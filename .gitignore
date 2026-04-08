@@ -1,0 +1,29 @@
+# dependências
+node_modules/
+
+# build do next.js
+.next/
+out/
+
+# arquivos de ambiente (segredos)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# backups e arquivos pesados
+_assets_backup/
+*.zip
+*.pdf
+*.docx
+
+# ferramentas de IA e cache
+.aiox-core/
+.antigravity/
+.claude/
+.codex/
+.cursor/
+.gemini/
+.DS_Store
+*.log

@@ -1,0 +1,156 @@
+'use client'
+
+import { Gem, Loader2, Mail, Lock, UserPlus } from 'lucide-react'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import Link from 'next/link'
+
+export default function RegisterPage() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+  const router = useRouter()
+  const supabase = createClient()
+
+  async function handleRegister(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    if (password !== confirmPassword) {
+      setError('As senhas não coincidem, Angela.')
+      setLoading(false)
+      return
+    }
+
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
+
+      if (error) {
+        setError(error.message === 'User already registered' 
+          ? 'Este e-mail já está cadastrado.' 
+          : 'Erro ao criar conta. Verifique os dados.')
+        return
+      }
+
+      setSuccess(true)
+      // Após 3 segundos redireciona para o login
+      setTimeout(() => {
+        router.push('/login')
+      }, 3000)
+      
+    } catch (err) {
+      setError('Ocorreu um erro inesperado. Tente novamente mais tarde.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-[85vh] flex items-center justify-center px-4 bg-[#fffafa]">
+      <div className="bg-white p-10 rounded-[48px] shadow-2xl shadow-rose-100 w-full max-w-md border border-rose-50 relative overflow-hidden">
+
+        <div className="text-center mb-10 relative z-10">
+          <h1 className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.4em] mb-8">Catálogo Lapidado</h1>
+          <div className="bg-rose-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Gem className="text-[#c99090]" size={36} />
+          </div>
+          <h2 className="text-3xl font-bold text-[#4a322e]">Nova Empresária</h2>
+          <p className="text-[#7a5c58] text-sm mt-2 font-medium italic">"Comece hoje a lapidar o futuro do seu catálogo." 💎</p>
+        </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl text-rose-800 text-xs font-medium text-center animate-shake">
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-100 rounded-2xl text-green-800 text-xs font-medium text-center">
+            Conta de Empresária criada com sucesso! Redirecionando...
+          </div>
+        )}
+
+        {!success && (
+          <form onSubmit={handleRegister} className="space-y-5 relative z-10">
+            <div>
+              <label className="block text-[10px] font-black text-[#c99090] uppercase tracking-[0.2em] mb-2 ml-2">E-mail Profissional</label>
+              <div className="relative">
+                <input 
+                  type="email" 
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-12 pr-6 py-4 rounded-3xl bg-rose-50/50 border-2 border-transparent focus:border-[#c99090] focus:bg-white outline-none transition-all text-[#4a322e]"
+                  placeholder="angela@exemplo.com"
+                />
+                <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-[#c99090]" size={18} />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black text-[#c99090] uppercase tracking-[0.2em] mb-2 ml-2">Senha Mestra</label>
+              <div className="relative">
+                <input 
+                  type="password" 
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-12 pr-6 py-4 rounded-3xl bg-rose-50/50 border-2 border-transparent focus:border-[#c99090] focus:bg-white outline-none transition-all text-[#4a322e]"
+                  placeholder="••••••••"
+                  minLength={6}
+                />
+                <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-[#c99090]" size={18} />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black text-[#c99090] uppercase tracking-[0.2em] mb-2 ml-2">Confirmar Senha</label>
+              <div className="relative">
+                <input 
+                  type="password" 
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full pl-12 pr-6 py-4 rounded-3xl bg-rose-50/50 border-2 border-transparent focus:border-[#c99090] focus:bg-white outline-none transition-all text-[#4a322e]"
+                  placeholder="••••••••"
+                />
+                <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-[#c99090]" size={18} />
+              </div>
+            </div>
+
+            <button 
+              disabled={loading}
+              className="w-full bg-[#4a322e] text-white py-5 rounded-3xl font-bold hover:bg-[#c99090] transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-rose-200 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed mt-4"
+            >
+              {loading ? (
+                <Loader2 className="animate-spin" size={20} />
+              ) : (
+                'Criar Acesso Empresária 💎'
+              )}
+            </button>
+          </form>
+        )}
+
+        <div className="mt-8 text-center relative z-10">
+          <p className="text-[#7a5c58] text-sm">
+            Já possui acesso?{' '}
+            <Link href="/login" className="text-[#c99090] font-bold hover:underline">
+              Fazer Login
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
