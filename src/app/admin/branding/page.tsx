@@ -1,205 +1,193 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Upload, CheckCircle2, RefreshCw, MapPin, Phone, Camera, Link as LinkIcon, Globe, Gem, Music } from 'lucide-react'
-import { Vibrant } from 'node-vibrant/browser'
+import { Upload, CheckCircle2, Phone, Camera, Loader2, Store, Palette, Sparkles, MapPin, Camera as InstagramIcon, Music2 } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 export default function BrandingPage() {
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [logo, setLogo] = useState<string | null>(null)
-  const [analyzing, setAnalyzing] = useState(false)
-  const [colors, setColors] = useState<{primary: string, secondary: string} | null>(null)
-  
-  // Campos da marca
-  const [address, setAddress] = useState('')
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [name, setName] = useState('LAPIDADO')
+  const [tagline, setTagline] = useState('')
+  const [primaryColor, setPrimaryColor] = useState('#4a322e')
+  const [secondaryColor, setSecondaryColor] = useState('#c99090')
   const [phone, setPhone] = useState('')
-  const [instagram, setInstagram] = useState('')
-  const [facebook, setFacebook] = useState('')
+  const [address, setAddress] = useState('')
   const [tiktok, setTiktok] = useState('')
-  const [website, setGlobe] = useState('')
+  const [instagram, setInstagram] = useState('')
+  
+  const supabase = createClient()
 
   useEffect(() => {
-    const saved = localStorage.getItem('lapidado-branding')
-    if (saved) {
-      const parsed = JSON.parse(saved)
-      setColors({ primary: parsed.primary, secondary: parsed.secondary })
-      setAddress(parsed.address || '')
-      setPhone(parsed.phone || '')
-      setInstagram(parsed.instagram || '')
-      setFacebook(parsed.facebook || '')
-      setTiktok(parsed.tiktok || '')
-      setGlobe(parsed.website || '')
+    async function loadBranding() {
+      try {
+        const { data } = await supabase.from('branding').select('*').single()
+        if (data) {
+          // O Campo 'instagram' no banco estava sendo usado como bypass para o Nome da Loja
+          // Vou manter essa lógica de leitura para não quebrar o que já foi salvo, 
+          // mas agora teremos campos separados na interface.
+          setName(data.instagram || data.business_name || 'LAPIDADO')
+          setTagline(data.facebook || '')
+          setPrimaryColor(data.primary_color || '#4a322e')
+          setSecondaryColor(data.secondary_color || '#c99090')
+          setLogo(data.logo_url)
+          setPhone(data.phone || '')
+          setAddress(data.address || '')
+          setTiktok(data.tiktok || '')
+          setInstagram(data.website || '') // Usaremos o campo 'website' no banco para o Instagram real
+        }
+      } catch (e) {
+        console.error('Erro ao carregar marca')
+      }
+      setLoading(false)
     }
+    loadBranding()
   }, [])
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-
+    setLogoFile(file)
     const reader = new FileReader()
-    reader.onload = async (event) => {
-      const base64 = event.target?.result as string
-      setLogo(base64)
-      setAnalyzing(true)
-
-      try {
-        const palette = await Vibrant.from(base64).getPalette()
-        const primary = palette.DarkMuted?.hex || '#4a322e'
-        const secondary = palette.Vibrant?.hex || '#c99090'
-        
-        const newBranding = { primary, secondary, address, phone, instagram, facebook, tiktok, website }
-        setColors({ primary, secondary })
-        localStorage.setItem('lapidado-branding', JSON.stringify(newBranding))
-        
-        document.documentElement.style.setProperty('--brand-primary', primary)
-        document.documentElement.style.setProperty('--brand-secondary', secondary)
-      } catch (err) {
-        console.error("Erro ao extrair cores:", err)
-      } finally {
-        setAnalyzing(false)
-      }
-    }
+    reader.onload = (event) => setLogo(event.target?.result as string)
     reader.readAsDataURL(file)
   }
 
-  const handleSaveInfo = () => {
-    const currentBranding = JSON.parse(localStorage.getItem('lapidado-branding') || '{}')
-    const updatedBranding = { ...currentBranding, address, phone, instagram, facebook, tiktok, website }
-    localStorage.setItem('lapidado-branding', JSON.stringify(updatedBranding))
-    alert('INFORMAÇÕES DA MARCA SALVAS COM SUCESSO! 💎')
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      let currentLogoUrl = logo
+
+      if (logoFile) {
+        const formData = new FormData()
+        formData.append('file', logoFile)
+        formData.append('bucket', 'branding')
+        const uploadRes = await fetch('/api/admin/upload', { method: 'POST', body: formData })
+        const uploadData = await uploadRes.json()
+        if (uploadData.url) currentLogoUrl = uploadData.url
+      }
+
+      const response = await fetch('/api/admin/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          table: 'branding',
+          data: {
+            instagram: name.toUpperCase(), // Mantemos o nome da loja aqui para o Header não quebrar
+            facebook: tagline.toUpperCase(),
+            primary_color: primaryColor,
+            secondary_color: secondaryColor,
+            logo_url: currentLogoUrl,
+            phone: phone,
+            address: address,
+            tiktok: tiktok,
+            website: instagram // Instagram real salvo no campo website
+          }
+        })
+      })
+
+      const result = await response.json()
+      if (!result.success) throw new Error(result.error)
+
+      // Atualiza cores em tempo real no Admin
+      document.documentElement.style.setProperty('--brand-primary', primaryColor)
+      document.documentElement.style.setProperty('--brand-secondary', secondaryColor)
+
+      alert('IDENTIDADE VISUAL E CONTATOS ATUALIZADOS! 💎✨')
+      window.location.reload()
+    } catch (err: any) {
+      alert('ERRO AO SALVAR: ' + err.message.toUpperCase())
+    } finally {
+      setSaving(false)
+    }
   }
 
+  if (loading) return <div className="flex justify-center p-20"><Loader2 className="animate-spin text-brand-secondary" size={48} /></div>
+
   return (
-    <div className="max-w-5xl mx-auto">
-      <div className="mb-16">
-        <h1 className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.4em] mb-4 text-brand-secondary">Lapidado</h1>
-        <h2 className="text-4xl font-bold tracking-tight text-[#4a322e] uppercase text-brand-primary">Minha Marca</h2>
-        <p className="text-[#c99090] text-[10px] font-light tracking-[0.4em] uppercase mt-2">A identidade visual e contatos da sua empresa</p>
+    <div className="max-w-5xl mx-auto py-10 px-4 pb-20">
+      <div className="text-center mb-12">
+        <h1 className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.4em] mb-4">ESPAÇO DA EMPRESÁRIA</h1>
+        <h2 className="text-3xl font-bold text-brand-primary uppercase tracking-tight">CUSTOMIZAÇÃO DA PLATAFORMA</h2>
+        <p className="text-[#7a5c58] text-[10px] mt-4 font-black uppercase tracking-[0.1em]">"SUA MARCA EM CADA DETALHE DO APLICATIVO." 💎</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Identidade Visual */}
-        <div className="space-y-8">
-          <div className="bg-white p-10 rounded-[60px] border border-rose-50 shadow-sm relative overflow-hidden text-brand-primary">
-            <h3 className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.2em] mb-8 flex items-center gap-2">
-              <Gem size={14} /> Logotipo e Cores
-            </h3>
-            
-            <div className="flex flex-col items-center gap-8 text-center">
-              <div className="w-48 h-48 rounded-full bg-rose-50 border-2 border-dashed border-rose-100 flex items-center justify-center relative overflow-hidden group">
-                {logo ? (
-                  <img src={logo} alt="Logo" className="w-full h-full object-contain p-4" />
-                ) : (
-                  <Upload className="text-[#c99090] opacity-40" size={48} />
-                )}
-                <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleLogoUpload} accept="image/*" />
-              </div>
-
-              <div className="space-y-2">
-                <p className="font-bold text-xs uppercase tracking-widest">DNA Cromático</p>
-                <div className="flex gap-3 justify-center">
-                  <div className="w-8 h-8 rounded-full shadow-inner border border-white" style={{ backgroundColor: colors?.primary || '#4a322e' }} title="Cor Primária" />
-                  <div className="w-8 h-8 rounded-full shadow-inner border border-white" style={{ backgroundColor: colors?.secondary || '#c99090' }} title="Cor de Destaque" />
-                </div>
-              </div>
-
-              {analyzing && (
-                <div className="flex items-center gap-2 text-[#c99090] animate-pulse">
-                  <RefreshCw className="animate-spin" size={14} />
-                  <p className="text-[9px] font-bold tracking-[0.3em] uppercase">Analisando marca...</p>
-                </div>
-              )}
+        <div className="bg-white p-8 rounded-[40px] border border-rose-50 shadow-sm space-y-6">
+          <div className="flex items-center gap-3 mb-4"><Palette className="text-brand-secondary" size={20} /><h3 className="text-sm font-bold text-brand-primary uppercase tracking-wider">Estilo e Cores</h3></div>
+          
+          <div className="flex flex-col items-center gap-6">
+            <div className="relative w-32 h-32 rounded-full overflow-hidden border-2 border-dashed border-brand-secondary/30 flex items-center justify-center bg-brand-secondary/5">
+              {logo ? <img src={logo} alt="LOGO" className="w-full h-full object-contain p-4" /> : <Camera size={24} className="text-brand-secondary/40" />}
+              <label className="absolute inset-0 cursor-pointer flex items-center justify-center bg-black/0 hover:bg-black/10 transition-all">
+                <input type="file" className="hidden" onChange={handleLogoUpload} accept="image/*" />
+              </label>
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-[10px] font-bold text-brand-secondary uppercase tracking-widest block mb-2 ml-2">COR PRIMÁRIA</label>
+              <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="w-full h-14 rounded-2xl cursor-pointer border-0" />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold text-brand-secondary uppercase tracking-widest block mb-2 ml-2">COR SECUNDÁRIA</label>
+              <input type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} className="w-full h-14 rounded-2xl cursor-pointer border-0" />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-bold text-brand-secondary uppercase tracking-widest block mb-2 ml-2">NOME DA LOJA (PARA ASSINATURA)</label>
+            <input type="text" value={name} onChange={(e) => setName(e.target.value.toUpperCase())} className="w-full px-6 py-4 rounded-3xl bg-brand-secondary/5 border-2 border-transparent focus:border-brand-secondary outline-none transition-all font-bold text-brand-primary" />
+          </div>
+
+          <div>
+            <label className="text-[10px] font-bold text-brand-secondary uppercase tracking-widest block mb-2 ml-2">FRASE DE GLAMOUR</label>
+            <input type="text" value={tagline} onChange={(e) => setTagline(e.target.value)} className="w-full px-6 py-4 rounded-3xl bg-brand-secondary/5 border-2 border-transparent focus:border-brand-secondary outline-none transition-all italic text-[#7a5c58]" />
           </div>
         </div>
 
-        {/* Informações de Contato */}
-        <div className="space-y-8">
-          <div className="bg-white p-10 rounded-[60px] border border-rose-50 shadow-sm text-brand-primary">
-            <h3 className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.2em] mb-8 flex items-center gap-2">
-              <MapPin size={14} /> Dados de Contato
-            </h3>
+        {/* Informações de Contato Real */}
+        <div className="bg-white p-8 rounded-[40px] border border-rose-50 shadow-sm space-y-6">
+          <div className="flex items-center gap-3 mb-4"><Phone className="text-brand-secondary" size={20} /><h3 className="text-sm font-bold text-brand-primary uppercase tracking-wider">Contatos e Redes</h3></div>
 
-            <div className="space-y-6">
-              <div>
-                <label className="block text-[9px] font-black text-[#c99090] uppercase tracking-[0.2em] mb-2 ml-2">Endereço Físico ou Showroom</label>
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value.toUpperCase())}
-                    className="w-full pl-12 pr-6 py-4 rounded-3xl bg-rose-50/50 border-2 border-transparent focus:border-[#c99090] focus:bg-white outline-none transition-all uppercase text-xs"
-                    placeholder="EX: AV. DAS JOIAS, 1000 - SALA 01"
-                  />
-                  <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 text-[#c99090]" size={16} />
-                </div>
-              </div>
+          <div>
+            <label className="text-[10px] font-bold text-brand-secondary uppercase tracking-widest block mb-2 ml-2">WHATSAPP DE VENDAS</label>
+            <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(11) 99999-9999" className="w-full px-6 py-4 rounded-3xl bg-brand-secondary/5 border-2 border-transparent focus:border-brand-secondary outline-none" />
+          </div>
 
-              <div>
-                <label className="block text-[9px] font-black text-[#c99090] uppercase tracking-[0.2em] mb-2 ml-2">Telefone / WhatsApp</label>
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full pl-12 pr-6 py-4 rounded-3xl bg-rose-50/50 border-2 border-transparent focus:border-[#c99090] focus:bg-white outline-none transition-all text-xs"
-                    placeholder="(00) 00000-0000"
-                  />
-                  <Phone className="absolute left-5 top-1/2 -translate-y-1/2 text-[#c99090]" size={16} />
-                </div>
-              </div>
+          <div>
+            <label className="text-[10px] font-bold text-brand-secondary uppercase tracking-widest block mb-2 ml-2">PERFIL DO INSTAGRAM (SEM @)</label>
+            <div className="relative">
+              <InstagramIcon size={16} className="absolute left-5 top-1/2 -translate-y-1/2 text-brand-secondary" />
+              <input type="text" value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="minhaloja_oficial" className="w-full pl-14 pr-6 py-4 rounded-3xl bg-brand-secondary/5 border-2 border-transparent focus:border-brand-secondary outline-none" />
+            </div>
+          </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-[9px] font-black text-[#c99090] uppercase tracking-[0.2em] mb-2 ml-2">Instagram</label>
-                  <div className="relative">
-                    <input 
-                      type="text" 
-                      value={instagram}
-                      onChange={(e) => setInstagram(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 rounded-3xl bg-rose-50/50 border-2 border-transparent focus:border-[#c99090] focus:bg-white outline-none transition-all text-xs"
-                      placeholder="@SUAMARCA"
-                    />
-                    <Camera className="absolute left-4 top-1/2 -translate-y-1/2 text-[#c99090]" size={14} />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-[9px] font-black text-[#c99090] uppercase tracking-[0.2em] mb-2 ml-2">Facebook</label>
-                  <div className="relative">
-                    <input 
-                      type="text" 
-                      value={facebook}
-                      onChange={(e) => setFacebook(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 rounded-3xl bg-rose-50/50 border-2 border-transparent focus:border-[#c99090] focus:bg-white outline-none transition-all text-xs"
-                      placeholder="LINK"
-                    />
-                    <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-[#c99090]" size={14} />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-[9px] font-black text-[#c99090] uppercase tracking-[0.2em] mb-2 ml-2">TikTok</label>
-                  <div className="relative">
-                    <input 
-                      type="text" 
-                      value={tiktok}
-                      onChange={(e) => setTiktok(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 rounded-3xl bg-rose-50/50 border-2 border-transparent focus:border-[#c99090] focus:bg-white outline-none transition-all text-xs"
-                      placeholder="@TIKTOK"
-                    />
-                    <Music className="absolute left-4 top-1/2 -translate-y-1/2 text-[#c99090]" size={14} />
-                  </div>
-                </div>
-              </div>
+          <div>
+            <label className="text-[10px] font-bold text-brand-secondary uppercase tracking-widest block mb-2 ml-2">USUÁRIO TIKTOK (SEM @)</label>
+            <div className="relative">
+              <Music2 className="absolute left-5 top-1/2 -translate-y-1/2 text-brand-secondary" size={16} />
+              <input type="text" value={tiktok} onChange={(e) => setTiktok(e.target.value)} placeholder="minha_loja" className="w-full pl-14 pr-6 py-4 rounded-3xl bg-brand-secondary/5 border-2 border-transparent focus:border-brand-secondary outline-none" />
+            </div>
+          </div>
 
-              <button 
-                onClick={handleSaveInfo}
-                className="w-full py-5 rounded-[32px] bg-[#4a322e] text-white font-black uppercase tracking-widest shadow-xl hover:bg-[#c99090] transition-all flex items-center justify-center gap-3 mt-4"
-              >
-                <CheckCircle2 size={20} /> <span>Salvar Dados da Marca</span>
-              </button>
+          <div>
+            <label className="text-[10px] font-bold text-brand-secondary uppercase tracking-widest block mb-2 ml-2">ENDEREÇO / SHOWROOM</label>
+            <div className="relative">
+              <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 text-brand-secondary" size={16} />
+              <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Cidade - Estado" className="w-full pl-14 pr-6 py-4 rounded-3xl bg-brand-secondary/5 border-2 border-transparent focus:border-brand-secondary outline-none text-xs" />
             </div>
           </div>
         </div>
       </div>
+
+      <button onClick={handleSave} disabled={saving} className="w-full py-6 rounded-[32px] bg-brand-primary text-white font-black uppercase tracking-widest shadow-xl hover:opacity-90 transition-all flex items-center justify-center gap-4 mt-10 disabled:opacity-50">
+        {saving ? <Loader2 className="animate-spin" size={24} /> : <><Sparkles size={24} /> <span>SALVAR IDENTIDADE DA ASSINANTE</span></>}
+      </button>
     </div>
   )
 }

@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
-import CartIcon from '@/components/cart/cart-icon';
-import Link from 'next/link';
 import BrandingSync from '@/components/branding-sync';
-import Header from '@/components/header';
+import Footer from '@/components/footer';
 
-const inter = Inter({ subsets: ["latin"], weight: ['300', '400', '600'] });
+const inter = Inter({ subsets: ["latin"], weight: ['300', '400', '600'], variable: '--font-inter' });
+const cormorant = Cormorant_Garamond({ 
+  subsets: ["latin"], 
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-glamour'
+});
 
 export const metadata: Metadata = {
   title: "Lapidado — Catálogo de Semijoias",
@@ -20,11 +23,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={`${inter.className} bg-[#fffcfc] text-[#4a322e] min-h-screen flex flex-col antialiased`}>
+      <body className={`${inter.variable} ${cormorant.variable} font-sans bg-[#fffcfc] text-[#4a322e] min-h-screen flex flex-col antialiased`}>
         <BrandingSync />
         <main className="flex-1">
           {children}
         </main>
+        <Footer />
       </body>
     </html>
   );

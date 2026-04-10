@@ -1,0 +1,38 @@
+import { createClient } from '@supabase/supabase-js'
+import { NextResponse } from 'next/server'
+
+export async function POST(req: Request) {
+  try {
+    const formData = await req.formData()
+    const file = formData.get('file') as File
+    const bucket = formData.get('bucket') as string || 'products'
+
+    if (!file) {
+      return NextResponse.json({ error: 'NENHUM ARQUIVO ENVIADO' }, { status: 400 })
+    }
+
+    // Criar cliente com Chave Mestra (Service Role) - APENAS NO SERVIDOR
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
+
+    // Upload usando a permissão master
+    const { data, error } = await supabaseAdmin.storage
+      .from(bucket)
+      .upload(fileName, file)
+
+    if (error) throw error
+
+    const { data: { publicUrl } } = supabaseAdmin.storage.from(bucket).getPublicUrl(fileName)
+
+    return NextResponse.json({ url: publicUrl })
+
+  } catch (err: any) {
+    console.error('ERRO NO UPLOAD SEGURO:', err.message)
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}

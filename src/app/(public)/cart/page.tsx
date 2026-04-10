@@ -3,13 +3,26 @@
 import { useState, useEffect } from 'react'
 import { Trash2, MessageCircle, ShoppingBag, Banknote } from 'lucide-react'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
 
 export default function CartPage() {
   const [cartItems, setCartItems] = useState<any[]>([])
+  const [storePhone, setStorePhone] = useState('5511999999999')
 
   useEffect(() => {
     const cart = JSON.parse(localStorage.getItem('lapidado-cart') || '[]')
     setCartItems(cart)
+
+    const loadStorePhone = async () => {
+      const supabase = createClient()
+      const { data } = await supabase.from('branding').select('phone, business_name').single()
+      if (data && data.phone) {
+        let cleanPhone = data.phone.replace(/\D/g, '')
+        if (cleanPhone && cleanPhone.length <= 11) cleanPhone = '55' + cleanPhone
+        setStorePhone(cleanPhone)
+      }
+    }
+    loadStorePhone()
   }, [])
 
   const removeItem = (index: number) => {
@@ -37,7 +50,7 @@ export default function CartPage() {
       `VALOR NO PIX (5% DESC): R$ ${pixValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n` +
       `PODEMOS COMBINAR O ENVIO?`
     )
-    window.open(`https://wa.me/5511999999999?text=${message}`, '_blank') // Substitua pelo seu número
+    window.open(`https://wa.me/${storePhone}?text=${message}`, '_blank')
   }
 
   if (cartItems.length === 0) {

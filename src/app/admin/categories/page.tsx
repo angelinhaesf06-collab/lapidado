@@ -38,11 +38,36 @@ export default function CategoriesPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Tem certeza que deseja excluir esta categoria? Isso pode afetar as joias cadastradas nela. 💎')) return
+    if (!confirm('DESEJA REALMENTE EXCLUIR ESTA CATEGORIA? 💎\n\nAVISO: Se houver joias nesta categoria, a exclusão pode falhar por segurança.')) return
     setActionLoading(id)
-    const { error } = await supabase.from('categories').delete().eq('id', id)
-    if (!error) loadCategories()
-    setActionLoading(null)
+    
+    try {
+      const response = await fetch('/api/admin/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          table: 'categories',
+          action: 'delete',
+          id: id
+        })
+      })
+      const result = await response.json()
+      
+      if (!result.success) {
+        if (result.error?.includes('foreign key constraint')) {
+          alert('ERRO: NÃO É POSSÍVEL EXCLUIR! ESTA CATEGORIA POSSUI JOIAS VINCULADAS. EXCLUA OU MUDE AS JOIAS DE LUGAR PRIMEIRO. 💎')
+        } else {
+          throw new Error(result.error)
+        }
+      } else {
+        alert('CATEGORIA REMOVIDA COM SUCESSO! ✨')
+        loadCategories()
+      }
+    } catch (err: any) {
+      alert('ERRO AO EXCLUIR: ' + err.message.toUpperCase())
+    } finally {
+      setActionLoading(null)
+    }
   }
 
   async function handleUpdate(id: string) {
