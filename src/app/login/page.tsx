@@ -115,6 +115,15 @@ export default function LoginPage() {
           </button>
         </form>
 
+        <div className="mt-4 pt-4 border-t border-dashed border-rose-100 flex flex-col gap-3">
+          <button 
+            onClick={() => router.push('/admin')}
+            className="w-full bg-white text-[#c99090] border-2 border-[#c99090] py-4 rounded-3xl font-bold hover:bg-rose-50 transition-all flex items-center justify-center gap-2"
+          >
+            Acesso Rápido (Modo Dev) 🚀
+          </button>
+        </div>
+
         <div className="mt-8 text-center relative z-10">
           <p className="text-[#7a5c58] text-sm font-medium">
             Ainda não tem acesso?{' '}

@@ -14,11 +14,8 @@ export async function POST(req: Request) {
     // Limpar o prefixo base64 se existir (ex: data:image/jpeg;base64,)
     const base64Data = image.split(",")[1] || image;
 
-    // Forçar o uso da versão v1 estável
-    const model = genAI.getGenerativeModel(
-      { model: "gemini-1.5-flash" },
-      { apiVersion: "v1" }
-    );
+    // Usar o modelo flash avançado disponível na chave da usuária
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = `
       Você é um especialista em marketing de joias de luxo para o "Catálogo Lapidado".
