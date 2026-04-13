@@ -26,12 +26,12 @@ export async function POST(req: Request) {
       Retorne APENAS o JSON.
     `;
 
-    const models = ["gemini-1.5-flash", "gemini-2.0-flash"];
+    const models = ["gemini-2.0-flash-lite", "gemini-flash-lite-latest", "gemini-2.0-flash", "gemini-1.5-flash"];
     let lastError = null;
 
     for (const modelName of models) {
-      // MÁGICA NEXUS: RETRY AUTOMÁTICO (3 Tentativas por modelo)
-      for (let i = 0; i < 3; i++) {
+      // MÁGICA NEXUS: RETRY AUTOMÁTICO (2 Tentativas por modelo)
+      for (let i = 0; i < 2; i++) {
         try {
           console.log(`💎 NEXUS: TENTATIVA ${i+1} COM MODELO ${modelName}...`);
           const model = genAI.getGenerativeModel({ model: modelName });
@@ -50,13 +50,21 @@ export async function POST(req: Request) {
         } catch (err: any) {
           lastError = err;
           const isOverloaded = err.message?.includes("503") || err.message?.includes("overloaded");
+          const isNotFound = err.message?.includes("404") || err.message?.includes("not found");
           
-          if (isOverloaded && i < 2) {
-            console.warn(`⚠️ NEXUS: GOOGLE SOBRECARREGADO. ESPERANDO 2s PARA TENTAR NOVAMENTE...`);
-            await sleep(2000); // Espera 2 segundos antes da próxima tentativa
+          if (isNotFound) {
+            console.warn(`⚠️ NEXUS: MODELO ${modelName} NÃO ENCONTRADO (404). TENTANDO PRÓXIMO...`);
+            break; // Pula imediatamente para o próximo modelo se for 404
+          }
+
+          if (isOverloaded && i < 1) {
+            console.warn(`⚠️ NEXUS: MODELO ${modelName} SOBRECARREGADO (503). ESPERANDO 1s...`);
+            await sleep(1000); // Espera 1 segundo
             continue;
           }
-          break; // Se não for erro de carga ou acabaram os retries, pula pro próximo modelo
+          
+          console.error(`❌ NEXUS: ERRO NO MODELO ${modelName}:`, err.message);
+          break; // Se for outro erro ou acabaram retries, pula pro próximo modelo
         }
       }
     }

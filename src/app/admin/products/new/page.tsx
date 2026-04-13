@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 export default function NewProductPage() {
   const [loading, setLoading] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
+  const [aiError, setAiError] = useState<string | null>(null)
   const [image, setImage] = useState<string | null>(null)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [name, setName] = useState('')
@@ -97,6 +98,7 @@ export default function NewProductPage() {
   const generateAIDescription = async () => {
     if (!image) return
     setAiLoading(true)
+    setAiError(null)
     try {
       const compressed = await compressImage(image)
       
@@ -120,7 +122,7 @@ export default function NewProductPage() {
         if (foundCat) setCategory(foundCat.id)
       }
     } catch (err: any) {
-      alert(`AVISO: A MÁGICA LAPIDADO ESTÁ SOBRECARREGADA. ✨\n\nCONTINUE O CADASTRO MANUALMENTE PARA NÃO PERDER SEU TEMPO. 💎`)
+      setAiError("IA SOBRECARREGADA. CONTINUE MANUALMENTE. ✨")
     } finally {
       setAiLoading(false)
     }
@@ -189,6 +191,12 @@ export default function NewProductPage() {
           <button type="button" disabled={!image || aiLoading} onClick={generateAIDescription} className="w-full py-5 rounded-[32px] bg-[#4a322e] text-white font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl hover:bg-[#c99090] transition-all disabled:opacity-50">
             {aiLoading ? <Loader2 className="animate-spin" size={20} /> : <><Gem size={20} /> <span>MÁGICA LAPIDADO</span></>}
           </button>
+          
+          {aiError && (
+            <div className="p-4 bg-rose-50 border border-rose-100 rounded-3xl text-rose-800 text-[10px] font-black text-center animate-pulse tracking-widest uppercase">
+              {aiError}
+            </div>
+          )}
         </div>
 
         <div className="space-y-6 bg-white p-10 rounded-[60px] border border-rose-50 shadow-sm">

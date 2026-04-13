@@ -6,7 +6,7 @@ const genAI = new GoogleGenerativeAI(key);
 
 async function run() {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-8b" });
     const result = await model.generateContent("Olá, quem é você?");
     const response = await result.response;
     const text = response.text();

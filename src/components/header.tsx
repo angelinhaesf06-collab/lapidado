@@ -57,12 +57,12 @@ export default function Header() {
         {/* Lado Direito - Ações Mobile-Friendly */}
         <div className="flex justify-end gap-2 md:gap-6 items-center">
           <Link href="/cart" className="group relative p-3 md:p-4 rounded-full hover:bg-rose-50/50 transition-all text-brand-primary">
-             <ShoppingBag size={24} md:size={28} strokeWidth={1.5} />
+             <ShoppingBag className="w-6 h-6 md:w-7 md:h-7" strokeWidth={1.5} />
              <span className="absolute top-1 right-1 w-5 h-5 bg-brand-primary text-white text-[10px] flex items-center justify-center rounded-full border-2 border-white">!</span>
           </Link>
           
           <Link href="/admin" className="p-3 md:p-4 rounded-full hover:bg-rose-50/50 transition-all text-brand-primary/30">
-             <User size={20} md:size={24} strokeWidth={1.5} />
+             <User className="w-5 h-5 md:w-6 md:h-6" strokeWidth={1.5} />
           </Link>
         </div>
 

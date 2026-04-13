@@ -117,10 +117,14 @@ export default function LoginPage() {
 
         <div className="mt-4 pt-4 border-t border-dashed border-rose-100 flex flex-col gap-3">
           <button 
-            onClick={() => router.push('/admin')}
-            className="w-full bg-white text-[#c99090] border-2 border-[#c99090] py-4 rounded-3xl font-bold hover:bg-rose-50 transition-all flex items-center justify-center gap-2"
+            onClick={() => {
+              setLoading(true);
+              router.push('/admin');
+              setTimeout(() => router.refresh(), 100);
+            }}
+            className="w-full bg-[#c99090] text-white py-4 rounded-3xl font-bold hover:bg-[#4a322e] transition-all flex items-center justify-center gap-2 shadow-lg shadow-rose-100"
           >
-            Acesso Rápido (Modo Dev) 🚀
+            Acesso Rápido (Entrar Agora) 🚀
           </button>
         </div>
 
