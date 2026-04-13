@@ -19,8 +19,29 @@ export default async function ProductPage({
     .eq('id', id)
     .single()
 
+  // Buscar branding para garantia personalizada
+  const { data: branding } = await supabase.from('branding').select('instagram').single()
+  const warrantyText = branding?.instagram || 'ETERNA'
+
   if (!product) {
     notFound();
+  }
+
+  // Lógica para limpar descrição e extrair banho
+  let displayDescription = product.description || ''
+  let materialFinish = product.material_finish || ''
+
+  if (displayDescription.includes('---')) {
+    const parts = displayDescription.split('---')
+    displayDescription = parts[0].trim()
+    
+    // Tentar extrair do JSON se a coluna material_finish estiver vazia
+    if (!materialFinish && parts[1]?.includes('DATA:{')) {
+      try {
+        const match = parts[1].match(/DATA:({.*})/)
+        if (match) materialFinish = JSON.parse(match[1]).finish
+      } catch(e) {}
+    }
   }
 
   return (
@@ -50,11 +71,18 @@ export default async function ProductPage({
           </div>
 
           <div className="space-y-8 mb-20 w-full flex flex-col items-center border-t border-rose-50 pt-16 text-center">
+            {materialFinish && (
+              <div className="px-6 py-2 bg-rose-50/50 border border-rose-100 rounded-full mb-8">
+                <span className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.3em]">
+                  Acabamento: {materialFinish}
+                </span>
+              </div>
+            )}
             <h3 className="text-[9px] font-semibold text-[#4a322e] uppercase tracking-[0.5em] mb-4">
               Descrição da Peça
             </h3>
             <p className="text-xl text-[#7a5c58] font-light leading-relaxed max-w-md">
-              {product.description}
+              {displayDescription}
             </p>
           </div>
 
@@ -62,8 +90,8 @@ export default async function ProductPage({
             <AddToCartButton product={product} />
           </div>
           
-          <p className="mt-20 text-[9px] text-[#7a5c58] font-light opacity-50 tracking-[0.3em] uppercase">
-            💎 Garantia eterna de banho • Lapidado
+          <p className="mt-20 text-[9px] text-[#7a5c58] font-light opacity-50 tracking-[0.3em] uppercase text-center">
+            💎 Garantia {warrantyText} de banho • Lapidado
           </p>
         </div>
       </div>

@@ -1,22 +1,18 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Gem, Plus, Edit2, Trash2, Loader2, Check, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { Plus, Trash2, LayoutGrid, Loader2, ArrowLeft, Gem, Pencil, Check, X } from 'lucide-react'
+import Link from 'next/link'
 
 export default function CategoriesPage() {
-  const [categories, setCategories] = useState<{id: string, name: string}[]>([])
-  const [loading, setLoading] = useState(true)
-  const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [categories, setCategories] = useState<any[]>([])
   const [newCategory, setNewCategory] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [editingName, setEditingIdName] = useState('')
-  
+  const [editingName, setEditingName] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [adding, setAdding] = useState(false)
   const supabase = createClient()
-
-  useEffect(() => {
-    loadCategories()
-  }, [])
 
   async function loadCategories() {
     setLoading(true)
@@ -25,145 +21,150 @@ export default function CategoriesPage() {
     setLoading(false)
   }
 
-  async function handleAdd() {
-    if (!newCategory) return
-    setActionLoading('add')
-    const slug = newCategory.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-')
-    const { error } = await supabase.from('categories').insert([{ name: newCategory, slug }])
-    if (!error) {
-      setNewCategory('')
-      loadCategories()
-    }
-    setActionLoading(null)
-  }
+  useEffect(() => {
+    loadCategories()
+  }, [])
 
-  async function handleDelete(id: string) {
-    if (!confirm('DESEJA REALMENTE EXCLUIR ESTA CATEGORIA? 💎\n\nAVISO: Se houver joias nesta categoria, a exclusão pode falhar por segurança.')) return
-    setActionLoading(id)
-    
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newCategory) return
+    setAdding(true)
     try {
       const response = await fetch('/api/admin/save', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          table: 'categories',
-          action: 'delete',
-          id: id
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer LAPIDADO_ADMIN_2026`
+        },
+        body: JSON.stringify({ 
+          table: 'categories', 
+          data: { name: newCategory.toUpperCase() } 
         })
       })
       const result = await response.json()
+      if (!result.success) throw new Error(result.error)
       
-      if (!result.success) {
-        if (result.error?.includes('foreign key constraint')) {
-          alert('ERRO: NÃO É POSSÍVEL EXCLUIR! ESTA CATEGORIA POSSUI JOIAS VINCULADAS. EXCLUA OU MUDE AS JOIAS DE LUGAR PRIMEIRO. 💎')
-        } else {
-          throw new Error(result.error)
-        }
-      } else {
-        alert('CATEGORIA REMOVIDA COM SUCESSO! ✨')
-        loadCategories()
-      }
+      setNewCategory('')
+      await loadCategories()
+      alert('CATEGORIA ADICIONADA! 💎')
     } catch (err: any) {
-      alert('ERRO AO EXCLUIR: ' + err.message.toUpperCase())
+      alert('ERRO: ' + err.message.toUpperCase())
     } finally {
-      setActionLoading(null)
+      setAdding(false)
     }
   }
 
-  async function handleUpdate(id: string) {
+  const handleUpdate = async (id: string) => {
     if (!editingName) return
-    setActionLoading(id)
-    const slug = editingName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-')
-    const { error } = await supabase.from('categories').update({ name: editingName, slug }).eq('id', id)
-    if (!error) {
+    try {
+      const response = await fetch('/api/admin/save', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer LAPIDADO_ADMIN_2026`
+        },
+        body: JSON.stringify({ 
+          table: 'categories', 
+          id,
+          data: { name: editingName.toUpperCase() } 
+        })
+      })
+      const result = await response.json()
+      if (!result.success) throw new Error(result.error)
+      
       setEditingId(null)
-      loadCategories()
+      await loadCategories()
+    } catch (err: any) {
+      alert('ERRO AO ATUALIZAR: ' + err.message.toUpperCase())
     }
-    setActionLoading(null)
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('DESEJA REALMENTE EXCLUIR ESTA CATEGORIA? ISSO NÃO APAGARÁ OS PRODUTOS DELA. 💎')) return
+    try {
+      const { error } = await supabase.from('categories').delete().eq('id', id)
+      if (error) throw error
+      await loadCategories()
+    } catch (err: any) {
+      alert('ERRO: ' + err.message.toUpperCase())
+    }
   }
 
   return (
     <div className="max-w-4xl mx-auto py-10 px-4">
-      <div className="text-center mb-12">
-        <h1 className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.4em] mb-4 text-brand-secondary">Catálogo Lapidado</h1>
-        <h2 className="text-3xl font-bold text-[#4a322e] text-brand-primary">Gestão de Categorias</h2>
-        <p className="text-[#7a5c58] text-sm mt-2 font-medium italic">"Organize seu acervo para que cada joia encontre seu lugar de destaque." ✨</p>
+      <div className="mb-12">
+        <Link href="/admin" className="flex items-center gap-2 text-[10px] font-black text-[#c99090] uppercase tracking-widest mb-4 hover:ml-2 transition-all">
+          <ArrowLeft size={14} /> Voltar ao Painel
+        </Link>
+        <h1 className="text-3xl font-bold text-[#4a322e] uppercase tracking-tight flex items-center gap-3">
+          <LayoutGrid className="text-[#c99090]" /> Categorias do Catálogo
+        </h1>
       </div>
 
       {/* Adicionar Nova */}
-      <div className="bg-white p-8 rounded-[40px] border border-rose-50 shadow-sm mb-10 flex gap-4 items-center">
-        <input 
-          type="text" 
-          value={newCategory}
-          onChange={(e) => setNewCategory(e.target.value)}
-          placeholder="Ex: Tornozeleira"
-          className="flex-1 px-6 py-4 rounded-3xl bg-rose-50/50 border-2 border-transparent focus:border-[#c99090] focus:bg-white outline-none transition-all text-[#4a322e]"
-        />
-        <button 
-          onClick={handleAdd}
-          disabled={actionLoading === 'add' || !newCategory}
-          className="bg-[#4a322e] text-white p-4 rounded-full hover:bg-[#c99090] transition-all shadow-lg disabled:opacity-50"
-        >
-          {actionLoading === 'add' ? <Loader2 className="animate-spin" size={24} /> : <Plus size={24} />}
-        </button>
+      <div className="bg-white p-10 rounded-[60px] border border-rose-50 shadow-sm mb-12">
+        <h3 className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.2em] mb-8">Nova Categoria</h3>
+        <form onSubmit={handleAdd} className="flex gap-4">
+          <input 
+            type="text" 
+            placeholder="NOME DA CATEGORIA (EX: COLARES BANHADOS)"
+            value={newCategory}
+            onChange={(e) => setNewCategory(e.target.value.toUpperCase())}
+            className="flex-1 px-8 py-5 rounded-3xl bg-rose-50/20 border-2 border-transparent focus:border-[#c99090] outline-none font-bold text-[#4a322e] uppercase"
+          />
+          <button 
+            type="submit" 
+            disabled={adding || !newCategory}
+            className="px-10 bg-[#4a322e] text-white rounded-3xl font-black uppercase tracking-widest shadow-lg hover:bg-[#c99090] transition-all disabled:opacity-50"
+          >
+            {adding ? <Loader2 size={24} className="animate-spin" /> : 'Adicionar'}
+          </button>
+        </form>
       </div>
 
-      {/* Lista de Categorias */}
-      <div className="bg-white rounded-[60px] border border-rose-50 shadow-sm overflow-hidden">
+      {/* Listagem */}
+      <div className="bg-white p-10 rounded-[60px] border border-rose-50 shadow-sm">
+        <h3 className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.2em] mb-8">Categorias Atuais</h3>
         {loading ? (
-          <div className="p-20 flex justify-center"><Loader2 className="animate-spin text-[#c99090]" size={40} /></div>
+          <div className="flex justify-center p-10"><Loader2 className="animate-spin text-[#c99090]" size={24} /></div>
         ) : (
-          <div className="divide-y divide-rose-50">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {categories.map((cat) => (
-              <div key={cat.id} className="p-6 flex items-center justify-between hover:bg-rose-50/30 transition-all">
+              <div key={cat.id} className="flex items-center justify-between p-6 rounded-3xl bg-rose-50/30 border border-rose-100/50 group hover:bg-rose-50 transition-all">
                 {editingId === cat.id ? (
-                  <div className="flex-1 flex gap-3 mr-4">
+                  <div className="flex items-center gap-2 flex-1">
                     <input 
                       type="text" 
-                      value={editingName}
-                      onChange={(e) => setEditingIdName(e.target.value)}
-                      className="flex-1 px-4 py-2 rounded-xl border-2 border-[#c99090] outline-none"
-                      autoFocus
+                      value={editingName} 
+                      onChange={(e) => setEditingName(e.target.value.toUpperCase())}
+                      className="flex-1 bg-white px-4 py-2 rounded-xl border border-[#c99090] outline-none font-bold text-[#4a322e] text-[11px]"
                     />
-                    <button onClick={() => handleUpdate(cat.id)} className="text-green-600 hover:scale-110 transition-all"><Check size={20} /></button>
-                    <button onClick={() => setEditingId(null)} className="text-rose-400 hover:scale-110 transition-all"><X size={20} /></button>
+                    <button onClick={() => handleUpdate(cat.id)} className="text-green-500 p-2"><Check size={16} /></button>
+                    <button onClick={() => setEditingId(null)} className="text-rose-500 p-2"><X size={16} /></button>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center text-[#c99090]">
-                      <Gem size={18} />
-                    </div>
-                    <span className="font-semibold text-[#4a322e]">{cat.name}</span>
-                  </div>
-                )}
-
-                <div className="flex gap-2">
-                  {editingId !== cat.id && (
-                    <>
+                  <>
+                    <span className="font-bold text-[#4a322e] uppercase text-[11px] tracking-wider">{cat.name}</span>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
                       <button 
-                        onClick={() => { setEditingId(cat.id); setEditingIdName(cat.name); }}
-                        className="p-3 text-[#7a5c58] hover:text-[#c99090] hover:bg-white rounded-full transition-all"
+                        onClick={() => { setEditingId(cat.id); setEditingName(cat.name); }}
+                        className="p-3 text-[#c99090] hover:text-[#4a322e] hover:bg-white rounded-full transition-all"
                       >
-                        <Edit2 size={18} />
+                        <Pencil size={16} />
                       </button>
                       <button 
                         onClick={() => handleDelete(cat.id)}
-                        disabled={actionLoading === cat.id}
-                        className="p-3 text-[#7a5c58] hover:text-rose-600 hover:bg-white rounded-full transition-all"
+                        className="p-3 text-rose-300 hover:text-rose-500 hover:bg-white rounded-full transition-all"
                       >
-                        {actionLoading === cat.id ? <Loader2 className="animate-spin" size={18} /> : <Trash2 size={18} />}
+                        <Trash2 size={16} />
                       </button>
-                    </>
-                  )}
-                </div>
+                    </div>
+                  </>
+                )}
               </div>
             ))}
           </div>
         )}
-      </div>
-
-      <div className="mt-12 text-center">
-        <a href="/admin" className="text-[#c99090] text-xs font-bold hover:underline italic">Voltar para o Espaço da Empresária</a>
       </div>
     </div>
   )

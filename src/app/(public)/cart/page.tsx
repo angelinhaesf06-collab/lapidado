@@ -6,13 +6,15 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState<any[]>([])
+  const [cartItems, setCartItems] = useState<any[]>(() => {
+    if (typeof window !== 'undefined') {
+      return JSON.parse(localStorage.getItem('lapidado-cart') || '[]')
+    }
+    return []
+  })
   const [storePhone, setStorePhone] = useState('5511999999999')
 
   useEffect(() => {
-    const cart = JSON.parse(localStorage.getItem('lapidado-cart') || '[]')
-    setCartItems(cart)
-
     const loadStorePhone = async () => {
       const supabase = createClient()
       const { data } = await supabase.from('branding').select('phone, business_name').single()

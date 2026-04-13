@@ -1,24 +1,18 @@
-const https = require('https');
+const fetch = require('node-fetch');
+require('dotenv').config();
 
-const key = 'AIzaSyBAKXpERdRIIGxYzdVpn3cBYQst7WB1HX0';
-const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`;
+async function list() {
+  const key = process.env.GEMINI_API_KEY;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`;
+  
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    console.log("Modelos Disponíveis:");
+    data.models.forEach(m => console.log(`- ${m.name} (${m.displayName})`));
+  } catch (e) {
+    console.error("ERRO:", e.message);
+  }
+}
 
-https.get(url, (res) => {
-  let data = '';
-  res.on('data', (chunk) => { data += chunk; });
-  res.on('end', () => {
-    try {
-      const json = JSON.parse(data);
-      if (json.models) {
-        console.log("MODELOS DISPONÍVEIS:");
-        json.models.forEach(m => console.log("- " + m.name.replace('models/', '')));
-      } else {
-        console.log("ERRO NA RESPOSTA:", data);
-      }
-    } catch (e) {
-      console.log("ERRO AO PROCESSAR JSON:", data);
-    }
-  });
-}).on('error', (err) => {
-  console.log("ERRO DE CONEXÃO:", err.message);
-});
+list();

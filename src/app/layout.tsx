@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
-import { Inter, Cormorant_Garamond } from "next/font/google";
+import { Montserrat, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 import BrandingSync from '@/components/branding-sync';
 import Footer from '@/components/footer';
 
-const inter = Inter({ subsets: ["latin"], weight: ['300', '400', '600'], variable: '--font-inter' });
+const montserrat = Montserrat({ 
+  subsets: ["latin"], 
+  weight: ['100', '300', '400', '500', '700', '900'], 
+  variable: '--font-montserrat' 
+});
 const cormorant = Cormorant_Garamond({ 
   subsets: ["latin"], 
   weight: ['300', '400', '500', '600', '700'],
@@ -23,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={`${inter.variable} ${cormorant.variable} font-sans bg-[#fffcfc] text-[#4a322e] min-h-screen flex flex-col antialiased`}>
+      <body className={`${montserrat.variable} ${cormorant.variable} font-montserrat bg-[#fffcfc] text-[#4a322e] min-h-screen flex flex-col antialiased`}>
         <BrandingSync />
         <main className="flex-1">
           {children}

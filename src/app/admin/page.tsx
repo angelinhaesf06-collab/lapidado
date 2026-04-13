@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ShoppingBag, PlusCircle, TrendingUp, Gem, Loader2, DollarSign, Sparkles } from 'lucide-react'
+import { ShoppingBag, PlusCircle, TrendingUp, Gem, Loader2, DollarSign, Sparkles, Pencil } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
@@ -16,7 +16,7 @@ export default function AdminDashboard() {
       setLoading(true)
       
       const { data: categories } = await supabase.from('categories').select('id, name')
-      const { data: products } = await supabase.from('products').select('category_id, price, cost_price, stock_quantity')
+      const { data: products } = await supabase.from('products').select('category_id, price, cost_price, stock_quantity, description')
 
       if (categories && products) {
         // Estatísticas de Quantidade (Total de Itens Físicos)
@@ -31,7 +31,17 @@ export default function AdminDashboard() {
         setStats([totalCountStat, ...counts])
 
         // Estatísticas Financeiras Reais (Preço x Quantidade)
-        const totalCost = products.reduce((acc, p) => acc + ((Number(p.cost_price) || 0) * (Number(p.stock_quantity) || 0)), 0)
+        const totalCost = products.reduce((acc, p) => {
+          let cost = Number(p.cost_price) || 0
+          if (cost === 0 && p.description?.includes('DATA:{')) {
+            try {
+              const match = p.description.match(/DATA:({.*})/)
+              if (match) cost = JSON.parse(match[1]).cost || 0
+            } catch(e) {}
+          }
+          return acc + (cost * (Number(p.stock_quantity) || 0))
+        }, 0)
+        
         const totalSales = products.reduce((acc, p) => acc + ((Number(p.price) || 0) * (Number(p.stock_quantity) || 0)), 0)
         setFinance({ totalCost, totalSales })
       }
@@ -59,9 +69,16 @@ export default function AdminDashboard() {
           {loading ? <div className="flex justify-center p-10"><Loader2 className="animate-spin text-[#c99090]" size={24} /></div> : (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {stats.map((stat, i) => (
-                <div key={i} className={`p-5 rounded-[32px] ${i === 0 ? 'bg-[#4a322e] text-white shadow-lg' : 'bg-rose-50/30 text-[#4a322e] hover:bg-rose-50/50'} transition-all`}>
+                <div key={i} className={`p-5 rounded-[32px] relative group ${i === 0 ? 'bg-[#4a322e] text-white shadow-lg' : 'bg-rose-50/30 text-[#4a322e] hover:bg-rose-50/50'} transition-all`}>
                   <p className={`text-[7px] font-black uppercase tracking-widest mb-1 ${i === 0 ? 'text-rose-200' : 'text-[#c99090]'}`}>{stat.name}</p>
                   <h4 className="text-xl font-bold">{stat.count} <span className="text-[9px] font-light">PÇS</span></h4>
+                  
+                  <Link 
+                    href={i === 0 ? "/admin/products" : `/admin/categories`}
+                    className={`absolute top-4 right-4 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all ${i === 0 ? 'bg-white/10 text-rose-200 hover:bg-white/20' : 'bg-[#4a322e]/5 text-[#4a322e] hover:bg-[#4a322e]/10'}`}
+                  >
+                    <Pencil size={10} />
+                  </Link>
                 </div>
               ))}
             </div>

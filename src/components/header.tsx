@@ -16,7 +16,7 @@ export default function Header() {
         if (data) {
           setBranding({ 
             logo_url: data.logo_url,
-            tagline: data.facebook || null
+            tagline: data.business_name || null // Agora a tagline é o business_name
           })
         }
       } catch (e) {
@@ -33,25 +33,26 @@ export default function Header() {
         {/* Lado Esquerdo - Vazio para equilíbrio */}
         <div className="flex-1"></div>
 
-        {/* Centro - Logotipo Responsivo */}
+        {/* Centro - Logotipo Imperial */}
         <Link href="/" className="flex flex-col items-center text-center group">
           {branding?.logo_url ? (
-            <div className="w-32 h-32 md:w-48 md:h-48 mb-4 md:mb-8 flex items-center justify-center group-hover:scale-105 transition-transform duration-700">
+            <div className="w-40 h-40 md:w-64 md:h-64 mb-6 md:mb-10 flex items-center justify-center group-hover:scale-105 transition-transform duration-700 drop-shadow-xl">
                <img src={branding.logo_url} alt="Logo" className="w-full h-full object-contain" />
             </div>
           ) : (
-            <div className="w-16 h-16 md:w-20 md:h-20 mb-4 md:mb-8 rounded-full bg-rose-50 flex items-center justify-center text-brand-primary">
-              <span className="font-glamour text-3xl md:text-4xl font-bold">L</span>
+            <div className="w-20 h-20 md:w-32 md:h-32 mb-6 md:mb-10 rounded-full bg-rose-50 flex items-center justify-center text-brand-primary">
+              <span className="font-glamour text-4xl md:text-6xl font-bold italic">L</span>
             </div>
           )}
 
           {branding?.tagline && (
-            <p className="text-[8px] md:text-[11px] font-light tracking-[0.4em] md:tracking-[0.7em] uppercase text-brand-secondary italic px-2">
-              {branding.tagline}
-            </p>
+            <div className="space-y-2">
+              <p className="text-[9px] md:text-[13px] font-black tracking-[0.5em] md:tracking-[0.8em] uppercase text-brand-primary/80 px-4 max-w-lg leading-relaxed">
+                {branding.tagline}
+              </p>
+              <div className="w-12 h-[1px] bg-brand-secondary/30 mx-auto group-hover:w-32 transition-all duration-1000" />
+            </div>
           )}
-          
-          <div className="w-8 h-[1px] bg-brand-secondary/20 mt-4 group-hover:w-20 transition-all duration-1000 hidden md:block" />
         </Link>
 
         {/* Lado Direito - Ações Mobile-Friendly */}

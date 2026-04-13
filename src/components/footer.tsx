@@ -20,16 +20,17 @@ export default function Footer() {
 
   return (
     <footer className="bg-white border-t border-rose-50 pt-20 pb-10">
-      <div className="max-w-7xl mx-auto px-8 grid grid-cols-1 md:grid-cols-3 gap-16">
+      <div className="max-w-7xl mx-auto px-8 grid grid-cols-1 md:grid-cols-3 gap-16 items-center">
         
-        {/* Lado 1: Sobre a Marca */}
-        <div className="space-y-6 text-center md:text-left">
-          <h3 className="font-glamour text-2xl text-brand-primary uppercase tracking-widest">
-            {branding.business_name || branding.instagram || 'MINHA VITRINE'}
-          </h3>
-          <p className="text-[10px] text-[#7a5c58] uppercase tracking-[0.2em] leading-relaxed max-w-xs">
-            {branding.facebook || 'EXCLUSIVIDADE E BRILHO EM CADA DETALHE DO SEU DIA.'}
-          </p>
+        {/* Lado 1: Assinatura Visual */}
+        <div className="flex flex-col items-center md:items-start space-y-4">
+          {branding.logo_url ? (
+            <img src={branding.logo_url} alt="Logo" className="h-16 w-auto object-contain grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all duration-700" />
+          ) : (
+            <h3 className="font-glamour text-2xl text-brand-primary uppercase tracking-widest opacity-50">
+              {branding.business_name || branding.instagram || 'MINHA VITRINE'}
+            </h3>
+          )}
         </div>
 
         {/* Lado 2: Contato e Endereço */}
@@ -75,7 +76,7 @@ export default function Footer() {
 
       <div className="max-w-7xl mx-auto px-8 mt-20 pt-10 border-t border-rose-50/50 flex flex-col md:flex-row justify-between items-center gap-6">
         <p className="text-[8px] text-brand-secondary font-bold uppercase tracking-[0.4em]">
-          © {new Date().getFullYear()} {branding.business_name || branding.instagram} — TODOS OS DIREITOS RESERVADOS.
+          © {new Date().getFullYear()} — TODOS OS DIREITOS RESERVADOS.
         </p>
         <div className="flex items-center gap-2 opacity-40 hover:opacity-100 transition-opacity">
           <span className="text-[8px] font-bold text-brand-primary tracking-widest">DESENVOLVIDO COM</span>

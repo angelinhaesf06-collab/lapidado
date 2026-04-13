@@ -26,7 +26,7 @@ export async function POST(req: Request) {
       Retorne APENAS o JSON.
     `;
 
-    const models = ["gemini-2.0-flash-lite", "gemini-flash-lite-latest", "gemini-2.0-flash", "gemini-1.5-flash"];
+    const models = ["gemini-flash-latest", "gemini-pro-latest"];
     let lastError = null;
 
     for (const modelName of models) {

@@ -7,6 +7,7 @@
   /* Cores da Marca (Pousarão aqui via BrandingSync) */
   --brand-primary: #4a322e;
   --brand-secondary: #c99090;
+  --brand-font: var(--font-montserrat);
 }
 
 @theme inline {
@@ -18,14 +19,15 @@
   --color-brand-secondary: var(--brand-secondary);
   
   /* Fontes Customizadas */
-  --font-sans: var(--font-inter);
+  --font-montserrat: var(--font-montserrat);
   --font-glamour: var(--font-glamour);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-inter), sans-serif;
+  font-family: var(--brand-font), sans-serif;
+  letter-spacing: -0.01em;
 }
 
 /* Utilitários de Cor de Borda Dinâmicos */

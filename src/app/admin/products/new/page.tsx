@@ -1,25 +1,38 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Gem, Loader2, Camera, Plus, Check, Edit2, Calculator, Hash, FolderPlus, X } from 'lucide-react'
+import { Gem, Loader2, Camera, Check, Calculator, Coins, Percent, PackageOpen, Sparkles, X, Plus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
 export default function NewProductPage() {
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [isSaving, setIsSaving] = useState(false)
   const [loading, setLoading] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
-  const [image, setImage] = useState<string | null>(null)
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [name, setName] = useState('')
-  const [price, setPrice] = useState<string>('')
-  const [category, setCategory] = useState('')
-  const [description, setDescription] = useState('')
-  const [categories, setCategories] = useState<{id: string, name: string}[]>([])
   
-  const [showNewCategory, setShowNewCategory] = useState(false)
+  // GALERIA DE IMAGENS
+  const [images, setImages] = useState<{file: File | null, preview: string}[]>([])
+  
+  // CAMPOS DO PRODUTO
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
+  const [category, setCategory] = useState('')
+  const [materialFinish, setMaterialFinish] = useState('OURO 18K')
+  const [categories, setCategories] = useState<{id: string, name: string}[]>([])
   const [newCategoryName, setNewCategoryName] = useState('')
-  const [catLoading, setCatLoading] = useState(false)
+  const [isAddingCategory, setIsAddingCategory] = useState(false)
+  
+  const FINISH_OPTIONS = [
+    'OURO 18K', 'PRATA', 'PRATA 925', 'OURO ROSE', 'RODIO BRANCO', 'RODIO NEGRO'
+  ]
+  
+  // CAMPOS FINANCEIROS E ESTOQUE
+  const [costPrice, setCostPrice] = useState<string>('')
+  const [margin, setMargin] = useState<string>('100')
+  const [salePrice, setSalePrice] = useState<string>('')
+  const [stock, setStock] = useState<string>('1')
 
   const router = useRouter()
   const supabase = createClient()
@@ -29,91 +42,98 @@ export default function NewProductPage() {
     if (data) setCategories(data)
   }
 
-  useEffect(() => {
-    loadCategories()
-  }, [])
-
-  const handleCreateCategory = async () => {
+  async function handleSaveCategory() {
     if (!newCategoryName) return
-    setCatLoading(true)
+    setIsAddingCategory(true)
     try {
-      const slug = newCategoryName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ /g, '-')
       const response = await fetch('/api/admin/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          table: 'categories',
-          data: { name: newCategoryName.toUpperCase(), slug }
+        body: JSON.stringify({ 
+          table: 'categories', 
+          data: { name: newCategoryName.toUpperCase() } 
         })
       })
       const result = await response.json()
       if (!result.success) throw new Error(result.error)
+      
       await loadCategories()
-      setCategory(result.data.id)
-      setShowNewCategory(false)
       setNewCategoryName('')
-      alert('CATEGORIA CRIADA! 💎')
+      setIsAddingCategory(false)
+      alert('CATEGORIA ADICIONADA! 💎')
     } catch (err: any) {
-      alert('ERRO AO CRIAR CATEGORIA: ' + err.message.toUpperCase())
-    } finally {
-      setCatLoading(false)
+      alert('ERRO AO SALVAR CATEGORIA: ' + err.message.toUpperCase())
+      setIsAddingCategory(false)
     }
   }
 
+  useEffect(() => {
+    loadCategories()
+  }, [])
+
+  useEffect(() => {
+    const cost = parseFloat(costPrice) || 0
+    const m = parseFloat(margin) || 0
+    if (cost > 0) {
+      const finalPrice = cost + (cost * (m / 100))
+      setSalePrice(finalPrice.toFixed(2))
+    }
+  }, [costPrice, margin])
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setImageFile(file)
-    const reader = new FileReader()
-    reader.onload = (event) => setImage(event.target?.result as string)
-    reader.readAsDataURL(file)
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
+
+    files.forEach(file => {
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        setImages(prev => [...prev, { file, preview: event.target?.result as string }])
+      }
+      reader.readAsDataURL(file)
+    })
   }
 
-  // MÁGICA NEXUS: COMPRESSÃO E REDUÇÃO AUTOMÁTICA
+  const removeImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index))
+  }
+
   const compressImage = async (base64Str: string): Promise<string> => {
     return new Promise((resolve) => {
       const img = new Image()
       img.src = base64Str
       img.onload = () => {
         const canvas = document.createElement('canvas')
-        const MAX_WIDTH = 800 // IA não precisa de mais que isso
+        const MAX_WIDTH = 800
         let width = img.width
         let height = img.height
-
         if (width > MAX_WIDTH) {
           height *= MAX_WIDTH / width
           width = MAX_WIDTH
         }
-
         canvas.width = width
         canvas.height = height
         const ctx = canvas.getContext('2d')
         ctx?.drawImage(img, 0, 0, width, height)
-        // Reduzindo para 60% de qualidade JPEG (~100kb a 300kb)
         resolve(canvas.toDataURL('image/jpeg', 0.6))
       }
     })
   }
 
   const generateAIDescription = async () => {
-    if (!image) return
+    if (images.length === 0) return
     setAiLoading(true)
     setAiError(null)
     try {
-      const compressed = await compressImage(image)
-      
+      const compressed = await compressImage(images[0].preview)
       const response = await fetch('/api/ai/describe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image: compressed })
       })
-      
       const data = await response.json()
       if (data.error) throw new Error(data.error)
-      
       if (data.name) setName(data.name.toUpperCase())
       setDescription(data.description ? data.description.toUpperCase() : '')
-      
       if (data.category) {
         const foundCat = categories.find(c => 
           c.name.toLowerCase().includes(data.category.toLowerCase()) ||
@@ -130,66 +150,130 @@ export default function NewProductPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!imageFile || !name || !price || !category) {
-      alert('POR FAVOR, PREENCHA TUDO E SUBA A FOTO. 💎')
+    if (images.length === 0 || !name || !salePrice || !category) {
+      alert('POR FAVOR, PREENCHA TUDO E ADICIONE PELO MENOS UMA FOTO. 💎')
       return
     }
-    setLoading(true)
+    setIsSaving(true)
+    setUploadProgress(10)
     try {
-      const formData = new FormData()
-      formData.append('file', imageFile)
-      formData.append('bucket', 'products')
+      const uploadedUrls: string[] = []
 
-      const uploadResponse = await fetch('/api/admin/upload', { method: 'POST', body: formData })
-      const uploadResult = await uploadResponse.json()
-      if (uploadResult.error) throw new Error(uploadResult.error)
+      // Upload de todas as imagens em lote com compressão
+      const totalImages = images.filter(img => img.file).length
+      let currentImage = 0
+
+      for (const img of images) {
+        if (img.file) {
+          currentImage++
+          const progressBase = 10 + ((currentImage / totalImages) * 60)
+          setUploadProgress(Math.round(progressBase))
+
+          const compressedBase64 = await compressImage(img.preview)
+          const res = await fetch(compressedBase64)
+          const blob = await res.blob()
+          const compressedFile = new File([blob], img.file.name, { type: 'image/jpeg' })
+
+          const formData = new FormData()
+          formData.append('file', compressedFile)
+          formData.append('bucket', 'products')
+          const uploadRes = await fetch('/api/admin/upload', { method: 'POST', body: formData })
+          const uploadData = await uploadRes.json()
+          if (uploadData.url) uploadedUrls.push(uploadData.url)
+        }
+      }
       
+      setUploadProgress(80)
+      
+      // Armazenamento Resiliente: Se as colunas não existirem, guardamos os dados na descrição
+      // de forma que o sistema consiga ler depois sem quebrar o banco.
       const productData = {
         name: name.toUpperCase(),
-        price: parseFloat(price),
+        price: parseFloat(salePrice),
+        stock_quantity: parseInt(stock) || 0,
         category_id: category,
-        description: description.toUpperCase(),
-        image_url: uploadResult.url
+        description: `${description.toUpperCase()}\n\n---\nDATA:{"cost":${costPrice || 0},"finish":"${materialFinish}"}`,
+        image_url: uploadedUrls[0],
       }
 
       const response = await fetch('/api/admin/save', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer LAPIDADO_ADMIN_2026`
+        },
         body: JSON.stringify({ table: 'products', data: productData })
       })
       const result = await response.json()
       if (!result.success) throw new Error(result.error)
       
-      alert('JOIA SALVA COM SUCESSO! 💎✨')
+      setUploadProgress(100)
+      alert('JOIA E GALERIA SALVAS COM SUCESSO! 💎✨')
       router.push('/admin')
       router.refresh()
     } catch (err: any) {
       alert('ERRO AO SALVAR: ' + err.message.toUpperCase())
     } finally {
-      setLoading(false)
+      setIsSaving(false)
+      setUploadProgress(0)
     }
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-10 px-4">
-      <div className="text-center mb-12">
-        <h1 className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.4em] mb-4">CATÁLOGO LAPIDADO</h1>
-        <h2 className="text-3xl font-bold text-[#4a322e] uppercase tracking-tight">NOVA PEÇA</h2>
+    <div className="max-w-6xl mx-auto py-10 px-4 pb-20">
+      {isSaving && (
+        <div className="fixed inset-0 bg-white/90 z-50 flex flex-col items-center justify-center p-10 backdrop-blur-sm">
+          <div className="w-full max-w-md space-y-8 text-center">
+            <Gem className="mx-auto text-brand-primary animate-bounce" size={48} />
+            <h3 className="text-xl font-black text-brand-primary uppercase tracking-[0.2em]">Lapidando sua Joia...</h3>
+            <div className="h-4 w-full bg-rose-100 rounded-full overflow-hidden shadow-inner">
+              <div 
+                className="h-full bg-brand-primary transition-all duration-500 rounded-full" 
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+            <p className="text-[10px] font-black text-brand-secondary uppercase tracking-widest italic">
+              {uploadProgress < 80 ? 'SUBINDO FOTOS EM ALTA QUALIDADE...' : 'SINCRONIZANDO COM O BANCO...'}
+            </p>
+          </div>
+        </div>
+      )}      <div className="text-center mb-12">
+        <h1 className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.4em] mb-4">CATÁLOGO LAPIDADO</h1>
+        <h2 className="text-3xl font-bold text-brand-primary uppercase tracking-tight">ACERVO MULTIFOTOS</h2>
+        <p className="text-[#7a5c58] text-[10px] mt-4 font-black uppercase tracking-[0.1em]">"ADICIONE VÁRIOS ÂNGULOS PARA ENCANTAR SUA CLIENTE." 💎</p>
       </div>
 
       <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        {/* Lado Esquerdo - Galeria e IA */}
         <div className="space-y-6">
-          <div className={`relative aspect-square rounded-[60px] overflow-hidden border-2 border-dashed transition-all flex items-center justify-center bg-white ${image ? 'border-transparent shadow-2xl shadow-rose-100' : 'border-rose-100'}`}>
-            {image ? <img src={image} alt="PREVIEW" className="w-full h-full object-cover" /> : (
-              <label className="cursor-pointer flex flex-col items-center gap-4">
-                <Camera size={28} className="text-[#c99090]" />
-                <p className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.2em]">FOTO DA JOIA</p>
-                <input type="file" className="hidden" onChange={handleImageUpload} accept="image/*" />
+          <div className="grid grid-cols-2 gap-4">
+            {images.map((img, index) => (
+              <div key={index} className="relative aspect-square rounded-[40px] overflow-hidden border-2 border-brand-secondary/10 group shadow-md hover:shadow-xl transition-all">
+                <img src={img.preview} alt="Preview" className="w-full h-full object-cover" />
+                <button type="button" onClick={() => removeImage(index)} className="absolute top-4 right-4 p-2 bg-white/90 rounded-full text-rose-500 opacity-0 group-hover:opacity-100 transition-all shadow-lg">
+                  <X size={16} />
+                </button>
+                {index === 0 && (
+                  <div className="absolute bottom-4 left-4 px-3 py-1 bg-brand-primary/90 text-white text-[8px] font-black uppercase tracking-widest rounded-full">
+                    Principal
+                  </div>
+                )}
+              </div>
+            ))}
+            
+            {images.length < 6 && (
+              <label className="cursor-pointer aspect-square rounded-[40px] border-2 border-dashed border-brand-secondary/20 flex flex-col items-center justify-center gap-3 bg-white hover:bg-rose-50/30 transition-all group">
+                <div className="p-4 rounded-full bg-brand-secondary/5 group-hover:scale-110 transition-transform">
+                  <Plus size={24} className="text-brand-secondary" />
+                </div>
+                <p className="text-[9px] font-black text-brand-secondary uppercase tracking-widest">Adicionar Foto</p>
+                <input type="file" className="hidden" onChange={handleImageUpload} accept="image/*" multiple />
               </label>
             )}
           </div>
-          <button type="button" disabled={!image || aiLoading} onClick={generateAIDescription} className="w-full py-5 rounded-[32px] bg-[#4a322e] text-white font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl hover:bg-[#c99090] transition-all disabled:opacity-50">
-            {aiLoading ? <Loader2 className="animate-spin" size={20} /> : <><Gem size={20} /> <span>MÁGICA LAPIDADO</span></>}
+          
+          <button type="button" disabled={images.length === 0 || aiLoading} onClick={generateAIDescription} className="w-full py-6 rounded-[32px] bg-brand-primary text-white font-black uppercase tracking-widest flex items-center justify-center gap-4 shadow-xl hover:opacity-90 transition-all disabled:opacity-50">
+            {aiLoading ? <Loader2 className="animate-spin" size={24} /> : <><Sparkles size={24} /> <span>MÁGICA LAPIDADO (VIA FOTO 1)</span></>}
           </button>
           
           {aiError && (
@@ -199,28 +283,101 @@ export default function NewProductPage() {
           )}
         </div>
 
-        <div className="space-y-6 bg-white p-10 rounded-[60px] border border-rose-50 shadow-sm">
-          <div>
-            <label className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.2em] mb-2 block">NOME</label>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value.toUpperCase())} className="w-full px-6 py-4 rounded-3xl bg-rose-50/50 outline-none uppercase" />
+        {/* Lado Direito - Formulário */}
+        <div className="space-y-6 bg-white p-10 rounded-[60px] border border-rose-50 shadow-sm relative">
+          
+          <div className="grid grid-cols-1 gap-4">
+            <div>
+              <label className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.2em] mb-3 ml-2 block">ACABAMENTO / BANHO</label>
+              <div className="flex flex-wrap gap-2">
+                {FINISH_OPTIONS.map(option => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => setMaterialFinish(option)}
+                    className={`px-4 py-2 rounded-full text-[9px] font-black transition-all ${
+                      materialFinish === option 
+                        ? 'bg-brand-primary text-white shadow-md scale-105' 
+                        : 'bg-rose-50 text-brand-secondary hover:bg-rose-100'
+                    }`}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
+          
           <div>
-            <label className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.2em] mb-2 block">PREÇO (R$)</label>
-            <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} className="w-full px-6 py-4 rounded-3xl bg-rose-50 font-bold outline-none" />
+            <label className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.2em] mb-3 ml-2 block">NOME DA JOIA</label>
+            <input type="text" value={name} onChange={(e) => setName(e.target.value.toUpperCase())} className="w-full px-8 py-5 rounded-3xl bg-brand-secondary/5 border-2 border-transparent focus:border-brand-secondary outline-none uppercase font-bold text-brand-primary transition-all" />
           </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.2em] mb-3 ml-2 block">CATEGORIA</label>
+              <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-6 py-5 rounded-3xl bg-brand-secondary/5 border-2 border-transparent focus:border-brand-secondary outline-none uppercase font-bold text-brand-primary appearance-none cursor-pointer mb-2">
+                <option value="">SELECIONE...</option>
+                {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name.toUpperCase()}</option>)}
+              </select>
+              
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  placeholder="NOVA CATEGORIA..." 
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  className="flex-1 px-4 py-2 rounded-xl bg-brand-secondary/5 border border-brand-secondary/10 outline-none text-[10px] font-bold uppercase"
+                />
+                <button 
+                  type="button"
+                  onClick={handleSaveCategory}
+                  disabled={isAddingCategory || !newCategoryName}
+                  className="px-4 py-2 bg-brand-secondary text-white rounded-xl text-[10px] font-black disabled:opacity-50"
+                >
+                  {isAddingCategory ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.2em] mb-3 ml-2 block">ESTOQUE INICIAL</label>
+              <div className="relative">
+                <PackageOpen className="absolute left-6 top-1/2 -translate-y-1/2 text-brand-secondary" size={18} />
+                <input type="number" value={stock} onChange={(e) => setStock(e.target.value)} className="w-full pl-16 pr-6 py-5 rounded-3xl bg-brand-secondary/5 border-2 border-transparent focus:border-brand-secondary outline-none font-bold text-brand-primary" />
+              </div>
+            </div>
+          </div>
+
+          {/* Seção Financeira */}
+          <div className="p-8 rounded-[40px] bg-rose-50/30 border border-rose-100/50 space-y-6">
+            <h4 className="text-[9px] font-black text-brand-secondary uppercase tracking-[0.3em] flex items-center gap-2 mb-2">
+              <Calculator size={14} /> Inteligência Financeira
+            </h4>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-[10px] font-bold text-brand-secondary uppercase tracking-widest mb-2 block ml-2">CUSTO (R$)</label>
+                <input type="number" step="0.01" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} className="w-full px-6 py-4 rounded-2xl bg-white border-2 border-transparent focus:border-brand-secondary outline-none font-bold text-brand-primary" />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-brand-secondary uppercase tracking-widest mb-2 block ml-2">MARGEM (%)</label>
+                <input type="number" value={margin} onChange={(e) => setMargin(e.target.value)} className="w-full px-6 py-4 rounded-2xl bg-white border-2 border-transparent focus:border-brand-secondary outline-none font-bold text-brand-primary" />
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-rose-100">
+               <label className="text-[10px] font-black text-brand-primary uppercase tracking-widest mb-2 block ml-2">PREÇO DE VENDA FINAL</label>
+               <input type="number" step="0.01" value={salePrice} onChange={(e) => setSalePrice(e.target.value)} className="w-full px-8 py-6 rounded-[28px] bg-brand-primary text-white text-2xl font-black outline-none shadow-lg text-center" />
+            </div>
+          </div>
+
           <div>
-            <label className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.2em] mb-2 block">CATEGORIA</label>
-            <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-6 py-4 rounded-3xl bg-rose-50/50 outline-none uppercase">
-              <option value=""></option>
-              {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name.toUpperCase()}</option>)}
-            </select>
+            <label className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.2em] mb-3 ml-2 block">DESCRIÇÃO DA JOIA</label>
+            <textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value.toUpperCase())} className="w-full px-8 py-5 rounded-3xl bg-brand-secondary/5 border-2 border-transparent focus:border-brand-secondary outline-none resize-none uppercase text-xs leading-relaxed text-[#7a5c58]" />
           </div>
-          <div>
-            <label className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.2em] mb-2 block">DESCRIÇÃO</label>
-            <textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value.toUpperCase())} className="w-full px-6 py-4 rounded-3xl bg-rose-50/50 outline-none resize-none uppercase" />
-          </div>
-          <button type="submit" disabled={loading} className="w-full py-5 rounded-[32px] bg-[#4a322e] text-white font-black uppercase tracking-widest shadow-xl hover:bg-[#c99090] transition-all flex items-center justify-center gap-3 disabled:opacity-50">
-            {loading ? <Loader2 className="animate-spin" size={20} /> : <><Check size={20} /> <span>SALVAR PEÇA</span></>}
+
+          <button type="submit" disabled={loading} className="w-full py-6 rounded-[32px] bg-brand-primary text-white font-black uppercase tracking-widest shadow-xl hover:opacity-95 transition-all flex items-center justify-center gap-4 disabled:opacity-50 mt-4">
+            {loading ? <Loader2 className="animate-spin" size={24} /> : <><Check size={24} /> <span>SALVAR JOIA E GALERIA</span></>}
           </button>
         </div>
       </form>

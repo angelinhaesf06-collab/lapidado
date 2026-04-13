@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Info, PlusCircle, LayoutGrid, LogOut, Gem, Eye, Share2, MessageCircle } from 'lucide-react'
+import { Info, PlusCircle, LayoutGrid, LogOut, Gem, Eye, Share2, MessageCircle, ShoppingBag, Pencil } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
 
@@ -49,10 +49,22 @@ export default function AdminLayout({
           <Link href="/admin/branding" className="flex items-center gap-4 px-5 py-4 text-[9px] font-black tracking-[0.2em] uppercase text-[#4a322e] hover:bg-rose-50 rounded-[24px] transition-all group">
             <Gem size={18} className="text-[#c99090] group-hover:scale-110 transition-transform" /> Minha Marca
           </Link>
-          
-          <Link href="/admin/products/new" className="flex items-center gap-4 px-5 py-4 text-[9px] font-black tracking-[0.2em] uppercase text-[#4a322e] hover:bg-rose-50 rounded-[24px] transition-all group">
-            <PlusCircle size={18} className="text-[#c99090] group-hover:scale-110 transition-transform" /> Cadastrar Nova Peça
-          </Link>
+
+          <div className="pt-8">
+            <p className="px-5 text-[7px] font-black text-[#c99090] uppercase tracking-[0.4em] mb-4 opacity-60">Gestão da Vitrine</p>
+            
+            <Link href="/admin/products/new" className="flex items-center gap-4 px-5 py-4 text-[9px] font-black tracking-[0.2em] uppercase text-[#4a322e] hover:bg-rose-50 rounded-[24px] transition-all group">
+              <PlusCircle size={18} className="text-[#c99090] group-hover:scale-110 transition-transform" /> Cadastrar Nova Peça
+            </Link>
+
+            <Link href="/admin/categories" className="flex items-center gap-4 px-5 py-4 text-[9px] font-black tracking-[0.2em] uppercase text-[#4a322e] hover:bg-rose-50 rounded-[24px] transition-all group">
+              <LayoutGrid size={18} className="text-[#c99090] group-hover:scale-110 transition-transform" /> Adicionar Categoria
+            </Link>
+
+            <Link href="/admin/products" className="flex items-center gap-4 px-5 py-4 text-[9px] font-black tracking-[0.2em] uppercase text-[#4a322e] hover:bg-rose-50 rounded-[24px] transition-all group">
+              <Pencil size={18} className="text-[#c99090] group-hover:scale-110 transition-transform" /> Editar / Excluir Peça
+            </Link>
+          </div>
 
           <div className="pt-8 pb-4">
             <p className="px-5 text-[7px] font-black text-[#c99090] uppercase tracking-[0.4em] mb-4 opacity-60">Visão da Cliente</p>

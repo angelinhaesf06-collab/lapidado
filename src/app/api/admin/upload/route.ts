@@ -20,10 +20,16 @@ export async function POST(req: Request) {
     const fileExt = file.name.split('.').pop()
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
 
+    // Converter para Buffer para garantir compatibilidade no ambiente Node.js do Next.js
+    const buffer = Buffer.from(await file.arrayBuffer());
+
     // Upload usando a permissão master
     const { data, error } = await supabaseAdmin.storage
       .from(bucket)
-      .upload(fileName, file)
+      .upload(fileName, buffer, {
+        contentType: file.type,
+        upsert: true
+      })
 
     if (error) throw error
 
