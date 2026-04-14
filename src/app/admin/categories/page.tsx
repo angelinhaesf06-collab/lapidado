@@ -37,24 +37,15 @@ export default function CategoriesPage() {
     try {
       const response = await fetch('/api/admin/save', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer LAPIDADO_ADMIN_2026`
-        },
-        body: JSON.stringify({ 
-          table: 'categories', 
-          data: { name: newCategory.toUpperCase() } 
-        })
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer LAPIDADO_ADMIN_2026` },
+        body: JSON.stringify({ table: 'categories', data: { name: newCategory.toUpperCase() } })
       })
       const result = await response.json()
       if (!result.success) throw new Error(result.error)
-      
       setNewCategory('')
       await loadCategories()
-      alert('CATEGORIA ADICIONADA! 💎')
     } catch (err: unknown) {
-      const error = err instanceof Error ? err : new Error(String(err))
-      alert('ERRO: ' + error.message.toUpperCase())
+      alert('ERRO: ' + (err as Error).message.toUpperCase())
     } finally {
       setAdding(false)
     }
@@ -65,114 +56,105 @@ export default function CategoriesPage() {
     try {
       const response = await fetch('/api/admin/save', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer LAPIDADO_ADMIN_2026`
-        },
-        body: JSON.stringify({ 
-          table: 'categories', 
-          id,
-          data: { name: editingName.toUpperCase() } 
-        })
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer LAPIDADO_ADMIN_2026` },
+        body: JSON.stringify({ table: 'categories', id, data: { name: editingName.toUpperCase() } })
       })
       const result = await response.json()
       if (!result.success) throw new Error(result.error)
-      
       setEditingId(null)
       await loadCategories()
     } catch (err: unknown) {
-      const error = err instanceof Error ? err : new Error(String(err))
-      alert('ERRO AO ATUALIZAR: ' + error.message.toUpperCase())
+      alert('ERRO: ' + (err as Error).message.toUpperCase())
     }
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('DESEJA REALMENTE EXCLUIR ESTA CATEGORIA? 💎')) return
+    if (!confirm('EXCLUIR? 💎')) return
     try {
-      const { error } = await supabase.from('categories').delete().eq('id', id)
-      if (error) throw error
+      await supabase.from('categories').delete().eq('id', id)
       await loadCategories()
     } catch (err: unknown) {
-      const error = err instanceof Error ? err : new Error(String(err))
-      alert('ERRO: ' + error.message.toUpperCase())
+      alert('ERRO: ' + (err as Error).message.toUpperCase())
     }
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-6 px-5 pb-20">
-      <div className="text-center mb-8">
-        <Link href="/admin" className="inline-flex items-center gap-2 text-[8px] font-black text-brand-secondary uppercase tracking-[0.2em] mb-4 opacity-60 hover:opacity-100 transition-all">
-          <ArrowLeft size={12} /> Voltar ao Painel
+    <div className="h-[calc(100vh-180px)] md:h-auto flex flex-col max-w-4xl mx-auto py-2 px-4 overflow-hidden">
+      
+      {/* HEADER ULTRA COMPACTO */}
+      <div className="flex items-center justify-between mb-4">
+        <Link href="/admin" className="p-2 text-brand-secondary/60 hover:text-brand-primary transition-all">
+          <ArrowLeft size={16} />
         </Link>
-        <h1 className="text-xl md:text-2xl font-bold text-brand-primary uppercase tracking-tight">Categorias</h1>
+        <h1 className="text-[10px] font-black text-brand-primary uppercase tracking-[0.2em]">Gestão de Categorias</h1>
+        <div className="w-8" />
       </div>
 
-      {/* ADICIONAR NOVA - CENTRALIZADO E DELICADO */}
-      <div className="bg-white/60 p-6 rounded-[40px] border border-rose-50 shadow-sm mb-8 flex flex-col items-center">
-        <div className="flex items-center gap-2 mb-6"><LayoutGrid className="text-brand-secondary" size={16} /><h3 className="text-[10px] font-bold text-brand-primary uppercase tracking-wider">Nova Categoria</h3></div>
-        
-        <form onSubmit={handleAdd} className="w-full max-w-[320px] space-y-4">
+      {/* ADICIONAR NOVA - FORMULÁRIO EM LINHA ÚNICA */}
+      <div className="bg-white/60 p-4 rounded-[24px] border border-rose-50 shadow-sm mb-4">
+        <form onSubmit={handleAdd} className="flex gap-2">
           <input 
             type="text" 
             placeholder="NOME DA CATEGORIA..."
             value={newCategory}
             onChange={(e) => setNewCategory(e.target.value.toUpperCase())}
-            className="w-full px-5 py-3 rounded-2xl bg-rose-50/30 border border-transparent focus:border-brand-secondary outline-none font-bold text-[10px] text-brand-primary uppercase text-center placeholder:text-brand-primary/30 shadow-inner"
+            className="flex-1 px-4 py-2.5 rounded-xl bg-rose-50/30 border border-transparent focus:border-brand-secondary outline-none font-bold text-[9px] text-brand-primary uppercase shadow-inner"
           />
           <button 
             type="submit" 
             disabled={adding || !newCategory}
-            className="w-full py-4 bg-brand-primary text-white rounded-[24px] text-[9px] font-black uppercase tracking-widest shadow-lg hover:opacity-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            className="px-4 bg-brand-primary text-white rounded-xl text-[8px] font-black uppercase tracking-widest shadow-md flex items-center gap-2 disabled:opacity-50"
           >
-            {adding ? <Loader2 size={16} className="animate-spin" /> : <><Gem size={16} /> <span>Salvar Nova Categoria</span></>}
+            {adding ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
           </button>
         </form>
       </div>
 
-      {/* LISTAGEM FINA */}
-      <div className="bg-white/40 p-6 rounded-[40px] border border-rose-50 shadow-sm">
-        <h3 className="text-[9px] font-bold text-brand-secondary uppercase tracking-[0.2em] mb-6 text-center">Coleções Cadastradas</h3>
-        {loading ? (
-          <div className="flex justify-center p-10"><Loader2 className="animate-spin text-brand-secondary" size={24} /></div>
-        ) : (
-          <div className="grid grid-cols-1 gap-3">
-            {categories.map((cat) => (
-              <div key={cat.id} className="flex items-center justify-between p-4 rounded-2xl bg-white/80 border border-rose-50 shadow-sm group">
+      {/* LISTAGEM EM GRADE - TUDO VISÍVEL */}
+      <div className="flex-1 bg-white/40 p-4 rounded-[24px] border border-rose-50 shadow-sm overflow-y-auto no-scrollbar">
+        <div className="grid grid-cols-2 gap-2">
+          {loading ? (
+            <div className="col-span-2 flex justify-center py-10 text-brand-secondary/40"><Loader2 className="animate-spin" size={20} /></div>
+          ) : categories.length > 0 ? (
+            categories.map((cat) => (
+              <div key={cat.id} className="bg-white/80 p-3 rounded-xl border border-rose-50 shadow-xs flex flex-col justify-between h-20 relative group">
                 {editingId === cat.id ? (
-                  <div className="flex items-center gap-2 flex-1">
+                  <div className="flex flex-col gap-1 h-full">
                     <input 
                       type="text" 
                       value={editingName} 
                       onChange={(e) => setEditingName(e.target.value.toUpperCase())}
-                      className="flex-1 bg-rose-50/30 px-4 py-2 rounded-xl outline-none font-bold text-brand-primary text-[10px]"
+                      className="w-full bg-rose-50/50 px-2 py-1 rounded text-[8px] font-bold outline-none border border-brand-secondary"
+                      autoFocus
                     />
-                    <button onClick={() => handleUpdate(cat.id)} className="text-green-500 p-1"><Check size={14} /></button>
-                    <button onClick={() => setEditingId(null)} className="text-rose-500 p-1"><X size={14} /></button>
+                    <div className="flex justify-end gap-1">
+                      <button onClick={() => handleUpdate(cat.id)} className="text-green-500 p-1"><Check size={12} /></button>
+                      <button onClick={() => setEditingId(null)} className="text-rose-500 p-1"><X size={12} /></button>
+                    </div>
                   </div>
                 ) : (
                   <>
-                    <span className="font-bold text-brand-primary uppercase text-[9px] tracking-wider pl-2">{cat.name}</span>
-                    <div className="flex items-center gap-1">
-                      <button 
-                        onClick={() => { setEditingId(cat.id); setEditingName(cat.name); }}
-                        className="p-2 text-brand-secondary/40 hover:text-brand-primary transition-all"
-                      >
-                        <Pencil size={14} />
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(cat.id)}
-                        className="p-2 text-rose-200 hover:text-rose-500 transition-all"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                    <span className="text-[8px] font-black text-brand-primary uppercase leading-tight pr-4">{cat.name}</span>
+                    <div className="flex justify-end gap-1 mt-auto">
+                      <button onClick={() => { setEditingId(cat.id); setEditingName(cat.name); }} className="p-1.5 text-brand-secondary/30 hover:text-brand-primary transition-all"><Pencil size={10} /></button>
+                      <button onClick={() => handleDelete(cat.id)} className="p-1.5 text-rose-200 hover:text-rose-500 transition-all"><Trash2 size={10} /></button>
                     </div>
                   </>
                 )}
               </div>
-            ))}
-          </div>
-        )}
+            ))
+          ) : (
+            <p className="col-span-2 text-center text-[8px] text-brand-primary/30 uppercase font-black py-10 tracking-widest">Vazio 💎</p>
+          )}
+        </div>
       </div>
     </div>
+  )
+}
+
+// Ícones extras necessários
+function Plus({ size }: { size: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
   )
 }
