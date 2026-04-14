@@ -61,9 +61,10 @@ export default function AdminLayout({
           <p className="px-5 text-[7px] font-black text-[#c99090] uppercase tracking-[0.4em] mb-4 opacity-60">Gestão de Negócio</p>
           
           {menuItems.map((item) => (
-            <Link key={item.href} href={item.href} className="flex items-center gap-4 px-5 py-4 text-[9px] font-black tracking-[0.2em] uppercase text-[#4a322e] hover:bg-rose-50 rounded-[24px] transition-all group">
-              <item.icon size={18} className="text-[#c99090] group-hover:scale-110 transition-transform" /> {item.label}
+            <Link href="/admin/products" className="flex items-center gap-4 px-5 py-4 text-[9px] font-black tracking-[0.2em] uppercase text-[#4a322e] hover:bg-rose-50 rounded-[24px] transition-all group">
+              <Pencil size={18} className="text-[#c99090] group-hover:scale-110 transition-transform" /> Editar Peça Já Cadastrada
             </Link>
+
           ))}
 
           <div className="pt-8 pb-4">
@@ -96,5 +97,8 @@ export default function AdminLayout({
         </div>
       </main>
     </div>
+  )
+}
+ </div>
   )
 }
