@@ -26,7 +26,7 @@ export async function POST(req: Request) {
       Retorne APENAS o JSON.
     `;
 
-    const models = ["gemini-1.5-flash", "gemini-1.5-pro"];
+    const models = ["gemini-2.0-flash-exp", "gemini-1.5-flash", "gemini-1.5-pro"];
     let lastError = null;
 
     for (const modelName of models) {
@@ -34,7 +34,9 @@ export async function POST(req: Request) {
       for (let i = 0; i < 2; i++) {
         try {
           console.log(`💎 NEXUS: TENTATIVA ${i+1} COM MODELO ${modelName}...`);
-          const model = genAI.getGenerativeModel({ model: modelName });
+          // Adicionando fallback para o nome completo se necessário
+          const fullModelName = modelName.includes("/") ? modelName : `models/${modelName}`;
+          const model = genAI.getGenerativeModel({ model: fullModelName });
           
           const result = await model.generateContent([
             prompt,

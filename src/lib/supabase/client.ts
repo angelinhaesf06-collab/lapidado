@@ -5,12 +5,12 @@ export function createClient() {
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!url || !key) {
-    // Retorna um cliente "vazio" ou mock para não quebrar o build
-    console.warn('⚠️ Supabase Keys não encontradas no ambiente atual.')
+    console.error('❌ ERRO CRÍTICO: SUPABASE KEYS FALTANDO NO NAVEGADOR! Verifique as variáveis de ambiente na Vercel.')
+    // Em produção, queremos que o erro seja visível para diagnóstico
   }
 
   return createBrowserClient(
-    url || 'https://placeholder.supabase.co',
-    key || 'placeholder-key'
+    url || 'https://MISSING-URL.supabase.co',
+    key || 'MISSING-KEY'
   )
 }

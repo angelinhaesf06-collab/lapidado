@@ -18,11 +18,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'DADOS INCOMPLETOS' }, { status: 400 })
     }
 
-    // Usamos as chaves apenas para a CONEXÃO com o banco, não para a validação
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('❌ ERRO: VARIÁVEIS DE AMBIENTE DO SUPABASE NÃO CONFIGURADAS NO SERVIDOR.')
+      return NextResponse.json({ 
+        error: 'SERVIDOR NÃO CONFIGURADO (CHAVES DO BANCO AUSENTES)', 
+        details: 'Adicione as chaves no painel da Vercel.' 
+      }, { status: 500 })
+    }
+
+    const supabaseAdmin = createClient(supabaseUrl, supabaseKey)
 
     // GERAR SLUG AUTOMÁTICO PARA CATEGORIAS
     if (table === 'categories' && data.name) {
