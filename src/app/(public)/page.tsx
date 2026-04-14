@@ -31,17 +31,17 @@ export default async function Home({
 
   return (
     <div className="flex flex-col w-full min-h-screen">
-      {/* Navegação Mobile Resiliente */}
-      <nav className="bg-white border-b border-rose-50 sticky top-[180px] md:top-[280px] z-40 shadow-sm overflow-x-auto no-scrollbar">
-        <div className="max-w-7xl mx-auto px-4 py-4 md:py-6 flex md:justify-center gap-6 md:gap-8 min-w-max">
+      {/* Navegação Mobile e Desktop Superior - Compacta e Visível */}
+      <nav className="bg-white/80 backdrop-blur-md border-b border-rose-50 sticky top-[158px] z-40 shadow-sm overflow-x-auto no-scrollbar">
+        <div className="max-w-7xl mx-auto px-4 py-3 md:py-4 flex justify-start md:justify-center gap-4 md:gap-8 min-w-max">
           {categoryNames.map((cat) => (
             <Link 
               key={cat}
               href={`/?category=${cat === 'Todos' ? '' : cat}`}
-              className={`px-2 py-1 transition-all font-bold md:font-light text-[10px] md:text-[11px] tracking-[0.2em] md:tracking-[0.3em] uppercase ${
+              className={`px-3 py-1.5 transition-all font-bold text-[9px] md:text-[11px] tracking-[0.15em] md:tracking-[0.3em] uppercase rounded-full ${
                 activeCategory === cat
-                ? "text-brand-primary border-b-2 border-brand-secondary" 
-                : "text-[#7a5c58] hover:text-brand-secondary"
+                ? "bg-brand-primary text-white shadow-md" 
+                : "text-brand-primary/60 hover:text-brand-primary bg-rose-50/30"
               }`}
             >
               {cat}
@@ -50,12 +50,12 @@ export default async function Home({
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-4 py-12 md:py-20 w-full text-center">
-        <div className="mb-12 md:mb-20">
-          <h2 className="text-2xl md:text-3xl font-light tracking-[0.2em] uppercase text-brand-primary mb-3">
+      <div className="max-w-7xl mx-auto px-4 py-6 md:py-20 w-full text-center">
+        <div className="mb-6 md:mb-20">
+          <h2 className="text-lg md:text-3xl font-light tracking-[0.2em] uppercase text-brand-primary mb-1 md:mb-3">
             {activeCategory === 'Todos' ? 'Coleção Completa' : activeCategory}
           </h2>
-          <p className="text-brand-secondary text-[9px] md:text-[10px] font-bold md:font-light tracking-[0.3em] uppercase">{(products?.length || 0)} Peças Selecionadas</p>
+          <p className="text-brand-secondary text-[8px] md:text-[10px] font-bold md:font-light tracking-[0.2em] uppercase">{(products?.length || 0)} Peças</p>
         </div>
 
         {/* Grid de 2 Colunas no Mobile, 3 em tablets e 4 em desktops */}
