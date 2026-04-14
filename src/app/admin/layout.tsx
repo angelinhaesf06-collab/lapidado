@@ -9,15 +9,48 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const shareCatalog = () => {
-    const url = window.location.origin // Link do catálogo atual
+    const url = typeof window !== 'undefined' ? window.location.origin : ''
     const message = encodeURIComponent(`OLÁ! ✨ ACABEI DE ATUALIZAR MEU CATÁLOGO DE SEMIJOIAS COM NOVIDADES LINDAS! 💎\n\nCONFIRA AQUI: ${url}\n\nESTOU À DISPOSIÇÃO PARA DÚVIDAS!`)
     window.open(`https://wa.me/?text=${message}`, '_blank')
   }
 
+  const menuItems = [
+    { href: '/admin', label: 'Painel', icon: Info },
+    { href: '/admin/branding', label: 'Marca', icon: Gem },
+    { href: '/admin/products/new', label: 'Cadastrar', icon: PlusCircle },
+    { href: '/admin/categories', label: 'Categorias', icon: LayoutGrid },
+    { href: '/admin/products', label: 'Editar', icon: Pencil },
+  ]
+
   return (
-    <div className="min-h-screen bg-[#fffcfc] flex">
-      {/* Sidebar Administrativa - Estética Luxo */}
-      <aside className="w-72 bg-white border-r border-rose-50 flex flex-col pt-12 shadow-sm sticky top-0 h-screen">
+    <div className="min-h-screen bg-[#fffcfc] flex flex-col md:flex-row">
+      
+      {/* MENU SUPERIOR MOBILE (Tudo visível na primeira tela) */}
+      <nav className="md:hidden bg-white border-b border-rose-100 p-3 sticky top-0 z-50 shadow-sm">
+        <div className="flex flex-wrap justify-center gap-2 mb-3">
+          {menuItems.map((item) => (
+            <Link 
+              key={item.href} 
+              href={item.href} 
+              className="flex flex-col items-center justify-center gap-1 p-2 min-w-[70px] bg-rose-50/50 rounded-xl border border-rose-100/50"
+            >
+              <item.icon size={16} className="text-[#c99090]" />
+              <span className="text-[7px] font-black tracking-widest uppercase text-[#4a322e]">{item.label}</span>
+            </Link>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <Link href="/" target="_blank" className="flex-1 flex items-center justify-center gap-2 p-2 bg-rose-50 rounded-xl border border-rose-100 text-[8px] font-black uppercase tracking-widest text-brand-primary">
+            <Eye size={14} /> Ver Vitrine
+          </Link>
+          <button onClick={shareCatalog} className="flex-1 flex items-center justify-center gap-2 p-2 bg-[#25D366] text-white rounded-xl text-[8px] font-black uppercase tracking-widest shadow-sm">
+            <Share2 size={14} /> Enviar WhatsApp
+          </button>
+        </div>
+      </nav>
+
+      {/* SIDEBAR DESKTOP (Elegância mantida no PC) */}
+      <aside className="hidden md:flex w-72 bg-white border-r border-rose-50 flex-col pt-12 shadow-sm sticky top-0 h-screen">
         <div className="px-8 mb-16 text-center">
           <Gem className="mx-auto text-[#c99090] mb-4" size={32} />
           <h2 className="text-xl font-bold tracking-[0.2em] uppercase text-[#4a322e]">Espaço da Empresária</h2>
@@ -27,29 +60,11 @@ export default function AdminLayout({
         <nav className="flex-1 px-6 space-y-2 overflow-y-auto pb-8">
           <p className="px-5 text-[7px] font-black text-[#c99090] uppercase tracking-[0.4em] mb-4 opacity-60">Gestão de Negócio</p>
           
-          <Link href="/admin" className="flex items-center gap-4 px-5 py-4 text-[9px] font-black tracking-[0.2em] uppercase text-[#4a322e] hover:bg-rose-50 rounded-[24px] transition-all group">
-            <Info size={18} className="text-[#c99090] group-hover:scale-110 transition-transform" /> Painel de Informações
-          </Link>
-          
-          <Link href="/admin/branding" className="flex items-center gap-4 px-5 py-4 text-[9px] font-black tracking-[0.2em] uppercase text-[#4a322e] hover:bg-rose-50 rounded-[24px] transition-all group">
-            <Gem size={18} className="text-[#c99090] group-hover:scale-110 transition-transform" /> Minha Marca
-          </Link>
-
-          <div className="pt-8">
-            <p className="px-5 text-[7px] font-black text-[#c99090] uppercase tracking-[0.4em] mb-4 opacity-60">Gestão da Vitrine</p>
-            
-            <Link href="/admin/products/new" className="flex items-center gap-4 px-5 py-4 text-[9px] font-black tracking-[0.2em] uppercase text-[#4a322e] hover:bg-rose-50 rounded-[24px] transition-all group">
-              <PlusCircle size={18} className="text-[#c99090] group-hover:scale-110 transition-transform" /> Cadastrar Nova Peça
+          {menuItems.map((item) => (
+            <Link key={item.href} href={item.href} className="flex items-center gap-4 px-5 py-4 text-[9px] font-black tracking-[0.2em] uppercase text-[#4a322e] hover:bg-rose-50 rounded-[24px] transition-all group">
+              <item.icon size={18} className="text-[#c99090] group-hover:scale-110 transition-transform" /> {item.label}
             </Link>
-
-            <Link href="/admin/categories" className="flex items-center gap-4 px-5 py-4 text-[9px] font-black tracking-[0.2em] uppercase text-[#4a322e] hover:bg-rose-50 rounded-[24px] transition-all group">
-              <LayoutGrid size={18} className="text-[#c99090] group-hover:scale-110 transition-transform" /> Adicionar Categoria
-            </Link>
-
-            <Link href="/admin/products" className="flex items-center gap-4 px-5 py-4 text-[9px] font-black tracking-[0.2em] uppercase text-[#4a322e] hover:bg-rose-50 rounded-[24px] transition-all group">
-              <Pencil size={18} className="text-[#c99090] group-hover:scale-110 transition-transform" /> Editar / Excluir Peça
-            </Link>
-          </div>
+          ))}
 
           <div className="pt-8 pb-4">
             <p className="px-5 text-[7px] font-black text-[#c99090] uppercase tracking-[0.4em] mb-4 opacity-60">Visão da Cliente</p>
@@ -75,7 +90,7 @@ export default function AdminLayout({
       </aside>
 
       {/* Área de Conteúdo */}
-      <main className="flex-1 p-16 overflow-y-auto bg-white/40">
+      <main className="flex-1 p-6 md:p-16 overflow-y-auto bg-white/40">
         <div className="max-w-6xl mx-auto">
           {children}
         </div>
