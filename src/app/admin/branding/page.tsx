@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Upload, Phone, Camera, Loader2, Palette, Sparkles, MapPin, Camera as InstagramIcon, Music2 } from 'lucide-react'
+import { Upload, Phone, Camera, Loader2, Palette, Gem, MapPin, Camera as InstagramIcon, Music2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
 
@@ -19,7 +19,6 @@ export default function BrandingPage() {
   const [instagram, setInstagram] = useState('')
   const [warrantyTime, setWarrantyTime] = useState('ETERNA')
   const [brandingId, setBrandingId] = useState<string | null>(null)
-  const [extracting] = useState(false)
   
   const supabase = createClient()
 
@@ -29,9 +28,8 @@ export default function BrandingPage() {
         const { data } = await supabase.from('branding').select('*').single()
         if (data) {
           setBrandingId(data.id)
-          setTagline(data.business_name || '') // Frase de Impacto salva aqui
-          setWarrantyTime(data.instagram || 'ETERNA') // Garantia salva aqui
-          
+          setTagline(data.business_name || '')
+          setWarrantyTime(data.instagram || 'ETERNA')
           setPrimaryColor(data.primary_color || '#4a322e')
           setSecondaryColor(data.secondary_color || '#c99090')
           setLogo(data.logo_url)
@@ -53,10 +51,8 @@ export default function BrandingPage() {
     if (!file) return
     setLogoFile(file)
     const reader = new FileReader()
-    reader.onload = async (event) => {
-      const base64 = event.target?.result as string
-      setLogo(base64)
-      // Extração de cores desativada para compatibilidade com Vercel
+    reader.onload = (event) => {
+      setLogo(event.target?.result as string)
     }
     reader.readAsDataURL(file)
   }
@@ -110,97 +106,66 @@ export default function BrandingPage() {
     }
   }
 
-  if (loading) return <div className="flex justify-center p-20"><Loader2 className="animate-spin text-brand-secondary" size={48} /></div>
+  if (loading) return <div className="flex justify-center p-20"><Loader2 className="animate-spin text-brand-secondary" size={32} /></div>
 
   return (
-    <div className="max-w-5xl mx-auto py-10 px-4 pb-20">
-      {extracting && (
-        <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
-          <Loader2 className="animate-spin text-brand-primary mb-4" size={48} />
-          <p className="text-brand-primary font-black animate-pulse">LAPIDADO ANALISANDO SEU LOGO... 💎</p>
-        </div>
-      )}
-
-      <div className="text-center mb-12">
-        <h1 className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.4em] mb-4">ESPAÇO DA EMPRESÁRIA</h1>
-        <h2 className="text-3xl font-bold text-brand-primary uppercase tracking-tight">BRANDING DNA & ESTILO</h2>
-        <p className="text-[#7a5c58] text-[10px] mt-4 font-black uppercase tracking-[0.1em]">&quot;NOSSA INTELIGÊNCIA IDENTIFICA SUAS CORES AUTOMATICAMENTE.&quot; ✨</p>
+    <div className="max-w-4xl mx-auto py-6 px-5 pb-20">
+      <div className="text-center mb-8">
+        <h1 className="text-[8px] font-black text-brand-secondary uppercase tracking-[0.4em] mb-2">ESPAÇO DA EMPRESÁRIA</h1>
+        <h2 className="text-xl md:text-2xl font-bold text-brand-primary uppercase tracking-tight">DNA da Marca</h2>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white p-8 rounded-[40px] border border-rose-50 shadow-sm space-y-6">
-          <div className="flex items-center gap-3 mb-4"><Palette className="text-brand-secondary" size={20} /><h3 className="text-sm font-bold text-brand-primary uppercase tracking-wider">DNA Visual</h3></div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* DNA Visual - Fino */}
+        <div className="bg-white p-6 rounded-[40px] border border-rose-50 shadow-sm space-y-4">
+          <div className="flex items-center gap-2 mb-2"><Palette className="text-brand-secondary" size={16} /><h3 className="text-[10px] font-bold text-brand-primary uppercase tracking-wider">DNA Visual</h3></div>
           
-          <div className="flex flex-col items-center gap-6">
-            <div className="relative w-32 h-32 rounded-full overflow-hidden border-2 border-dashed border-brand-secondary/30 flex items-center justify-center bg-brand-secondary/5 group">
-              {logo ? <Image src={logo} alt="LOGO" fill className="object-contain p-4" /> : <Camera size={24} className="text-brand-secondary/40" />}
-              <label className="absolute inset-0 cursor-pointer flex items-center justify-center bg-black/0 hover:bg-black/10 transition-all">
+          <div className="flex flex-col items-center gap-4">
+            <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-dashed border-rose-200 flex items-center justify-center bg-rose-50/30 group">
+              {logo ? <Image src={logo} alt="LOGO" fill className="object-contain p-3" /> : <Camera size={20} className="text-brand-secondary/40" />}
+              <label className="absolute inset-0 cursor-pointer flex items-center justify-center hover:bg-black/5 transition-all">
                 <input type="file" className="hidden" onChange={handleLogoUpload} accept="image/*" />
-                <div className="opacity-0 group-hover:opacity-100 bg-white/90 p-2 rounded-full shadow-lg transition-all">
-                   <Upload size={16} className="text-brand-primary" />
-                </div>
               </label>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[10px] font-bold text-brand-secondary uppercase tracking-widest block mb-2 ml-2">COR PRIMÁRIA (AURA)</label>
-              <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="w-full h-14 rounded-2xl cursor-pointer border-0 shadow-inner" />
+              <label className="text-[7px] font-black text-brand-secondary uppercase tracking-widest block mb-1 ml-1">Primária</label>
+              <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="w-full h-10 rounded-xl cursor-pointer border-0" />
             </div>
             <div>
-              <label className="text-[10px] font-bold text-brand-secondary uppercase tracking-widest block mb-2 ml-2">COR SECUNDÁRIA (BRILHO)</label>
-              <input type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} className="w-full h-14 rounded-2xl cursor-pointer border-0 shadow-inner" />
+              <label className="text-[7px] font-black text-brand-secondary uppercase tracking-widest block mb-1 ml-1">Secundária</label>
+              <input type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} className="w-full h-10 rounded-xl cursor-pointer border-0" />
             </div>
           </div>
 
           <div>
-            <label className="text-[10px] font-bold text-brand-secondary uppercase tracking-widest block mb-2 ml-2">FRASE DE IMPACTO (VOZ DA MARCA)</label>
-            <input type="text" value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder="EX: A ELEGÂNCIA EM CADA DETALHE" className="w-full px-6 py-4 rounded-3xl bg-brand-secondary/5 border-2 border-transparent focus:border-brand-secondary outline-none transition-all italic text-[#7a5c58]" />
+            <label className="text-[7px] font-black text-brand-secondary uppercase tracking-widest block mb-1 ml-1">Frase de Impacto</label>
+            <input type="text" value={tagline} onChange={(e) => setTagline(e.target.value)} className="w-full px-4 py-3 rounded-2xl bg-rose-50/30 border border-transparent focus:border-brand-secondary outline-none text-[10px] italic text-[#7a5c58]" />
           </div>
         </div>
 
-        <div className="bg-white p-8 rounded-[40px] border border-rose-50 shadow-sm space-y-6">
-          <div className="flex items-center gap-3 mb-4"><Phone className="text-brand-secondary" size={20} /><h3 className="text-sm font-bold text-brand-primary uppercase tracking-wider">Contatos e Redes</h3></div>
+        {/* Contatos - Fino */}
+        <div className="bg-white p-6 rounded-[40px] border border-rose-50 shadow-sm space-y-4">
+          <div className="flex items-center gap-2 mb-2"><Phone className="text-brand-secondary" size={16} /><h3 className="text-[10px] font-bold text-brand-primary uppercase tracking-wider">Contatos</h3></div>
 
-          <div>
-            <label className="text-[10px] font-bold text-brand-secondary uppercase tracking-widest block mb-2 ml-2">WHATSAPP DE VENDAS</label>
-            <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(11) 99999-9999" className="w-full px-6 py-4 rounded-3xl bg-brand-secondary/5 border-2 border-transparent focus:border-brand-secondary outline-none" />
+          <div className="space-y-3">
+            <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="WHATSAPP" className="w-full px-4 py-3 rounded-2xl bg-rose-50/30 text-[10px] outline-none" />
+            <input type="text" value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="INSTAGRAM (SEM @)" className="w-full px-4 py-3 rounded-2xl bg-rose-50/30 text-[10px] outline-none" />
+            <input type="text" value={tiktok} onChange={(e) => setTiktok(e.target.value)} placeholder="TIKTOK (SEM @)" className="w-full px-4 py-3 rounded-2xl bg-rose-50/30 text-[10px] outline-none" />
+            <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="ENDEREÇO / CIDADE" className="w-full px-4 py-3 rounded-2xl bg-rose-50/30 text-[10px] outline-none" />
           </div>
 
-          <div>
-            <label className="text-[10px] font-bold text-brand-secondary uppercase tracking-widest block mb-2 ml-2">PERFIL DO INSTAGRAM (SEM @)</label>
-            <div className="relative">
-              <InstagramIcon size={16} className="absolute left-5 top-1/2 -translate-y-1/2 text-brand-secondary" />
-              <input type="text" value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="minhaloja_oficial" className="w-full pl-14 pr-6 py-4 rounded-3xl bg-brand-secondary/5 border-2 border-transparent focus:border-brand-secondary outline-none" />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-[10px] font-bold text-brand-secondary uppercase tracking-widest block mb-2 ml-2">USUÁRIO TIKTOK (SEM @)</label>
-            <div className="relative">
-              <Music2 className="absolute left-5 top-1/2 -translate-y-1/2 text-brand-secondary" size={16} />
-              <input type="text" value={tiktok} onChange={(e) => setTiktok(e.target.value)} placeholder="minha_loja" className="w-full pl-14 pr-6 py-4 rounded-3xl bg-brand-secondary/5 border-2 border-transparent focus:border-brand-secondary outline-none" />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-[10px] font-bold text-brand-secondary uppercase tracking-widest block mb-2 ml-2">ENDEREÇO / SHOWROOM</label>
-            <div className="relative">
-              <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 text-brand-secondary" size={16} />
-              <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Cidade - Estado" className="w-full pl-14 pr-6 py-4 rounded-3xl bg-brand-secondary/5 border-2 border-transparent focus:border-brand-secondary outline-none text-xs" />
-            </div>
-          </div>
-
-          <div className="pt-4 border-t border-rose-50">
-            <label className="text-[10px] font-black text-brand-primary uppercase tracking-widest block mb-2 ml-2">TEMPO DE GARANTIA (EX: ETERNA, 1 ANO)</label>
-            <input type="text" value={warrantyTime} onChange={(e) => setWarrantyTime(e.target.value.toUpperCase())} placeholder="ETERNA" className="w-full px-6 py-4 rounded-3xl bg-brand-primary text-white font-bold outline-none shadow-lg text-center" />
+          <div className="pt-3 border-t border-rose-50">
+            <label className="text-[7px] font-black text-brand-primary uppercase block mb-1">Garantia</label>
+            <input type="text" value={warrantyTime} onChange={(e) => setWarrantyTime(e.target.value.toUpperCase())} className="w-full px-4 py-3 rounded-2xl bg-brand-primary text-white text-[10px] font-bold text-center outline-none shadow-sm" />
           </div>
         </div>
       </div>
 
-      <button onClick={handleSave} disabled={saving} className="w-full py-6 rounded-[32px] bg-brand-primary text-white font-black uppercase tracking-widest shadow-xl hover:opacity-90 transition-all flex items-center justify-center gap-4 mt-10 disabled:opacity-50">
-        {saving ? <Loader2 className="animate-spin" size={24} /> : <><Sparkles size={24} /> <span>SALVAR IDENTIDADE DA MARCA</span></>}
+      <button onClick={handleSave} disabled={saving} className="w-full py-5 rounded-[24px] bg-brand-primary text-white font-black uppercase tracking-widest shadow-xl hover:opacity-95 transition-all flex items-center justify-center gap-3 mt-8 disabled:opacity-50">
+        {saving ? <Loader2 className="animate-spin" size={20} /> : <><Gem size={20} /> <span>SALVAR IDENTIDADE DA MARCA</span></>}
       </button>
     </div>
   )
