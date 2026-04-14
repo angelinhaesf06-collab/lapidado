@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Upload, Phone, Camera, Loader2, Palette, Gem, MapPin, Camera as InstagramIcon, Music2 } from 'lucide-react'
+import { Upload, Phone, Camera, Loader2, Palette, Gem, MapPin, Camera as InstagramIcon, Music2, Pencil } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
 
@@ -165,6 +165,12 @@ export default function BrandingPage() {
       </div>
 
       <button onClick={handleSave} disabled={saving} className="w-full py-5 rounded-[24px] bg-brand-primary text-white font-black uppercase tracking-widest shadow-xl hover:opacity-95 transition-all flex items-center justify-center gap-3 mt-8 disabled:opacity-50">
+        {saving ? <Loader2 className="animate-spin" size={20} /> : <><Gem size={20} /> <span>SALVAR IDENTIDADE DA MARCA</span></>}
+      </button>
+    </div>
+  )
+}
+ text-white font-black uppercase tracking-widest shadow-xl hover:opacity-95 transition-all flex items-center justify-center gap-3 mt-8 disabled:opacity-50">
         {saving ? <Loader2 className="animate-spin" size={20} /> : <><Gem size={20} /> <span>SALVAR IDENTIDADE DA MARCA</span></>}
       </button>
     </div>
