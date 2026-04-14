@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Gem, Loader2, Check, Calculator, PackageOpen, Sparkles, X, Plus, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { Gem, Loader2, Check, Calculator, PackageOpen, Sparkles, X, Plus, AlertCircle, CheckCircle2, Pencil } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -13,23 +13,18 @@ export default function NewProductPage() {
   const [aiError, setAiError] = useState<string | null>(null)
   const [dbStatus, setDbStatus] = useState<'checking' | 'ok' | 'error'>('checking')
   
-  // GALERIA DE IMAGENS
+  // GALERIA DE IMAGENS - Aumentado para 6
   const [images, setImages] = useState<{file: File | null, preview: string}[]>([])
   
   // CAMPOS DO PRODUTO
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('')
-  const [materialFinish, setMaterialFinish] = useState('OURO 18K')
   const [categories, setCategories] = useState<{id: string, name: string}[]>([])
-  const [newCategoryName, setNewCategoryName] = useState('')
-  const [isAddingCategory, setIsAddingCategory] = useState(false)
-  
-  const FINISH_OPTIONS = ['OURO 18K', 'PRATA 925', 'RÓDIO BRANCO', 'RÓDIO NEGRO']
   
   // CAMPOS FINANCEIROS E ESTOQUE
   const [costPrice, setCostPrice] = useState<string>('')
-  const [margin, setMargin] = useState<string>('100')
+  const [margin, setMargin] = useState<string>('100') // Campo de Porcentagem
   const [salePrice, setSalePrice] = useState<string>('')
   const [stock, setStock] = useState<string>('1')
 
@@ -57,6 +52,7 @@ export default function NewProductPage() {
     loadCategories()
   }, [checkConnection, loadCategories])
 
+  // CÁLCULO AUTOMÁTICO DE LUCRO
   useEffect(() => {
     const cost = parseFloat(costPrice) || 0
     const m = parseFloat(margin) || 0
@@ -73,7 +69,10 @@ export default function NewProductPage() {
     files.forEach(file => {
       const reader = new FileReader()
       reader.onload = (event) => {
-        setImages(prev => [...prev, { file, preview: event.target?.result as string }])
+        setImages(prev => {
+          if (prev.length >= 6) return prev
+          return [...prev, { file, preview: event.target?.result as string }]
+        })
       }
       reader.readAsDataURL(file)
     })
@@ -110,6 +109,7 @@ export default function NewProductPage() {
     setAiLoading(true)
     setAiError(null)
     try {
+      // IA ANALISA APENAS A PRIMEIRA FOTO
       const compressed = await compressImage(images[0].preview)
       const response = await fetch('/api/ai/describe', {
         method: 'POST',
@@ -141,7 +141,6 @@ export default function NewProductPage() {
       return
     }
     setIsSaving(true)
-    setUploadProgress(10)
     try {
       const uploadedUrls: string[] = []
 
@@ -193,79 +192,96 @@ export default function NewProductPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-6 px-4 pb-20">
+    <div className="max-w-4xl mx-auto py-4 px-5 pb-20">
       {/* DIAGNÓSTICO DE CONEXÃO */}
-      <div className="flex justify-center mb-6">
-        {dbStatus === 'checking' && <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-50 text-[8px] font-black uppercase text-brand-secondary tracking-widest animate-pulse"><Loader2 size={10} className="animate-spin" /> Verificando Conexão...</div>}
-        {dbStatus === 'ok' && <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-50 text-[8px] font-black uppercase text-green-600 tracking-widest shadow-sm border border-green-100"><CheckCircle2 size={10} /> Sistema Operacional 💎</div>}
-        {dbStatus === 'error' && <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-500 text-[8px] font-black uppercase text-white tracking-widest shadow-lg animate-bounce"><AlertCircle size={10} /> Erro de Banco de Dados</div>}
+      <div className="flex justify-center mb-4">
+        {dbStatus === 'ok' && <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 text-[7px] font-black uppercase text-green-600 tracking-widest shadow-sm border border-green-100"><CheckCircle2 size={8} /> Sistema Operacional 💎</div>}
+        {dbStatus === 'error' && <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500 text-[7px] font-black uppercase text-white tracking-widest shadow-lg animate-bounce"><AlertCircle size={8} /> Erro de Banco de Dados</div>}
       </div>
 
-      <div className="text-center mb-8">
-        <h1 className="text-[8px] font-black text-brand-secondary uppercase tracking-[0.4em] mb-2">Espaço da Empresária</h1>
-        <h2 className="text-xl md:text-2xl font-bold text-brand-primary uppercase tracking-tight">Nova Joia</h2>
+      <div className="text-center mb-6">
+        <h1 className="text-[7px] font-black text-brand-secondary uppercase tracking-[0.4em] mb-1">Espaço da Empresária</h1>
+        <h2 className="text-lg font-bold text-brand-primary uppercase tracking-tight">Nova Peça</h2>
       </div>
 
-      <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Lado Esquerdo - Compacto */}
+      <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        
+        {/* LADO ESQUERDO - GALERIA (Até 6 fotos) */}
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-2">
             {images.map((img, index) => (
-              <div key={index} className="relative aspect-square rounded-[24px] overflow-hidden border border-rose-100 group">
+              <div key={index} className="relative aspect-square rounded-[16px] overflow-hidden border border-rose-100 group">
                 <Image src={img.preview} alt="Preview" className="object-cover" fill />
-                <button type="button" onClick={() => removeImage(index)} className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-full text-rose-500 shadow-sm"><X size={12} /></button>
+                <button type="button" onClick={() => removeImage(index)} className="absolute top-1 right-1 p-1 bg-white/90 rounded-full text-rose-500 shadow-sm"><X size={10} /></button>
+                {index === 0 && <div className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-brand-primary text-white text-[5px] font-black uppercase rounded-full">Principal</div>}
               </div>
             ))}
-            {images.length < 4 && (
-              <label className="cursor-pointer aspect-square rounded-[24px] border-2 border-dashed border-rose-200 flex flex-col items-center justify-center gap-1 bg-white hover:bg-rose-50/50 transition-all">
-                <Plus size={18} className="text-brand-secondary" />
-                <span className="text-[7px] font-black text-brand-secondary uppercase tracking-widest">Foto</span>
+            {images.length < 6 && (
+              <label className="cursor-pointer aspect-square rounded-[16px] border border-dashed border-rose-200 flex flex-col items-center justify-center bg-white hover:bg-rose-50/50 transition-all">
+                <Plus size={14} className="text-brand-secondary" />
+                <span className="text-[6px] font-black text-brand-secondary uppercase tracking-widest">Foto</span>
                 <input type="file" className="hidden" onChange={handleImageUpload} accept="image/*" multiple />
               </label>
             )}
           </div>
           
-          <button type="button" disabled={images.length === 0 || aiLoading} onClick={generateAIDescription} className="w-full py-4 rounded-[20px] bg-brand-primary text-white text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg disabled:opacity-50">
-            {aiLoading ? <Loader2 className="animate-spin" size={16} /> : <><Sparkles size={16} /> <span>Mágica Lapidado</span></>}
+          {/* BOTÃO MÁGICA - COR SECUNDÁRIA + DIAMANTE */}
+          <button type="button" disabled={images.length === 0 || aiLoading} onClick={generateAIDescription} className="w-full py-3.5 rounded-[18px] bg-brand-secondary text-white text-[8px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-md disabled:opacity-50">
+            {aiLoading ? <Loader2 className="animate-spin" size={14} /> : <><Gem size={14} /> <span>Mágica Lapidado</span></>}
           </button>
         </div>
 
-        {/* Lado Direito - Mais Fino */}
-        <div className="space-y-4 bg-white/60 p-6 rounded-[40px] border border-rose-50 shadow-sm">
+        {/* LADO DIREITO - FORMULÁRIO FINO */}
+        <div className="space-y-3 bg-white/60 p-5 rounded-[30px] border border-rose-50 shadow-sm">
           <div>
-            <label className="text-[8px] font-black text-brand-secondary uppercase tracking-[0.2em] mb-2 ml-1 block">Nome da Joia</label>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value.toUpperCase())} className="w-full px-5 py-3 rounded-2xl bg-white border border-rose-100 focus:border-brand-primary outline-none uppercase font-bold text-xs text-brand-primary transition-all" />
+            <label className="text-[7px] font-black text-brand-secondary uppercase tracking-[0.1em] mb-1 ml-1 block">Nome da Peça</label>
+            <input type="text" value={name} onChange={(e) => setName(e.target.value.toUpperCase())} className="w-full px-4 py-2.5 rounded-xl bg-white border border-rose-100 focus:border-brand-primary outline-none uppercase font-bold text-[10px] text-brand-primary transition-all" />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[8px] font-black text-brand-secondary uppercase tracking-[0.2em] mb-2 ml-1 block">Categoria</label>
-              <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-4 py-3 rounded-2xl bg-white border border-rose-100 text-[10px] font-bold text-brand-primary outline-none appearance-none cursor-pointer">
+              <label className="text-[7px] font-black text-brand-secondary uppercase tracking-[0.1em] mb-1 ml-1 block">Categoria</label>
+              <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-white border border-rose-100 text-[9px] font-bold text-brand-primary outline-none appearance-none cursor-pointer">
                 <option value="">SELECIONE...</option>
                 {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name.toUpperCase()}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-[8px] font-black text-brand-secondary uppercase tracking-[0.2em] mb-2 ml-1 block">Estoque</label>
-              <input type="number" value={stock} onChange={(e) => setStock(e.target.value)} className="w-full px-4 py-3 rounded-2xl bg-white border border-rose-100 font-bold text-brand-primary text-[10px]" />
+              <label className="text-[7px] font-black text-brand-secondary uppercase tracking-[0.1em] mb-1 ml-1 block">Estoque</label>
+              <input type="number" value={stock} onChange={(e) => setStock(e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-white border border-rose-100 font-bold text-brand-primary text-[9px]" />
             </div>
           </div>
 
-          <div className="p-4 rounded-[24px] bg-rose-50/50 border border-rose-100/50 space-y-3">
+          {/* FINANCEIRO - COR SECUNDÁRIA NO PREÇO FINAL */}
+          <div className="p-3.5 rounded-[20px] bg-rose-50/50 border border-rose-100/50 space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[7px] font-bold text-brand-secondary uppercase mb-1 block">Custo (R$)</label>
-                <input type="number" step="0.01" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-white border border-rose-100 font-bold text-[10px]" />
+                <label className="text-[6px] font-bold text-brand-secondary uppercase mb-1 block">Custo (R$)</label>
+                <input type="number" step="0.01" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-white border border-rose-100 font-bold text-[9px] outline-none" />
               </div>
               <div>
-                <label className="text-[7px] font-bold text-brand-secondary uppercase mb-1 block">Preço Final</label>
-                <input type="number" step="0.01" value={salePrice} onChange={(e) => setSalePrice(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-brand-primary text-white font-bold text-[10px]" />
+                <label className="text-[6px] font-bold text-brand-secondary uppercase mb-1 block">Lucro (%)</label>
+                <input type="number" value={margin} onChange={(e) => setMargin(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-white border border-rose-100 font-bold text-[9px] outline-none" />
               </div>
+            </div>
+            
+            <div className="pt-2 border-t border-rose-100">
+               <label className="text-[7px] font-black text-brand-primary uppercase tracking-widest mb-1.5 block text-center">Preço Final de Venda</label>
+               <div className="relative">
+                 <input type="number" step="0.01" value={salePrice} onChange={(e) => setSalePrice(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-brand-secondary text-white text-lg font-black outline-none shadow-sm text-center" />
+                 <Pencil size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50" />
+               </div>
             </div>
           </div>
 
-          <button type="submit" disabled={isSaving || dbStatus === 'error'} className="w-full py-4 rounded-[24px] bg-brand-primary text-white text-[10px] font-black uppercase tracking-widest shadow-lg hover:opacity-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
-            {isSaving ? <Loader2 className="animate-spin" size={18} /> : <><Check size={18} /> <span>Salvar Joia</span></>}
+          <div className="pt-1">
+            <label className="text-[7px] font-black text-brand-secondary uppercase tracking-[0.1em] mb-1 ml-1 block">Descrição</label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value.toUpperCase())} rows={2} className="w-full px-4 py-2.5 rounded-xl bg-white border border-rose-100 text-[8px] uppercase font-bold text-brand-primary outline-none resize-none" />
+          </div>
+
+          {/* BOTÃO SALVAR - COR PRIMÁRIA */}
+          <button type="submit" disabled={isSaving || dbStatus === 'error'} className="w-full py-3.5 rounded-[18px] bg-brand-primary text-white text-[9px] font-black uppercase tracking-widest shadow-md hover:opacity-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+            {isSaving ? <Loader2 className="animate-spin" size={16} /> : <><Check size={16} /> <span>Salvar Peça</span></>}
           </button>
         </div>
       </form>
