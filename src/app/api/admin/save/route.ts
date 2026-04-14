@@ -23,10 +23,11 @@ export async function POST(req: Request) {
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
     if (!supabaseUrl || !supabaseKey) {
-      console.error('❌ ERRO: VARIÁVEIS DE AMBIENTE DO SUPABASE NÃO CONFIGURADAS NO SERVIDOR.')
+      const missing = !supabaseUrl ? 'NEXT_PUBLIC_SUPABASE_URL' : 'SUPABASE_SERVICE_ROLE_KEY';
+      console.error(`❌ ERRO: VARIÁVEL ${missing} AUSENTE NA VERCEL.`);
       return NextResponse.json({ 
-        error: 'SERVIDOR NÃO CONFIGURADO (CHAVES DO BANCO AUSENTES)', 
-        details: 'Adicione as chaves no painel da Vercel.' 
+        error: `SERVIDOR NÃO CONFIGURADO (CHAVE ${missing} AUSENTE)`, 
+        details: 'Adicione esta chave no painel da Vercel e faça o Redeploy.' 
       }, { status: 500 })
     }
 
