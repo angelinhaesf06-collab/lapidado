@@ -157,24 +157,29 @@ export default function BrandingPage() {
             <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="ENDEREÇO" className="w-full px-3 py-2 rounded-xl bg-rose-50/20 text-[9px] outline-none" />
           </div>
 
-          {/* GARANTIA - CONFORME PEDIDO: COR PRIMÁRIA, SEM TEXTO PADRÃO, COM LÁPIS */}
+          {/* GARANTIA - COR SECUNDÁRIA, LIMPO E COM LÁPIS */}
           <div className="pt-2 border-t border-rose-50 flex flex-col items-center">
-            <div className="relative w-full max-w-[160px]">
+            <div className="relative w-full max-w-[150px]">
               <input 
                 type="text" 
                 value={warrantyTime} 
                 onChange={(e) => setWarrantyTime(e.target.value.toUpperCase())} 
-                placeholder="ESCREVA A GARANTIA..."
-                className="w-full px-3 py-2 rounded-xl bg-brand-primary text-white text-[9px] font-black text-center outline-none shadow-sm tracking-[0.1em] placeholder:text-white/40" 
+                placeholder="GARANTIA..."
+                className="w-full px-3 py-2 rounded-xl bg-brand-secondary text-white text-[9px] font-black text-center outline-none shadow-sm tracking-[0.1em] placeholder:text-white/60" 
               />
-              <Pencil size={10} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40" />
+              <Pencil size={10} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60" />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex justify-center mt-6">
-        <button onClick={handleSave} disabled={saving} className="w-full max-w-xs py-4 rounded-[20px] bg-brand-primary text-white text-[9px] font-black uppercase tracking-widest shadow-lg hover:opacity-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+      {/* BOTÃO SALVAR - CENTRALIZAÇÃO TOTAL E DELICADA */}
+      <div className="flex justify-center mt-10 w-full px-4">
+        <button 
+          onClick={handleSave} 
+          disabled={saving} 
+          className="w-full max-w-[280px] py-4 rounded-[20px] bg-brand-primary text-white text-[9px] font-black uppercase tracking-widest shadow-xl hover:opacity-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+        >
           {saving ? <Loader2 className="animate-spin" size={16} /> : <><Gem size={16} /> <span>SALVAR IDENTIDADE DA MARCA</span></>}
         </button>
       </div>
