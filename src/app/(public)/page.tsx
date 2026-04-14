@@ -19,7 +19,7 @@ export default async function Home({
   const { data: branding } = await supabase.from('branding').select('facebook').single()
   const installments = parseInt(branding?.facebook?.split('|')[1] || '10')
 
-  const { data: dbCategories } = await supabase
+  const { data: dbCategories, error: catError } = await supabase
     .from('categories')
     .select('id, name')
     .order('name')
@@ -35,10 +35,18 @@ export default async function Home({
     query = query.eq('categories.name', activeCategory)
   }
 
-  const { data: products } = await query
+  const { data: products, error: prodError } = await query
 
   return (
     <div className="flex flex-col w-full min-h-screen">
+      {/* 💎 DEBUG MÁGICO: Só aparece se houver erro real no banco */}
+      {(catError || prodError || !products || products.length === 0) && (
+        <div className="bg-black text-white text-[8px] p-2 text-center">
+          DADOS: {products?.length || 0} | CATS: {dbCategories?.length || 0} | 
+          ERRO_P: {prodError?.message || 'OK'} | ERRO_C: {catError?.message || 'OK'} |
+          URL: {process.env.NEXT_PUBLIC_SUPABASE_URL ? 'DEFINIDA' : 'AUSENTE'}
+        </div>
+      )}
       {/* Navegação Mobile e Desktop Superior - Sem deslizar, tudo visível */}
       <nav className="bg-white/80 backdrop-blur-md border-b border-brand-secondary/10 sticky top-[158px] z-40 shadow-sm">
         <div className="max-w-7xl mx-auto px-2 py-2 md:py-4 flex flex-wrap justify-center gap-2 md:gap-8">
