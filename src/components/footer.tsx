@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Phone, MapPin, Music2, Camera as InstagramIcon } from 'lucide-react'
+import { Phone, MapPin, Music2, Camera as InstagramIcon, Gem } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
 
@@ -30,7 +30,7 @@ export default function Footer() {
   if (!branding) return null
 
   return (
-    <footer className="bg-white border-t border-rose-50 pt-20 pb-10">
+    <footer className="bg-white border-t border-brand-secondary/10 pt-20 pb-10">
       <div className="max-w-7xl mx-auto px-8 grid grid-cols-1 md:grid-cols-3 gap-16 items-center">
         
         {/* Lado 1: Assinatura Visual */}
@@ -68,27 +68,35 @@ export default function Footer() {
         {/* Lado 3: Redes Sociais */}
         <div className="space-y-6 flex flex-col items-center md:items-end text-center md:text-right">
           <h4 className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.3em]">SIGA NOSSO BRILHO</h4>
-          
+
           <div className="flex gap-4">
-            {branding.website && (
-              <a href={`https://instagram.com/${branding.website}`} target="_blank" className="p-4 rounded-full bg-brand-secondary/10 text-brand-primary hover:bg-brand-primary hover:text-white transition-all">
+            {branding.instagram && (
+              <a href={`https://instagram.com/${branding.instagram.replace('@', '').trim()}`} target="_blank" className="p-4 rounded-full bg-brand-secondary/10 text-brand-primary hover:bg-brand-primary hover:text-white transition-all">
                 <InstagramIcon size={20} />
               </a>
             )}
-            {branding.tiktok && (
-              <a href={`https://tiktok.com/@${branding.tiktok}`} target="_blank" className="p-4 rounded-full bg-brand-secondary/10 text-brand-primary hover:bg-brand-primary hover:text-white transition-all">
+            {branding.tiktok && !branding.tiktok.includes('MESES') && (
+              <a href={`https://tiktok.com/@${branding.tiktok.replace('@', '').trim()}`} target="_blank" className="p-4 rounded-full bg-brand-secondary/10 text-brand-primary hover:bg-brand-primary hover:text-white transition-all">
                 <Music2 size={20} />
               </a>
             )}
           </div>
         </div>
 
+
       </div>
 
-      <div className="max-w-7xl mx-auto px-8 mt-20 pt-10 border-t border-rose-50/50 flex flex-col md:flex-row justify-between items-center gap-6">
-        <p className="text-[8px] text-brand-secondary font-bold uppercase tracking-[0.4em]">
-          © {new Date().getFullYear()} — TODOS OS DIREITOS RESERVADOS.
-        </p>
+      <div className="max-w-7xl mx-auto px-8 mt-20 pt-10 border-t border-brand-secondary/5 flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="flex flex-col items-center md:items-start gap-2">
+          <p className="text-[8px] text-brand-secondary font-bold uppercase tracking-[0.4em]">
+            © {new Date().getFullYear()} — TODOS OS DIREITOS RESERVADOS.
+          </p>
+          {(branding as any).tiktok && (branding as any).tiktok.includes('MESES') && (
+            <p className="text-[7px] text-brand-primary/60 font-black uppercase tracking-widest flex items-center gap-2">
+              <Gem size={8} /> GARANTIA DE {(branding as any).tiktok}
+            </p>
+          )}
+        </div>
         <div className="flex items-center gap-2 opacity-40 hover:opacity-100 transition-opacity">
           <span className="text-[8px] font-bold text-brand-primary tracking-widest">DESENVOLVIDO COM</span>
           <div className="w-4 h-4 bg-brand-primary rounded-full flex items-center justify-center text-white text-[8px]">✨</div>

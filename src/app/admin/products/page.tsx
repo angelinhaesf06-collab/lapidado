@@ -40,17 +40,18 @@ export default function ProductsListPage() {
     
     setDeletingId(id)
     try {
-      // 1. Tentar remover a imagem do Storage (se houver URL)
-      if (imageUrl) {
-        const path = imageUrl.split('/').pop() // Pega o nome do arquivo
-        if (path) {
-          await supabase.storage.from('products').remove([path])
-        }
-      }
-
-      // 2. Remover do Banco de Dados
-      const { error } = await supabase.from('products').delete().eq('id', id)
-      if (error) throw error
+      // 💎 MÁGICA NEXUS: EXCLUSÃO VIA SERVIDOR (Bypass de RLS)
+      const res = await fetch('/api/admin/delete', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer LAPIDADO_ADMIN_2026'
+        },
+        body: JSON.stringify({ table: 'products', id, imageUrl })
+      })
+      
+      const result = await res.json()
+      if (!result.success) throw new Error(result.error)
 
       setProducts(products.filter(p => p.id !== id))
       alert('JOIA REMOVIDA COM SUCESSO! ✨')
@@ -65,33 +66,33 @@ export default function ProductsListPage() {
     <div className="max-w-6xl mx-auto py-10 px-4 pb-20">
       <div className="flex items-center justify-between mb-12">
         <div>
-          <Link href="/admin" className="flex items-center gap-2 text-[10px] font-black text-[#c99090] uppercase tracking-widest mb-4 hover:ml-2 transition-all">
+          <Link href="/admin" className="flex items-center gap-2 text-[10px] font-black text-brand-secondary uppercase tracking-widest mb-4 hover:ml-2 transition-all">
             <ArrowLeft size={14} /> Voltar ao Painel
           </Link>
-          <h1 className="text-3xl font-bold text-[#4a322e] uppercase tracking-tight flex items-center gap-3">
-            <Gem className="text-[#c99090]" /> Gestão da Vitrine
+          <h1 className="text-3xl font-bold text-brand-primary uppercase tracking-tight flex items-center gap-3">
+            <Gem className="text-brand-secondary" /> Gestão da Vitrine
           </h1>
         </div>
-        <Link href="/admin/products/new" className="px-8 py-4 bg-[#4a322e] text-white rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-[#c99090] transition-all shadow-lg">
+        <Link href="/admin/products/new" className="px-8 py-4 bg-brand-primary text-white rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-brand-secondary transition-all shadow-lg">
           Nova Joia
         </Link>
       </div>
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
-          <Loader2 className="animate-spin text-[#c99090]" size={40} />
-          <p className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.3em]">Carregando Acervo...</p>
+          <Loader2 className="animate-spin text-brand-secondary" size={40} />
+          <p className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.3em]">Carregando Acervo...</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {products.map((product) => (
-            <div key={product.id} className="bg-white rounded-[40px] border border-rose-50 overflow-hidden shadow-sm hover:shadow-xl transition-all group relative">
+            <div key={product.id} className="bg-white rounded-[40px] border border-brand-secondary/10 overflow-hidden shadow-sm hover:shadow-xl transition-all group relative">
               {/* Imagem do Produto */}
-              <div className="aspect-square relative overflow-hidden bg-rose-50/30">
+              <div className="aspect-square relative overflow-hidden bg-brand-secondary/5">
                 {product.image_url ? (
                   <Image src={product.image_url} alt={product.name} className="object-cover group-hover:scale-110 transition-transform duration-500" fill />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-rose-200">
+                  <div className="w-full h-full flex items-center justify-center text-brand-secondary/30">
                     <ImageIcon size={48} />
                   </div>
                 )}
@@ -101,7 +102,7 @@ export default function ProductsListPage() {
                    <button 
                     onClick={() => handleDelete(product.id, product.image_url)}
                     disabled={deletingId === product.id}
-                    className="p-4 bg-white rounded-full text-rose-500 hover:scale-110 transition-all shadow-lg"
+                    className="p-4 bg-white rounded-full text-red-500 hover:scale-110 transition-all shadow-lg"
                     title="Excluir"
                    >
                      {deletingId === product.id ? <Loader2 size={20} className="animate-spin" /> : <Trash2 size={20} />}
@@ -109,7 +110,7 @@ export default function ProductsListPage() {
                    
                    <Link 
                     href={`/admin/products/edit/${product.id}`} 
-                    className="p-4 bg-white rounded-full text-[#4a322e] hover:scale-110 transition-all shadow-lg"
+                    className="p-4 bg-white rounded-full text-brand-primary hover:scale-110 transition-all shadow-lg"
                     title="Editar"
                    >
                      <Pencil size={20} />
@@ -148,11 +149,11 @@ export default function ProductsListPage() {
 
               {/* Info do Produto */}
               <div className="p-6">
-                <p className="text-[8px] font-black text-[#c99090] uppercase tracking-widest mb-1">{product.categories?.name || 'SEM CATEGORIA'}</p>
-                <h3 className="text-lg font-bold text-[#4a322e] uppercase mb-2 line-clamp-1">{product.name}</h3>
+                <p className="text-[8px] font-black text-brand-secondary uppercase tracking-widest mb-1">{product.categories?.name || 'SEM CATEGORIA'}</p>
+                <h3 className="text-lg font-bold text-brand-primary uppercase mb-2 line-clamp-1">{product.name}</h3>
                 <div className="flex items-center justify-between mt-4">
-                  <span className="text-xl font-black text-[#4a322e]">R$ {Number(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                  <span className="text-[10px] font-bold text-[#c99090] bg-rose-50 px-3 py-1 rounded-full">{product.stock_quantity} PÇS</span>
+                  <span className="text-xl font-black text-brand-primary">R$ {Number(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                  <span className="text-[10px] font-bold text-brand-secondary bg-brand-secondary/10 px-3 py-1 rounded-full">{product.stock_quantity} PÇS</span>
                 </div>
               </div>
             </div>
@@ -161,8 +162,8 @@ export default function ProductsListPage() {
       )}
 
       {!loading && products.length === 0 && (
-        <div className="text-center py-20 bg-rose-50/30 rounded-[60px] border border-dashed border-rose-100">
-          <p className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.3em]">A vitrine está vazia. Comece a brilhar!</p>
+        <div className="text-center py-20 bg-brand-secondary/5 rounded-[60px] border border-dashed border-brand-secondary/10">
+          <p className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.3em]">A vitrine está vazia. Comece a brilhar!</p>
         </div>
       )}
     </div>

@@ -19,6 +19,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   const [category, setCategory] = useState('')
   const [materialFinish, setMaterialFinish] = useState('OURO 18K')
   const [categories, setCategories] = useState<{id: string, name: string}[]>([])
+  const [costPrice, setCostPrice] = useState<string>('')
   const [salePrice, setSalePrice] = useState<string>('')
   const [stock, setStock] = useState<string>('1')
 
@@ -45,12 +46,15 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
       if (prod) {
         setName(prod.name)
+        setCostPrice(prod.cost_price?.toString() || '')
+        
         // Tentar extrair custo e banho da descrição se as colunas falharem
         const descMatch = prod.description?.match(/---[\s\S]*DATA:({.*})/)
         if (descMatch) {
           try {
             const extraData = JSON.parse(descMatch[1])
             setMaterialFinish(extraData.finish || 'OURO 18K')
+            if (!prod.cost_price) setCostPrice(extraData.cost?.toString() || '')
             setDescription(prod.description.split('\n\n---')[0])
           } catch {
             setDescription(prod.description)
@@ -96,33 +100,26 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         const uploadData = await uploadRes.json()
         if (uploadData.url) finalImageUrl = uploadData.url
       }
-      
       const productData = {
         name: name.toUpperCase(),
         price: parseFloat(salePrice),
-        // cost_price: parseFloat(costPrice) || 0,
         stock_quantity: parseInt(stock) || 0,
         category_id: category,
-        // material_finish: materialFinish,
-        description: description.toUpperCase(),
+        description: `${description.toUpperCase()}\n\n---\nDATA:{"finish": "${materialFinish}", "cost": ${parseFloat(costPrice) || 0}}`,
         image_url: finalImageUrl,
-        updated_at: new Date().toISOString()
       }
 
-      const { error } = await supabase.from('products').update(productData).eq('id', id)
-      if (error) {
-        // Fallback para a rota de API segura se o RLS bloquear o update direto
-        const response = await fetch('/api/admin/save', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer LAPIDADO_ADMIN_2026`
-          },
-          body: JSON.stringify({ table: 'products', data: productData, id })
-        })
-        const result = await response.json()
-        if (!result.success) throw new Error(result.error)
-      }
+      // 💎 MÁGICA NEXUS: SEMPRE USAR A API DE SALVAMENTO PARA GARANTIR REVALIDAÇÃO DE CACHE
+      const response = await fetch('/api/admin/save', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer LAPIDADO_ADMIN_2026`
+        },
+        body: JSON.stringify({ table: 'products', data: productData, id })
+      })
+      const result = await response.json()
+      if (!result.success) throw new Error(result.error)
       
       alert('JOIA ATUALIZADA COM SUCESSO! 💎✨')
       router.push('/admin/products')
@@ -134,36 +131,36 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     }
   }
 
-  if (fetching) return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[#c99090]" size={40} /></div>
+  if (fetching) return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-brand-secondary" size={40} /></div>
 
   return (
     <div className="max-w-6xl mx-auto py-10 px-4 pb-20">
       <div className="mb-12">
-        <Link href="/admin/products" className="flex items-center gap-2 text-[10px] font-black text-[#c99090] uppercase tracking-widest mb-4 hover:ml-2 transition-all">
+        <Link href="/admin/products" className="flex items-center gap-2 text-[10px] font-black text-brand-secondary uppercase tracking-widest mb-4 hover:ml-2 transition-all">
           <ArrowLeft size={14} /> Voltar para Vitrine
         </Link>
-        <h1 className="text-3xl font-bold text-[#4a322e] uppercase tracking-tight">Editar Joia</h1>
+        <h1 className="text-3xl font-bold text-brand-primary uppercase tracking-tight">Editar Joia</h1>
       </div>
 
       <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         <div className="space-y-6">
-          <div className="relative aspect-square rounded-[40px] overflow-hidden border-2 border-[#c99090]/10 shadow-md">
+          <div className="relative aspect-square rounded-[40px] overflow-hidden border-2 border-brand-secondary/10 shadow-md">
             {images[0] ? (
               <Image src={images[0].preview} alt="Preview" className="object-cover" fill />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-rose-50 text-rose-200 uppercase text-[10px] font-black">Sem Foto</div>
+              <div className="w-full h-full flex items-center justify-center bg-brand-secondary/5 text-brand-secondary uppercase text-[10px] font-black">Sem Foto</div>
             )}
-            <label className="absolute bottom-6 right-6 p-4 bg-white rounded-full shadow-xl cursor-pointer hover:scale-110 transition-all text-[#c99090]">
+            <label className="absolute bottom-6 right-6 p-4 bg-white rounded-full shadow-xl cursor-pointer hover:scale-110 transition-all text-brand-secondary">
               <Plus size={24} />
               <input type="file" className="hidden" onChange={handleImageUpload} accept="image/*" />
             </label>
           </div>
         </div>
 
-        <div className="space-y-6 bg-white p-10 rounded-[60px] border border-rose-50 shadow-sm">
+        <div className="space-y-6 bg-white p-10 rounded-[60px] border border-brand-secondary/10 shadow-sm">
           
           <div>
-            <label className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.2em] mb-3 ml-2 block">ACABAMENTO / BANHO</label>
+            <label className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.2em] mb-3 ml-2 block">ACABAMENTO / BANHO</label>
             <div className="flex flex-wrap gap-2">
               {FINISH_OPTIONS.map(option => (
                 <button
@@ -172,8 +169,8 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                   onClick={() => setMaterialFinish(option)}
                   className={`px-4 py-2 rounded-full text-[9px] font-black transition-all ${
                     materialFinish === option 
-                      ? 'bg-[#4a322e] text-white shadow-md scale-105' 
-                      : 'bg-rose-50 text-[#c99090] hover:bg-rose-100'
+                      ? 'bg-brand-primary text-white shadow-md scale-105' 
+                      : 'bg-brand-secondary/5 text-brand-secondary hover:bg-brand-secondary/10'
                   }`}
                 >
                   {option}
@@ -183,34 +180,40 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           </div>
 
           <div>
-            <label className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.2em] mb-3 ml-2 block">NOME DA JOIA</label>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value.toUpperCase())} className="w-full px-8 py-5 rounded-3xl bg-rose-50/20 border-2 border-transparent focus:border-[#c99090] outline-none font-bold text-[#4a322e] uppercase" />
+            <label className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.2em] mb-3 ml-2 block">NOME DA JOIA</label>
+            <input type="text" value={name} onChange={(e) => setName(e.target.value.toUpperCase())} className="w-full px-8 py-5 rounded-3xl bg-brand-secondary/5 border-2 border-transparent focus:border-brand-secondary outline-none font-bold text-brand-primary uppercase" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.2em] mb-3 ml-2 block">CATEGORIA</label>
-              <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-6 py-5 rounded-3xl bg-rose-50/20 border-2 border-transparent focus:border-[#c99090] outline-none font-bold text-[#4a322e]">
+              <label className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.2em] mb-3 ml-2 block">CATEGORIA</label>
+              <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-6 py-5 rounded-3xl bg-brand-secondary/5 border-2 border-transparent focus:border-brand-secondary outline-none font-bold text-brand-primary">
                 {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name.toUpperCase()}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.2em] mb-3 ml-2 block">ESTOQUE</label>
-              <input type="number" value={stock} onChange={(e) => setStock(e.target.value)} className="w-full px-8 py-5 rounded-3xl bg-rose-50/20 border-2 border-transparent focus:border-[#c99090] outline-none font-bold text-[#4a322e]" />
+              <label className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.2em] mb-3 ml-2 block">ESTOQUE</label>
+              <input type="number" value={stock} onChange={(e) => setStock(e.target.value)} className="w-full px-8 py-5 rounded-3xl bg-brand-secondary/5 border-2 border-transparent focus:border-brand-secondary outline-none font-bold text-brand-primary" />
             </div>
           </div>
 
-          <div className="p-8 rounded-[40px] bg-rose-50/30 border border-rose-100/50">
-            <label className="text-[10px] font-black text-[#4a322e] uppercase tracking-widest mb-4 block ml-2">PREÇO DE VENDA (R$)</label>
-            <input type="number" step="0.01" value={salePrice} onChange={(e) => setSalePrice(e.target.value)} className="w-full px-8 py-6 rounded-[28px] bg-[#4a322e] text-white text-2xl font-black outline-none shadow-lg text-center" />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.2em] mb-3 ml-2 block">PREÇO DE CUSTO (R$)</label>
+              <input type="number" step="0.01" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} className="w-full px-8 py-5 rounded-3xl bg-brand-secondary/5 border-2 border-transparent focus:border-brand-secondary outline-none font-bold text-brand-primary" />
+            </div>
+            <div className="p-8 rounded-[40px] bg-brand-secondary/5 border border-brand-secondary/10">
+              <label className="text-[10px] font-black text-brand-primary uppercase tracking-widest mb-4 block ml-2">PREÇO DE VENDA (R$)</label>
+              <input type="number" step="0.01" value={salePrice} onChange={(e) => setSalePrice(e.target.value)} className="w-full px-8 py-6 rounded-[28px] bg-brand-primary text-white text-2xl font-black outline-none shadow-lg text-center" />
+            </div>
           </div>
 
           <div>
-            <label className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.2em] mb-3 ml-2 block">DESCRIÇÃO</label>
-            <textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value.toUpperCase())} className="w-full px-8 py-5 rounded-3xl bg-rose-50/20 border-2 border-transparent focus:border-[#c99090] outline-none resize-none text-xs text-[#7a5c58] uppercase" />
+            <label className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.2em] mb-3 ml-2 block">DESCRIÇÃO</label>
+            <textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value.toUpperCase())} className="w-full px-8 py-5 rounded-3xl bg-brand-secondary/5 border-2 border-transparent focus:border-brand-secondary outline-none resize-none text-xs text-brand-primary/60 uppercase" />
           </div>
 
-          <button type="submit" disabled={loading} className="w-full py-6 rounded-[32px] bg-[#4a322e] text-white font-black uppercase tracking-widest shadow-xl hover:opacity-95 transition-all flex items-center justify-center gap-4 disabled:opacity-50">
+          <button type="submit" disabled={loading} className="w-full py-6 rounded-[32px] bg-brand-primary text-white font-black uppercase tracking-widest shadow-xl hover:opacity-95 transition-all flex items-center justify-center gap-4 disabled:opacity-50">
             {loading ? <Loader2 className="animate-spin" size={24} /> : <><Check size={24} /> <span>SALVAR ALTERAÇÕES</span></>}
           </button>
         </div>

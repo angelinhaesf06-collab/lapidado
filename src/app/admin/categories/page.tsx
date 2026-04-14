@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Trash2, Loader2, ArrowLeft, Pencil, Check, X, Gem, LayoutGrid } from 'lucide-react'
+import { Trash2, Loader2, ArrowLeft, Pencil, Check, X, Gem } from 'lucide-react'
 import Link from 'next/link'
 
 interface Category {
@@ -64,7 +64,7 @@ export default function CategoriesPage() {
       setEditingId(null)
       await loadCategories()
     } catch (err: unknown) {
-      alert('ERRO: ' + (err as Error).message.toUpperCase())
+      alert('ERRO AO ATUALIZAR: ' + (err as Error).message.toUpperCase())
     }
   }
 
@@ -79,82 +79,67 @@ export default function CategoriesPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-180px)] md:h-auto flex flex-col max-w-4xl mx-auto py-2 px-4 overflow-hidden">
+    <div className="flex flex-col h-full max-w-4xl mx-auto py-1 px-2 overflow-hidden">
       
-      {/* HEADER ULTRA COMPACTO */}
-      <div className="flex items-center justify-between mb-4">
-        <Link href="/admin" className="p-2 text-brand-secondary/60 hover:text-brand-primary transition-all">
-          <ArrowLeft size={16} />
-        </Link>
-        <h1 className="text-[10px] font-black text-brand-primary uppercase tracking-[0.2em]">Gestão de Categorias</h1>
-        <div className="w-8" />
-      </div>
-
-      {/* ADICIONAR NOVA - FORMULÁRIO EM LINHA ÚNICA */}
-      <div className="bg-white/60 p-4 rounded-[24px] border border-rose-50 shadow-sm mb-4">
-        <form onSubmit={handleAdd} className="flex gap-2">
+      {/* FORMULÁRIO E TÍTULO EM LINHA ÚNICA (ULTRA COMPACTO) */}
+      <div className="flex items-center gap-2 mb-3 bg-white/80 p-2 rounded-2xl border border-rose-50 shadow-sm">
+        <Link href="/admin" className="p-1 text-brand-secondary/60 hover:text-brand-primary"><ArrowLeft size={14} /></Link>
+        <form onSubmit={handleAdd} className="flex-1 flex gap-1">
           <input 
             type="text" 
-            placeholder="NOME DA CATEGORIA..."
+            placeholder="NOVA COLEÇÃO..."
             value={newCategory}
             onChange={(e) => setNewCategory(e.target.value.toUpperCase())}
-            className="flex-1 px-4 py-2.5 rounded-xl bg-rose-50/30 border border-transparent focus:border-brand-secondary outline-none font-bold text-[9px] text-brand-primary uppercase shadow-inner"
+            className="flex-1 px-3 py-1.5 rounded-xl bg-rose-50/30 border border-transparent focus:border-brand-secondary outline-none font-bold text-[8px] text-brand-primary uppercase shadow-inner"
           />
           <button 
             type="submit" 
             disabled={adding || !newCategory}
-            className="px-4 bg-brand-primary text-white rounded-xl text-[8px] font-black uppercase tracking-widest shadow-md flex items-center gap-2 disabled:opacity-50"
+            className="px-3 py-1.5 bg-brand-primary text-white rounded-xl text-[8px] font-black uppercase tracking-widest shadow-sm disabled:opacity-50"
           >
-            {adding ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+            {adding ? <Loader2 size={10} className="animate-spin" /> : <Gem size={10} />}
           </button>
         </form>
       </div>
 
-      {/* LISTAGEM EM GRADE - TUDO VISÍVEL */}
-      <div className="flex-1 bg-white/40 p-4 rounded-[24px] border border-rose-50 shadow-sm overflow-y-auto no-scrollbar">
-        <div className="grid grid-cols-2 gap-2">
+      {/* LISTAGEM EM GRADE DENSA (3 Colunas no Mobile) */}
+      <div className="flex-1 bg-white/40 p-2 rounded-2xl border border-rose-50 shadow-sm overflow-y-auto no-scrollbar">
+        <div className="grid grid-cols-2 xs:grid-cols-3 gap-1.5">
           {loading ? (
-            <div className="col-span-2 flex justify-center py-10 text-brand-secondary/40"><Loader2 className="animate-spin" size={20} /></div>
+            <div className="col-span-full flex justify-center py-4 text-brand-secondary/40"><Loader2 className="animate-spin" size={16} /></div>
           ) : categories.length > 0 ? (
             categories.map((cat) => (
-              <div key={cat.id} className="bg-white/80 p-3 rounded-xl border border-rose-50 shadow-xs flex flex-col justify-between h-20 relative group">
+              <div key={cat.id} className="bg-white/90 p-2 rounded-lg border border-rose-50 flex flex-col justify-between h-16 relative">
                 {editingId === cat.id ? (
-                  <div className="flex flex-col gap-1 h-full">
+                  <div className="flex flex-col gap-1">
                     <input 
                       type="text" 
                       value={editingName} 
                       onChange={(e) => setEditingName(e.target.value.toUpperCase())}
-                      className="w-full bg-rose-50/50 px-2 py-1 rounded text-[8px] font-bold outline-none border border-brand-secondary"
+                      className="w-full bg-rose-50/50 px-1 py-0.5 rounded text-[7px] font-bold outline-none border border-brand-secondary"
                       autoFocus
                     />
                     <div className="flex justify-end gap-1">
-                      <button onClick={() => handleUpdate(cat.id)} className="text-green-500 p-1"><Check size={12} /></button>
-                      <button onClick={() => setEditingId(null)} className="text-rose-500 p-1"><X size={12} /></button>
+                      <button onClick={() => handleUpdate(cat.id)} className="text-green-500"><Check size={10} /></button>
+                      <button onClick={() => setEditingId(null)} className="text-rose-500"><X size={10} /></button>
                     </div>
                   </div>
                 ) : (
                   <>
-                    <span className="text-[8px] font-black text-brand-primary uppercase leading-tight pr-4">{cat.name}</span>
-                    <div className="flex justify-end gap-1 mt-auto">
-                      <button onClick={() => { setEditingId(cat.id); setEditingName(cat.name); }} className="p-1.5 text-brand-secondary/30 hover:text-brand-primary transition-all"><Pencil size={10} /></button>
-                      <button onClick={() => handleDelete(cat.id)} className="p-1.5 text-rose-200 hover:text-rose-500 transition-all"><Trash2 size={10} /></button>
+                    <span className="text-[7px] font-black text-brand-primary uppercase leading-tight truncate">{cat.name}</span>
+                    <div className="flex justify-end gap-0.5 mt-auto">
+                      <button onClick={() => { setEditingId(cat.id); setEditingName(cat.name); }} className="p-1 text-brand-secondary/30 hover:text-brand-primary"><Pencil size={8} /></button>
+                      <button onClick={() => handleDelete(cat.id)} className="p-1 text-rose-200 hover:text-rose-500"><Trash2 size={8} /></button>
                     </div>
                   </>
                 )}
               </div>
             ))
           ) : (
-            <p className="col-span-2 text-center text-[8px] text-brand-primary/30 uppercase font-black py-10 tracking-widest">Vazio 💎</p>
+            <p className="col-span-full text-center text-[7px] text-brand-primary/30 uppercase font-black py-4">Vazio 💎</p>
           )}
         </div>
       </div>
     </div>
-  )
-}
-
-// Ícones extras necessários
-function Plus({ size }: { size: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
   )
 }

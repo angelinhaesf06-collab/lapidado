@@ -24,13 +24,13 @@ export default function SearchBar() {
 
   return (
     <div className="relative flex-1 group">
-      <Search className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${isPending ? 'text-[#c99090] animate-pulse' : 'text-rose-300 group-focus-within:text-[#c99090]'}`} size={18} />
+      <Search className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${isPending ? 'text-brand-secondary animate-pulse' : 'text-brand-secondary/60 group-focus-within:text-brand-secondary'}`} size={18} />
       <input 
         type="text" 
         onChange={(e) => handleSearch(e.target.value)}
         defaultValue={searchParams.get('q')?.toString()}
         placeholder="Buscar por nome ou material..." 
-        className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white border border-rose-100 shadow-sm focus:ring-2 focus:ring-[#c99090] focus:border-transparent outline-none transition-all text-[#4a322e] font-light italic"
+        className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white border border-brand-secondary/20 shadow-sm focus:ring-2 focus:ring-brand-secondary focus:border-transparent outline-none transition-all text-brand-primary font-light italic"
       />
     </div>
   )

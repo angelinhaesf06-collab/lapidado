@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 
 export async function POST(req: Request) {
   try {
@@ -41,8 +42,10 @@ export async function POST(req: Request) {
     // LÓGICA INTELIGENTE PARA BRANDING: Sempre opera no único registro existente
     if (table === 'branding') {
       // Tenta buscar o primeiro registro para obter o ID caso ele não tenha sido enviado
-      const { data: existing } = await supabaseAdmin.from('branding').select('id').limit(1).single();
+      const { data: existing, error: fetchError } = await supabaseAdmin.from('branding').select('id').limit(1).maybeSingle();
       
+      console.log('💎 NEXUS: VERIFICANDO REGISTRO EXISTENTE...', existing?.id);
+
       if (existing?.id || id) {
         // Se existe um registro ou temos o ID, faz o update
         result = await supabaseAdmin.from(table).update(data).eq('id', existing?.id || id).select();
@@ -58,7 +61,17 @@ export async function POST(req: Request) {
       result = await supabaseAdmin.from(table).insert([data]).select()
     }
 
-    if (result.error) throw result.error
+    if (result.error) {
+      console.error('❌ ERRO CRÍTICO NO SUPABASE:', result.error.message);
+      throw result.error;
+    }
+
+    // INVALIDAÇÃO DE CACHE ESTRATÉGICA
+    revalidatePath('/')
+    revalidatePath('/admin/products')
+    if (id && table === 'products') {
+      revalidatePath(`/product/${id}`)
+    }
 
     return NextResponse.json({ success: true, data: result.data })
 

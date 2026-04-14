@@ -32,15 +32,15 @@ export default function AdminLayout({
             <Link 
               key={item.href} 
               href={item.href} 
-              className="flex flex-col items-center justify-center gap-1 p-2 min-w-[70px] bg-rose-50/50 rounded-xl border border-rose-100/50"
+              className="flex flex-col items-center justify-center gap-1 p-2 min-w-[70px] bg-brand-secondary/10 rounded-xl border border-brand-secondary/20"
             >
-              <item.icon size={16} className="text-[#c99090]" />
-              <span className="text-[7px] font-black tracking-widest uppercase text-[#4a322e]">{item.label}</span>
+              <item.icon size={16} className="text-brand-secondary" />
+              <span className="text-[7px] font-black tracking-widest uppercase text-brand-primary">{item.label}</span>
             </Link>
           ))}
         </div>
         <div className="flex gap-2">
-          <Link href="/" target="_blank" className="flex-1 flex items-center justify-center gap-2 p-2 bg-rose-50 rounded-xl border border-rose-100 text-[8px] font-black uppercase tracking-widest text-brand-primary">
+          <Link href="/" target="_blank" className="flex-1 flex items-center justify-center gap-2 p-2 bg-brand-secondary/10 rounded-xl border border-brand-secondary/20 text-[8px] font-black uppercase tracking-widest text-brand-primary">
             <Eye size={14} /> Ver Vitrine
           </Link>
           <button onClick={shareCatalog} className="flex-1 flex items-center justify-center gap-2 p-2 bg-[#25D366] text-white rounded-xl text-[8px] font-black uppercase tracking-widest shadow-sm">
@@ -52,26 +52,29 @@ export default function AdminLayout({
       {/* SIDEBAR DESKTOP (Elegância mantida no PC) */}
       <aside className="hidden md:flex w-72 bg-white border-r border-rose-50 flex-col pt-12 shadow-sm sticky top-0 h-screen">
         <div className="px-8 mb-16 text-center">
-          <Gem className="mx-auto text-[#c99090] mb-4" size={32} />
-          <h2 className="text-xl font-bold tracking-[0.2em] uppercase text-[#4a322e]">Espaço da Empresária</h2>
-          <p className="text-[8px] font-black text-[#c99090] tracking-[0.4em] uppercase mt-2 italic">Lapidado</p>
+          <Gem className="mx-auto text-brand-secondary mb-4" size={32} />
+          <h2 className="text-xl font-bold tracking-[0.2em] uppercase text-brand-primary">Espaço da Empresária</h2>
+          <p className="text-[8px] font-black text-brand-secondary tracking-[0.4em] uppercase mt-2 italic">Lapidado</p>
         </div>
 
         <nav className="flex-1 px-6 space-y-2 overflow-y-auto pb-8">
-          <p className="px-5 text-[7px] font-black text-[#c99090] uppercase tracking-[0.4em] mb-4 opacity-60">Gestão de Negócio</p>
+          <p className="px-5 text-[7px] font-black text-brand-secondary uppercase tracking-[0.4em] mb-4 opacity-60">Gestão de Negócio</p>
           
           {menuItems.map((item) => (
-            <Link href="/admin/products" className="flex items-center gap-4 px-5 py-4 text-[9px] font-black tracking-[0.2em] uppercase text-[#4a322e] hover:bg-rose-50 rounded-[24px] transition-all group">
-              <Pencil size={18} className="text-[#c99090] group-hover:scale-110 transition-transform" /> Editar Peça Já Cadastrada
+            <Link 
+              key={item.href} 
+              href={item.href} 
+              className="flex items-center gap-4 px-5 py-4 text-[9px] font-black tracking-[0.2em] uppercase text-brand-primary hover:bg-brand-secondary/10 rounded-[24px] transition-all group"
+            >
+              <item.icon size={18} className="text-brand-secondary group-hover:scale-110 transition-transform" /> {item.label}
             </Link>
-
           ))}
 
           <div className="pt-8 pb-4">
-            <p className="px-5 text-[7px] font-black text-[#c99090] uppercase tracking-[0.4em] mb-4 opacity-60">Visão da Cliente</p>
+            <p className="px-5 text-[7px] font-black text-brand-secondary uppercase tracking-[0.4em] mb-4 opacity-60">Visão da Cliente</p>
             
-            <Link href="/" target="_blank" className="flex items-center gap-4 px-5 py-4 text-[9px] font-black tracking-[0.2em] uppercase text-brand-primary bg-rose-50/50 hover:bg-rose-50 rounded-[24px] transition-all group border border-rose-100/50 mb-2">
-              <Eye size={18} className="text-[#c99090] group-hover:scale-110 transition-transform" /> Ver Minha Vitrine
+            <Link href="/" target="_blank" className="flex items-center gap-4 px-5 py-4 text-[9px] font-black tracking-[0.2em] uppercase text-brand-primary bg-brand-secondary/5 hover:bg-brand-secondary/10 rounded-[24px] transition-all group border border-brand-secondary/10 mb-2">
+              <Eye size={18} className="text-brand-secondary group-hover:scale-110 transition-transform" /> Ver Minha Vitrine
             </Link>
 
             <button 
@@ -84,7 +87,7 @@ export default function AdminLayout({
         </nav>
 
         <div className="p-8 border-t border-rose-50 bg-rose-50/20">
-          <Link href="/" className="flex items-center gap-4 px-5 py-4 text-[9px] font-black tracking-[0.2em] uppercase text-[#7a5c58] hover:text-[#4a322e] transition-colors">
+          <Link href="/" className="flex items-center gap-4 px-5 py-4 text-[9px] font-black tracking-[0.2em] uppercase text-brand-primary/60 hover:text-brand-primary transition-colors">
             <LogOut size={18} className="opacity-60" /> Sair do Painel
           </Link>
         </div>
@@ -97,8 +100,5 @@ export default function AdminLayout({
         </div>
       </main>
     </div>
-  )
-}
- </div>
   )
 }

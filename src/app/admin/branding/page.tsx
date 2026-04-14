@@ -11,15 +11,17 @@ export default function BrandingPage() {
   const [logo, setLogo] = useState<string | null>(null)
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [tagline, setTagline] = useState('')
+  const [topBanner, setTopBanner] = useState('')
   const [primaryColor, setPrimaryColor] = useState('#4a322e')
   const [secondaryColor, setSecondaryColor] = useState('#c99090')
   const [phone, setPhone] = useState('')
   const [address, setAddress] = useState('')
   const [tiktok, setTiktok] = useState('')
   const [instagram, setInstagram] = useState('')
-  const [warrantyTime, setWarrantyTime] = useState('') // Começa vazio para a cliente escrever
+  const [warrantyTime, setWarrantyTime] = useState('') 
+  const [installments, setInstallments] = useState('10')
   const [brandingId, setBrandingId] = useState<string | null>(null)
-  
+
   const supabase = createClient()
 
   useEffect(() => {
@@ -28,16 +30,22 @@ export default function BrandingPage() {
         const { data } = await supabase.from('branding').select('*').single()
         if (data) {
           setBrandingId(data.id)
-          setTagline(data.business_name || '')
-          setWarrantyTime(data.instagram || '') // Pega o que está no banco ou vazio
+          const rawTagline = data.facebook || ''
+          const [text, inst, banner] = rawTagline.split('|')
+          setTagline(text || '') 
+          setInstallments(inst || '10')
+          setTopBanner(banner || '')
+
+          setTiktok(data.website || '') 
+          setWarrantyTime(data.tiktok || '') 
           setPrimaryColor(data.primary_color || '#4a322e')
           setSecondaryColor(data.secondary_color || '#c99090')
           setLogo(data.logo_url)
           setPhone(data.phone || '')
           setAddress(data.address || '')
-          setTiktok(data.tiktok || '')
-          setInstagram(data.website || '')
+          setInstagram(data.instagram || '')
         }
+
       } catch (e: unknown) {
         console.error('Erro ao carregar marca', e)
       }
@@ -51,8 +59,21 @@ export default function BrandingPage() {
     if (!file) return
     setLogoFile(file)
     const reader = new FileReader()
-    reader.onload = (event) => {
-      setLogo(event.target?.result as string)
+    reader.onload = async (event) => {
+      const base64 = event.target?.result as string
+      setLogo(base64)
+
+      try {
+        const res = await fetch('/api/ai/colors', {
+          method: 'POST',
+          body: JSON.stringify({ image: base64 })
+        })
+        const colors = await res.json()
+        if (colors.primary) setPrimaryColor(colors.primary)
+        if (colors.secondary) setSecondaryColor(colors.secondary)
+      } catch (err) {
+        console.error('Erro na extração do DNA cromático', err)
+      }
     }
     reader.readAsDataURL(file)
   }
@@ -74,24 +95,25 @@ export default function BrandingPage() {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer LAPIDADO_ADMIN_2026'
+          'Authorization': `Bearer LAPIDADO_ADMIN_2026`
         },
         body: JSON.stringify({
           table: 'branding',
           id: brandingId,
           data: {
-            business_name: tagline.toUpperCase(),
-            instagram: warrantyTime.toUpperCase(),
+            facebook: `${tagline.toUpperCase()}|${installments}|${topBanner.toUpperCase()}`, // Salva Frase|Parcelas|Banner
+            tiktok: warrantyTime.toUpperCase(), 
+            website: tiktok, 
+            instagram: instagram,
             primary_color: primaryColor,
             secondary_color: secondaryColor,
             logo_url: currentLogoUrl,
             phone: phone,
-            address: address,
-            tiktok: tiktok,
-            website: instagram
+            address: address
           }
         })
       })
+
 
       const result = await response.json()
       if (!result.success) throw new Error(result.error)
@@ -116,7 +138,6 @@ export default function BrandingPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* DNA Visual - Ultra Fino */}
         <div className="bg-white p-5 rounded-[30px] border border-rose-50 shadow-sm space-y-3">
           <div className="flex items-center gap-2 mb-1"><Palette className="text-brand-secondary" size={14} /><h3 className="text-[9px] font-bold text-brand-primary uppercase tracking-wider">Visual</h3></div>
           
@@ -144,9 +165,13 @@ export default function BrandingPage() {
             <label className="text-[6px] font-black text-brand-secondary uppercase block mb-1">Frase de Impacto</label>
             <input type="text" value={tagline} onChange={(e) => setTagline(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-rose-50/20 border border-transparent focus:border-brand-secondary outline-none text-[9px] italic text-[#7a5c58]" />
           </div>
+
+          <div>
+            <label className="text-[6px] font-black text-brand-secondary uppercase block mb-1">Frase do Topo (Banner)</label>
+            <input type="text" value={topBanner} onChange={(e) => setTopBanner(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-brand-primary/10 border border-transparent focus:border-brand-primary outline-none text-[9px] font-bold text-brand-primary" />
+          </div>
         </div>
 
-        {/* Contatos - Ultra Fino */}
         <div className="bg-white p-5 rounded-[30px] border border-rose-50 shadow-sm space-y-3">
           <div className="flex items-center gap-2 mb-1"><Phone className="text-brand-secondary" size={14} /><h3 className="text-[9px] font-bold text-brand-primary uppercase tracking-wider">Contatos</h3></div>
 
@@ -157,9 +182,9 @@ export default function BrandingPage() {
             <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="ENDEREÇO" className="w-full px-3 py-2 rounded-xl bg-rose-50/20 text-[9px] outline-none" />
           </div>
 
-          {/* GARANTIA - COR SECUNDÁRIA, LIMPO E COM LÁPIS */}
-          <div className="pt-2 border-t border-rose-50 flex flex-col items-center">
+          <div className="pt-2 border-t border-rose-50 flex flex-col items-center gap-3">
             <div className="relative w-full max-w-[150px]">
+              <label className="text-[6px] font-black text-brand-secondary uppercase block mb-1 text-center">Garantia</label>
               <input 
                 type="text" 
                 value={warrantyTime} 
@@ -167,13 +192,25 @@ export default function BrandingPage() {
                 placeholder="GARANTIA..."
                 className="w-full px-3 py-2 rounded-xl bg-brand-secondary text-white text-[9px] font-black text-center outline-none shadow-sm tracking-[0.1em] placeholder:text-white/60" 
               />
-              <Pencil size={10} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60" />
+              <Pencil size={10} className="absolute right-2 top-[60%] -translate-y-1/2 text-white/60" />
+            </div>
+
+            <div className="relative w-full max-w-[150px]">
+              <label className="text-[6px] font-black text-brand-secondary uppercase block mb-1 text-center">Parcelamento Máx.</label>
+              <select 
+                value={installments} 
+                onChange={(e) => setInstallments(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-brand-primary text-white text-[9px] font-black text-center outline-none shadow-sm tracking-[0.1em] appearance-none cursor-pointer"
+              >
+                {[1,2,3,4,5,6,7,8,9,10,11,12].map(n => (
+                  <option key={n} value={n} className="bg-white text-brand-primary">{n}X SEM JUROS</option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
       </div>
 
-      {/* BOTÃO SALVAR - CENTRALIZAÇÃO TOTAL E DELICADA */}
       <div className="flex justify-center mt-10 w-full px-4">
         <button 
           onClick={handleSave} 

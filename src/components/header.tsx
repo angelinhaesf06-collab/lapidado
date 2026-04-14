@@ -15,9 +15,14 @@ export default function Header() {
       try {
         const { data } = await supabase.from('branding').select('*').single()
         if (data) {
+          const rawTagline = data.facebook || ''
+          const [tagline, installments, banner] = rawTagline.split('|')
+          
           setBranding({ 
             logo_url: data.logo_url,
-            tagline: data.business_name || null // Agora a tagline é o business_name
+            tagline: tagline || null,
+            topBanner: banner || null,
+            warranty: data.tiktok || null // Garantia guardada na coluna tiktok
           })
         }
       } catch {
@@ -28,46 +33,49 @@ export default function Header() {
   }, [supabase])
 
   return (
-    <header className="bg-white/95 backdrop-blur-md border-b border-rose-50 sticky top-0 z-50 py-6 md:py-12 flex flex-col items-center justify-center shadow-sm min-h-[180px] md:min-h-[280px]">
-      <div className="max-w-7xl w-full px-4 md:px-8 grid grid-cols-3 items-center">
-        
-        {/* Lado Esquerdo - Vazio para equilíbrio */}
-        <div className="flex-1"></div>
+    <header className="bg-white/95 backdrop-blur-md border-b border-brand-secondary/10 sticky top-0 z-50 flex flex-col items-center justify-center shadow-sm">
+      
+      {/* BANNER PERSONALIZADO - TOPO DO HEADER (COR PRIMÁRIA) */}
+      {(branding as any)?.topBanner && (
+        <div className="w-full bg-brand-primary py-2.5 text-center overflow-hidden shadow-inner">
+           <p className="text-white text-[7px] md:text-[10px] font-black uppercase tracking-[0.4em] md:tracking-[0.6em] animate-pulse">
+             ✨ {(branding as any).topBanner} ✨
+           </p>
+        </div>
+      )}
 
-        {/* Centro - Logotipo Imperial */}
-        <Link href="/" className="flex flex-col items-center text-center group">
+      <div className="w-full px-4 md:px-12 py-6 md:py-10 flex flex-col items-center relative">
+        
+        {/* SACOLA NO CANTO SUPERIOR DIREITO - APENAS ELA AGORA */}
+        <div className="absolute right-4 md:right-12 top-1/2 -translate-y-1/2">
+          <Link href="/cart" className="group relative p-3 md:p-5 rounded-full hover:bg-brand-secondary/5 transition-all text-brand-primary">
+             <ShoppingBag className="w-6 h-6 md:w-8 md:h-8" strokeWidth={1.5} />
+             <span className="absolute top-1 right-1 w-5 h-5 bg-brand-primary text-white text-[10px] flex items-center justify-center rounded-full border-2 border-white shadow-sm font-black">!</span>
+          </Link>
+        </div>
+
+        {/* LOGOTIPO EM DESTAQUE TOTAL */}
+        <Link href="/" className="flex flex-col items-center text-center group w-full">
           {branding?.logo_url ? (
-            <div className="w-40 h-40 md:w-64 md:h-64 mb-6 md:mb-10 flex items-center justify-center group-hover:scale-105 transition-transform duration-700 drop-shadow-xl relative">
-               <Image src={branding.logo_url} alt="Logo" className="object-contain" fill />
+            <div className="w-full max-w-[300px] md:max-w-[450px] h-32 md:h-56 mb-4 md:mb-8 flex items-center justify-center transition-transform duration-700 relative">
+               <Image src={branding.logo_url} alt="Logo" className="object-contain" fill priority />
             </div>
           ) : (
-            <div className="w-20 h-20 md:w-32 md:h-32 mb-6 md:mb-10 rounded-full bg-rose-50 flex items-center justify-center text-brand-primary">
+            <div className="w-20 h-20 md:w-32 md:h-32 mb-4 md:mb-8 rounded-full bg-brand-secondary/5 flex items-center justify-center text-brand-primary">
               <span className="font-glamour text-4xl md:text-6xl font-bold italic">L</span>
             </div>
           )}
 
+          {/* FRASE DE IMPACTO EM UMA ÚNICA LINHA CENTRALIZADA */}
           {branding?.tagline && (
-            <div className="space-y-2">
-              <p className="text-[9px] md:text-[13px] font-black tracking-[0.5em] md:tracking-[0.8em] uppercase text-brand-primary/80 px-4 max-w-lg leading-relaxed">
+            <div className="w-full max-w-4xl px-4">
+              <p className="text-[10px] md:text-[14px] font-black tracking-[0.3em] md:tracking-[0.6em] uppercase text-brand-primary/90 leading-none whitespace-nowrap overflow-hidden text-ellipsis">
                 {branding.tagline}
               </p>
-              <div className="w-12 h-[1px] bg-brand-secondary/30 mx-auto group-hover:w-32 transition-all duration-1000" />
+              <div className="w-16 h-[1.5px] bg-brand-secondary/40 mx-auto mt-3 group-hover:w-full transition-all duration-1000 max-w-[200px]" />
             </div>
           )}
         </Link>
-
-        {/* Lado Direito - Ações Mobile-Friendly */}
-        <div className="flex justify-end gap-2 md:gap-6 items-center">
-          <Link href="/cart" className="group relative p-3 md:p-4 rounded-full hover:bg-rose-50/50 transition-all text-brand-primary">
-             <ShoppingBag className="w-6 h-6 md:w-7 md:h-7" strokeWidth={1.5} />
-             <span className="absolute top-1 right-1 w-5 h-5 bg-brand-primary text-white text-[10px] flex items-center justify-center rounded-full border-2 border-white">!</span>
-          </Link>
-          
-          <Link href="/admin" className="p-3 md:p-4 rounded-full hover:bg-rose-50/50 transition-all text-brand-primary/30">
-             <User className="w-5 h-5 md:w-6 md:h-6" strokeWidth={1.5} />
-          </Link>
-        </div>
-
       </div>
     </header>
   )

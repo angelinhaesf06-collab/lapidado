@@ -20,8 +20,13 @@ export default function NewProductPage() {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('')
+  const [materialFinish, setMaterialFinish] = useState('OURO 18K')
   const [categories, setCategories] = useState<{id: string, name: string}[]>([])
   
+  const FINISH_OPTIONS = [
+    'OURO 18K', 'PRATA', 'PRATA 925', 'OURO ROSE', 'RODIO BRANCO', 'RODIO NEGRO'
+  ]
+
   // CAMPOS FINANCEIROS E ESTOQUE
   const [costPrice, setCostPrice] = useState<string>('')
   const [margin, setMargin] = useState<string>('100')
@@ -160,7 +165,7 @@ export default function NewProductPage() {
         price: parseFloat(salePrice),
         stock_quantity: parseInt(stock) || 0,
         category_id: category,
-        description: description.toUpperCase(),
+        description: `${description.toUpperCase()}\n\n---\nDATA:{"finish": "${materialFinish}", "cost": ${parseFloat(costPrice) || 0}}`,
         image_url: uploadedUrls[0] || '',
       }
       const response = await fetch('/api/admin/save', {
@@ -170,8 +175,19 @@ export default function NewProductPage() {
       })
       const result = await response.json()
       if (!result.success) throw new Error(result.error)
+      
       alert('JOIA SALVA COM SUCESSO! 💎✨')
-      router.push('/admin')
+      
+      // ✨ MÁGICA: LIMPAR CAMPOS PARA PRÓXIMO CADASTRO
+      setName('')
+      setDescription('')
+      setCostPrice('')
+      setSalePrice('')
+      setImages([])
+      setAiError(null)
+      setStock('1')
+      // Mantemos a categoria e o acabamento selecionados para agilizar o próximo cadastro
+      
       router.refresh()
     } catch (err: unknown) {
       alert('ERRO AO SALVAR: ' + (err as Error).message.toUpperCase())
@@ -214,14 +230,41 @@ export default function NewProductPage() {
             )}
           </div>
           
-          {/* MÁGICA - COR SECUNDÁRIA (IGUAL AO PREÇO) + DIAMANTE */}
-          <button type="button" disabled={images.length === 0 || aiLoading} onClick={generateAIDescription} className="w-full py-4 rounded-xl bg-brand-secondary text-white text-[8px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-sm disabled:opacity-50">
-            {aiLoading ? <Loader2 className="animate-spin" size={16} /> : <><Gem size={16} /> <span>Mágica Lapidado</span></>}
-          </button>
+          {/* MÁGICA - AGORA NA COR PRIMÁRIA + DIAMANTE */}
+          <div className="space-y-2">
+            <button type="button" disabled={images.length === 0 || aiLoading} onClick={generateAIDescription} className="w-full py-4 rounded-xl bg-brand-primary text-white text-[8px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-sm disabled:opacity-50">
+              {aiLoading ? <Loader2 className="animate-spin" size={16} /> : <><Gem size={16} /> <span>Mágica Lapidado</span></>}
+            </button>
+            {aiError && (
+              <div className="bg-rose-50 text-rose-500 text-[8px] font-black uppercase p-3 rounded-xl border border-rose-100 text-center animate-pulse">
+                {aiError}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* FORMULÁRIO */}
         <div className="space-y-3 bg-white/60 p-5 rounded-[30px] border border-rose-50 shadow-sm">
+          <div>
+            <label className="text-[7px] font-black text-brand-secondary uppercase tracking-[0.1em] mb-1 ml-1 block">Acabamento / Banho</label>
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {FINISH_OPTIONS.map(option => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => setMaterialFinish(option)}
+                  className={`px-3 py-1.5 rounded-full text-[7px] font-black transition-all ${
+                    materialFinish === option 
+                      ? 'bg-brand-primary text-white shadow-md scale-105' 
+                      : 'bg-white text-brand-secondary border border-rose-100 hover:bg-rose-50'
+                  }`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div>
             <label className="text-[7px] font-black text-brand-secondary uppercase tracking-[0.1em] mb-1 ml-1 block">Nome da Peça</label>
             <input type="text" value={name} onChange={(e) => setName(e.target.value.toUpperCase())} className="w-full px-4 py-2.5 rounded-xl bg-white border border-rose-100 focus:border-brand-primary outline-none font-bold text-[10px] text-brand-primary" />

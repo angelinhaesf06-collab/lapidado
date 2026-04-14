@@ -65,10 +65,10 @@ export default function CartPage() {
   if (cartItems.length === 0) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-32 text-center flex flex-col items-center">
-        <ShoppingBag size={48} className="text-rose-100 mb-6" />
-        <h2 className="text-2xl font-light tracking-[0.2em] uppercase text-[#4a322e] mb-4">Sua sacola está vazia</h2>
-        <p className="text-[#c99090] text-[10px] tracking-widest uppercase mb-12 font-light">Escolha as joias que mais combinam com você</p>
-        <Link href="/" className="bg-[#4a322e] text-white px-12 py-4 rounded-full font-light text-[10px] tracking-[0.3em] uppercase">
+        <ShoppingBag size={48} className="text-brand-secondary/30 mb-6" />
+        <h2 className="text-2xl font-light tracking-[0.2em] uppercase text-brand-primary mb-4">Sua sacola está vazia</h2>
+        <p className="text-brand-secondary text-[10px] tracking-widest uppercase mb-12 font-light">Escolha as joias que mais combinam com você</p>
+        <Link href="/" className="bg-brand-primary text-white px-12 py-4 rounded-full font-light text-[10px] tracking-[0.3em] uppercase hover:bg-brand-secondary transition-colors">
           Voltar ao Catálogo
         </Link>
       </div>
@@ -78,44 +78,44 @@ export default function CartPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-20">
       <div className="text-center mb-20">
-        <h2 className="text-3xl font-light tracking-[0.2em] uppercase text-[#4a322e] mb-4">Minha Sacola</h2>
-        <p className="text-[#c99090] text-[10px] font-light tracking-[0.4em] uppercase">{cartItems.length} Itens Selecionados</p>
+        <h2 className="text-3xl font-light tracking-[0.2em] uppercase text-brand-primary mb-4">Minha Sacola</h2>
+        <p className="text-brand-secondary text-[10px] font-light tracking-[0.4em] uppercase">{cartItems.length} Itens Selecionados</p>
       </div>
 
       <div className="space-y-8 mb-16">
         {cartItems.map((item, index) => (
-          <div key={index} className="flex items-center gap-6 border-b border-rose-50 pb-8">
-            <div className="w-24 h-32 rounded-3xl overflow-hidden bg-white border border-rose-50 shadow-sm relative">
+          <div key={index} className="flex items-center gap-6 border-b border-brand-secondary/10 pb-8">
+            <div className="w-24 h-32 rounded-3xl overflow-hidden bg-white border border-brand-secondary/10 shadow-sm relative">
               <Image src={item.image_url} alt={item.name} fill className="object-cover" />
             </div>
             <div className="flex-1">
-              <h4 className="text-xs font-normal tracking-[0.2em] uppercase text-[#4a322e] mb-2">{item.name}</h4>
-              <p className="text-lg font-light text-[#4a322e]">R$ {item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+              <h4 className="text-xs font-normal tracking-[0.2em] uppercase text-brand-primary mb-2">{item.name}</h4>
+              <p className="text-lg font-light text-brand-primary">R$ {item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
             </div>
-            <button onClick={() => removeItem(index)} className="text-rose-200 hover:text-red-400 transition-colors">
+            <button onClick={() => removeItem(index)} className="text-brand-secondary/40 hover:text-red-400 transition-colors">
               <Trash2 size={18} />
             </button>
           </div>
         ))}
       </div>
 
-      <div className="bg-[#fdf2f2] p-10 rounded-[40px] text-center border border-rose-50 shadow-sm">
+      <div className="bg-brand-secondary/5 p-10 rounded-[40px] text-center border border-brand-secondary/10 shadow-sm">
         <div className="mb-10">
-          <p className="text-[10px] font-light tracking-[0.4em] uppercase text-[#c99090] mb-4">Valor Total do Pedido</p>
-          <h3 className="text-4xl font-light text-[#4a322e] mb-2">R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
-          <p className="text-[11px] font-light tracking-widest uppercase opacity-60 text-[#4a322e]">
+          <p className="text-[10px] font-light tracking-[0.4em] uppercase text-brand-secondary mb-4">Valor Total do Pedido</p>
+          <h3 className="text-4xl font-light text-brand-primary mb-2">R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
+          <p className="text-[11px] font-light tracking-widest uppercase opacity-60 text-brand-primary">
             ou {installments}x de R$ {installmentValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} sem juros
           </p>
         </div>
 
         {/* BENEFÍCIO PIX */}
-        <div className="mb-12 p-6 bg-white rounded-3xl border border-rose-100 flex items-center justify-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center text-[#c99090]">
+        <div className="mb-12 p-6 bg-white rounded-3xl border border-brand-secondary/10 flex items-center justify-center gap-4">
+          <div className="w-10 h-10 rounded-full bg-brand-secondary/10 flex items-center justify-center text-brand-secondary">
             <Banknote size={20} />
           </div>
           <div className="text-left">
-            <p className="text-[10px] font-semibold tracking-widest uppercase text-[#c99090]">Pague com PIX e ganhe 5% OFF</p>
-            <p className="text-2xl font-normal text-[#4a322e]">R$ {pixValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+            <p className="text-[10px] font-semibold tracking-widest uppercase text-brand-secondary">Pague com PIX e ganhe 5% OFF</p>
+            <p className="text-2xl font-normal text-brand-primary">R$ {pixValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
           </div>
         </div>
         
@@ -126,7 +126,7 @@ export default function CartPage() {
           <MessageCircle size={20} /> Finalizar no WhatsApp
         </button>
         
-        <Link href="/" className="inline-block mt-8 text-[9px] font-light tracking-[0.3em] uppercase text-[#7a5c58] hover:text-[#4a322e] transition-colors">
+        <Link href="/" className="inline-block mt-8 text-[9px] font-light tracking-[0.3em] uppercase text-brand-secondary hover:text-brand-primary transition-colors">
           ← Adicionar mais joias
         </Link>
       </div>
