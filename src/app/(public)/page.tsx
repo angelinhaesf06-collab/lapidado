@@ -31,17 +31,17 @@ export default async function Home({
 
   return (
     <div className="flex flex-col w-full min-h-screen">
-      {/* Navegação Mobile e Desktop Superior - Compacta e Visível */}
-      <nav className="bg-white/80 backdrop-blur-md border-b border-rose-50 sticky top-[158px] z-40 shadow-sm overflow-x-auto no-scrollbar">
-        <div className="max-w-7xl mx-auto px-4 py-3 md:py-4 flex justify-start md:justify-center gap-4 md:gap-8 min-w-max">
+      {/* Navegação Mobile e Desktop Superior - Sem deslizar, tudo visível */}
+      <nav className="bg-white/80 backdrop-blur-md border-b border-rose-50 sticky top-[158px] z-40 shadow-sm">
+        <div className="max-w-7xl mx-auto px-2 py-2 md:py-4 flex flex-wrap justify-center gap-2 md:gap-8">
           {categoryNames.map((cat) => (
             <Link 
               key={cat}
               href={`/?category=${cat === 'Todos' ? '' : cat}`}
-              className={`px-3 py-1.5 transition-all font-bold text-[9px] md:text-[11px] tracking-[0.15em] md:tracking-[0.3em] uppercase rounded-full ${
+              className={`px-3 py-1 transition-all font-bold text-[9px] md:text-[11px] tracking-[0.1em] md:tracking-[0.3em] uppercase rounded-full border ${
                 activeCategory === cat
-                ? "bg-brand-primary text-white shadow-md" 
-                : "text-brand-primary/60 hover:text-brand-primary bg-rose-50/30"
+                ? "bg-brand-primary text-white border-brand-primary shadow-sm" 
+                : "text-brand-primary/70 hover:text-brand-primary bg-rose-50/20 border-rose-100"
               }`}
             >
               {cat}
