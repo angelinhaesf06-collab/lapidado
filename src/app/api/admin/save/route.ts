@@ -31,14 +31,18 @@ export async function POST(req: Request) {
 
     let result;
     
-    // LÓGICA UPSERT: Se for branding, tentamos atualizar o registro existente ou criar um novo
+    // LÓGICA INTELIGENTE PARA BRANDING: Sempre opera no único registro existente
     if (table === 'branding') {
-      // No branding, geralmente só temos um registro. 
-      // Se não houver ID, tentamos o upsert baseado na restrição de unicidade.
-      result = await supabaseAdmin
-        .from(table)
-        .upsert(data, { onConflict: 'id' })
-        .select()
+      // Tenta buscar o primeiro registro para obter o ID caso ele não tenha sido enviado
+      const { data: existing } = await supabaseAdmin.from('branding').select('id').limit(1).single();
+      
+      if (existing?.id || id) {
+        // Se existe um registro ou temos o ID, faz o update
+        result = await supabaseAdmin.from(table).update(data).eq('id', existing?.id || id).select();
+      } else {
+        // Se a tabela estiver vazia, faz o primeiro insert
+        result = await supabaseAdmin.from(table).insert([data]).select();
+      }
     } else if (id) {
       // UPDATE para tabelas com ID específico (Produtos, Categorias)
       result = await supabaseAdmin.from(table).update(data).eq('id', id).select()
