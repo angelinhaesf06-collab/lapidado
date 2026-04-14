@@ -58,12 +58,12 @@ export default async function Home({
           <p className="text-brand-secondary text-[9px] md:text-[10px] font-bold md:font-light tracking-[0.3em] uppercase">{(products?.length || 0)} Peças Selecionadas</p>
         </div>
 
-        {/* Grid de 1 Coluna no Mobile, 2 em tablets e 4 em desktops */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 md:gap-x-12 gap-y-12 md:gap-y-24">
+        {/* Grid de 2 Colunas no Mobile, 3 em tablets e 4 em desktops */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 md:gap-x-12 gap-y-8 md:gap-y-24 px-1 md:px-0">
           {products && products.length > 0 ? (
             products.map((product) => (
               <Link href={`/product/${product.id}`} key={product.id} className="group flex flex-col items-center">
-                <div className="aspect-[4/5] bg-white rounded-[24px] md:rounded-[40px] overflow-hidden mb-4 md:mb-10 shadow-sm border border-rose-50 relative transition-all duration-700">
+                <div className="aspect-[4/5] w-full bg-white rounded-[16px] md:rounded-[40px] overflow-hidden mb-3 md:mb-10 shadow-sm border border-rose-50 relative transition-all duration-700">
                   <Image 
                     src={product.image_url} 
                     alt={product.name} 
@@ -72,13 +72,13 @@ export default async function Home({
                   />
                 </div>
                 
-                <div className="px-2 text-center w-full">
-                  <h4 className="text-[10px] md:text-sm font-bold md:font-normal tracking-[0.1em] md:tracking-[0.2em] uppercase text-brand-primary mb-1 md:mb-3 truncate w-full">{product.name}</h4>
-                  <div className="flex flex-col gap-1 md:gap-2">
-                    <span className="text-sm md:text-lg font-bold md:font-light text-brand-primary">
+                <div className="px-1 text-center w-full">
+                  <h4 className="text-[9px] md:text-sm font-bold md:font-normal tracking-[0.05em] md:tracking-[0.2em] uppercase text-brand-primary mb-1 md:mb-3 truncate w-full">{product.name}</h4>
+                  <div className="flex flex-col gap-0.5 md:gap-2">
+                    <span className="text-[12px] md:text-lg font-bold md:font-light text-brand-primary">
                       R$ {product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
-                    <p className="text-brand-secondary text-[8px] md:text-[9px] font-bold md:font-light tracking-tighter md:tracking-widest uppercase opacity-80">
+                    <p className="text-brand-secondary text-[7px] md:text-[9px] font-bold md:font-light tracking-tighter md:tracking-widest uppercase opacity-80">
                       10x de R$ {(product.price / 10).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </p>
                   </div>
