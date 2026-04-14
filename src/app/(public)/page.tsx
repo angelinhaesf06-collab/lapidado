@@ -3,6 +3,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import AddToCartButton from '@/components/cart/add-to-cart-button'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function Home({
   searchParams,
 }: {

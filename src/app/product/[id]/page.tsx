@@ -4,6 +4,8 @@ import AddToCartButton from '@/components/cart/add-to-cart-button'
 import { createClient } from '@/lib/supabase/server'
 import Image from 'next/image'
 
+export const dynamic = 'force-dynamic'
+
 export default async function ProductPage({
   params,
 }: {
