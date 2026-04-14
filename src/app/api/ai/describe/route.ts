@@ -26,7 +26,7 @@ export async function POST(req: Request) {
       Retorne APENAS o JSON.
     `;
 
-    const models = ["gemini-flash-latest", "gemini-pro-latest"];
+    const models = ["gemini-1.5-flash", "gemini-1.5-pro"];
     let lastError = null;
 
     for (const modelName of models) {
@@ -58,8 +58,8 @@ export async function POST(req: Request) {
           }
 
           if (isOverloaded && i < 1) {
-            console.warn(`⚠️ NEXUS: MODELO ${modelName} SOBRECARREGADO (503). ESPERANDO 1s...`);
-            await sleep(1000); // Espera 1 segundo
+            console.warn(`⚠️ NEXUS: MODELO ${modelName} SOBRECARREGADO (503). ESPERANDO 3s...`);
+            await sleep(3000); // Espera 3 segundos
             continue;
           }
           
