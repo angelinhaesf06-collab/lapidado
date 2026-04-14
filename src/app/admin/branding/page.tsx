@@ -1,26 +1,25 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Upload, CheckCircle2, Phone, Camera, Loader2, Store, Palette, Sparkles, MapPin, Camera as InstagramIcon, Music2, Type } from 'lucide-react'
+import { Upload, Phone, Camera, Loader2, Palette, Sparkles, MapPin, Camera as InstagramIcon, Music2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import Image from 'next/image'
 
 export default function BrandingPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [logo, setLogo] = useState<string | null>(null)
   const [logoFile, setLogoFile] = useState<File | null>(null)
-  const [name, setName] = useState('LAPIDADO')
   const [tagline, setTagline] = useState('')
   const [primaryColor, setPrimaryColor] = useState('#4a322e')
   const [secondaryColor, setSecondaryColor] = useState('#c99090')
-  const [fontFamily, setFontFamily] = useState('Inter')
   const [phone, setPhone] = useState('')
   const [address, setAddress] = useState('')
   const [tiktok, setTiktok] = useState('')
   const [instagram, setInstagram] = useState('')
   const [warrantyTime, setWarrantyTime] = useState('ETERNA')
   const [brandingId, setBrandingId] = useState<string | null>(null)
-  const [extracting, setExtracting] = useState(false)
+  const [extracting] = useState(false)
   
   const supabase = createClient()
 
@@ -41,13 +40,13 @@ export default function BrandingPage() {
           setTiktok(data.tiktok || '')
           setInstagram(data.website || '')
         }
-      } catch (e) {
-        console.error('Erro ao carregar marca')
+      } catch (e: unknown) {
+        console.error('Erro ao carregar marca', e)
       }
       setLoading(false)
     }
     loadBranding()
-  }, [])
+  }, [supabase])
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -103,8 +102,9 @@ export default function BrandingPage() {
 
       alert('IDENTIDADE DA MARCA ATUALIZADA! 💎✨')
       window.location.reload()
-    } catch (err: any) {
-      alert('ERRO AO SALVAR: ' + err.message.toUpperCase())
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      alert('ERRO AO SALVAR: ' + error.message.toUpperCase())
     } finally {
       setSaving(false)
     }
@@ -133,7 +133,7 @@ export default function BrandingPage() {
           
           <div className="flex flex-col items-center gap-6">
             <div className="relative w-32 h-32 rounded-full overflow-hidden border-2 border-dashed border-brand-secondary/30 flex items-center justify-center bg-brand-secondary/5 group">
-              {logo ? <img src={logo} alt="LOGO" className="w-full h-full object-contain p-4" /> : <Camera size={24} className="text-brand-secondary/40" />}
+              {logo ? <Image src={logo} alt="LOGO" fill className="object-contain p-4" /> : <Camera size={24} className="text-brand-secondary/40" />}
               <label className="absolute inset-0 cursor-pointer flex items-center justify-center bg-black/0 hover:bg-black/10 transition-all">
                 <input type="file" className="hidden" onChange={handleLogoUpload} accept="image/*" />
                 <div className="opacity-0 group-hover:opacity-100 bg-white/90 p-2 rounded-full shadow-lg transition-all">

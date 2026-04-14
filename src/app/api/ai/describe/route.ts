@@ -47,10 +47,10 @@ export async function POST(req: Request) {
           const jsonString = jsonMatch ? jsonMatch[0] : text;
           return NextResponse.json(JSON.parse(jsonString));
 
-        } catch (err: any) {
-          lastError = err;
-          const isOverloaded = err.message?.includes("503") || err.message?.includes("overloaded");
-          const isNotFound = err.message?.includes("404") || err.message?.includes("not found");
+        } catch (err) {
+          lastError = err as Error;
+          const isOverloaded = (err as Error).message?.includes("503") || (err as Error).message?.includes("overloaded");
+          const isNotFound = (err as Error).message?.includes("404") || (err as Error).message?.includes("not found");
           
           if (isNotFound) {
             console.warn(`⚠️ NEXUS: MODELO ${modelName} NÃO ENCONTRADO (404). TENTANDO PRÓXIMO...`);
@@ -63,7 +63,7 @@ export async function POST(req: Request) {
             continue;
           }
           
-          console.error(`❌ NEXUS: ERRO NO MODELO ${modelName}:`, err.message);
+          console.error(`❌ NEXUS: ERRO NO MODELO ${modelName}:`, (err as Error).message);
           break; // Se for outro erro ou acabaram retries, pula pro próximo modelo
         }
       }
@@ -71,11 +71,12 @@ export async function POST(req: Request) {
 
     throw lastError || new Error("Falha total na comunicação com a IA.");
 
-  } catch (error: any) {
-    console.error("Erro Final na IA:", error);
+  } catch (error) {
+    const err = error as Error
+    console.error("Erro Final na IA:", err);
     return NextResponse.json({ 
       error: "ALTA DEMANDA NO GOOGLE.",
-      details: error.message 
+      details: err.message 
     }, { status: 503 });
   }
 }

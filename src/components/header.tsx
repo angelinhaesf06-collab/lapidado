@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ShoppingBag, User } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import Image from 'next/image'
 
 export default function Header() {
   const [branding, setBranding] = useState<{logo_url: string | null, tagline: string | null} | null>(null)
@@ -19,12 +20,12 @@ export default function Header() {
             tagline: data.business_name || null // Agora a tagline é o business_name
           })
         }
-      } catch (e) {
+      } catch {
         console.error('Erro ao carregar marca na vitrine')
       }
     }
     loadBranding()
-  }, [])
+  }, [supabase])
 
   return (
     <header className="bg-white/95 backdrop-blur-md border-b border-rose-50 sticky top-0 z-50 py-6 md:py-12 flex flex-col items-center justify-center shadow-sm min-h-[180px] md:min-h-[280px]">
@@ -36,8 +37,8 @@ export default function Header() {
         {/* Centro - Logotipo Imperial */}
         <Link href="/" className="flex flex-col items-center text-center group">
           {branding?.logo_url ? (
-            <div className="w-40 h-40 md:w-64 md:h-64 mb-6 md:mb-10 flex items-center justify-center group-hover:scale-105 transition-transform duration-700 drop-shadow-xl">
-               <img src={branding.logo_url} alt="Logo" className="w-full h-full object-contain" />
+            <div className="w-40 h-40 md:w-64 md:h-64 mb-6 md:mb-10 flex items-center justify-center group-hover:scale-105 transition-transform duration-700 drop-shadow-xl relative">
+               <Image src={branding.logo_url} alt="Logo" className="object-contain" fill />
             </div>
           ) : (
             <div className="w-20 h-20 md:w-32 md:h-32 mb-6 md:mb-10 rounded-full bg-rose-50 flex items-center justify-center text-brand-primary">

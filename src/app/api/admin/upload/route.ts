@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     const buffer = Buffer.from(await file.arrayBuffer());
 
     // Upload usando a permissão master
-    const { data, error } = await supabaseAdmin.storage
+    const { error } = await supabaseAdmin.storage
       .from(bucket)
       .upload(fileName, buffer, {
         contentType: file.type,
@@ -37,8 +37,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ url: publicUrl })
 
-  } catch (err: any) {
-    console.error('ERRO NO UPLOAD SEGURO:', err.message)
-    return NextResponse.json({ error: err.message }, { status: 500 })
+  } catch (err) {
+    const error = err as Error
+    console.error('ERRO NO UPLOAD SEGURO:', error.message)
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

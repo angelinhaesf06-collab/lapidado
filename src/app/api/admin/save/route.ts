@@ -51,8 +51,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, data: result.data })
 
-  } catch (err: any) {
-    console.error('ERRO NO SALVAMENTO:', err.message)
-    return NextResponse.json({ error: err.message }, { status: 500 })
+  } catch (err) {
+    const error = err as Error
+    console.error('ERRO NO SALVAMENTO:', error.message)
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

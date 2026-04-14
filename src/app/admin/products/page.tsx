@@ -1,31 +1,41 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Trash2, Pencil, Image as ImageIcon, Loader2, ArrowLeft, Gem, Share2, Camera } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
+
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  image_url: string | null;
+  stock_quantity: number;
+  categories: { name: string } | null;
+}
 
 export default function ProductsListPage() {
-  const [products, setProducts] = useState<any[]>([])
+  const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const supabase = createClient()
 
-  async function loadProducts() {
+  const loadProducts = useCallback(async () => {
     setLoading(true)
     const { data } = await supabase
       .from('products')
       .select('*, categories(name)')
       .order('created_at', { ascending: false })
-    if (data) setProducts(data)
+    if (data) setProducts(data as unknown as Product[])
     setLoading(false)
-  }
+  }, [supabase])
 
   useEffect(() => {
     loadProducts()
-  }, [])
+  }, [loadProducts])
 
-  const handleDelete = async (id: string, imageUrl: string) => {
+  const handleDelete = async (id: string, imageUrl: string | null) => {
     if (!confirm('TEM CERTEZA QUE DESEJA REMOVER ESTA JOIA DA VITRINE? 💎')) return
     
     setDeletingId(id)
@@ -44,8 +54,8 @@ export default function ProductsListPage() {
 
       setProducts(products.filter(p => p.id !== id))
       alert('JOIA REMOVIDA COM SUCESSO! ✨')
-    } catch (err: any) {
-      alert('ERRO AO EXCLUIR: ' + err.message.toUpperCase())
+    } catch (err: unknown) {
+      alert('ERRO AO EXCLUIR: ' + (err as Error).message.toUpperCase())
     } finally {
       setDeletingId(null)
     }
@@ -79,7 +89,7 @@ export default function ProductsListPage() {
               {/* Imagem do Produto */}
               <div className="aspect-square relative overflow-hidden bg-rose-50/30">
                 {product.image_url ? (
-                  <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  <Image src={product.image_url} alt={product.name} className="object-cover group-hover:scale-110 transition-transform duration-500" fill />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-rose-200">
                     <ImageIcon size={48} />

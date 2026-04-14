@@ -32,10 +32,11 @@ export default function AtivarPage() {
 
       setStatus('success')
       setMessage('O banco de dados e as categorias foram lapidados com sucesso! ✨')
-    } catch (err: any) {
-      console.error("Erro na ativação:", err)
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      console.error("Erro na ativação:", error)
       setStatus('error')
-      setMessage(`Erro: ${err.message}. Certifique-se de que as tabelas existem no Supabase.`)
+      setMessage(`Erro: ${error.message}. Certifique-se de que as tabelas existem no Supabase.`)
     } finally {
       setLoading(false)
     }

@@ -1,20 +1,31 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Phone, MapPin, Music2, Mail, Camera as InstagramIcon, Share2 as FacebookIcon } from 'lucide-react'
+import { Phone, MapPin, Music2, Camera as InstagramIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import Image from 'next/image'
+
+interface Branding {
+  logo_url: string | null;
+  business_name: string | null;
+  instagram: string | null;
+  phone: string | null;
+  address: string | null;
+  website: string | null;
+  tiktok: string | null;
+}
 
 export default function Footer() {
-  const [branding, setBranding] = useState<any>(null)
+  const [branding, setBranding] = useState<Branding | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
     async function loadBranding() {
       const { data } = await supabase.from('branding').select('*').single()
-      if (data) setBranding(data)
+      if (data) setBranding(data as unknown as Branding)
     }
     loadBranding()
-  }, [])
+  }, [supabase])
 
   if (!branding) return null
 
@@ -25,7 +36,7 @@ export default function Footer() {
         {/* Lado 1: Assinatura Visual */}
         <div className="flex flex-col items-center md:items-start space-y-4">
           {branding.logo_url ? (
-            <img src={branding.logo_url} alt="Logo" className="h-16 w-auto object-contain grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all duration-700" />
+            <Image src={branding.logo_url} alt="Logo" className="h-16 w-auto object-contain grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all duration-700" width={150} height={64} />
           ) : (
             <h3 className="font-glamour text-2xl text-brand-primary uppercase tracking-widest opacity-50">
               {branding.business_name || branding.instagram || 'MINHA VITRINE'}

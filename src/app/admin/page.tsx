@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ShoppingBag, PlusCircle, TrendingUp, Gem, Loader2, DollarSign, Sparkles, Pencil } from 'lucide-react'
+import { ShoppingBag, PlusCircle, Gem, Loader2, DollarSign, Pencil } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
@@ -37,7 +37,7 @@ export default function AdminDashboard() {
             try {
               const match = p.description.match(/DATA:({.*})/)
               if (match) cost = JSON.parse(match[1]).cost || 0
-            } catch(e) {}
+            } catch {}
           }
           return acc + (cost * (Number(p.stock_quantity) || 0))
         }, 0)
@@ -48,7 +48,7 @@ export default function AdminDashboard() {
       setLoading(false)
     }
     loadDashboardData()
-  }, [])
+  }, [supabase])
 
   return (
     <div className="max-w-6xl mx-auto py-10 px-4">
@@ -67,7 +67,7 @@ export default function AdminDashboard() {
             <ShoppingBag size={14} /> Inventário por Categoria
           </h3>
           {loading ? <div className="flex justify-center p-10"><Loader2 className="animate-spin text-[#c99090]" size={24} /></div> : (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {stats.map((stat, i) => (
                 <div key={i} className={`p-5 rounded-[32px] relative group ${i === 0 ? 'bg-[#4a322e] text-white shadow-lg' : 'bg-rose-50/30 text-[#4a322e] hover:bg-rose-50/50'} transition-all`}>
                   <p className={`text-[7px] font-black uppercase tracking-widest mb-1 ${i === 0 ? 'text-rose-200' : 'text-[#c99090]'}`}>{stat.name}</p>

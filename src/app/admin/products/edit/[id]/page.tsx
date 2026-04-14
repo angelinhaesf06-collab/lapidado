@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect, use } from 'react'
-import { Gem, Loader2, Check, Calculator, PackageOpen, Sparkles, X, Plus, ArrowLeft } from 'lucide-react'
+import { Loader2, Check, Plus, ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -18,8 +19,6 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   const [category, setCategory] = useState('')
   const [materialFinish, setMaterialFinish] = useState('OURO 18K')
   const [categories, setCategories] = useState<{id: string, name: string}[]>([])
-  const [costPrice, setCostPrice] = useState<string>('')
-  const [margin, setMargin] = useState<string>('100')
   const [salePrice, setSalePrice] = useState<string>('')
   const [stock, setStock] = useState<string>('1')
 
@@ -51,10 +50,9 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         if (descMatch) {
           try {
             const extraData = JSON.parse(descMatch[1])
-            setCostPrice(extraData.cost?.toString() || '')
             setMaterialFinish(extraData.finish || 'OURO 18K')
             setDescription(prod.description.split('\n\n---')[0])
-          } catch(e) {
+          } catch {
             setDescription(prod.description)
           }
         } else {
@@ -72,7 +70,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
       setFetching(false)
     }
     loadData()
-  }, [id])
+  }, [id, router, supabase])
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -129,8 +127,8 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
       alert('JOIA ATUALIZADA COM SUCESSO! 💎✨')
       router.push('/admin/products')
       router.refresh()
-    } catch (err: any) {
-      alert('ERRO AO ATUALIZAR: ' + err.message.toUpperCase())
+    } catch (err: unknown) {
+      alert('ERRO AO ATUALIZAR: ' + (err as Error).message.toUpperCase())
     } finally {
       setLoading(false)
     }
@@ -151,7 +149,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         <div className="space-y-6">
           <div className="relative aspect-square rounded-[40px] overflow-hidden border-2 border-[#c99090]/10 shadow-md">
             {images[0] ? (
-              <img src={images[0].preview} alt="Preview" className="w-full h-full object-cover" />
+              <Image src={images[0].preview} alt="Preview" className="object-cover" fill />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-rose-50 text-rose-200 uppercase text-[10px] font-black">Sem Foto</div>
             )}

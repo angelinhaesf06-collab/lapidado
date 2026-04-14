@@ -1,6 +1,6 @@
 'use client'
 
-import { Gem, Loader2, Mail, Lock, UserPlus } from 'lucide-react'
+import { Gem, Loader2, Mail, Lock } from 'lucide-react'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -49,7 +49,7 @@ export default function RegisterPage() {
         router.push('/login')
       }, 3000)
       
-    } catch (err) {
+    } catch {
       setError('Ocorreu um erro inesperado. Tente novamente mais tarde.')
     } finally {
       setLoading(false)
@@ -66,7 +66,7 @@ export default function RegisterPage() {
             <Gem className="text-[#c99090]" size={36} />
           </div>
           <h2 className="text-3xl font-bold text-[#4a322e]">Nova Empresária</h2>
-          <p className="text-[#7a5c58] text-sm mt-2 font-medium italic">"Comece hoje a lapidar o futuro do seu catálogo." 💎</p>
+          <p className="text-[#7a5c58] text-sm mt-2 font-medium italic">&quot;Comece hoje a lapidar o futuro do seu catálogo.&quot; 💎</p>
         </div>
 
         {error && (

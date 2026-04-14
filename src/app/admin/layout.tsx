@@ -1,28 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { Info, PlusCircle, LayoutGrid, LogOut, Gem, Eye, Share2, MessageCircle, ShoppingBag, Pencil } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import { useEffect, useState } from 'react'
+import { Info, PlusCircle, LayoutGrid, LogOut, Gem, Eye, Share2, Pencil } from 'lucide-react'
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const [whatsapp, setWhatsapp] = useState('')
-  const supabase = createClient()
-
-  useEffect(() => {
-    async function loadPhone() {
-      const { data } = await supabase.from('branding').select('phone').single()
-      if (data?.phone) {
-        setWhatsapp(data.phone.replace(/\D/g, ''))
-      }
-    }
-    loadPhone()
-  }, [])
-
   const shareCatalog = () => {
     const url = window.location.origin // Link do catálogo atual
     const message = encodeURIComponent(`OLÁ! ✨ ACABEI DE ATUALIZAR MEU CATÁLOGO DE SEMIJOIAS COM NOVIDADES LINDAS! 💎\n\nCONFIRA AQUI: ${url}\n\nESTOU À DISPOSIÇÃO PARA DÚVIDAS!`)

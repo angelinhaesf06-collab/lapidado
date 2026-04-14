@@ -46,7 +46,7 @@ export default function BrandingSync() {
       }
     }
     syncBranding()
-  }, [])
+  }, [supabase])
 
   return null
 }

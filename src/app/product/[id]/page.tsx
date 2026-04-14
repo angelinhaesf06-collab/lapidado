@@ -1,8 +1,8 @@
-import { ChevronLeft, Star } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import AddToCartButton from '@/components/cart/add-to-cart-button'
 import { createClient } from '@/lib/supabase/server'
+import Image from 'next/image'
 
 export default async function ProductPage({
   params,
@@ -40,7 +40,9 @@ export default async function ProductPage({
       try {
         const match = parts[1].match(/DATA:({.*})/)
         if (match) materialFinish = JSON.parse(match[1]).finish
-      } catch(e) {}
+      } catch {
+        // Ignorar erro se o JSON for inválido
+      }
     }
   }
 
@@ -53,8 +55,8 @@ export default async function ProductPage({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center w-full">
-        <div className="aspect-[4/5] bg-white rounded-[80px] overflow-hidden shadow-2xl border border-rose-50 mx-auto w-full max-w-lg">
-          <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+        <div className="relative aspect-[4/5] bg-white rounded-[80px] overflow-hidden shadow-2xl border border-rose-50 mx-auto w-full max-w-lg">
+          <Image src={product.image_url} alt={product.name} className="object-cover" fill />
         </div>
 
         <div className="flex flex-col items-center text-center max-w-xl mx-auto lg:mx-0">

@@ -3,10 +3,17 @@
 import { useState, useEffect } from 'react'
 import { Trash2, MessageCircle, ShoppingBag, Banknote } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 
+interface CartItem {
+  name: string
+  price: number
+  image_url: string
+}
+
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState<any[]>(() => {
+  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
     if (typeof window !== 'undefined') {
       return JSON.parse(localStorage.getItem('lapidado-cart') || '[]')
     }
@@ -78,8 +85,8 @@ export default function CartPage() {
       <div className="space-y-8 mb-16">
         {cartItems.map((item, index) => (
           <div key={index} className="flex items-center gap-6 border-b border-rose-50 pb-8">
-            <div className="w-24 h-32 rounded-3xl overflow-hidden bg-white border border-rose-50 shadow-sm">
-              <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+            <div className="w-24 h-32 rounded-3xl overflow-hidden bg-white border border-rose-50 shadow-sm relative">
+              <Image src={item.image_url} alt={item.name} fill className="object-cover" />
             </div>
             <div className="flex-1">
               <h4 className="text-xs font-normal tracking-[0.2em] uppercase text-[#4a322e] mb-2">{item.name}</h4>

@@ -1,12 +1,17 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Plus, Trash2, LayoutGrid, Loader2, ArrowLeft, Gem, Pencil, Check, X } from 'lucide-react'
+import { Trash2, LayoutGrid, Loader2, ArrowLeft, Pencil, Check, X } from 'lucide-react'
 import Link from 'next/link'
 
+interface Category {
+  id: string
+  name: string
+}
+
 export default function CategoriesPage() {
-  const [categories, setCategories] = useState<any[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [newCategory, setNewCategory] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState('')
@@ -14,16 +19,16 @@ export default function CategoriesPage() {
   const [adding, setAdding] = useState(false)
   const supabase = createClient()
 
-  async function loadCategories() {
+  const loadCategories = useCallback(async () => {
     setLoading(true)
     const { data } = await supabase.from('categories').select('*').order('name')
-    if (data) setCategories(data)
+    if (data) setCategories(data as Category[])
     setLoading(false)
-  }
+  }, [supabase])
 
   useEffect(() => {
     loadCategories()
-  }, [])
+  }, [loadCategories])
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -47,8 +52,9 @@ export default function CategoriesPage() {
       setNewCategory('')
       await loadCategories()
       alert('CATEGORIA ADICIONADA! 💎')
-    } catch (err: any) {
-      alert('ERRO: ' + err.message.toUpperCase())
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      alert('ERRO: ' + error.message.toUpperCase())
     } finally {
       setAdding(false)
     }
@@ -74,8 +80,9 @@ export default function CategoriesPage() {
       
       setEditingId(null)
       await loadCategories()
-    } catch (err: any) {
-      alert('ERRO AO ATUALIZAR: ' + err.message.toUpperCase())
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      alert('ERRO AO ATUALIZAR: ' + error.message.toUpperCase())
     }
   }
 
@@ -85,8 +92,9 @@ export default function CategoriesPage() {
       const { error } = await supabase.from('categories').delete().eq('id', id)
       if (error) throw error
       await loadCategories()
-    } catch (err: any) {
-      alert('ERRO: ' + err.message.toUpperCase())
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      alert('ERRO: ' + error.message.toUpperCase())
     }
   }
 

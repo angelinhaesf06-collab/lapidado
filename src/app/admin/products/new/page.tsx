@@ -1,14 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Gem, Loader2, Camera, Check, Calculator, Coins, Percent, PackageOpen, Sparkles, X, Plus } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { Gem, Loader2, Check, Calculator, PackageOpen, Sparkles, X, Plus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 export default function NewProductPage() {
   const [uploadProgress, setUploadProgress] = useState(0)
   const [isSaving, setIsSaving] = useState(false)
-  const [loading, setLoading] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
   
@@ -37,10 +37,10 @@ export default function NewProductPage() {
   const router = useRouter()
   const supabase = createClient()
 
-  async function loadCategories() {
+  const loadCategories = useCallback(async () => {
     const { data } = await supabase.from('categories').select('*').order('name')
     if (data) setCategories(data)
-  }
+  }, [supabase])
 
   async function handleSaveCategory() {
     if (!newCategoryName) return
@@ -61,15 +61,15 @@ export default function NewProductPage() {
       setNewCategoryName('')
       setIsAddingCategory(false)
       alert('CATEGORIA ADICIONADA! 💎')
-    } catch (err: any) {
-      alert('ERRO AO SALVAR CATEGORIA: ' + err.message.toUpperCase())
+    } catch (err: unknown) {
+      alert('ERRO AO SALVAR CATEGORIA: ' + (err as Error).message.toUpperCase())
       setIsAddingCategory(false)
     }
   }
 
   useEffect(() => {
     loadCategories()
-  }, [])
+  }, [loadCategories])
 
   useEffect(() => {
     const cost = parseFloat(costPrice) || 0
@@ -99,7 +99,7 @@ export default function NewProductPage() {
 
   const compressImage = async (base64Str: string): Promise<string> => {
     return new Promise((resolve) => {
-      const img = new Image()
+      const img = new window.Image()
       img.src = base64Str
       img.onload = () => {
         const canvas = document.createElement('canvas')
@@ -141,7 +141,7 @@ export default function NewProductPage() {
         )
         if (foundCat) setCategory(foundCat.id)
       }
-    } catch (err: any) {
+    } catch {
       setAiError("IA SOBRECARREGADA. CONTINUE MANUALMENTE. ✨")
     } finally {
       setAiLoading(false)
@@ -211,8 +211,8 @@ export default function NewProductPage() {
       alert('JOIA E GALERIA SALVAS COM SUCESSO! 💎✨')
       router.push('/admin')
       router.refresh()
-    } catch (err: any) {
-      alert('ERRO AO SALVAR: ' + err.message.toUpperCase())
+    } catch (err: unknown) {
+      alert('ERRO AO SALVAR: ' + (err as Error).message.toUpperCase())
     } finally {
       setIsSaving(false)
       setUploadProgress(0)
@@ -240,7 +240,7 @@ export default function NewProductPage() {
       )}      <div className="text-center mb-12">
         <h1 className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.4em] mb-4">CATÁLOGO LAPIDADO</h1>
         <h2 className="text-3xl font-bold text-brand-primary uppercase tracking-tight">ACERVO MULTIFOTOS</h2>
-        <p className="text-[#7a5c58] text-[10px] mt-4 font-black uppercase tracking-[0.1em]">"ADICIONE VÁRIOS ÂNGULOS PARA ENCANTAR SUA CLIENTE." 💎</p>
+        <p className="text-[#7a5c58] text-[10px] mt-4 font-black uppercase tracking-[0.1em]">&quot;ADICIONE VÁRIOS ÂNGULOS PARA ENCANTAR SUA CLIENTE.&quot; 💎</p>
       </div>
 
       <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -249,7 +249,7 @@ export default function NewProductPage() {
           <div className="grid grid-cols-2 gap-4">
             {images.map((img, index) => (
               <div key={index} className="relative aspect-square rounded-[40px] overflow-hidden border-2 border-brand-secondary/10 group shadow-md hover:shadow-xl transition-all">
-                <img src={img.preview} alt="Preview" className="w-full h-full object-cover" />
+                <Image src={img.preview} alt="Preview" className="object-cover" fill />
                 <button type="button" onClick={() => removeImage(index)} className="absolute top-4 right-4 p-2 bg-white/90 rounded-full text-rose-500 opacity-0 group-hover:opacity-100 transition-all shadow-lg">
                   <X size={16} />
                 </button>
@@ -376,8 +376,8 @@ export default function NewProductPage() {
             <textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value.toUpperCase())} className="w-full px-8 py-5 rounded-3xl bg-brand-secondary/5 border-2 border-transparent focus:border-brand-secondary outline-none resize-none uppercase text-xs leading-relaxed text-[#7a5c58]" />
           </div>
 
-          <button type="submit" disabled={loading} className="w-full py-6 rounded-[32px] bg-brand-primary text-white font-black uppercase tracking-widest shadow-xl hover:opacity-95 transition-all flex items-center justify-center gap-4 disabled:opacity-50 mt-4">
-            {loading ? <Loader2 className="animate-spin" size={24} /> : <><Check size={24} /> <span>SALVAR JOIA E GALERIA</span></>}
+          <button type="submit" disabled={isSaving} className="w-full py-6 rounded-[32px] bg-brand-primary text-white font-black uppercase tracking-widest shadow-xl hover:opacity-95 transition-all flex items-center justify-center gap-4 disabled:opacity-50 mt-4">
+            {isSaving ? <Loader2 className="animate-spin" size={24} /> : <><Check size={24} /> <span>SALVAR JOIA E GALERIA</span></>}
           </button>
         </div>
       </form>

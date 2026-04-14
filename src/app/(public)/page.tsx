@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
-import { Star } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default async function Home({
   searchParams,
@@ -58,16 +58,17 @@ export default async function Home({
           <p className="text-brand-secondary text-[9px] md:text-[10px] font-bold md:font-light tracking-[0.3em] uppercase">{(products?.length || 0)} Peças Selecionadas</p>
         </div>
 
-        {/* Grid de 2 Colunas no Mobile */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 md:gap-x-12 gap-y-12 md:gap-y-24">
+        {/* Grid de 1 Coluna no Mobile, 2 em tablets e 4 em desktops */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 md:gap-x-12 gap-y-12 md:gap-y-24">
           {products && products.length > 0 ? (
             products.map((product) => (
               <Link href={`/product/${product.id}`} key={product.id} className="group flex flex-col items-center">
                 <div className="aspect-[4/5] bg-white rounded-[24px] md:rounded-[40px] overflow-hidden mb-4 md:mb-10 shadow-sm border border-rose-50 relative transition-all duration-700">
-                  <img 
+                  <Image 
                     src={product.image_url} 
                     alt={product.name} 
-                    className="w-full h-full object-cover" 
+                    fill
+                    className="object-cover" 
                   />
                 </div>
                 

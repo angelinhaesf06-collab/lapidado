@@ -2,7 +2,7 @@
 
 import { ShoppingBag } from 'lucide-react'
 
-export default function AddToCartButton({ product }: { product: any }) {
+export default function AddToCartButton({ product }: { product: unknown }) {
   const handleAddToCart = () => {
     const cart = JSON.parse(localStorage.getItem('lapidado-cart') || '[]')
     cart.push(product)

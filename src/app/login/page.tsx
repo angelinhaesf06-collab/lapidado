@@ -1,6 +1,6 @@
 'use client'
 
-import { Lock, Gem, Loader2, Key } from 'lucide-react'
+import { Gem, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -10,7 +10,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [socialLoading, setSocialLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
@@ -35,29 +34,10 @@ export default function LoginPage() {
 
       router.push('/admin')
       router.refresh()
-    } catch (err) {
+    } catch {
       setError('Ocorreu um erro inesperado. Tente novamente mais tarde.')
     } finally {
       setLoading(false)
-    }
-  }
-
-  async function handleGitHubLogin() {
-    setSocialLoading(true)
-    setError(null)
-    
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'github',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      })
-
-      if (error) throw error
-    } catch (err) {
-      setError('Erro ao conectar com GitHub. Verifique as configurações no Supabase.')
-      setSocialLoading(false)
     }
   }
 
@@ -71,7 +51,7 @@ export default function LoginPage() {
             <Gem className="text-[#c99090]" size={36} />
           </div>
           <h2 className="text-3xl font-bold text-[#4a322e]">Olá, Empresária!</h2>
-          <p className="text-[#7a5c58] text-sm mt-2 font-medium italic">"Nossa tecnologia, sua criatividade. Juntas, lapidamos o extraordinário." ✨</p>
+          <p className="text-[#7a5c58] text-sm mt-2 font-medium italic">&quot;Nossa tecnologia, sua criatividade. Juntas, lapidamos o extraordinário.&quot; ✨</p>
         </div>
 
         {error && (
