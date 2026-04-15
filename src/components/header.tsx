@@ -21,17 +21,34 @@ export default function Header() {
   useEffect(() => {
     async function loadBranding() {
       try {
-        const { data } = await supabase.from('branding').select('*').limit(1).single()
-        if (data) {
-          const rawTagline = data.facebook || ''
+        const { data: { user } } = await supabase.auth.getUser()
+        let brandingData = null
+
+        if (user) {
+          const { data: userBranding } = await supabase.from('branding').select('*').eq('user_id', user.id).limit(1).maybeSingle()
+          brandingData = userBranding
+        }
+        
+        if (!brandingData) {
+          const { data: orphanedBranding } = await supabase.from('branding').select('*').is('user_id', null).limit(1).maybeSingle()
+          brandingData = orphanedBranding
+        }
+
+        if (!brandingData) {
+          const { data: anyBranding } = await supabase.from('branding').select('*').limit(1).maybeSingle()
+          brandingData = anyBranding
+        }
+
+        if (brandingData) {
+          const rawTagline = brandingData.facebook || ''
           const [tagline, installments, banner] = rawTagline.split('|')
           
           setBranding({ 
-            logo_url: data.logo_url,
+            logo_url: brandingData.logo_url,
             tagline: tagline || null,
             topBanner: banner || null,
-            warranty: data.tiktok || null, // Garantia guardada na coluna tiktok
-            store_name: data.store_name || 'LAPIDADO'
+            warranty: brandingData.tiktok || null,
+            store_name: brandingData.store_name || 'LAPIDADO'
           })
         }
       } catch {
