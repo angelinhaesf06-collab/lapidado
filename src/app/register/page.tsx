@@ -21,6 +21,11 @@ export default function RegisterPage() {
     setLoading(true)
     setError(null)
 
+    // 💎 INTELIGÊNCIA NEXUS: CORREÇÃO AUTOMÁTICA DE ERROS DE DIGITAÇÃO
+    let cleanEmail = email.trim().toLowerCase()
+    if (cleanEmail.endsWith('.cor')) cleanEmail = cleanEmail.replace('.cor', '.com')
+    if (cleanEmail.endsWith('.con')) cleanEmail = cleanEmail.replace('.con', '.com')
+    
     const pass = password.trim()
     const confirm = confirmPassword.trim()
 
@@ -32,7 +37,7 @@ export default function RegisterPage() {
 
     try {
       const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
+        email: cleanEmail,
         password: pass,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
@@ -40,12 +45,21 @@ export default function RegisterPage() {
       })
 
       if (error) {
+        console.error('ERRO REAL DO SUPABASE:', error)
         let msg = error.message
         if (msg === 'User already registered') msg = 'Este e-mail já está cadastrado.'
-        if (msg.includes('email')) msg = 'O formato do e-mail parece inválido. Verifique se digitou .com corretamente.'
+        if (msg.includes('email')) msg = 'E-mail inválido ou mal formatado. Verifique o .com'
         if (msg.includes('password')) msg = 'A senha deve ter pelo menos 6 caracteres.'
+        if (msg.includes('Database error')) msg = 'Erro de banco de dados. Tente novamente em instantes.'
         
         setError(msg)
+        return
+      }
+
+      // 💎 SE O USUÁRIO FOR CRIADO MAS PRECISAR DE CONFIRMAÇÃO
+      if (data.user && data.session === null) {
+        setSuccess(true)
+        setError('CONTA CRIADA! Verifique seu e-mail para confirmar o acesso. 📧')
         return
       }
 
