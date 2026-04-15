@@ -96,6 +96,9 @@ export default function BrandingPage() {
         if (uploadData.url) currentLogoUrl = uploadData.url
       }
 
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Sessão expirada. Faça login novamente.')
+
       const response = await fetch('/api/admin/save', {
         method: 'POST',
         headers: { 
@@ -106,7 +109,8 @@ export default function BrandingPage() {
           table: 'branding',
           id: brandingId,
           data: {
-            facebook: `${tagline.toUpperCase()}|${installments}|${topBanner.toUpperCase()}|${businessName}`, // Salva Frase|Parcelas|Banner|NomeLoja
+            user_id: user.id, // 💎 INJEÇÃO CRÍTICA NEXUS
+            facebook: `${tagline.toUpperCase()}|${installments}|${topBanner.toUpperCase()}|${businessName}`,
             tiktok: warrantyTime.toUpperCase(), 
             website: tiktok, 
             instagram: instagram,

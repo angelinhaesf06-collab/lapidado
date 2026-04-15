@@ -22,27 +22,53 @@ export default async function Home({
   const activeCategory = params.category || 'Todos';
   const supabase = await createClient()
 
-  // Carregar configurações de parcelamento
-  const { data: branding } = await supabase.from('branding').select('facebook').single()
-  const installments = parseInt(branding?.facebook?.split('|')[1] || '10')
+  // 💎 NEXUS: Consulta Ultra-Resiliente para o catálogo público
+  const { data: { user } } = await supabase.auth.getUser()
+  let branding = null
 
-  const { data: dbCategories, error: catError } = await supabase
-    .from('categories')
-    .select('id, name')
-    .order('name')
+  if (user) {
+    const { data: userBranding } = await supabase.from('branding').select('*').eq('user_id', user.id).limit(1)
+    branding = userBranding?.[0]
+  }
   
-  const categoryNames = ['Todos', ...(dbCategories?.map(c => c.name) || [])]
-  
-  let query = supabase
-    .from('products')
-    .select('*, categories!inner(name)')
-    .order('created_at', { ascending: false })
-
-  if (activeCategory !== 'Todos') {
-    query = query.eq('categories.name', activeCategory)
+  if (!branding) {
+    const { data: orphanedBranding } = await supabase.from('branding').select('*').is('user_id', null).limit(1)
+    branding = orphanedBranding?.[0]
   }
 
-  const { data: products, error: prodError } = await query
+  if (!branding) {
+    const { data: anyBranding } = await supabase.from('branding').select('*').limit(1)
+    branding = anyBranding?.[0]
+  }
+
+  const installments = parseInt(branding?.facebook?.split('|')[1] || '10')
+  const currentUserId = branding?.user_id
+
+  // 💎 NEXUS: Consultas de Categorias e Produtos (Pega do dono OU órfãos)
+  let catQuery = supabase.from('categories').select('id, name')
+  if (currentUserId) {
+    catQuery = catQuery.or(`user_id.eq.${currentUserId},user_id.is.null`)
+  } else {
+    catQuery = catQuery.is('user_id', null)
+  }
+  
+  const { data: dbCategories, error: catError } = await catQuery.order('name')
+  const categoryNames = ['Todos', ...(dbCategories?.map(c => c.name) || [])]
+  
+  let prodQuery = supabase.from('products').select('*, categories!inner(name)')
+  if (currentUserId) {
+    prodQuery = prodQuery.or(`user_id.eq.${currentUserId},user_id.is.null`)
+  } else {
+    prodQuery = prodQuery.is('user_id', null)
+  }
+
+  let finalQuery = prodQuery.order('created_at', { ascending: false })
+
+  if (activeCategory !== 'Todos') {
+    finalQuery = finalQuery.eq('categories.name', activeCategory)
+  }
+
+  const { data: products, error: prodError } = await finalQuery
 
   // 💎 VERIFICAR SE É ADMIN LOGADO PARA MOSTRAR BOTÃO DE RETORNO
   const { data: { session } } = await supabase.auth.getSession();
@@ -52,10 +78,10 @@ export default async function Home({
     <div className="flex flex-col w-full min-h-screen">
       {/* 💎 BARRA DE FERRAMENTAS DA EMPRESÁRIA (Só aparece para você) */}
       {isAdmin && (
-        <div className="bg-brand-primary py-2 px-4 flex justify-between items-center sticky top-0 z-[100] shadow-lg border-b border-white/10">
-          <p className="text-[8px] font-black text-white/80 uppercase tracking-[0.3em]">Modo Visualização (Empresária)</p>
-          <Link href="/admin" className="bg-white text-brand-primary px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-brand-secondary hover:text-white transition-all">
-            Voltar ao Painel
+        <div className="bg-brand-primary py-1.5 px-4 flex justify-between items-center sticky top-0 z-[100] shadow-md border-b border-white/5">
+          <p className="text-[7px] font-black text-white/50 uppercase tracking-[0.2em]">Visualização (Admin)</p>
+          <Link href="/admin" className="bg-white text-brand-primary px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest hover:bg-brand-secondary hover:text-white transition-all">
+            Painel
           </Link>
         </div>
       )}
@@ -68,16 +94,16 @@ export default async function Home({
           URL: {process.env.NEXT_PUBLIC_SUPABASE_URL ? 'DEFINIDA' : 'AUSENTE'}
         </div>
       )}
-      {/* Navegação Mobile e Desktop Superior - Sem deslizar, tudo visível */}
-      <nav className="bg-white/80 backdrop-blur-md border-b border-brand-secondary/10 sticky top-[158px] z-40 shadow-sm">
-        <div className="max-w-7xl mx-auto px-2 py-2 md:py-4 flex flex-wrap justify-center gap-2 md:gap-8">
+      {/* Navegação Mobile e Desktop Superior - Agora mais próxima do topo */}
+      <nav className="bg-white/80 backdrop-blur-md border-b border-brand-secondary/10 sticky top-[56px] md:top-[72px] z-40 shadow-sm">
+        <div className="max-w-7xl mx-auto px-2 py-2 md:py-3 flex flex-wrap justify-center gap-2 md:gap-6">
           {categoryNames.map((cat) => (
             <Link 
               key={cat}
-              href={`/?category=${cat === 'Todos' ? '' : cat}`}
-              className={`px-3 py-1 transition-all font-bold text-[9px] md:text-[11px] tracking-[0.1em] md:tracking-[0.3em] uppercase rounded-full border ${
+              href={`/?catalogo=true&category=${cat === 'Todos' ? '' : cat}`}
+              className={`px-3 py-1.5 transition-all font-bold text-[9px] md:text-[10px] tracking-[0.1em] md:tracking-[0.2em] uppercase rounded-full border ${
                 activeCategory === cat
-                ? "bg-brand-primary text-white border-brand-primary shadow-sm" 
+                ? "bg-brand-primary text-white border-brand-primary shadow-md" 
                 : "text-brand-primary/70 hover:text-brand-primary bg-brand-secondary/5 border-brand-secondary/10"
               }`}
             >
@@ -87,21 +113,22 @@ export default async function Home({
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-4 py-6 md:py-20 w-full text-center">
-        <div className="mb-6 md:mb-20">
-          <h2 className="text-lg md:text-3xl font-light tracking-[0.2em] uppercase text-brand-primary mb-1 md:mb-3">
+      <div className="max-w-7xl mx-auto px-4 py-8 md:py-12 w-full text-center">
+        <div className="mb-8 md:mb-16">
+          <h2 className="text-xl md:text-2xl font-light tracking-[0.2em] uppercase text-brand-primary mb-2">
             {activeCategory === 'Todos' ? 'Coleção Completa' : activeCategory}
           </h2>
-          <p className="text-brand-secondary text-[8px] md:text-[10px] font-bold md:font-light tracking-[0.2em] uppercase">{(products?.length || 0)} Peças</p>
+          <div className="w-12 h-[1px] bg-brand-secondary/30 mx-auto mb-2" />
+          <p className="text-brand-secondary text-[8px] md:text-[9px] font-bold tracking-[0.2em] uppercase opacity-60">{(products?.length || 0)} Itens Selecionados</p>
         </div>
 
-        {/* Grid de 2 Colunas no Mobile, 3 em tablets e 4 em desktops */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 md:gap-x-12 gap-y-8 md:gap-y-24 px-1 md:px-0">
+        {/* Grid de Vitrine Otimizada */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 md:gap-x-10 gap-y-10 md:gap-y-20 px-1">
           {products && products.length > 0 ? (
             products.map((product) => (
               <div key={product.id} className="group flex flex-col items-center">
                 <Link href={`/product/${product.id}?catalogo=true`} className="w-full">
-                  <div className="aspect-[4/5] w-full bg-white rounded-[16px] md:rounded-[40px] overflow-hidden mb-3 md:mb-10 shadow-sm border border-brand-secondary/10 relative transition-all duration-700">
+                  <div className="aspect-[4/5] w-full bg-white rounded-[40px] md:rounded-[64px] overflow-hidden mb-6 md:mb-10 shadow-[0_20px_60px_rgba(74,50,46,0.08)] border border-white relative transition-all duration-700 group-hover:shadow-[0_40px_80px_rgba(74,50,46,0.12)]">
                     <Image 
                       src={product.image_url} 
                       alt={product.name} 
@@ -110,13 +137,13 @@ export default async function Home({
                     />
                   </div>
                   
-                  <div className="px-1 text-center w-full mb-4">
-                    <h4 className="text-[9px] md:text-sm font-bold md:font-normal tracking-[0.05em] md:tracking-[0.2em] uppercase text-brand-primary mb-1 md:mb-3 truncate w-full">{product.name}</h4>
-                    <div className="flex flex-col gap-0.5 md:gap-2">
-                      <span className="text-[12px] md:text-lg font-bold md:font-light text-brand-primary">
+                  <div className="px-4 text-center w-full mb-8">
+                    <h4 className="text-[10px] md:text-[13px] font-black tracking-[0.2em] md:tracking-[0.4em] uppercase text-brand-primary mb-2 truncate w-full">{product.name}</h4>
+                    <div className="flex flex-col gap-1 md:gap-3">
+                      <span className="text-[14px] md:text-[22px] font-bold text-brand-primary">
                         R$ {product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </span>
-                      <p className="text-brand-secondary text-[7px] md:text-[9px] font-bold md:font-light tracking-tighter md:tracking-widest uppercase opacity-80">
+                      <p className="text-brand-secondary text-[8px] md:text-[10px] font-black tracking-widest uppercase opacity-60">
                         {installments}x de R$ {(product.price / installments).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} sem juros
                       </p>
                     </div>
@@ -124,7 +151,10 @@ export default async function Home({
                 </Link>
                 
                 {/* 💎 BOTÃO DE COMPRA DIRETA (MÁGICA NEXUS) */}
-                <div className="w-full max-w-[140px] md:max-w-none px-2 md:px-6">
+                <div className="w-full max-w-[140px] md:max-w-none px-2 md:px-6 flex flex-col items-center gap-4">
+                  <Link href={`/product/${product.id}?catalogo=true`} className="text-[9px] md:text-[11px] font-black uppercase tracking-[0.3em] text-brand-secondary hover:text-brand-primary transition-all border-b border-transparent hover:border-brand-secondary/40 pb-1">
+                    Espiar Peça
+                  </Link>
                   <AddToCartButton product={product} />
                 </div>
               </div>

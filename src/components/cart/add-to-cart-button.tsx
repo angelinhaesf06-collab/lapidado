@@ -1,6 +1,6 @@
 'use client'
 
-import { ShoppingBag, Check } from 'lucide-react'
+import { Gem, Check } from 'lucide-react'
 import { useState } from 'react'
 import { useCart } from '@/lib/cart-context'
 
@@ -19,19 +19,22 @@ export default function AddToCartButton({ product }: { product: any }) {
     <button 
       onClick={handleAddToCart}
       disabled={added}
-      className={`w-full px-4 md:px-12 py-2.5 md:py-4 rounded-full font-light text-[8px] md:text-[10px] tracking-[0.2em] md:tracking-[0.3em] uppercase transition-all transform hover:scale-[1.02] shadow-lg active:scale-95 flex items-center justify-center gap-2 md:gap-4 ${
+      className={`w-full px-3 md:px-6 py-3 md:py-5 rounded-[40px] md:rounded-[56px] text-[8px] md:text-[11px] font-black uppercase tracking-[0.1em] md:tracking-[0.4em] transition-all transform hover:scale-[1.03] shadow-xl active:scale-[0.97] flex items-center justify-center gap-2 md:gap-4 border-2 border-transparent ${
         added 
-        ? 'bg-green-600 text-white cursor-default' 
-        : 'bg-brand-primary text-white hover:bg-brand-secondary'
+        ? 'bg-green-500/10 text-green-700 border-green-200 cursor-default shadow-none' 
+        : 'bg-brand-primary text-white hover:bg-brand-secondary hover:shadow-brand-secondary/30'
       }`}
     >
       {added ? (
         <>
-          <Check size={14} className="animate-bounce md:w-4 md:h-4" /> <span className="truncate">Na Sacola! ✨</span>
+          <Check size={14} className="text-green-600" /> <span className="truncate">Adicionado</span>
         </>
       ) : (
         <>
-          <ShoppingBag size={14} className="opacity-70 md:w-4 md:h-4" /> <span className="truncate">Comprar</span>
+          <span className="truncate">Eu Quero</span>
+          <div className="w-4 h-4 md:w-6 md:h-6 bg-white/10 rounded-full flex items-center justify-center shrink-0">
+             <Gem size={10} className="opacity-80 md:w-4 md:h-4 text-white" strokeWidth={2} />
+          </div>
         </>
       )}
     </button>

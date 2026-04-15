@@ -26,10 +26,12 @@ export default function ProductsListPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
+    // 💎 NEXUS: Consulta resiliente para restaurar acervo antigo
+    // Busca produtos do usuário logado OU produtos que ainda não têm user_id
     const { data } = await supabase
       .from('products')
       .select('*, categories(name)')
-      .eq('user_id', user.id)
+      .or(`user_id.eq.${user.id},user_id.is.null`)
       .order('created_at', { ascending: false })
     if (data) setProducts(data as unknown as Product[])
     setLoading(false)

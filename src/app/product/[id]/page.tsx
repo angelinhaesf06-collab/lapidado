@@ -21,8 +21,9 @@ export default async function ProductPage({
     .eq('id', id)
     .single()
 
-  // 2. Buscar branding para parcelamento e garantia personalizada
-  const { data: branding } = await supabase.from('branding').select('*').single()
+  // 2. Buscar branding para parcelamento e garantia personalizada (Consulta Resiliente)
+  const { data: brandingArray } = await supabase.from('branding').select('*').limit(1)
+  const branding = brandingArray?.[0]
   const warrantyText = branding?.instagram || '6 MESES'
   
   // Extrair parcelamento do campo facebook (formato: Tagline|Parcelas|Banner)
