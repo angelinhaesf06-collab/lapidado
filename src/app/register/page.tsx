@@ -21,7 +21,10 @@ export default function RegisterPage() {
     setLoading(true)
     setError(null)
 
-    if (password !== confirmPassword) {
+    const pass = password.trim()
+    const confirm = confirmPassword.trim()
+
+    if (pass !== confirm) {
       setError('As senhas não coincidem, Angela.')
       setLoading(false)
       return
@@ -29,8 +32,8 @@ export default function RegisterPage() {
 
     try {
       const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
+        email: email.trim(),
+        password: pass,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },

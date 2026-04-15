@@ -97,12 +97,15 @@ export default function LoginPage() {
           {/* Botão de Ação Sólido */}
           <button 
             disabled={loading}
-            className="w-full bg-[#4a322e] text-white py-6 rounded-[32px] text-xs font-black uppercase tracking-[0.3em] shadow-2xl shadow-rose-200/50 hover:bg-[#c99090] hover:shadow-rose-300/40 transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+            className="w-full bg-[#4a322e] text-white py-6 rounded-[32px] text-[10px] md:text-xs font-black uppercase tracking-[0.2em] md:tracking-[0.3em] shadow-2xl shadow-rose-200/50 hover:bg-[#c99090] hover:shadow-rose-300/40 transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center px-4"
           >
             {loading ? (
               <Loader2 className="animate-spin" size={20} />
             ) : (
-              <><span>Acessar Meu Acervo</span> <Gem size={16} /></>
+              <div className="flex items-center gap-2 md:gap-3 max-w-full">
+                <span className="truncate">Acessar Meu Acervo</span> 
+                <Gem size={16} className="shrink-0" />
+              </div>
             )}
           </button>
         </form>
