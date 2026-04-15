@@ -66,7 +66,14 @@ export default function RegisterPage() {
       }
       
     } catch (err) {
-      setError(`ERRO INESPERADO: ${(err as Error).message}`)
+      console.error('ERRO CAPTURADO:', err)
+      const errorMsg = (err as Error).message || ''
+      
+      if (errorMsg.includes('fetch') || errorMsg.includes('Network')) {
+        setError('ERRO DE CONEXÃO: Não foi possível alcançar o servidor. Verifique se as chaves do Supabase foram configuradas na Vercel. 🔗')
+      } else {
+        setError(`ERRO INESPERADO: ${errorMsg}`)
+      }
     } finally {
       setLoading(false)
     }
