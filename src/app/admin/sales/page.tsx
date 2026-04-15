@@ -127,35 +127,11 @@ export default function SalesPage() {
   const totalProfit = sales.reduce((acc, sale) => acc + ((sale.sale_price - sale.cost_price) * sale.quantity), 0)
 
   return (
-    <div className="flex min-h-screen bg-[#fffcfc]">
-      
-      {/* 💎 SIDEBAR LAPIDADO (ESQUERDA) */}
-      <aside className="hidden md:flex w-64 flex-col bg-white border-r border-brand-secondary/10 p-6 sticky top-0 h-screen">
-        <div className="flex items-center gap-3 mb-12 px-2">
-          <div className="w-8 h-8 rounded-full bg-brand-primary flex items-center justify-center text-white">
-            <Gem size={18} />
-          </div>
-          <span className="text-[11px] font-black uppercase tracking-[0.3em] text-brand-primary">Lapidado</span>
-        </div>
-        
-        <nav className="space-y-2 flex-1">
-          <Link href="/admin" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-brand-secondary/60 hover:bg-brand-secondary/5 transition-all">
-            <TrendingUp size={18} /> Dashboard
-          </Link>
-          <Link href="/admin/products" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-brand-secondary/60 hover:bg-brand-secondary/5 transition-all">
-            <Package size={18} /> Estoque
-          </Link>
-          <Link href="/admin/sales" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest bg-brand-primary text-white shadow-lg">
-            <ShoppingCart size={18} /> Vendas
-          </Link>
-        </nav>
-      </aside>
-
-      <div className="flex-1 max-w-4xl mx-auto py-6 px-5 md:py-10 pb-20">
-        <div className="text-center mb-10">
-          <h2 className="text-2xl font-bold tracking-tight uppercase text-brand-primary">Gestão de Vendas</h2>
-          <p className="text-brand-secondary text-[8px] font-black tracking-[0.3em] uppercase mt-1">Sua vitrine de sucessos 💰</p>
-        </div>
+    <div className="max-w-5xl mx-auto pb-20">
+      <div className="text-center mb-16">
+        <h2 className="text-3xl font-bold tracking-tight uppercase text-brand-primary">Gestão de Vendas</h2>
+        <p className="text-brand-secondary text-[10px] font-black tracking-[0.4em] uppercase mt-2">Sua vitrine de sucessos reais 💰</p>
+      </div>
 
         {/* RESUMO DE PERFORMANCE */}
         <div className="grid grid-cols-2 gap-4 mb-10">

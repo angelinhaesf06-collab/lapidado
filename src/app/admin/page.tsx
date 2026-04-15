@@ -68,14 +68,11 @@ export default function AdminDashboard() {
   }, [supabase])
 
   return (
-    <div className="max-w-4xl mx-auto py-6 px-5 md:py-10 pb-24">
+    <div className="max-w-5xl mx-auto">
       {/* CABEÇALHO REFINADO */}
-      <div className="text-center mb-10">
-        <div className="w-14 h-14 bg-brand-primary/10 rounded-full flex items-center justify-center text-brand-primary mx-auto mb-4 shadow-sm">
-          <Gem size={28} />
-        </div>
-        <h2 className="text-2xl font-bold tracking-tight uppercase text-brand-primary">Painel Lapidado</h2>
-        <p className="text-brand-secondary text-[8px] font-black tracking-[0.3em] uppercase mt-1">Gestão de Luxo para o seu Negócio 💎</p>
+      <div className="mb-12">
+        <h2 className="text-3xl font-bold tracking-tight uppercase text-brand-primary">Resumo do Negócio</h2>
+        <p className="text-brand-secondary text-[10px] font-black tracking-[0.4em] uppercase mt-2">O brilho dos seus resultados 💎</p>
       </div>
 
       <div className="grid grid-cols-1 gap-6">

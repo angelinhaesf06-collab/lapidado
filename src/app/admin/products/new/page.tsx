@@ -197,16 +197,15 @@ export default function NewProductPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-4 px-5 pb-20">
-      {/* DIAGNÓSTICO */}
-      <div className="flex justify-center mb-4">
-        {dbStatus === 'ok' && <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 text-[7px] font-black uppercase text-green-600 tracking-widest shadow-sm border border-green-100"><CheckCircle2 size={8} /> Sistema Operacional 💎</div>}
-        {dbStatus === 'error' && <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500 text-[7px] font-black uppercase text-white tracking-widest shadow-lg animate-bounce"><AlertCircle size={8} /> Erro de Banco</div>}
+    <div className="max-w-5xl mx-auto pb-20">
+      <div className="mb-12">
+        <h2 className="text-3xl font-bold tracking-tight uppercase text-brand-primary">Nova Joia</h2>
+        <p className="text-brand-secondary text-[10px] font-black tracking-[0.4em] uppercase mt-2">Adicione brilho ao seu acervo 💎</p>
       </div>
 
-      <div className="text-center mb-6">
-        <h1 className="text-[7px] font-black text-brand-secondary uppercase tracking-[0.4em] mb-1">Espaço da Empresária</h1>
-        <h2 className="text-lg font-bold text-brand-primary uppercase tracking-tight">Nova Peça</h2>
+      <div className="flex justify-center mb-8">
+        {dbStatus === 'ok' && <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-50 text-[8px] font-black uppercase text-green-600 tracking-widest shadow-sm border border-green-100"><CheckCircle2 size={10} /> Sistema Online</div>}
+        {dbStatus === 'error' && <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-rose-500 text-[8px] font-black uppercase text-white tracking-widest shadow-lg animate-bounce"><AlertCircle size={10} /> Erro de Conexão</div>}
       </div>
 
       <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-5">

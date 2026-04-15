@@ -1,127 +1,82 @@
 'use client'
 
+import React from 'react'
 import Link from 'next/link'
-import { Info, PlusCircle, LayoutGrid, LogOut, Gem, Eye, Share2, Pencil } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
+import { TrendingUp, ShoppingCart, Package, Gem, PlusCircle, LayoutDashboard, LogOut } from 'lucide-react'
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const [businessName, setBusinessName] = useState('Lapidado')
-  const supabase = createClient()
+  const pathname = usePathname()
 
-  useEffect(() => {
-    async function loadBranding() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      const { data } = await supabase.from('branding')
-        .select('facebook')
-        .eq('user_id', user.id)
-        .maybeSingle()
-        
-      if (data?.facebook) {
-        const [tagline, installments, banner, bName] = data.facebook.split('|')
-        if (bName) setBusinessName(bName)
-      }
-    }
-    loadBranding()
-  }, [supabase])
-
-  const shareCatalog = () => {
-    const cleanName = businessName.toLowerCase().replace(/\s+/g, '')
-    const displayUrl = `catalogo.${cleanName}.com.br`
-    const realUrl = typeof window !== 'undefined' ? `${window.location.origin}/?catalogo=true` : ''
-    
-    const message = encodeURIComponent(`OLÁ! ✨ ACABEI DE ATUALIZAR MEU CATÁLOGO DE SEMIJOIAS COM NOVIDADES LINDAS! 💎\n\nCONFIRA AQUI: ${displayUrl}\n${realUrl}\n\nESTOU À DISPOSIÇÃO PARA DÚVIDAS!`)
-    window.open(`https://wa.me/?text=${message}`, '_blank')
-  }
-
-  const menuItems = [
-    { href: '/admin', label: 'Painel', icon: Info },
-    { href: '/admin/branding', label: 'Marca', icon: Gem },
-    { href: '/admin/products/new', label: 'Cadastrar', icon: PlusCircle },
-    { href: '/admin/categories', label: 'Categorias', icon: LayoutGrid },
-    { href: '/admin/products', label: 'Editar', icon: Pencil },
+  const navItems = [
+    { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+    { name: 'Vendas', href: '/admin/sales', icon: ShoppingCart },
+    { name: 'Produtos', href: '/admin/products', icon: Package },
+    { name: 'Nova Peça', href: '/admin/products/new', icon: PlusCircle },
   ]
 
   return (
-    <div className="min-h-screen bg-[#fffcfc] flex flex-col md:flex-row">
+    <div className="flex min-h-screen bg-[#fffcfc]">
       
-      {/* MENU SUPERIOR MOBILE (Tudo visível na primeira tela) */}
-      <nav className="md:hidden bg-white border-b border-rose-100 p-3 sticky top-0 z-50 shadow-sm">
-        <div className="flex flex-wrap justify-center gap-2 mb-3">
-          {menuItems.map((item) => (
-            <Link 
-              key={item.href} 
-              href={item.href} 
-              className="flex flex-col items-center justify-center gap-1 p-2 min-w-[70px] bg-brand-secondary/10 rounded-xl border border-brand-secondary/20"
-            >
-              <item.icon size={16} className="text-brand-secondary" />
-              <span className="text-[7px] font-black tracking-widest uppercase text-brand-primary">{item.label}</span>
-            </Link>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <Link href="/?catalogo=true" target="_blank" className="flex-1 flex items-center justify-center gap-2 p-2 bg-brand-secondary/10 rounded-xl border border-brand-secondary/20 text-[8px] font-black uppercase tracking-widest text-brand-primary">
-            <Eye size={14} /> Ver Vitrine
-          </Link>
-          <button onClick={shareCatalog} className="flex-1 flex items-center justify-center gap-2 p-2 bg-[#25D366] text-white rounded-xl text-[8px] font-black uppercase tracking-widest shadow-sm">
-            <Share2 size={14} /> Enviar WhatsApp
-          </button>
-        </div>
-      </nav>
-
-      {/* SIDEBAR DESKTOP (Elegância mantida no PC) */}
-      <aside className="hidden md:flex w-72 bg-white border-r border-rose-50 flex-col pt-12 shadow-sm sticky top-0 h-screen">
-        <div className="px-8 mb-16 text-center">
-          <Gem className="mx-auto text-brand-secondary mb-4" size={32} />
-          <h2 className="text-xl font-bold tracking-[0.2em] uppercase text-brand-primary">Espaço da Empresária</h2>
-          <p className="text-[8px] font-black text-brand-secondary tracking-[0.4em] uppercase mt-2">Lapidado</p>
-        </div>
-
-        <nav className="flex-1 px-6 space-y-2 overflow-y-auto pb-8">
-          <p className="px-5 text-[7px] font-black text-brand-secondary uppercase tracking-[0.4em] mb-4 opacity-60">Gestão de Negócio</p>
-          
-          {menuItems.map((item) => (
-            <Link 
-              key={item.href} 
-              href={item.href} 
-              className="flex items-center gap-4 px-5 py-4 text-[9px] font-black tracking-[0.2em] uppercase text-brand-primary hover:bg-brand-secondary/10 rounded-[24px] transition-all group"
-            >
-              <item.icon size={18} className="text-brand-secondary group-hover:scale-110 transition-transform" /> {item.label}
-            </Link>
-          ))}
-
-          <div className="pt-8 pb-4">
-            <p className="px-5 text-[7px] font-black text-brand-secondary uppercase tracking-[0.4em] mb-4 opacity-60">Visão da Cliente</p>
-            
-            <Link href="/?catalogo=true" target="_blank" className="flex items-center gap-4 px-5 py-4 text-[9px] font-black tracking-[0.2em] uppercase text-brand-primary bg-brand-secondary/5 hover:bg-brand-secondary/10 rounded-[24px] transition-all group border border-brand-secondary/10 mb-2">
-              <Eye size={18} className="text-brand-secondary group-hover:scale-110 transition-transform" /> Ver Minha Vitrine
-            </Link>
-
-            <button 
-              onClick={shareCatalog}
-              className="w-full flex items-center gap-4 px-5 py-4 text-[9px] font-black tracking-[0.2em] uppercase text-white bg-[#25D366] hover:brightness-105 rounded-[24px] transition-all group shadow-lg shadow-green-100"
-            >
-              <Share2 size={18} className="group-hover:scale-110 transition-transform" /> Enviar Para Cliente
-            </button>
+      {/* 💎 SIDEBAR LAPIDADO (ESQUERDA) */}
+      <aside className="hidden md:flex w-72 flex-col bg-white border-r border-brand-secondary/10 p-8 sticky top-0 h-screen z-50 shadow-[20px_0_40px_rgba(74,50,46,0.02)]">
+        
+        {/* LOGO NO TOPO DA SIDEBAR */}
+        <div className="flex items-center gap-4 mb-16 px-2">
+          <div className="w-10 h-10 rounded-full bg-brand-primary flex items-center justify-center text-white shadow-lg shadow-brand-primary/20">
+            <Gem size={22} />
           </div>
+          <div>
+            <h1 className="text-[12px] font-black uppercase tracking-[0.4em] text-brand-primary leading-none">Lapidado</h1>
+            <p className="text-[7px] font-bold uppercase tracking-[0.2em] text-brand-secondary mt-1">Gestão Empresarial</p>
+          </div>
+        </div>
+        
+        {/* NAVEGAÇÃO */}
+        <nav className="space-y-3 flex-1">
+          {navItems.map((item) => {
+            const isActive = pathname === item.href
+            return (
+              <Link 
+                key={item.name}
+                href={item.href} 
+                className={`flex items-center gap-4 px-6 py-4 rounded-[24px] text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 group ${
+                  isActive 
+                  ? 'bg-brand-primary text-white shadow-xl shadow-brand-primary/20 translate-x-2' 
+                  : 'text-brand-secondary/60 hover:bg-brand-secondary/5 hover:text-brand-primary'
+                }`}
+              >
+                <item.icon size={20} className={`${isActive ? 'text-white' : 'text-brand-secondary/40 group-hover:text-brand-primary'}`} /> 
+                {item.name}
+              </Link>
+            )
+          })}
         </nav>
 
-        <div className="p-8 border-t border-rose-50 bg-rose-50/20">
-          <Link href="/" className="flex items-center gap-4 px-5 py-4 text-[9px] font-black tracking-[0.2em] uppercase text-brand-primary/60 hover:text-brand-primary transition-colors">
-            <LogOut size={18} className="opacity-60" /> Sair do Painel
-          </Link>
+        {/* RODAPÉ DA SIDEBAR */}
+        <div className="pt-8 border-t border-brand-secondary/10">
+           <Link href="/" className="flex items-center gap-4 px-6 py-4 rounded-[24px] text-[10px] font-black uppercase tracking-[0.2em] text-brand-secondary/40 hover:text-rose-500 transition-all">
+              <LogOut size={20} /> Sair do Painel
+           </Link>
         </div>
       </aside>
 
-      {/* Área de Conteúdo */}
-      <main className="flex-1 p-6 md:p-16 overflow-y-auto bg-white/40">
-        <div className="max-w-6xl mx-auto">
+      {/* CONTEÚDO PRINCIPAL */}
+      <main className="flex-1 w-full overflow-x-hidden">
+        {/* BARRA SUPERIOR MOBILE (Apenas telas pequenas) */}
+        <div className="md:hidden bg-white border-b border-brand-secondary/10 p-4 flex justify-between items-center sticky top-0 z-50">
+           <div className="flex items-center gap-3">
+             <Gem size={20} className="text-brand-primary" />
+             <span className="text-[10px] font-black uppercase tracking-widest text-brand-primary">Lapidado</span>
+           </div>
+           {/* Menu Mobile pode ser adicionado aqui depois */}
+        </div>
+
+        <div className="px-4 py-8 md:px-12 md:py-16">
           {children}
         </div>
       </main>
