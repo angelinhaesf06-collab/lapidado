@@ -19,9 +19,17 @@ export default function AdminDashboard() {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
 
-        // 💎 NEXUS: Consulta estritamente isolada por usuário logado
-        const { data: categories } = await supabase.from('categories').select('id, name').eq('user_id', user.id)
-        const { data: products, error: pError } = await supabase.from('products').select('*').eq('user_id', user.id)
+        // 💎 NEXUS: Consulta Ultra-Resiliente para o Dashboard
+        // Busca dados do usuário logado OU dados que ainda não têm user_id
+        const { data: categories } = await supabase
+          .from('categories')
+          .select('id, name')
+          .or(`user_id.eq.${user.id},user_id.is.null`)
+
+        const { data: products, error: pError } = await supabase
+          .from('products')
+          .select('*')
+          .or(`user_id.eq.${user.id},user_id.is.null`)
         
         if (pError) throw pError;
 
