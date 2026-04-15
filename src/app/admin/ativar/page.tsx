@@ -77,7 +77,7 @@ export default function AtivarPage() {
         </button>
 
         <div className="mt-8">
-          <a href="/admin" className="text-[#c99090] text-xs font-bold hover:underline italic">Voltar para o Espaço da Empresária</a>
+          <a href="/admin" className="text-[#c99090] text-xs font-bold hover:underline">Voltar para o Espaço da Empresária</a>
         </div>
       </div>
     </div>

@@ -100,7 +100,7 @@ export default async function ProductPage({
           
           {branding?.tiktok && (
             <p className="mt-20 text-[9px] text-brand-primary/60 font-light opacity-50 tracking-[0.3em] uppercase text-center max-w-xs">
-              💎 {branding.tiktok}
+              💎 {branding.tiktok.toUpperCase().includes('GARANTIA') ? branding.tiktok : `${branding.tiktok} DE GARANTIA`}
             </p>
           )}
         </div>

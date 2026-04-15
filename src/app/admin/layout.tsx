@@ -2,15 +2,34 @@
 
 import Link from 'next/link'
 import { Info, PlusCircle, LayoutGrid, LogOut, Gem, Eye, Share2, Pencil } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { useState, useEffect } from 'react'
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const [businessName, setBusinessName] = useState('Lapidado')
+  const supabase = createClient()
+
+  useEffect(() => {
+    async function loadBranding() {
+      const { data } = await supabase.from('branding').select('facebook').single()
+      if (data?.facebook) {
+        const [tagline, installments, banner, bName] = data.facebook.split('|')
+        if (bName) setBusinessName(bName)
+      }
+    }
+    loadBranding()
+  }, [supabase])
+
   const shareCatalog = () => {
-    const url = typeof window !== 'undefined' ? window.location.origin : ''
-    const message = encodeURIComponent(`OLÁ! ✨ ACABEI DE ATUALIZAR MEU CATÁLOGO DE SEMIJOIAS COM NOVIDADES LINDAS! 💎\n\nCONFIRA AQUI: ${url}\n\nESTOU À DISPOSIÇÃO PARA DÚVIDAS!`)
+    const cleanName = businessName.toLowerCase().replace(/\s+/g, '')
+    const displayUrl = `catalogo.${cleanName}.com.br`
+    const realUrl = typeof window !== 'undefined' ? `${window.location.origin}/?catalogo=true` : ''
+    
+    const message = encodeURIComponent(`OLÁ! ✨ ACABEI DE ATUALIZAR MEU CATÁLOGO DE SEMIJOIAS COM NOVIDADES LINDAS! 💎\n\nCONFIRA AQUI: ${displayUrl}\n${realUrl}\n\nESTOU À DISPOSIÇÃO PARA DÚVIDAS!`)
     window.open(`https://wa.me/?text=${message}`, '_blank')
   }
 
@@ -40,7 +59,7 @@ export default function AdminLayout({
           ))}
         </div>
         <div className="flex gap-2">
-          <Link href="/" target="_blank" className="flex-1 flex items-center justify-center gap-2 p-2 bg-brand-secondary/10 rounded-xl border border-brand-secondary/20 text-[8px] font-black uppercase tracking-widest text-brand-primary">
+          <Link href="/?catalogo=true" target="_blank" className="flex-1 flex items-center justify-center gap-2 p-2 bg-brand-secondary/10 rounded-xl border border-brand-secondary/20 text-[8px] font-black uppercase tracking-widest text-brand-primary">
             <Eye size={14} /> Ver Vitrine
           </Link>
           <button onClick={shareCatalog} className="flex-1 flex items-center justify-center gap-2 p-2 bg-[#25D366] text-white rounded-xl text-[8px] font-black uppercase tracking-widest shadow-sm">
@@ -54,7 +73,7 @@ export default function AdminLayout({
         <div className="px-8 mb-16 text-center">
           <Gem className="mx-auto text-brand-secondary mb-4" size={32} />
           <h2 className="text-xl font-bold tracking-[0.2em] uppercase text-brand-primary">Espaço da Empresária</h2>
-          <p className="text-[8px] font-black text-brand-secondary tracking-[0.4em] uppercase mt-2 italic">Lapidado</p>
+          <p className="text-[8px] font-black text-brand-secondary tracking-[0.4em] uppercase mt-2">Lapidado</p>
         </div>
 
         <nav className="flex-1 px-6 space-y-2 overflow-y-auto pb-8">
@@ -73,7 +92,7 @@ export default function AdminLayout({
           <div className="pt-8 pb-4">
             <p className="px-5 text-[7px] font-black text-brand-secondary uppercase tracking-[0.4em] mb-4 opacity-60">Visão da Cliente</p>
             
-            <Link href="/" target="_blank" className="flex items-center gap-4 px-5 py-4 text-[9px] font-black tracking-[0.2em] uppercase text-brand-primary bg-brand-secondary/5 hover:bg-brand-secondary/10 rounded-[24px] transition-all group border border-brand-secondary/10 mb-2">
+            <Link href="/?catalogo=true" target="_blank" className="flex items-center gap-4 px-5 py-4 text-[9px] font-black tracking-[0.2em] uppercase text-brand-primary bg-brand-secondary/5 hover:bg-brand-secondary/10 rounded-[24px] transition-all group border border-brand-secondary/10 mb-2">
               <Eye size={18} className="text-brand-secondary group-hover:scale-110 transition-transform" /> Ver Minha Vitrine
             </Link>
 

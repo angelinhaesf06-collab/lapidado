@@ -1,18 +1,13 @@
 import type { Metadata } from "next";
-import { Montserrat, Cormorant_Garamond } from "next/font/google";
+import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { createClient } from '@/lib/supabase/server';
 import Footer from '@/components/footer';
 
 const montserrat = Montserrat({ 
   subsets: ["latin"], 
-  weight: ['100', '300', '400', '500', '700', '900'], 
+  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'], 
   variable: '--font-montserrat' 
-});
-const cormorant = Cormorant_Garamond({ 
-  subsets: ["latin"], 
-  weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-glamour'
 });
 
 export const metadata: Metadata = {
@@ -33,7 +28,7 @@ export default async function RootLayout({
   // Cores dinâmicas com fallback de luxo
   const primary = branding?.primary_color || '#4a322e'
   const secondary = branding?.secondary_color || '#c99090'
-  const businessName = branding?.instagram || 'LAPIDADO' // Usa o campo que sabemos que existe
+  const businessName = branding?.instagram || 'LAPIDADO' 
 
   return (
     <html lang="pt-BR">
@@ -41,9 +36,9 @@ export default async function RootLayout({
         <title>{`${businessName} — Catálogo de Semijoias`}</title>
       </head>
       <body 
-        className={`${montserrat.variable} ${cormorant.variable} font-montserrat bg-[#fffcfc] text-[#4a322e] min-h-screen flex flex-col antialiased`}
+        className={`${montserrat.variable} font-montserrat bg-[#fffcfc] text-[#4a322e] min-h-screen flex flex-col antialiased`}
         style={{ 
-          // @ts-ignore - Injeção de Variáveis de Marca Globais
+          // @ts-ignore
           '--brand-primary': primary, 
           '--brand-secondary': secondary 
         }}

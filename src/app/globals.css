@@ -4,10 +4,9 @@
   --background: #ffffff;
   --foreground: #171717;
   
-  /* Cores da Marca (Pousarão aqui via BrandingSync) */
+  /* Cores da Marca */
   --brand-primary: #4a322e;
   --brand-secondary: #c99090;
-  --brand-font: var(--font-montserrat);
 }
 
 @theme inline {
@@ -20,14 +19,19 @@
   
   /* Fontes Customizadas */
   --font-montserrat: var(--font-montserrat);
-  --font-glamour: var(--font-glamour);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--brand-font), sans-serif;
+  font-family: var(--font-montserrat), sans-serif;
   letter-spacing: -0.01em;
+  font-style: normal !important;
+}
+
+/* 💎 NEXUS: PADRONIZAÇÃO DE LUXO SEM ITÁLICO */
+* {
+  font-style: normal !important;
 }
 
 /* Utilitários de Cor de Borda Dinâmicos */

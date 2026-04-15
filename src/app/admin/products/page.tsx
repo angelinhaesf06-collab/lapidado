@@ -74,7 +74,7 @@ export default function ProductsListPage() {
           </h1>
         </div>
         <Link href="/admin/products/new" className="px-8 py-4 bg-brand-primary text-white rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-brand-secondary transition-all shadow-lg">
-          Nova Joia
+          Nova Peça
         </Link>
       </div>
 

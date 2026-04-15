@@ -62,7 +62,7 @@ export default function Header() {
             </div>
           ) : (
             <div className="w-20 h-20 md:w-32 md:h-32 mb-4 md:mb-8 rounded-full bg-brand-secondary/5 flex items-center justify-center text-brand-primary">
-              <span className="font-glamour text-4xl md:text-6xl font-bold italic">L</span>
+              <span className="text-4xl md:text-6xl font-bold">L</span>
             </div>
           )}
 

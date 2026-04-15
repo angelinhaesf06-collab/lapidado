@@ -66,7 +66,7 @@ export default function RegisterPage() {
             <Gem className="text-[#c99090]" size={36} />
           </div>
           <h2 className="text-3xl font-bold text-[#4a322e]">Nova Empresária</h2>
-          <p className="text-[#7a5c58] text-sm mt-2 font-medium italic">&quot;Comece hoje a lapidar o futuro do seu catálogo.&quot; 💎</p>
+          <p className="text-[#7a5c58] text-sm mt-2 font-medium">&quot;Comece hoje a lapidar o futuro do seu catálogo.&quot; 💎</p>
         </div>
 
         {error && (

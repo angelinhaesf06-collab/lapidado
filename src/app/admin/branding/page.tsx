@@ -11,6 +11,7 @@ export default function BrandingPage() {
   const [logo, setLogo] = useState<string | null>(null)
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [tagline, setTagline] = useState('')
+  const [businessName, setBusinessName] = useState('')
   const [topBanner, setTopBanner] = useState('')
   const [primaryColor, setPrimaryColor] = useState('#4a322e')
   const [secondaryColor, setSecondaryColor] = useState('#c99090')
@@ -31,10 +32,11 @@ export default function BrandingPage() {
         if (data) {
           setBrandingId(data.id)
           const rawTagline = data.facebook || ''
-          const [text, inst, banner] = rawTagline.split('|')
+          const [text, inst, banner, bName] = rawTagline.split('|')
           setTagline(text || '') 
           setInstallments(inst || '10')
           setTopBanner(banner || '')
+          setBusinessName(bName || '')
 
           setTiktok(data.website || '') 
           setWarrantyTime(data.tiktok || '') 
@@ -101,7 +103,7 @@ export default function BrandingPage() {
           table: 'branding',
           id: brandingId,
           data: {
-            facebook: `${tagline.toUpperCase()}|${installments}|${topBanner.toUpperCase()}`, // Salva Frase|Parcelas|Banner
+            facebook: `${tagline.toUpperCase()}|${installments}|${topBanner.toUpperCase()}|${businessName}`, // Salva Frase|Parcelas|Banner|NomeLoja
             tiktok: warrantyTime.toUpperCase(), 
             website: tiktok, 
             instagram: instagram,
@@ -162,8 +164,13 @@ export default function BrandingPage() {
           </div>
 
           <div>
+            <label className="text-[6px] font-black text-brand-secondary uppercase block mb-1">Nome da Loja (Link WhatsApp)</label>
+            <input type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="Ex: Lapidado" className="w-full px-3 py-2 rounded-xl bg-rose-50/20 border border-transparent focus:border-brand-secondary outline-none text-[9px] font-bold text-brand-primary" />
+          </div>
+
+          <div>
             <label className="text-[6px] font-black text-brand-secondary uppercase block mb-1">Frase de Impacto</label>
-            <input type="text" value={tagline} onChange={(e) => setTagline(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-rose-50/20 border border-transparent focus:border-brand-secondary outline-none text-[9px] italic text-[#7a5c58]" />
+            <input type="text" value={tagline} onChange={(e) => setTagline(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-rose-50/20 border border-transparent focus:border-brand-secondary outline-none text-[9px] text-[#7a5c58]" />
           </div>
 
           <div>

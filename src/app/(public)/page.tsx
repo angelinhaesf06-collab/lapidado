@@ -2,15 +2,23 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import Image from 'next/image'
 import AddToCartButton from '@/components/cart/add-to-cart-button'
+import { redirect } from 'next/navigation'
 
 export const revalidate = 3600 // Cache de 1 hora para velocidade máxima
 
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string }>;
+  searchParams: Promise<{ category?: string; catalogo?: string }>;
 }) {
   const params = await searchParams;
+  const isPublicCatalog = params.catalogo === 'true';
+
+  // 💎 REGRA DE NEGÓCIO: Se abrir lapidado.com.br seco, vai pro login
+  if (!isPublicCatalog) {
+    redirect('/login');
+  }
+
   const activeCategory = params.category || 'Todos';
   const supabase = await createClient()
 
@@ -36,8 +44,22 @@ export default async function Home({
 
   const { data: products, error: prodError } = await query
 
+  // 💎 VERIFICAR SE É ADMIN LOGADO PARA MOSTRAR BOTÃO DE RETORNO
+  const { data: { session } } = await supabase.auth.getSession();
+  const isAdmin = !!session;
+
   return (
     <div className="flex flex-col w-full min-h-screen">
+      {/* 💎 BARRA DE FERRAMENTAS DA EMPRESÁRIA (Só aparece para você) */}
+      {isAdmin && (
+        <div className="bg-brand-primary py-2 px-4 flex justify-between items-center sticky top-0 z-[100] shadow-lg border-b border-white/10">
+          <p className="text-[8px] font-black text-white/80 uppercase tracking-[0.3em]">Modo Visualização (Empresária)</p>
+          <Link href="/admin" className="bg-white text-brand-primary px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-brand-secondary hover:text-white transition-all">
+            Voltar ao Painel
+          </Link>
+        </div>
+      )}
+
       {/* 💎 DEBUG MÁGICO: Só aparece se houver erro real no banco */}
       {(catError || prodError || !products || products.length === 0) && (
         <div className="bg-black text-white text-[8px] p-2 text-center">

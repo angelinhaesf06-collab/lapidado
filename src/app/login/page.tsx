@@ -57,7 +57,7 @@ export default function LoginPage() {
           </div>
           <h1 className="text-[9px] font-black text-[#c99090] uppercase tracking-[0.6em] mb-4">Lapidado App</h1>
           <h2 className="text-4xl font-bold text-[#4a322e] tracking-tight mb-3">Seu Espaço</h2>
-          <p className="text-[#8b6e6a] text-[13px] font-medium italic tracking-wide">
+          <p className="text-[#8b6e6a] text-[13px] font-medium tracking-wide">
             &quot;Sua visão lapidada com perfeição.&quot;
           </p>
         </div>

@@ -85,7 +85,7 @@ export default function AdminDashboard() {
           <Gem size={24} />
         </div>
         <h2 className="text-2xl font-bold tracking-tight uppercase text-brand-primary">Olá, Empresária</h2>
-        <p className="text-brand-secondary text-[8px] font-black tracking-[0.3em] uppercase italic mt-1">O brilho do seu negócio começa aqui. 💎</p>
+        <p className="text-brand-secondary text-[8px] font-black tracking-[0.3em] uppercase mt-1">O brilho do seu negócio começa aqui. 💎</p>
       </div>
 
       <div className="grid grid-cols-1 gap-6">
@@ -151,7 +151,7 @@ export default function AdminDashboard() {
               </div>
               <div className="text-left">
                 <h3 className="text-sm font-black uppercase tracking-[0.15em]">Cadastrar Nova Peça</h3>
-                <p className="text-[7px] text-brand-secondary/80 font-bold uppercase tracking-[0.2em] mt-1 italic">Adicione brilho ao seu catálogo 💎</p>
+                <p className="text-[7px] text-brand-secondary/80 font-bold uppercase tracking-[0.2em] mt-1">Adicione brilho ao seu catálogo 💎</p>
               </div>
             </div>
           </Link>

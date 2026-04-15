@@ -38,7 +38,7 @@ export default function Footer() {
           {branding.logo_url ? (
             <Image src={branding.logo_url} alt="Logo" className="h-16 w-auto object-contain grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all duration-700" width={150} height={64} />
           ) : (
-            <h3 className="font-glamour text-2xl text-brand-primary uppercase tracking-widest opacity-50">
+            <h3 className="text-2xl text-brand-primary uppercase tracking-widest opacity-50">
               {branding.business_name || branding.instagram || 'MINHA VITRINE'}
             </h3>
           )}
@@ -93,7 +93,7 @@ export default function Footer() {
           </p>
           {branding.tiktok && (branding.tiktok.includes('MESES') || branding.tiktok.includes('ANO') || branding.tiktok.includes('ETERNA')) && (
             <p className="text-[7px] text-brand-primary/60 font-black uppercase tracking-widest flex items-center gap-2">
-              <Gem size={8} /> 💎 {branding.tiktok}
+              <Gem size={8} /> 💎 {branding.tiktok.toUpperCase().includes('GARANTIA') ? branding.tiktok : `${branding.tiktok} DE GARANTIA`}
             </p>
           )}
         </div>
