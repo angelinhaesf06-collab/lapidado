@@ -1,35 +1,23 @@
 'use client'
 
 import { ShoppingBag } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useCart } from '@/lib/cart-context'
+import Link from 'next/link'
 
 export default function CartIcon() {
-  const [count, setCount] = useState(0)
-
-  // Sincronizar com localStorage para o preview
-  useEffect(() => {
-    const updateCount = () => {
-      const cart = JSON.parse(localStorage.getItem('lapidado-cart') || '[]')
-      setCount(cart.length)
-    }
-    
-    updateCount()
-    window.addEventListener('storage', updateCount)
-    window.addEventListener('cart-updated', updateCount)
-    return () => {
-      window.removeEventListener('storage', updateCount)
-      window.removeEventListener('cart-updated', updateCount)
-    }
-  }, [])
+  const { itemCount } = useCart()
 
   return (
-    <button className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white rounded-full shadow-lg border border-brand-secondary/10 text-brand-secondary hover:scale-110 transition-transform flex items-center gap-2 group">
+    <Link 
+      href="/cart"
+      className="fixed bottom-8 right-8 p-4 bg-brand-primary text-white rounded-full shadow-2xl hover:scale-110 transition-transform flex items-center gap-2 group z-[100]"
+    >
       <ShoppingBag size={24} />
-      {count > 0 && (
-        <span className="bg-brand-secondary text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold group-hover:bg-brand-primary animate-in zoom-in">
-          {count}
+      {itemCount > 0 && (
+        <span className="bg-white text-brand-primary text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold group-hover:bg-brand-secondary group-hover:text-white transition-colors animate-in zoom-in">
+          {itemCount}
         </span>
       )}
-    </button>
+    </Link>
   )
 }

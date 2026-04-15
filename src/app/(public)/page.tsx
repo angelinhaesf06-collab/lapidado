@@ -100,7 +100,7 @@ export default async function Home({
           {products && products.length > 0 ? (
             products.map((product) => (
               <div key={product.id} className="group flex flex-col items-center">
-                <Link href={`/product/${product.id}`} className="w-full">
+                <Link href={`/product/${product.id}?catalogo=true`} className="w-full">
                   <div className="aspect-[4/5] w-full bg-white rounded-[16px] md:rounded-[40px] overflow-hidden mb-3 md:mb-10 shadow-sm border border-brand-secondary/10 relative transition-all duration-700">
                     <Image 
                       src={product.image_url} 

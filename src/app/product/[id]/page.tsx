@@ -55,7 +55,7 @@ export default async function ProductPage({
   return (
     <div className="max-w-7xl mx-auto px-4 py-20 flex flex-col items-center">
       <div className="w-full mb-20 text-center">
-        <Link href="/" className="text-[10px] font-light tracking-[0.4em] uppercase text-brand-secondary hover:text-brand-primary transition-colors">
+        <Link href="/?catalogo=true" className="text-[10px] font-light tracking-[0.4em] uppercase text-brand-secondary hover:text-brand-primary transition-colors">
           ← Voltar ao Catálogo
         </Link>
       </div>

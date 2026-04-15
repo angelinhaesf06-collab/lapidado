@@ -2,15 +2,14 @@
 
 import { ShoppingBag, Check } from 'lucide-react'
 import { useState } from 'react'
+import { useCart } from '@/lib/cart-context'
 
 export default function AddToCartButton({ product }: { product: any }) {
   const [added, setAdded] = useState(false)
+  const { addToCart } = useCart()
 
   const handleAddToCart = () => {
-    const cart = JSON.parse(localStorage.getItem('lapidado-cart') || '[]')
-    cart.push(product)
-    localStorage.setItem('lapidado-cart', JSON.stringify(cart))
-    window.dispatchEvent(new Event('cart-updated'))
+    addToCart(product)
     
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)

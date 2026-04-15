@@ -1,26 +1,20 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Trash2, MessageCircle, ShoppingBag, Banknote } from 'lucide-react'
+import { Trash2, MessageCircle, ShoppingBag, Banknote, User, MapPin } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
-
-interface CartItem {
-  name: string
-  price: number
-  image_url: string
-}
+import { useCart } from '@/lib/cart-context'
 
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
-    if (typeof window !== 'undefined') {
-      return JSON.parse(localStorage.getItem('lapidado-cart') || '[]')
-    }
-    return []
-  })
+  const { cart, removeFromCart, total, itemCount } = useCart()
   const [storePhone, setStorePhone] = useState('5511999999999')
   const [installments, setInstallments] = useState(10)
+  
+  // Dados do Cliente
+  const [customerName, setCustomerName] = useState('')
+  const [customerAddress, setCustomerAddress] = useState('')
 
   useEffect(() => {
     const loadStoreData = async () => {
@@ -40,15 +34,6 @@ export default function CartPage() {
     loadStoreData()
   }, [])
 
-  const removeItem = (index: number) => {
-    const newCart = [...cartItems]
-    newCart.splice(index, 1)
-    setCartItems(newCart)
-    localStorage.setItem('lapidado-cart', JSON.stringify(newCart))
-    window.dispatchEvent(new Event('cart-updated'))
-  }
-
-  const total = cartItems.reduce((acc, item) => acc + item.price, 0)
   const installmentValue = total / installments
   
   // Cálculo de Desconto PIX (5%)
@@ -56,33 +41,42 @@ export default function CartPage() {
   const pixValue = total * (1 - pixDiscount)
 
   const sendWhatsApp = () => {
+    if (!customerName) {
+      alert('POR FAVOR, INFORME SEU NOME PARA CONTINUAR. ✨')
+      return
+    }
+
     const message = encodeURIComponent(
-      `OLÁ ANGELA! ✨ GOSTARIA DE ENCOMENDAR ESTAS PEÇAS:\n\n` +
-      cartItems.map(item => {
-        let finish = (item as any).material_finish || ''
-        if (!finish && (item as any).description?.includes('DATA:')) {
+      `*NOVO PEDIDO - LAPIDADO* ✨\n\n` +
+      `*CLIENTE:* ${customerName.toUpperCase()}\n` +
+      (customerAddress ? `*ENDEREÇO:* ${customerAddress.toUpperCase()}\n` : '') +
+      `\n*ITENS SELECIONADOS:*\n` +
+      cart.map(item => {
+        let finish = item.material_finish || ''
+        if (!finish && item.description?.includes('DATA:')) {
           try {
-            const match = (item as any).description.match(/DATA:({.*})/)
+            const match = item.description.match(/DATA:({.*})/)
             if (match) finish = JSON.parse(match[1]).finish
           } catch {}
         }
         return `- ${item.name}${finish ? ` (${finish})` : ''} - R$ ${item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
       }).join('\n') +
-      `\n\nVALOR TOTAL: R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
-      `PARCELAMENTO: ${installments}X DE R$ ${installmentValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
-      `VALOR NO PIX (5% DESC): R$ ${pixValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n` +
-      `PODEMOS COMBINAR O ENVIO?`
+      `\n\n*RESUMO FINANCEIRO:*\n` +
+      `VALOR TOTAL: R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
+      `OPÇÃO CARTÃO: ${installments}X DE R$ ${installmentValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
+      `OPÇÃO PIX (5% OFF): R$ ${pixValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n` +
+      `*PODEMOS COMBINAR O ENVIO?*`
     )
     window.open(`https://wa.me/${storePhone}?text=${message}`, '_blank')
   }
 
-  if (cartItems.length === 0) {
+  if (itemCount === 0) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-32 text-center flex flex-col items-center">
         <ShoppingBag size={48} className="text-brand-secondary/30 mb-6" />
         <h2 className="text-2xl font-light tracking-[0.2em] uppercase text-brand-primary mb-4">Sua sacola está vazia</h2>
         <p className="text-brand-secondary text-[10px] tracking-widest uppercase mb-12 font-light">Escolha as joias que mais combinam com você</p>
-        <Link href="/" className="bg-brand-primary text-white px-12 py-4 rounded-full font-light text-[10px] tracking-[0.3em] uppercase hover:bg-brand-secondary transition-colors">
+        <Link href="/?catalogo=true" className="bg-brand-primary text-white px-12 py-4 rounded-full font-light text-[10px] tracking-[0.3em] uppercase hover:bg-brand-secondary transition-colors">
           Voltar ao Catálogo
         </Link>
       </div>
@@ -93,21 +87,21 @@ export default function CartPage() {
     <div className="max-w-3xl mx-auto px-4 py-20">
       <div className="text-center mb-20">
         <h2 className="text-3xl font-light tracking-[0.2em] uppercase text-brand-primary mb-4">Minha Sacola</h2>
-        <p className="text-brand-secondary text-[10px] font-light tracking-[0.4em] uppercase">{cartItems.length} Itens Selecionados</p>
+        <p className="text-brand-secondary text-[10px] font-light tracking-[0.4em] uppercase">{itemCount} Itens Selecionados</p>
       </div>
 
       <div className="space-y-8 mb-16">
-        {cartItems.map((item, index) => {
-          let finish = (item as any).material_finish || ''
-          if (!finish && (item as any).description?.includes('DATA:')) {
+        {cart.map((item, index) => {
+          let finish = item.material_finish || ''
+          if (!finish && item.description?.includes('DATA:')) {
             try {
-              const match = (item as any).description.match(/DATA:({.*})/)
+              const match = item.description.match(/DATA:({.*})/)
               if (match) finish = JSON.parse(match[1]).finish
             } catch {}
           }
 
           return (
-            <div key={index} className="flex items-center gap-6 border-b border-brand-secondary/10 pb-8">
+            <div key={`${item.id}-${index}`} className="flex items-center gap-6 border-b border-brand-secondary/10 pb-8">
               <div className="w-24 h-32 rounded-3xl overflow-hidden bg-white border border-brand-secondary/10 shadow-sm relative">
                 <Image src={item.image_url} alt={item.name} fill className="object-cover" />
               </div>
@@ -116,12 +110,39 @@ export default function CartPage() {
                 {finish && <p className="text-[8px] font-black text-brand-secondary uppercase tracking-widest mb-2">{finish}</p>}
                 <p className="text-lg font-light text-brand-primary">R$ {item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
               </div>
-              <button onClick={() => removeItem(index)} className="text-brand-secondary/40 hover:text-red-400 transition-colors">
+              <button onClick={() => removeFromCart(index)} className="text-brand-secondary/40 hover:text-red-400 transition-colors">
                 <Trash2 size={18} />
               </button>
             </div>
           )
         })}
+      </div>
+
+      {/* FORMULÁRIO DE IDENTIFICAÇÃO */}
+      <div className="mb-16 space-y-6">
+        <h3 className="text-[10px] font-black tracking-[0.4em] uppercase text-brand-primary text-center">Identificação</h3>
+        <div className="grid grid-cols-1 gap-4">
+          <div className="relative">
+            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-secondary/40" size={18} />
+            <input 
+              type="text" 
+              placeholder="SEU NOME COMPLETO" 
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+              className="w-full pl-12 pr-4 py-4 rounded-2xl border border-brand-secondary/10 bg-white text-[10px] font-bold tracking-widest text-brand-primary outline-none focus:border-brand-primary transition-colors"
+            />
+          </div>
+          <div className="relative">
+            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-secondary/40" size={18} />
+            <input 
+              type="text" 
+              placeholder="ENDEREÇO DE ENTREGA (OPCIONAL)" 
+              value={customerAddress}
+              onChange={(e) => setCustomerAddress(e.target.value)}
+              className="w-full pl-12 pr-4 py-4 rounded-2xl border border-brand-secondary/10 bg-white text-[10px] font-bold tracking-widest text-brand-primary outline-none focus:border-brand-primary transition-colors"
+            />
+          </div>
+        </div>
       </div>
 
       <div className="bg-brand-secondary/5 p-10 rounded-[40px] text-center border border-brand-secondary/10 shadow-sm">
@@ -151,7 +172,7 @@ export default function CartPage() {
           <MessageCircle size={20} /> Finalizar no WhatsApp
         </button>
         
-        <Link href="/" className="inline-block mt-8 text-[9px] font-light tracking-[0.3em] uppercase text-brand-secondary hover:text-brand-primary transition-colors">
+        <Link href="/?catalogo=true" className="inline-block mt-8 text-[9px] font-light tracking-[0.3em] uppercase text-brand-secondary hover:text-brand-primary transition-colors">
           ← Adicionar mais joias
         </Link>
       </div>

@@ -5,8 +5,10 @@ import Link from 'next/link'
 import { ShoppingBag, User } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
+import { useCart } from '@/lib/cart-context'
 
 export default function Header() {
+  const { itemCount } = useCart()
   const [branding, setBranding] = useState<{
     logo_url: string | null, 
     tagline: string | null,
@@ -55,7 +57,11 @@ export default function Header() {
         <div className="absolute right-4 md:right-12 top-1/2 -translate-y-1/2">
           <Link href="/cart" className="group relative p-3 md:p-5 rounded-full hover:bg-brand-secondary/5 transition-all text-brand-primary">
              <ShoppingBag className="w-6 h-6 md:w-8 md:h-8" strokeWidth={1.5} />
-             <span className="absolute top-1 right-1 w-5 h-5 bg-brand-primary text-white text-[10px] flex items-center justify-center rounded-full border-2 border-white shadow-sm font-black">!</span>
+             {itemCount > 0 && (
+               <span className="absolute top-1 right-1 w-5 h-5 bg-brand-primary text-white text-[10px] flex items-center justify-center rounded-full border-2 border-white shadow-sm font-black animate-in zoom-in duration-300">
+                 {itemCount}
+               </span>
+             )}
           </Link>
         </div>
 
