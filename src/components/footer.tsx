@@ -91,9 +91,9 @@ export default function Footer() {
           <p className="text-[8px] text-brand-secondary font-bold uppercase tracking-[0.4em]">
             © {new Date().getFullYear()} — TODOS OS DIREITOS RESERVADOS.
           </p>
-          {(branding as any).tiktok && (branding as any).tiktok.includes('MESES') && (
+          {branding.tiktok && (branding.tiktok.includes('MESES') || branding.tiktok.includes('ANO') || branding.tiktok.includes('ETERNA')) && (
             <p className="text-[7px] text-brand-primary/60 font-black uppercase tracking-widest flex items-center gap-2">
-              <Gem size={8} /> GARANTIA DE {(branding as any).tiktok}
+              <Gem size={8} /> 💎 {branding.tiktok}
             </p>
           )}
         </div>
