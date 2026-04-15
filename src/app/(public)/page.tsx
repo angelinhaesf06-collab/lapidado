@@ -44,7 +44,7 @@ export default async function Home({
   const installments = parseInt(branding?.facebook?.split('|')[1] || '10')
   const currentUserId = branding?.user_id
 
-  // 💎 NEXUS: Consultas de Categorias e Produtos (Pega do dono OU geral se não houver dono)
+  // 💎 NEXUS: Consultas de Categorias e Produtos (Resiliente para visitantes)
   let catQuery = supabase.from('categories').select('id, name')
   if (currentUserId) {
     catQuery = catQuery.or(`user_id.eq.${currentUserId},user_id.is.null`)
@@ -66,28 +66,12 @@ export default async function Home({
 
   const { data: products, error: prodError } = await finalQuery
 
-  // 💎 VERIFICAR SE É ADMIN LOGADO PARA MOSTRAR BOTÃO DE RETORNO
-  const { data: { session } } = await supabase.auth.getSession();
-  const isAdmin = !!session;
-
   return (
     <div className="flex flex-col w-full min-h-screen">
-      {/* 💎 BARRA DE FERRAMENTAS DA EMPRESÁRIA (Só aparece para você) */}
-      {isAdmin && (
-        <div className="bg-brand-primary py-1.5 px-4 flex justify-between items-center sticky top-0 z-[100] shadow-md border-b border-white/5">
-          <p className="text-[7px] font-black text-white/50 uppercase tracking-[0.2em]">Visualização (Admin)</p>
-          <Link href="/admin" className="bg-white text-brand-primary px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest hover:bg-brand-secondary hover:text-white transition-all">
-            Painel
-          </Link>
-        </div>
-      )}
-
       {/* 💎 DEBUG MÁGICO: Só aparece se houver erro real no banco */}
-      {(catError || prodError || !products || products.length === 0) && (
+      {(catError || prodError) && (
         <div className="bg-black text-white text-[8px] p-2 text-center">
-          DADOS: {products?.length || 0} | CATS: {dbCategories?.length || 0} | 
-          ERRO_P: {prodError?.message || 'OK'} | ERRO_C: {catError?.message || 'OK'} |
-          URL: {process.env.NEXT_PUBLIC_SUPABASE_URL ? 'DEFINIDA' : 'AUSENTE'}
+          ERRO_P: {prodError?.message || 'OK'} | ERRO_C: {catError?.message || 'OK'} 
         </div>
       )}
       {/* Navegação Mobile e Desktop Superior - Agora mais próxima do topo */}

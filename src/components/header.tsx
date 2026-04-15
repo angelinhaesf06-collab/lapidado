@@ -80,12 +80,8 @@ export default function Header() {
           </div>
         )}
 
-        {/* SACOLA E ACESSO (DIREITA) */}
+        {/* SACOLA (DIREITA) */}
         <div className="flex items-center gap-2 md:gap-4">
-          <Link href="/login" className="hidden md:flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-brand-primary/60 hover:text-brand-primary transition-colors">
-            <User size={16} strokeWidth={1.5} />
-            Minha Conta
-          </Link>
           <Link href="/cart" className="group relative p-2 md:p-3 rounded-full hover:bg-brand-secondary/5 transition-all text-brand-primary">
              <ShoppingBag className="w-5 h-5 md:w-6 md:h-6" strokeWidth={1.5} />
              {itemCount > 0 && (
