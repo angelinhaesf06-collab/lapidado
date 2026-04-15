@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { TrendingUp, ShoppingCart, DollarSign, Calendar, User, Package, Plus, Loader2, ArrowLeft } from 'lucide-react'
+import { TrendingUp, ShoppingCart, DollarSign, Calendar, User, Package, Plus, Loader2, ArrowLeft, Search, Filter, Gem, Check } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
@@ -25,10 +25,14 @@ export default function SalesPage() {
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
   const [products, setProducts] = useState<any[]>([])
+  const [categories, setCategories] = useState<any[]>([])
+  const [activeCategory, setActiveCategory] = useState('Todas')
+  const [searchQuery, setSearchQuery] = useState('')
+  
   const supabase = createClient()
 
   // Estado para nova venda
-  const [selectedProductId, setSelectedProductId] = useState('')
+  const [selectedProduct, setSelectedProduct] = useState<any>(null)
   const [quantity, setQuantity] = useState(1)
   const [customerName, setCustomerName] = useState('')
   const [isSaving, setIsSaving] = useState(false)
@@ -36,6 +40,7 @@ export default function SalesPage() {
   useEffect(() => {
     loadSales()
     loadProducts()
+    loadCategories()
   }, [])
 
   async function loadSales() {
@@ -59,7 +64,7 @@ export default function SalesPage() {
 
     const { data } = await supabase
       .from('products')
-      .select('*')
+      .select('*, categories(name)')
       .eq('user_id', user.id)
       .gt('stock_quantity', 0)
       .order('name')
@@ -67,39 +72,39 @@ export default function SalesPage() {
     if (data) setProducts(data)
   }
 
-  async function handleRegisterSale(e: React.FormEvent) {
-    e.preventDefault()
-    if (!selectedProductId || quantity <= 0) return
+  async function loadCategories() {
+    const { data } = await supabase.from('categories').select('*').order('name')
+    if (data) setCategories(data)
+  }
+
+  async function handleRegisterSale() {
+    if (!selectedProduct || quantity <= 0) return
 
     setIsSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
-    const product = products.find(p => p.id === selectedProductId)
-
-    if (!user || !product) return
+    if (!user) return
 
     try {
-      // 1. Registrar a Venda
       const { error: saleError } = await supabase.from('sales').insert({
-        product_id: selectedProductId,
+        product_id: selectedProduct.id,
         user_id: user.id,
         quantity,
-        sale_price: product.price,
-        cost_price: product.cost_price || 0,
+        sale_price: selectedProduct.price,
+        cost_price: selectedProduct.cost_price || 0,
         customer_name: customerName
       })
 
       if (saleError) throw saleError
 
-      // 2. Atualizar Estoque
       const { error: stockError } = await supabase
         .from('products')
-        .update({ stock_quantity: product.stock_quantity - quantity })
-        .eq('id', selectedProductId)
+        .update({ stock_quantity: selectedProduct.stock_quantity - quantity })
+        .eq('id', selectedProduct.id)
 
       if (stockError) throw stockError
 
       setShowAddModal(false)
-      setSelectedProductId('')
+      setSelectedProduct(null)
       setQuantity(1)
       setCustomerName('')
       loadSales()
@@ -107,132 +112,202 @@ export default function SalesPage() {
       alert('VENDA REGISTRADA COM SUCESSO! 💎')
     } catch (err) {
       alert('ERRO AO REGISTRAR VENDA.')
-      console.error(err)
     } finally {
       setIsSaving(false)
     }
   }
 
+  const filteredProducts = products.filter(p => {
+    const matchesCategory = activeCategory === 'Todas' || p.categories?.name === activeCategory
+    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase())
+    return matchesCategory && matchesSearch
+  })
+
   const totalRevenue = sales.reduce((acc, sale) => acc + (sale.sale_price * sale.quantity), 0)
   const totalProfit = sales.reduce((acc, sale) => acc + ((sale.sale_price - sale.cost_price) * sale.quantity), 0)
 
   return (
-    <div className="max-w-4xl mx-auto py-6 px-5 md:py-10 pb-20">
-      <div className="flex items-center justify-between mb-10">
-        <Link href="/admin" className="p-2 hover:bg-brand-secondary/5 rounded-full transition-colors text-brand-secondary">
-          <ArrowLeft size={20} />
-        </Link>
-        <div className="text-center flex-1 pr-8">
-          <h2 className="text-2xl font-bold tracking-tight uppercase text-brand-primary">Gestão de Vendas</h2>
-          <p className="text-brand-secondary text-[8px] font-black tracking-[0.3em] uppercase mt-1">Acompanhe o brilho do seu sucesso 💰</p>
-        </div>
-      </div>
-
-      {/* RESUMO DE PERFORMANCE */}
-      <div className="grid grid-cols-2 gap-4 mb-10">
-        <div className="bg-white p-6 rounded-[30px] border border-brand-secondary/10 shadow-sm text-center">
-          <p className="text-[7px] font-black text-brand-secondary uppercase tracking-widest mb-1">Faturamento Total</p>
-          <h4 className="text-xl font-bold text-brand-primary">R$ {totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h4>
-        </div>
-        <div className="bg-brand-primary p-6 rounded-[30px] text-center shadow-lg">
-          <p className="text-[7px] font-black text-brand-secondary/80 uppercase tracking-widest mb-1">Lucro Real Acumulado</p>
-          <h4 className="text-xl font-bold text-white">R$ {totalProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h4>
-        </div>
-      </div>
-
-      <button 
-        onClick={() => setShowAddModal(true)}
-        className="w-full bg-brand-primary text-white py-5 rounded-[25px] font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-xl hover:bg-brand-secondary transition-all mb-10"
-      >
-        <Plus size={18} /> Registrar Nova Venda
-      </button>
-
-      {/* LISTA DE VENDAS */}
-      <div className="space-y-4">
-        <h3 className="text-[9px] font-black text-brand-primary uppercase tracking-[0.3em] mb-4 ml-2">Histórico Recente</h3>
-        {loading ? (
-          <div className="flex justify-center py-20"><Loader2 className="animate-spin text-brand-secondary" /></div>
-        ) : sales.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-[40px] border border-brand-secondary/10 border-dashed">
-             <p className="text-[10px] text-brand-secondary uppercase font-bold tracking-widest">Nenhuma venda registrada ainda. 💎</p>
+    <div className="flex min-h-screen bg-[#fffcfc]">
+      
+      {/* 💎 SIDEBAR LAPIDADO (ESQUERDA) */}
+      <aside className="hidden md:flex w-64 flex-col bg-white border-r border-brand-secondary/10 p-6 sticky top-0 h-screen">
+        <div className="flex items-center gap-3 mb-12 px-2">
+          <div className="w-8 h-8 rounded-full bg-brand-primary flex items-center justify-center text-white">
+            <Gem size={18} />
           </div>
-        ) : (
-          sales.map((sale) => (
-            <div key={sale.id} className="bg-white p-4 rounded-[30px] border border-brand-secondary/5 shadow-sm flex items-center gap-4 group hover:border-brand-secondary/20 transition-all">
-              <div className="w-16 h-16 rounded-2xl overflow-hidden bg-brand-secondary/5 relative">
-                <Image src={sale.products?.image_url || ''} alt={sale.products?.name || ''} fill className="object-cover" />
-              </div>
-              <div className="flex-1">
-                <div className="flex justify-between items-start mb-1">
-                  <h4 className="text-[10px] font-bold text-brand-primary uppercase truncate max-w-[150px]">{sale.products?.name}</h4>
-                  <span className="text-[8px] font-black text-green-600 bg-green-50 px-2 py-0.5 rounded-full uppercase">+{sale.quantity} PÇ</span>
+          <span className="text-[11px] font-black uppercase tracking-[0.3em] text-brand-primary">Lapidado</span>
+        </div>
+        
+        <nav className="space-y-2 flex-1">
+          <Link href="/admin" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-brand-secondary/60 hover:bg-brand-secondary/5 transition-all">
+            <TrendingUp size={18} /> Dashboard
+          </Link>
+          <Link href="/admin/products" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-brand-secondary/60 hover:bg-brand-secondary/5 transition-all">
+            <Package size={18} /> Estoque
+          </Link>
+          <Link href="/admin/sales" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest bg-brand-primary text-white shadow-lg">
+            <ShoppingCart size={18} /> Vendas
+          </Link>
+        </nav>
+      </aside>
+
+      <div className="flex-1 max-w-4xl mx-auto py-6 px-5 md:py-10 pb-20">
+        <div className="text-center mb-10">
+          <h2 className="text-2xl font-bold tracking-tight uppercase text-brand-primary">Gestão de Vendas</h2>
+          <p className="text-brand-secondary text-[8px] font-black tracking-[0.3em] uppercase mt-1">Sua vitrine de sucessos 💰</p>
+        </div>
+
+        {/* RESUMO DE PERFORMANCE */}
+        <div className="grid grid-cols-2 gap-4 mb-10">
+          <div className="bg-white p-6 rounded-[30px] border border-brand-secondary/10 shadow-sm text-center">
+            <p className="text-[7px] font-black text-brand-secondary uppercase tracking-widest mb-1">Faturamento Total</p>
+            <h4 className="text-xl font-bold text-brand-primary">R$ {totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h4>
+          </div>
+          <div className="bg-brand-primary p-6 rounded-[30px] text-center shadow-lg">
+            <p className="text-[7px] font-black text-brand-secondary/80 uppercase tracking-widest mb-1">Lucro Real</p>
+            <h4 className="text-xl font-bold text-white">R$ {totalProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h4>
+          </div>
+        </div>
+
+        <button 
+          onClick={() => setShowAddModal(true)}
+          className="w-full bg-brand-primary text-white py-5 rounded-[25px] font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-xl hover:bg-brand-secondary transition-all mb-10"
+        >
+          <Plus size={18} /> Selecionar Peça e Vender
+        </button>
+
+        {/* HISTÓRICO */}
+        <div className="space-y-4">
+          <h3 className="text-[9px] font-black text-brand-primary uppercase tracking-[0.3em] mb-4 ml-2">Vendas Realizadas</h3>
+          {loading ? (
+            <div className="flex justify-center py-20"><Loader2 className="animate-spin text-brand-secondary" /></div>
+          ) : (
+            sales.map((sale) => (
+              <div key={sale.id} className="bg-white p-4 rounded-[30px] border border-brand-secondary/5 shadow-sm flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl overflow-hidden bg-brand-secondary/5 relative">
+                  <Image src={sale.products?.image_url || ''} alt="" fill className="object-cover" />
                 </div>
-                <div className="flex items-center gap-4 text-[9px] text-brand-secondary/60">
-                  <span className="flex items-center gap-1"><Calendar size={10} /> {new Date(sale.created_at).toLocaleDateString('pt-BR')}</span>
-                  {sale.customer_name && <span className="flex items-center gap-1"><User size={10} /> {sale.customer_name.toUpperCase()}</span>}
+                <div className="flex-1">
+                  <h4 className="text-[10px] font-bold text-brand-primary uppercase">{sale.products?.name}</h4>
+                  <div className="flex items-center gap-3 text-[8px] text-brand-secondary/60 uppercase font-black tracking-widest">
+                    <span>{new Date(sale.created_at).toLocaleDateString('pt-BR')}</span>
+                    {sale.customer_name && <span>• {sale.customer_name}</span>}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-bold text-brand-primary">R$ {(sale.sale_price * sale.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-xs font-bold text-brand-primary">R$ {(sale.sale_price * sale.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                <p className="text-[7px] font-black text-green-700 uppercase">Lucro: R$ {((sale.sale_price - sale.cost_price) * sale.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+            ))
+          )}
+        </div>
+
+        {/* 🪄 SELETOR VISUAL DE PRODUTOS (MODAL) */}
+        {showAddModal && (
+          <div className="fixed inset-0 bg-brand-primary/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+            <div className="bg-white w-full max-w-4xl h-[85vh] rounded-[40px] flex flex-col shadow-2xl overflow-hidden">
+              
+              {/* HEADER DO SELETOR */}
+              <div className="p-8 border-b border-brand-secondary/10 flex flex-col md:flex-row justify-between items-center gap-6">
+                <div className="flex items-center gap-4">
+                  <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-brand-secondary/5 rounded-full"><ArrowLeft size={20} /></button>
+                  <h3 className="text-lg font-bold text-brand-primary uppercase">Escolha a Joia</h3>
+                </div>
+                
+                <div className="flex items-center gap-4 w-full md:w-auto">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-secondary/40" size={16} />
+                    <input 
+                      type="text" 
+                      placeholder="BUSCAR NOME..." 
+                      className="w-full pl-12 pr-4 py-3 rounded-2xl bg-rose-50/30 border border-brand-secondary/10 text-[10px] font-bold uppercase"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                  <select 
+                    className="p-3 rounded-2xl bg-rose-50/30 border border-brand-secondary/10 text-[10px] font-bold uppercase outline-none"
+                    value={activeCategory}
+                    onChange={(e) => setActiveCategory(e.target.value)}
+                  >
+                    <option value="Todas">TODAS</option>
+                    {categories.map(cat => <option key={cat.id} value={cat.name}>{cat.name.toUpperCase()}</option>)}
+                  </select>
+                </div>
               </div>
+
+              {/* GRID VISUAL */}
+              <div className="flex-1 overflow-y-auto p-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 bg-rose-50/10">
+                {filteredProducts.map(p => (
+                  <button 
+                    key={p.id}
+                    onClick={() => setSelectedProduct(p)}
+                    className={`flex flex-col items-center p-4 rounded-[30px] border transition-all ${
+                      selectedProduct?.id === p.id 
+                      ? 'bg-brand-primary border-brand-primary shadow-xl scale-105' 
+                      : 'bg-white border-brand-secondary/10 hover:border-brand-primary'
+                    }`}
+                  >
+                    <div className="aspect-square w-full rounded-2xl overflow-hidden mb-4 relative shadow-sm">
+                      <Image src={p.image_url} alt="" fill className="object-cover" />
+                      {selectedProduct?.id === p.id && (
+                        <div className="absolute inset-0 bg-brand-primary/40 flex items-center justify-center text-white">
+                          <Check size={32} />
+                        </div>
+                      )}
+                    </div>
+                    <h4 className={`text-[9px] font-bold uppercase tracking-widest text-center mb-1 truncate w-full ${selectedProduct?.id === p.id ? 'text-white' : 'text-brand-primary'}`}>
+                      {p.name}
+                    </h4>
+                    <p className={`text-[8px] font-black uppercase ${selectedProduct?.id === p.id ? 'text-brand-secondary' : 'text-brand-secondary'}`}>
+                      {p.stock_quantity} EM ESTOQUE
+                    </p>
+                  </button>
+                ))}
+              </div>
+
+              {/* RODAPÉ DE FINALIZAÇÃO (SÓ APARECE SE SELECIONAR) */}
+              {selectedProduct && (
+                <div className="p-8 border-t border-brand-secondary/10 bg-white animate-in slide-in-from-bottom duration-500">
+                  <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div className="flex items-center gap-6">
+                      <div className="w-16 h-16 rounded-2xl overflow-hidden relative border border-brand-secondary/10">
+                        <Image src={selectedProduct.image_url} alt="" fill className="object-cover" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-brand-primary uppercase">{selectedProduct.name}</h4>
+                        <p className="text-lg font-light text-brand-primary">R$ {selectedProduct.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+                      <div className="flex items-center gap-3 bg-rose-50/50 p-2 rounded-2xl border border-brand-secondary/10">
+                        <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-10 h-10 rounded-xl bg-white flex items-center justify-center font-bold shadow-sm">-</button>
+                        <span className="w-8 text-center font-bold">{quantity}</span>
+                        <button onClick={() => setQuantity(Math.min(selectedProduct.stock_quantity, quantity + 1))} className="w-10 h-10 rounded-xl bg-white flex items-center justify-center font-bold shadow-sm">+</button>
+                      </div>
+                      <input 
+                        type="text" 
+                        placeholder="NOME DA CLIENTE..." 
+                        className="p-4 rounded-2xl bg-rose-50/30 border border-brand-secondary/10 text-[10px] font-bold uppercase w-full md:w-48 outline-none focus:border-brand-primary"
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                      />
+                      <button 
+                        onClick={handleRegisterSale}
+                        disabled={isSaving}
+                        className="bg-brand-primary text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+                      >
+                        {isSaving ? <Loader2 className="animate-spin" size={16} /> : <><ShoppingCart size={16} /> Confirmar Venda</>}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          ))
+          </div>
         )}
       </div>
-
-      {/* MODAL DE REGISTRO */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-brand-primary/40 backdrop-blur-sm z-[100] flex items-end md:items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-[40px] p-8 shadow-2xl animate-in slide-in-from-bottom duration-500">
-            <h3 className="text-lg font-bold text-brand-primary uppercase text-center mb-8">Registrar Venda</h3>
-            <form onSubmit={handleRegisterSale} className="space-y-4">
-              <div>
-                <label className="text-[8px] font-black text-brand-secondary uppercase mb-2 block ml-1">Produto</label>
-                <select 
-                  required
-                  value={selectedProductId}
-                  onChange={(e) => setSelectedProductId(e.target.value)}
-                  className="w-full p-4 rounded-2xl border border-brand-secondary/10 bg-rose-50/30 text-[10px] font-bold text-brand-primary outline-none focus:border-brand-primary"
-                >
-                  <option value="">SELECIONE A JOIA...</option>
-                  {products.map(p => (
-                    <option key={p.id} value={p.id}>{p.name.toUpperCase()} (ESTOQUE: {p.stock_quantity})</option>
-                  ))}
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[8px] font-black text-brand-secondary uppercase mb-2 block ml-1">Quantidade</label>
-                  <input 
-                    type="number" 
-                    required
-                    min="1"
-                    value={quantity}
-                    onChange={(e) => setQuantity(parseInt(e.target.value))}
-                    className="w-full p-4 rounded-2xl border border-brand-secondary/10 bg-rose-50/30 text-[10px] font-bold text-brand-primary outline-none focus:border-brand-primary"
-                  />
-                </div>
-                <div>
-                  <label className="text-[8px] font-black text-brand-secondary uppercase mb-2 block ml-1">Cliente (Opcional)</label>
-                  <input 
-                    type="text" 
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    className="w-full p-4 rounded-2xl border border-brand-secondary/10 bg-rose-50/30 text-[10px] font-bold text-brand-primary outline-none focus:border-brand-primary"
-                  />
-                </div>
-              </div>
-              <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 py-4 rounded-2xl border border-brand-secondary/10 text-[10px] font-black uppercase tracking-widest text-brand-secondary">Cancelar</button>
-                <button type="submit" disabled={isSaving} className="flex-[2] py-4 rounded-2xl bg-brand-primary text-white text-[10px] font-black uppercase tracking-widest shadow-lg flex items-center justify-center gap-2">
-                  {isSaving ? <Loader2 className="animate-spin" size={16} /> : 'Confirmar Venda'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
