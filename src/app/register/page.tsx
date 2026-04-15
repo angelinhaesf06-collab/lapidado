@@ -40,9 +40,12 @@ export default function RegisterPage() {
       })
 
       if (error) {
-        setError(error.message === 'User already registered' 
-          ? 'Este e-mail já está cadastrado.' 
-          : 'Erro ao criar conta. Verifique os dados.')
+        let msg = error.message
+        if (msg === 'User already registered') msg = 'Este e-mail já está cadastrado.'
+        if (msg.includes('email')) msg = 'O formato do e-mail parece inválido. Verifique se digitou .com corretamente.'
+        if (msg.includes('password')) msg = 'A senha deve ter pelo menos 6 caracteres.'
+        
+        setError(msg)
         return
       }
 
