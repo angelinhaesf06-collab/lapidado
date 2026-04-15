@@ -75,7 +75,7 @@ export default async function Home({
           {categoryNames.map((cat) => (
             <Link 
               key={cat}
-              href={`/?category=${cat === 'Todos' ? '' : cat}`}
+              href={`/?catalogo=true&category=${cat === 'Todos' ? '' : cat}`}
               className={`px-3 py-1.5 transition-all font-bold text-[9px] md:text-[10px] tracking-[0.1em] md:tracking-[0.2em] uppercase rounded-full border ${
                 activeCategory === cat
                 ? "bg-brand-primary text-white border-brand-primary shadow-md" 
