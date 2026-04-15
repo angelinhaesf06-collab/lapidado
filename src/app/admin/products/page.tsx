@@ -23,9 +23,13 @@ export default function ProductsListPage() {
 
   const loadProducts = useCallback(async () => {
     setLoading(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
     const { data } = await supabase
       .from('products')
       .select('*, categories(name)')
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false })
     if (data) setProducts(data as unknown as Product[])
     setLoading(false)

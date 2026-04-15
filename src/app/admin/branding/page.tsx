@@ -28,7 +28,10 @@ export default function BrandingPage() {
   useEffect(() => {
     async function loadBranding() {
       try {
-        const { data } = await supabase.from('branding').select('*').single()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+
+        const { data } = await supabase.from('branding').select('*').eq('user_id', user.id).single()
         if (data) {
           setBrandingId(data.id)
           const rawTagline = data.facebook || ''

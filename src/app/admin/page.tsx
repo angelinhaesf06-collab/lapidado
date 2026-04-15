@@ -16,10 +16,13 @@ export default function AdminDashboard() {
     async function loadDashboardData() {
       setLoading(true)
       try {
-        const { data: categories } = await supabase.from('categories').select('id, name')
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+
+        const { data: categories } = await supabase.from('categories').select('id, name').eq('user_id', user.id)
         
-        // 💎 NEXUS: CONSULTA RESILIENTE (Busca o que estiver disponível no banco)
-        const { data: products, error: pError } = await supabase.from('products').select('*')
+        // 💎 NEXUS: CONSULTA RESILIENTE E ISOLADA
+        const { data: products, error: pError } = await supabase.from('products').select('*').eq('user_id', user.id)
         
         if (pError) throw pError;
 

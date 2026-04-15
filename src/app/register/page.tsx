@@ -28,7 +28,7 @@ export default function RegisterPage() {
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -41,6 +41,18 @@ export default function RegisterPage() {
           ? 'Este e-mail já está cadastrado.' 
           : 'Erro ao criar conta. Verifique os dados.')
         return
+      }
+
+      // 💎 INICIALIZAÇÃO DE BRANDING (Para novas empresárias)
+      if (data.user) {
+        await supabase.from('branding').insert([{
+          user_id: data.user.id,
+          business_name: 'Lapidado',
+          primary_color: '#4a322e',
+          secondary_color: '#c99090',
+          facebook: 'CATÁLOGO REQUINTADO|10|BEM-VINDA AO BRILHO|Lapidado', // Tagline|Parcelas|Banner|Nome
+          tiktok: '6 MESES DE GARANTIA'
+        }])
       }
 
       setSuccess(true)
