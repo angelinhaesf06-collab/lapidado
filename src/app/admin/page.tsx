@@ -17,8 +17,11 @@ export default function AdminDashboard() {
       setLoading(true)
       try {
         const { data: categories } = await supabase.from('categories').select('id, name')
-        // 💎 NEXUS: SELECIONANDO COLUNAS EXPLICITAMENTE (Incluindo novas colunas se existirem)
-        const { data: products } = await supabase.from('products').select('id, name, category_id, price, stock_quantity, description, cost_price')
+        
+        // 💎 NEXUS: CONSULTA RESILIENTE (Busca o que estiver disponível no banco)
+        const { data: products, error: pError } = await supabase.from('products').select('*')
+        
+        if (pError) throw pError;
 
         if (categories && products) {
           // 1. ESTATÍSTICAS DE CATEGORIAS

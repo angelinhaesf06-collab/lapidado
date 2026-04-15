@@ -37,6 +37,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
       const { data: cats } = await supabase.from('categories').select('*').order('name')
       if (cats) setCategories(cats)
 
+      // 💎 NEXUS: CONSULTA RESILIENTE
       const { data: prod, error } = await supabase.from('products').select('*').eq('id', id).single()
       if (error) {
         alert('ERRO AO CARREGAR JOIA: ' + error.message)
@@ -46,7 +47,8 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
       if (prod) {
         setName(prod.name)
-        setCostPrice(prod.cost_price?.toString() || '')
+        const prodData = prod as any
+        setCostPrice(prodData.cost_price?.toString() || '')
         
         // Tentar extrair custo e banho da descrição se as colunas falharem
         const descMatch = prod.description?.match(/---[\s\S]*DATA:({.*})/)
@@ -54,14 +56,14 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           try {
             const extraData = JSON.parse(descMatch[1])
             setMaterialFinish(extraData.finish || 'OURO 18K')
-            if (!prod.cost_price) setCostPrice(extraData.cost?.toString() || '')
+            if (!prodData.cost_price) setCostPrice(extraData.cost?.toString() || '')
             setDescription(prod.description.split('\n\n---')[0])
           } catch {
             setDescription(prod.description)
           }
         } else {
           setDescription(prod.description)
-          setMaterialFinish(prod.material_finish || 'OURO 18K')
+          setMaterialFinish(prodData.material_finish || 'OURO 18K')
         }
         
         setCategory(prod.category_id)
