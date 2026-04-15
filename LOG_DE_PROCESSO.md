@@ -65,6 +65,11 @@ Data: 08 de Abril de 2026
 - Novo Slogan Oficial: **"[Nome da Loja]: Mais que acessórios, a sua assinatura de estilo."**
 - Fallback Inteligente: O sistema utiliza a primeira letra da marca como ícone caso não haja logotipo cadastrado.
 
+### 5. Arquitetura de Segurança (Cadeado Digital)
+- Definição das políticas de **RLS (Row Level Security)** para isolamento multi-tenant.
+- Garantia de privacidade: Uma empresária jamais acessa dados de faturamento ou estoque de outra.
+- Configuração de acesso granular: Público pode ver vitrine, mas apenas donos editam dados.
+
 
 ---
 **Status do Banco de Dados:** Tabela de `sales` (Vendas) criada e integrada com sucesso. 💎💰🚀
