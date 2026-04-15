@@ -50,39 +50,23 @@ export default function RegisterPage() {
         if (msg === 'User already registered') msg = 'Este e-mail já está cadastrado.'
         if (msg.includes('email')) msg = 'E-mail inválido ou mal formatado. Verifique o .com'
         if (msg.includes('password')) msg = 'A senha deve ter pelo menos 6 caracteres.'
-        if (msg.includes('Database error')) msg = 'Erro de banco de dados. Tente novamente em instantes.'
         
         setError(msg)
         return
       }
 
-      // 💎 SE O USUÁRIO FOR CRIADO MAS PRECISAR DE CONFIRMAÇÃO
-      if (data.user && data.session === null) {
-        setSuccess(true)
-        setError('CONTA CRIADA! Verifique seu e-mail para confirmar o acesso. 📧')
-        return
-      }
-
-      // 💎 INICIALIZAÇÃO DE BRANDING (Para novas empresárias)
-      if (data.user) {
-        await supabase.from('branding').insert([{
-          user_id: data.user.id,
-          business_name: 'Lapidado',
-          primary_color: '#4a322e',
-          secondary_color: '#c99090',
-          facebook: 'CATÁLOGO REQUINTADO|10|BEM-VINDA AO BRILHO|Lapidado', // Tagline|Parcelas|Banner|Nome
-          tiktok: '6 MESES DE GARANTIA'
-        }])
-      }
-
       setSuccess(true)
-      // Após 3 segundos redireciona para o login
-      setTimeout(() => {
-        router.push('/login')
-      }, 3000)
+      // 💎 SE PRECISAR DE CONFIRMAÇÃO DE E-MAIL
+      if (data.user && data.session === null) {
+        setError('QUASE LÁ! 💎 Enviamos um e-mail de confirmação. Clique no link para ativar seu acesso.')
+      } else {
+        setTimeout(() => {
+          router.push('/login')
+        }, 3000)
+      }
       
-    } catch {
-      setError('Ocorreu um erro inesperado. Tente novamente mais tarde.')
+    } catch (err) {
+      setError(`ERRO INESPERADO: ${(err as Error).message}`)
     } finally {
       setLoading(false)
     }
