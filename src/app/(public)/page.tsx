@@ -152,7 +152,7 @@ export default async function Home({
                 
                 {/* 💎 BOTÃO DE COMPRA DIRETA (MÁGICA NEXUS) */}
                 <div className="w-full max-w-[140px] md:max-w-none px-2 md:px-6 flex flex-col items-center gap-4">
-                  <Link href={`/product/${product.id}`} className="text-[9px] md:text-[11px] font-black uppercase tracking-[0.3em] text-brand-primary/40 hover:text-brand-primary transition-all border-b border-transparent hover:border-brand-primary/20 pb-1">
+                  <Link href={`/product/${product.id}`} className="text-[9px] md:text-[11px] font-black uppercase tracking-[0.3em] text-brand-secondary hover:text-brand-primary transition-all border-b border-transparent hover:border-brand-secondary/40 pb-1">
                     Espiar Peça
                   </Link>
                   <AddToCartButton product={product} />

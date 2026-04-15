@@ -23,7 +23,7 @@ export default function AddToCartButton({ product }: { product: any }) {
       className={`w-full px-3 md:px-6 py-3 md:py-5 rounded-[40px] md:rounded-[56px] text-[8px] md:text-[11px] font-black uppercase tracking-[0.1em] md:tracking-[0.4em] transition-all transform hover:scale-[1.03] shadow-xl active:scale-[0.97] flex items-center justify-center gap-2 md:gap-4 border-2 border-transparent ${
         added 
         ? 'bg-green-500/10 text-green-700 border-green-200 cursor-default shadow-none' 
-        : 'bg-[#4a322e] text-white hover:bg-[#c99090] hover:shadow-rose-200'
+        : 'bg-brand-primary text-white hover:bg-brand-secondary hover:shadow-brand-secondary/30'
       }`}
     >
       {added ? (
