@@ -22,8 +22,9 @@ export default async function Home({
   const activeCategory = params.category || 'Todos';
   const supabase = await createClient()
 
-  // Carregar configurações de parcelamento
-  const { data: branding } = await supabase.from('branding').select('facebook').single()
+  // 💎 NEXUS: Consulta resiliente para parcelamento
+  const { data: brandingArray } = await supabase.from('branding').select('facebook').limit(1)
+  const branding = brandingArray?.[0]
   const installments = parseInt(branding?.facebook?.split('|')[1] || '10')
 
   const { data: dbCategories, error: catError } = await supabase
@@ -68,16 +69,16 @@ export default async function Home({
           URL: {process.env.NEXT_PUBLIC_SUPABASE_URL ? 'DEFINIDA' : 'AUSENTE'}
         </div>
       )}
-      {/* Navegação Mobile e Desktop Superior - Sem deslizar, tudo visível */}
-      <nav className="bg-white/80 backdrop-blur-md border-b border-brand-secondary/10 sticky top-[158px] z-40 shadow-sm">
-        <div className="max-w-7xl mx-auto px-2 py-2 md:py-4 flex flex-wrap justify-center gap-2 md:gap-8">
+      {/* Navegação Mobile e Desktop Superior - Agora mais próxima do topo */}
+      <nav className="bg-white/80 backdrop-blur-md border-b border-brand-secondary/10 sticky top-[56px] md:top-[72px] z-40 shadow-sm">
+        <div className="max-w-7xl mx-auto px-2 py-2 md:py-3 flex flex-wrap justify-center gap-2 md:gap-6">
           {categoryNames.map((cat) => (
             <Link 
               key={cat}
               href={`/?category=${cat === 'Todos' ? '' : cat}`}
-              className={`px-3 py-1 transition-all font-bold text-[9px] md:text-[11px] tracking-[0.1em] md:tracking-[0.3em] uppercase rounded-full border ${
+              className={`px-3 py-1.5 transition-all font-bold text-[9px] md:text-[10px] tracking-[0.1em] md:tracking-[0.2em] uppercase rounded-full border ${
                 activeCategory === cat
-                ? "bg-brand-primary text-white border-brand-primary shadow-sm" 
+                ? "bg-brand-primary text-white border-brand-primary shadow-md" 
                 : "text-brand-primary/70 hover:text-brand-primary bg-brand-secondary/5 border-brand-secondary/10"
               }`}
             >
@@ -87,16 +88,17 @@ export default async function Home({
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-4 py-6 md:py-20 w-full text-center">
-        <div className="mb-6 md:mb-20">
-          <h2 className="text-lg md:text-3xl font-light tracking-[0.2em] uppercase text-brand-primary mb-1 md:mb-3">
+      <div className="max-w-7xl mx-auto px-4 py-8 md:py-12 w-full text-center">
+        <div className="mb-8 md:mb-16">
+          <h2 className="text-xl md:text-2xl font-light tracking-[0.2em] uppercase text-brand-primary mb-2">
             {activeCategory === 'Todos' ? 'Coleção Completa' : activeCategory}
           </h2>
-          <p className="text-brand-secondary text-[8px] md:text-[10px] font-bold md:font-light tracking-[0.2em] uppercase">{(products?.length || 0)} Peças</p>
+          <div className="w-12 h-[1px] bg-brand-secondary/30 mx-auto mb-2" />
+          <p className="text-brand-secondary text-[8px] md:text-[9px] font-bold tracking-[0.2em] uppercase opacity-60">{(products?.length || 0)} Itens Selecionados</p>
         </div>
 
-        {/* Grid de 2 Colunas no Mobile, 3 em tablets e 4 em desktops */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 md:gap-x-12 gap-y-8 md:gap-y-24 px-1 md:px-0">
+        {/* Grid de Vitrine Otimizada */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 md:gap-x-10 gap-y-10 md:gap-y-20 px-1">
           {products && products.length > 0 ? (
             products.map((product) => (
               <div key={product.id} className="group flex flex-col items-center">

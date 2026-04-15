@@ -23,12 +23,24 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const supabase = await createClient()
-  const { data: branding } = await supabase.from('branding').select('*').single()
+  
+  // 💎 NEXUS: Consulta resiliente para Multi-Tenancy
+  // Se estiver logado, tenta pegar o branding do usuário, senão pega o primeiro disponível
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  let query = supabase.from('branding').select('*')
+  
+  if (user) {
+    query = query.eq('user_id', user.id)
+  }
+  
+  const { data: brandingArray } = await query.limit(1)
+  const branding = brandingArray?.[0]
 
   // Cores dinâmicas com fallback de luxo
   const primary = branding?.primary_color || '#4a322e'
   const secondary = branding?.secondary_color || '#c99090'
-  const businessName = branding?.instagram || 'LAPIDADO' 
+  const businessName = branding?.business_name || 'LAPIDADO' 
 
   return (
     <html lang="pt-BR">
