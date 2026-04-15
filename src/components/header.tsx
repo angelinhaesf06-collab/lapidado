@@ -52,7 +52,7 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-3 md:py-4 flex items-center justify-between">
         
         {/* LOGOTIPO COMPACTO (ESQUERDA) */}
-        <Link href="/" className="flex items-center group">
+        <Link href="/?catalogo=true" className="flex items-center group">
           {branding?.logo_url ? (
             <div className="relative w-32 md:w-48 h-10 md:h-14 transition-transform duration-500 hover:scale-105">
                <Image src={branding.logo_url} alt="Logo" className="object-contain object-left" fill priority />

@@ -56,10 +56,10 @@ export default async function Home({
     <div className="flex flex-col w-full min-h-screen">
       {/* 💎 BARRA DE FERRAMENTAS DA EMPRESÁRIA (Só aparece para você) */}
       {isAdmin && (
-        <div className="bg-brand-primary py-2 px-4 flex justify-between items-center sticky top-0 z-[100] shadow-lg border-b border-white/10">
-          <p className="text-[8px] font-black text-white/80 uppercase tracking-[0.3em]">Modo Visualização (Empresária)</p>
-          <Link href="/admin" className="bg-white text-brand-primary px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-brand-secondary hover:text-white transition-all">
-            Voltar ao Painel
+        <div className="bg-[#4a322e] py-1.5 px-4 flex justify-between items-center sticky top-0 z-[100] shadow-md border-b border-white/5">
+          <p className="text-[7px] font-black text-white/50 uppercase tracking-[0.2em]">Visualização (Admin)</p>
+          <Link href="/admin" className="bg-white text-[#4a322e] px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest hover:bg-[#c99090] hover:text-white transition-all">
+            Painel
           </Link>
         </div>
       )}
