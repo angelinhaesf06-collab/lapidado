@@ -41,14 +41,15 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-[#fffaf9]">
-      {/* Background Decorativo Sutil */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
-         <div className="absolute -top-20 -left-20 w-80 h-80 bg-rose-200/30 rounded-full blur-3xl" />
-         <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-[#c99090]/20 rounded-full blur-3xl" />
+    <div className="min-h-screen flex items-center justify-center px-4 bg-[#fffaf9] relative overflow-hidden">
+      {/* Background Decorativo Mais Vibrante */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+         <div className="absolute -top-10 -left-10 w-[300px] h-[300px] bg-rose-200/40 rounded-full blur-3xl animate-pulse" />
+         <div className="absolute top-1/2 -right-20 w-[400px] h-[400px] bg-[#c99090]/20 rounded-full blur-3xl" />
+         <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-[300px] h-[300px] bg-rose-100/50 rounded-full blur-3xl" />
       </div>
 
-      <div className="bg-white p-12 rounded-[56px] shadow-[0_32px_80px_rgba(74,50,46,0.08)] w-full max-w-lg border border-rose-50 relative z-10 transition-all">
+      <div className="bg-white/90 backdrop-blur-sm p-8 md:p-12 rounded-[48px] md:rounded-[56px] shadow-[0_32px_80px_rgba(74,50,46,0.06)] w-full max-w-lg border border-white/50 relative z-10 transition-all">
         
         {/* Branding Elegante */}
         <div className="text-center mb-12">

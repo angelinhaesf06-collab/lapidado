@@ -72,8 +72,15 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center px-4 bg-[#fffafa]">
-      <div className="bg-white p-10 rounded-[48px] shadow-2xl shadow-rose-100 w-full max-w-md border border-rose-50 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-[#fffaf9] relative overflow-hidden">
+      {/* Background Decorativo Mais Vibrante */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+         <div className="absolute -top-10 -right-10 w-[300px] h-[300px] bg-rose-200/40 rounded-full blur-3xl animate-pulse" />
+         <div className="absolute top-1/2 -left-20 w-[400px] h-[400px] bg-[#c99090]/20 rounded-full blur-3xl" />
+         <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-[300px] h-[300px] bg-rose-100/50 rounded-full blur-3xl" />
+      </div>
+
+      <div className="bg-white/90 backdrop-blur-sm p-8 md:p-10 rounded-[40px] md:rounded-[48px] shadow-[0_32px_80px_rgba(74,50,46,0.06)] w-full max-w-md border border-white/50 relative z-10 transition-all">
 
         <div className="text-center mb-10 relative z-10">
           <h1 className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.4em] mb-8">Catálogo Lapidado</h1>
