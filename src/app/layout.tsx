@@ -40,19 +40,23 @@ export default async function RootLayout({
   // Cores dinâmicas com fallback de luxo
   const primary = branding?.primary_color || '#4a322e'
   const secondary = branding?.secondary_color || '#c99090'
-  const businessName = branding?.business_name || 'LAPIDADO' 
+  
+  // 💎 NEXUS: Extrair nome do negócio da frase de impacto (coluna facebook, formato Frase|Parcelas|Banner|NomeLoja)
+  const rawTagline = branding?.facebook || ''
+  const businessName = rawTagline.split('|')[3] || 'LAPIDADO' 
 
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" className="scroll-smooth">
       <head>
         <title>{`${businessName} — Catálogo de Semijoias`}</title>
       </head>
       <body 
-        className={`${montserrat.variable} font-montserrat bg-[#fffcfc] text-[#4a322e] min-h-screen flex flex-col antialiased`}
+        className={`${montserrat.variable} font-montserrat bg-[#fffcfc] text-[#4a322e] min-h-screen flex flex-col antialiased selection:bg-brand-secondary selection:text-white`}
         style={{ 
           // @ts-ignore
           '--brand-primary': primary, 
-          '--brand-secondary': secondary 
+          '--brand-secondary': secondary,
+          '--background': '#fffcfc'
         }}
       >
         <main className="flex-1">

@@ -22,14 +22,16 @@ export default async function Home({
   const activeCategory = params.category || 'Todos';
   const supabase = await createClient()
 
-  // 💎 NEXUS: Consulta resiliente para parcelamento
-  const { data: brandingArray } = await supabase.from('branding').select('facebook').limit(1)
+  // 💎 NEXUS: Consulta resiliente para parcelamento e isolamento
+  const { data: brandingArray } = await supabase.from('branding').select('*').limit(1)
   const branding = brandingArray?.[0]
   const installments = parseInt(branding?.facebook?.split('|')[1] || '10')
+  const currentUserId = branding?.user_id
 
   const { data: dbCategories, error: catError } = await supabase
     .from('categories')
     .select('id, name')
+    .eq('user_id', currentUserId) // 💎 FILTRO CRÍTICO
     .order('name')
   
   const categoryNames = ['Todos', ...(dbCategories?.map(c => c.name) || [])]
@@ -37,6 +39,7 @@ export default async function Home({
   let query = supabase
     .from('products')
     .select('*, categories!inner(name)')
+    .eq('user_id', currentUserId) // 💎 FILTRO CRÍTICO
     .order('created_at', { ascending: false })
 
   if (activeCategory !== 'Todos') {
@@ -126,7 +129,10 @@ export default async function Home({
                 </Link>
                 
                 {/* 💎 BOTÃO DE COMPRA DIRETA (MÁGICA NEXUS) */}
-                <div className="w-full max-w-[140px] md:max-w-none px-2 md:px-6">
+                <div className="w-full max-w-[140px] md:max-w-none px-2 md:px-6 flex flex-col items-center gap-4">
+                  <Link href={`/product/${product.id}`} className="text-[9px] md:text-[11px] font-black uppercase tracking-[0.3em] text-brand-primary/40 hover:text-brand-primary transition-all border-b border-transparent hover:border-brand-primary/20 pb-1">
+                    Espiar Peça
+                  </Link>
                   <AddToCartButton product={product} />
                 </div>
               </div>
