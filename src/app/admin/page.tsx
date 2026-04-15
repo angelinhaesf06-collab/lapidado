@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ShoppingBag, PlusCircle, Gem, Loader2, DollarSign, Pencil, AlertCircle, TrendingUp, BarChart3, Package } from 'lucide-react'
+import { ShoppingBag, PlusCircle, Gem, Loader2, DollarSign, Pencil, AlertCircle, TrendingUp, BarChart3, Package, ShoppingCart } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
