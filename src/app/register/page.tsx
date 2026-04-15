@@ -18,6 +18,16 @@ export default function RegisterPage() {
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
+    
+    // 💎 DIAGNÓSTICO DE AMBIENTE VERCEL
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    if (!supabaseUrl || supabaseUrl.includes('MISSING') || !supabaseKey) {
+      setError('ERRO DE AMBIENTE: As chaves do Supabase não foram detectadas. Por favor, faça um REDEPLOY na Vercel para ativar as variáveis de ambiente. 🚀')
+      return
+    }
+
     setLoading(true)
     setError(null)
 

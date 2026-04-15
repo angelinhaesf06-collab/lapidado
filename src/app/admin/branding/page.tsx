@@ -31,7 +31,7 @@ export default function BrandingPage() {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
 
-        const { data } = await supabase.from('branding').select('*').eq('user_id', user.id).single()
+        const { data } = await supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle()
         if (data) {
           setBrandingId(data.id)
           const rawTagline = data.facebook || ''

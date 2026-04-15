@@ -15,7 +15,14 @@ export default function AdminLayout({
 
   useEffect(() => {
     async function loadBranding() {
-      const { data } = await supabase.from('branding').select('facebook').single()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data } = await supabase.from('branding')
+        .select('facebook')
+        .eq('user_id', user.id)
+        .maybeSingle()
+        
       if (data?.facebook) {
         const [tagline, installments, banner, bName] = data.facebook.split('|')
         if (bName) setBusinessName(bName)
