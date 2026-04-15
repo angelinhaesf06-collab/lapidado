@@ -31,7 +31,15 @@ export default function BrandingPage() {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
 
-        const { data } = await supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle()
+        // 1. Tenta buscar a marca do usuário logado
+        let { data } = await supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle()
+        
+        // 2. Se não achou, tenta buscar a marca original (que está sem user_id) para migrar
+        if (!data) {
+          const { data: orphanedData } = await supabase.from('branding').select('*').is('user_id', null).limit(1).maybeSingle()
+          data = orphanedData
+        }
+
         if (data) {
           setBrandingId(data.id)
           const rawTagline = data.facebook || ''
@@ -39,7 +47,7 @@ export default function BrandingPage() {
           setTagline(text || '') 
           setInstallments(inst || '10')
           setTopBanner(banner || '')
-          setBusinessName(bName || '')
+          setBusinessName(data.store_name || bName || '') // Prioriza store_name
 
           setTiktok(data.website || '') 
           setWarrantyTime(data.tiktok || '') 
@@ -109,7 +117,8 @@ export default function BrandingPage() {
           table: 'branding',
           id: brandingId,
           data: {
-            user_id: user.id, // 💎 INJEÇÃO CRÍTICA NEXUS
+            user_id: user.id, 
+            store_name: businessName.toUpperCase(), // 💎 NOVO CAMPO WHITE-LABEL
             facebook: `${tagline.toUpperCase()}|${installments}|${topBanner.toUpperCase()}|${businessName}`,
             tiktok: warrantyTime.toUpperCase(), 
             website: tiktok, 

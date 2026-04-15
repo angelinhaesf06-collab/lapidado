@@ -21,7 +21,17 @@ export default function CategoriesPage() {
 
   const loadCategories = useCallback(async () => {
     setLoading(true)
-    const { data } = await supabase.from('categories').select('*').order('name')
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      setLoading(false)
+      return
+    }
+
+    const { data } = await supabase.from('categories')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('name')
+      
     if (data) setCategories(data as Category[])
     setLoading(false)
   }, [supabase])
@@ -35,10 +45,19 @@ export default function CategoriesPage() {
     if (!newCategory) return
     setAdding(true)
     try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Sessão expirada. Faça login novamente.')
+
       const response = await fetch('/api/admin/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer LAPIDADO_ADMIN_2026` },
-        body: JSON.stringify({ table: 'categories', data: { name: newCategory.toUpperCase() } })
+        body: JSON.stringify({ 
+          table: 'categories', 
+          data: { 
+            name: newCategory.toUpperCase(),
+            user_id: user.id
+          } 
+        })
       })
       const result = await response.json()
       if (!result.success) throw new Error(result.error)
