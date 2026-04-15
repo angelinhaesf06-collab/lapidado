@@ -7,7 +7,12 @@ import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
 
 export default function Header() {
-  const [branding, setBranding] = useState<{logo_url: string | null, tagline: string | null} | null>(null)
+  const [branding, setBranding] = useState<{
+    logo_url: string | null, 
+    tagline: string | null,
+    topBanner: string | null,
+    warranty: string | null
+  } | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
