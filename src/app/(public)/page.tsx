@@ -44,12 +44,10 @@ export default async function Home({
   const installments = parseInt(branding?.facebook?.split('|')[1] || '10')
   const currentUserId = branding?.user_id
 
-  // 💎 NEXUS: Consultas de Categorias e Produtos (Pega do dono OU órfãos)
+  // 💎 NEXUS: Consultas de Categorias e Produtos (Pega do dono OU geral se não houver dono)
   let catQuery = supabase.from('categories').select('id, name')
   if (currentUserId) {
     catQuery = catQuery.or(`user_id.eq.${currentUserId},user_id.is.null`)
-  } else {
-    catQuery = catQuery.is('user_id', null)
   }
   
   const { data: dbCategories, error: catError } = await catQuery.order('name')
@@ -58,8 +56,6 @@ export default async function Home({
   let prodQuery = supabase.from('products').select('*, categories!inner(name)')
   if (currentUserId) {
     prodQuery = prodQuery.or(`user_id.eq.${currentUserId},user_id.is.null`)
-  } else {
-    prodQuery = prodQuery.is('user_id', null)
   }
 
   let finalQuery = prodQuery.order('created_at', { ascending: false })
