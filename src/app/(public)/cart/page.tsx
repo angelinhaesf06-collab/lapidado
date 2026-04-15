@@ -20,18 +20,24 @@ export default function CartPage() {
     return []
   })
   const [storePhone, setStorePhone] = useState('5511999999999')
+  const [installments, setInstallments] = useState(10)
 
   useEffect(() => {
-    const loadStorePhone = async () => {
+    const loadStoreData = async () => {
       const supabase = createClient()
-      const { data } = await supabase.from('branding').select('phone, business_name').single()
-      if (data && data.phone) {
-        let cleanPhone = data.phone.replace(/\D/g, '')
-        if (cleanPhone && cleanPhone.length <= 11) cleanPhone = '55' + cleanPhone
-        setStorePhone(cleanPhone)
+      const { data } = await supabase.from('branding').select('*').single()
+      if (data) {
+        if (data.phone) {
+          let cleanPhone = data.phone.replace(/\D/g, '')
+          if (cleanPhone && cleanPhone.length <= 11) cleanPhone = '55' + cleanPhone
+          setStorePhone(cleanPhone)
+        }
+        // Extrair parcelas do facebook (Tagline|Parcelas|Banner)
+        const parts = data.facebook?.split('|')
+        if (parts && parts[1]) setInstallments(parseInt(parts[1]))
       }
     }
-    loadStorePhone()
+    loadStoreData()
   }, [])
 
   const removeItem = (index: number) => {
@@ -43,7 +49,6 @@ export default function CartPage() {
   }
 
   const total = cartItems.reduce((acc, item) => acc + item.price, 0)
-  const installments = 10
   const installmentValue = total / installments
   
   // Cálculo de Desconto PIX (5%)
@@ -53,7 +58,16 @@ export default function CartPage() {
   const sendWhatsApp = () => {
     const message = encodeURIComponent(
       `OLÁ ANGELA! ✨ GOSTARIA DE ENCOMENDAR ESTAS PEÇAS:\n\n` +
-      cartItems.map(item => `- ${item.name} (R$ ${item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})`).join('\n') +
+      cartItems.map(item => {
+        let finish = (item as any).material_finish || ''
+        if (!finish && (item as any).description?.includes('DATA:')) {
+          try {
+            const match = (item as any).description.match(/DATA:({.*})/)
+            if (match) finish = JSON.parse(match[1]).finish
+          } catch {}
+        }
+        return `- ${item.name}${finish ? ` (${finish})` : ''} - R$ ${item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+      }).join('\n') +
       `\n\nVALOR TOTAL: R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
       `PARCELAMENTO: ${installments}X DE R$ ${installmentValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
       `VALOR NO PIX (5% DESC): R$ ${pixValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n` +
@@ -83,20 +97,31 @@ export default function CartPage() {
       </div>
 
       <div className="space-y-8 mb-16">
-        {cartItems.map((item, index) => (
-          <div key={index} className="flex items-center gap-6 border-b border-brand-secondary/10 pb-8">
-            <div className="w-24 h-32 rounded-3xl overflow-hidden bg-white border border-brand-secondary/10 shadow-sm relative">
-              <Image src={item.image_url} alt={item.name} fill className="object-cover" />
+        {cartItems.map((item, index) => {
+          let finish = (item as any).material_finish || ''
+          if (!finish && (item as any).description?.includes('DATA:')) {
+            try {
+              const match = (item as any).description.match(/DATA:({.*})/)
+              if (match) finish = JSON.parse(match[1]).finish
+            } catch {}
+          }
+
+          return (
+            <div key={index} className="flex items-center gap-6 border-b border-brand-secondary/10 pb-8">
+              <div className="w-24 h-32 rounded-3xl overflow-hidden bg-white border border-brand-secondary/10 shadow-sm relative">
+                <Image src={item.image_url} alt={item.name} fill className="object-cover" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-xs font-normal tracking-[0.2em] uppercase text-brand-primary mb-1">{item.name}</h4>
+                {finish && <p className="text-[8px] font-black text-brand-secondary uppercase tracking-widest mb-2">{finish}</p>}
+                <p className="text-lg font-light text-brand-primary">R$ {item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+              </div>
+              <button onClick={() => removeItem(index)} className="text-brand-secondary/40 hover:text-red-400 transition-colors">
+                <Trash2 size={18} />
+              </button>
             </div>
-            <div className="flex-1">
-              <h4 className="text-xs font-normal tracking-[0.2em] uppercase text-brand-primary mb-2">{item.name}</h4>
-              <p className="text-lg font-light text-brand-primary">R$ {item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-            </div>
-            <button onClick={() => removeItem(index)} className="text-brand-secondary/40 hover:text-red-400 transition-colors">
-              <Trash2 size={18} />
-            </button>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       <div className="bg-brand-secondary/5 p-10 rounded-[40px] text-center border border-brand-secondary/10 shadow-sm">

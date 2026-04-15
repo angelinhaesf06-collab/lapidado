@@ -14,36 +14,40 @@ export default async function ProductPage({
   const { id } = await params;
   const supabase = await createClient()
 
-  // Buscar o produto real do banco de dados
+  // 1. Buscar o produto real do banco de dados
   const { data: product } = await supabase
     .from('products')
     .select('*, categories(name)')
     .eq('id', id)
     .single()
 
-  // Buscar branding para garantia personalizada
-  const { data: branding } = await supabase.from('branding').select('instagram').single()
-  const warrantyText = branding?.instagram || 'ETERNA'
+  // 2. Buscar branding para parcelamento e garantia personalizada
+  const { data: branding } = await supabase.from('branding').select('*').single()
+  const warrantyText = branding?.instagram || '6 MESES'
+  
+  // Extrair parcelamento do campo facebook (formato: Tagline|Parcelas|Banner)
+  const installments = parseInt(branding?.facebook?.split('|')[1] || '10')
 
   if (!product) {
     notFound();
   }
 
-  // Lógica para limpar descrição e extrair banho
+  // 3. Lógica para limpar descrição e extrair banho (resiliente)
   let displayDescription = product.description || ''
-  let materialFinish = product.material_finish || ''
+  let materialFinish = (product as any).material_finish || ''
 
   if (displayDescription.includes('---')) {
     const parts = displayDescription.split('---')
     displayDescription = parts[0].trim()
     
     // Tentar extrair do JSON se a coluna material_finish estiver vazia
-    if (!materialFinish && parts[1]?.includes('DATA:{')) {
-      try {
-        const match = parts[1].match(/DATA:({.*})/)
-        if (match) materialFinish = JSON.parse(match[1]).finish
-      } catch {
-        // Ignorar erro se o JSON for inválido
+    if (!materialFinish) {
+      const match = product.description.match(/DATA:({.*})/)
+      if (match) {
+        try {
+          const extraData = JSON.parse(match[1])
+          materialFinish = extraData.finish
+        } catch {}
       }
     }
   }
@@ -70,7 +74,7 @@ export default async function ProductPage({
               R$ {product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </span>
             <p className="text-brand-secondary text-sm font-light tracking-widest uppercase">
-              10x de R$ {(product.price / 10).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} sem juros
+              {installments}x de R$ {(product.price / installments).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} sem juros
             </p>
           </div>
 

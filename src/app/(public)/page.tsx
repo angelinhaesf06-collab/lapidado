@@ -95,13 +95,13 @@ export default async function Home({
                         R$ {product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </span>
                       <p className="text-brand-secondary text-[7px] md:text-[9px] font-bold md:font-light tracking-tighter md:tracking-widest uppercase opacity-80">
-                        {installments}x de R$ {(product.price / installments).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        {installments}x de R$ {(product.price / installments).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} sem juros
                       </p>
                     </div>
                   </div>
                 </Link>
                 
-                {/* Botão de Compra Direta */}
+                {/* 💎 BOTÃO DE COMPRA DIRETA (MÁGICA NEXUS) */}
                 <div className="w-full max-w-[140px] md:max-w-none px-2 md:px-6">
                   <AddToCartButton product={product} />
                 </div>
