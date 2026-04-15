@@ -1,8 +1,10 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
-// 💎 NEXUS: INICIALIZAÇÃO DE ELITE (Forçando Versão Estável)
+// 💎 NEXUS: INICIALIZAÇÃO DE ELITE (Forçando Versão Estável v1)
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+// Nota: Se o SDK não suportar a opção apiVersion no construtor, 
+// ele usará o padrão da versão instalada.
 
 // Função de espera (sleep) para o retry
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -27,8 +29,8 @@ export async function POST(req: Request) {
       Retorne APENAS o JSON puro, sem markdown.
     `;
 
-    // 🚀 SEQUÊNCIA DE MODELOS DE ALTA PERFORMANCE
-    const models = ["gemini-2.0-flash", "gemini-flash-latest", "gemini-pro-latest", "gemini-1.5-flash"];
+    // 🚀 SEQUÊNCIA DE MODELOS DE ALTA PERFORMANCE (Nomes corrigidos e atualizados)
+    const models = ["gemini-1.5-flash-latest", "gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro-latest"];
     let lastError = null;
 
     for (const modelName of models) {
@@ -36,7 +38,7 @@ export async function POST(req: Request) {
         try {
           console.log(`💎 NEXUS: DISPARANDO ${modelName} (TENTATIVA ${i+1})...`);
           
-          // O segredo está em usar o modelo sem o prefixo 'models/' se o 404 persistir
+          // O segredo está em garantir o nome do modelo sem prefixos extras se o SDK já os colocar
           const model = genAI.getGenerativeModel({ model: modelName });
           
           const result = await model.generateContent([

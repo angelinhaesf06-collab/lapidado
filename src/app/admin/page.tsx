@@ -17,7 +17,8 @@ export default function AdminDashboard() {
       setLoading(true)
       try {
         const { data: categories } = await supabase.from('categories').select('id, name')
-        const { data: products } = await supabase.from('products').select('id, name, category_id, price, stock_quantity, description')
+        // 💎 NEXUS: SELECIONANDO COLUNAS EXPLICITAMENTE (Incluindo novas colunas se existirem)
+        const { data: products } = await supabase.from('products').select('id, name, category_id, price, stock_quantity, description, cost_price')
 
         if (categories && products) {
           // 1. ESTATÍSTICAS DE CATEGORIAS
@@ -26,23 +27,30 @@ export default function AdminDashboard() {
             name: cat.name.toUpperCase(),
             count: products.filter(p => p.category_id === cat.id).reduce((acc, p) => acc + (Number(p.stock_quantity) || 0), 0)
           }))
+          
+          // 💎 NEXUS: ADICIONAR CONTAGEM DE ITENS SEM CATEGORIA
+          const noCategoryCount = products.filter(p => !p.category_id).reduce((acc, p) => acc + (Number(p.stock_quantity) || 0), 0)
+          if (noCategoryCount > 0) {
+            counts.push({ name: 'SEM CATEGORIA', count: noCategoryCount })
+          }
+
           setStats([{ name: 'TOTAL DE PEÇAS', count: totalItemsCount }, ...counts])
 
-          // 2. FINANCEIRO
+          // 2. FINANCEIRO (Fórmulas Blindadas)
           const totalCost = products.reduce((acc, p) => {
             let cost = 0
-            // Usar any para evitar erro de tipagem com cost_price inexistente
             const prod = p as any
-            if (prod.cost_price) {
+            // Tenta coluna direta primeiro, depois descrição
+            if (prod.cost_price && Number(prod.cost_price) > 0) {
               cost = Number(prod.cost_price)
-            } else if (p.description?.includes('DATA:{')) {
-              try {
-                const match = p.description.match(/DATA:({.*})/)
-                if (match) {
+            } else if (p.description) {
+              const match = p.description.match(/DATA:({.*})/)
+              if (match) {
+                try {
                   const data = JSON.parse(match[1])
-                  cost = data.cost || 0
-                }
-              } catch {}
+                  cost = Number(data.cost) || 0
+                } catch { cost = 0 }
+              }
             }
             return acc + (cost * (Number(p.stock_quantity) || 0))
           }, 0)

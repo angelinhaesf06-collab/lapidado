@@ -102,14 +102,16 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
       }
       const productData = {
         name: name.toUpperCase(),
-        price: parseFloat(salePrice),
+        price: parseFloat(salePrice) || 0,
         stock_quantity: parseInt(stock) || 0,
-        category_id: category,
+        category_id: category || categories[0]?.id, // Garante que nunca seja nulo se houver categorias
         description: `${description.toUpperCase()}\n\n---\nDATA:{"finish": "${materialFinish}", "cost": ${parseFloat(costPrice) || 0}}`,
         image_url: finalImageUrl,
       }
 
-      // 💎 MÁGICA NEXUS: SEMPRE USAR A API DE SALVAMENTO PARA GARANTIR REVALIDAÇÃO DE CACHE
+      // 💎 MÁGICA NEXUS: SEMPRE USAR A API DE SALVAMENTO COM LOGS PARA DEBUG
+      console.log('💎 NEXUS: ENVIANDO DADOS PARA SALVAMENTO...', productData);
+      
       const response = await fetch('/api/admin/save', {
         method: 'POST',
         headers: { 
