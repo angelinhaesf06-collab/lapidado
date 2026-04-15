@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 
 export default function RegisterPage() {
+  const [storeName, setStoreName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -67,7 +68,7 @@ export default function RegisterPage() {
     }
 
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email: cleanEmail,
         password: pass,
         options: {
@@ -75,15 +76,30 @@ export default function RegisterPage() {
         },
       })
 
-      if (error) {
-        console.error('ERRO REAL DO SUPABASE:', error)
-        let msg = error.message
+      if (signUpError) {
+        console.error('ERRO REAL DO SUPABASE:', signUpError)
+        let msg = signUpError.message
         if (msg === 'User already registered') msg = 'Este e-mail já está cadastrado.'
         if (msg.includes('email')) msg = 'E-mail inválido ou mal formatado. Verifique o .com'
         if (msg.includes('password')) msg = 'A senha deve ter pelo menos 6 caracteres.'
         
         setError(msg)
         return
+      }
+
+      // 💎 WHITE-LABEL: Criar entrada inicial de branding com o nome da loja
+      if (data.user) {
+        const { error: brandingError } = await supabase.from('branding').insert({
+          user_id: data.user.id,
+          store_name: storeName.trim().toUpperCase(),
+          primary_color: '#4a322e', // Padrão luxo
+          secondary_color: '#c99090'
+        })
+
+        if (brandingError) {
+          console.error('Erro ao salvar branding:', brandingError)
+          // Não bloqueia o registro se o branding falhar, mas loga o erro
+        }
       }
 
       // 💎 SE PRECISAR DE CONFIRMAÇÃO DE E-MAIL
@@ -182,6 +198,21 @@ export default function RegisterPage() {
 
             {!success && (
               <form onSubmit={handleRegister} className="space-y-5 relative z-10">
+                <div>
+                  <label className="block text-[10px] font-black text-[#c99090] uppercase tracking-[0.2em] mb-2 ml-2">Nome da sua Marca ou Loja</label>
+                  <div className="relative">
+                    <input 
+                      type="text" 
+                      required
+                      value={storeName}
+                      onChange={(e) => setStoreName(e.target.value)}
+                      className="w-full pl-12 pr-6 py-4 rounded-3xl bg-rose-50/50 border-2 border-transparent focus:border-[#c99090] focus:bg-white outline-none transition-all text-[#4a322e]"
+                      placeholder="EX: ANGELA SEMIJOIAS"
+                    />
+                    <Gem className="absolute left-5 top-1/2 -translate-y-1/2 text-[#c99090]" size={18} />
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-[10px] font-black text-[#c99090] uppercase tracking-[0.2em] mb-2 ml-2">E-mail Profissional</label>
                   <div className="relative">

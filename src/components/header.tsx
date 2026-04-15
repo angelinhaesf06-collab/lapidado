@@ -13,14 +13,15 @@ export default function Header() {
     logo_url: string | null, 
     tagline: string | null,
     topBanner: string | null,
-    warranty: string | null
+    warranty: string | null,
+    store_name: string | null
   } | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
     async function loadBranding() {
       try {
-        const { data } = await supabase.from('branding').select('*').single()
+        const { data } = await supabase.from('branding').select('*').limit(1).single()
         if (data) {
           const rawTagline = data.facebook || ''
           const [tagline, installments, banner] = rawTagline.split('|')
@@ -29,7 +30,8 @@ export default function Header() {
             logo_url: data.logo_url,
             tagline: tagline || null,
             topBanner: banner || null,
-            warranty: data.tiktok || null // Garantia guardada na coluna tiktok
+            warranty: data.tiktok || null, // Garantia guardada na coluna tiktok
+            store_name: data.store_name || 'LAPIDADO'
           })
         }
       } catch {
@@ -57,14 +59,14 @@ export default function Header() {
         <Link href="/?catalogo=true" className="flex items-center group">
           {branding?.logo_url ? (
             <div className="relative w-32 md:w-48 h-10 md:h-14 transition-transform duration-500 hover:scale-105">
-               <Image src={branding.logo_url} alt="Logo" className="object-contain object-left" fill priority />
+               <Image src={branding.logo_url} alt={branding.store_name || "Logo"} className="object-contain object-left" fill priority />
             </div>
           ) : (
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-brand-primary flex items-center justify-center text-white">
-                <span className="text-sm md:text-lg font-bold italic">L</span>
+                <span className="text-sm md:text-lg font-bold italic">{(branding?.store_name || 'L')[0]}</span>
               </div>
-              <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.3em] text-brand-primary">Lapidado</span>
+              <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.3em] text-brand-primary">{branding?.store_name || 'Lapidado'}</span>
             </div>
           )}
         </Link>

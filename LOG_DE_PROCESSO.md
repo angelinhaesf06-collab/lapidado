@@ -59,6 +59,12 @@ Data: 08 de Abril de 2026
 - Formulário de **Identificação do Cliente**: Nome e endereço integrados na mensagem de WhatsApp.
 - Correção Crítica de Navegação: Adição do parâmetro `?catalogo=true` em todos os links para evitar pedidos indevidos de login na vitrine pública.
 
+### 4. Personalização Dinâmica (White-Label)
+- Implementação do campo **"Nome da sua Marca ou Loja"** no registro de novas empresárias.
+- Substituição global do termo "Lapidado" pelo nome da loja da assinante em todo o ecossistema.
+- Novo Slogan Oficial: **"[Nome da Loja]: Mais que acessórios, a sua assinatura de estilo."**
+- Fallback Inteligente: O sistema utiliza a primeira letra da marca como ícone caso não haja logotipo cadastrado.
+
 
 ---
 **Status do Banco de Dados:** Tabela de `sales` (Vendas) criada e integrada com sucesso. 💎💰🚀

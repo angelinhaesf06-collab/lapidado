@@ -51,9 +51,9 @@ export default async function RootLayout({
   const primary = branding?.primary_color || '#4a322e'
   const secondary = branding?.secondary_color || '#c99090'
   
-  // 💎 NEXUS: Extrair nome do negócio da frase de impacto (coluna facebook, formato Frase|Parcelas|Banner|NomeLoja)
-  const rawTagline = branding?.facebook || ''
-  const businessName = rawTagline.split('|')[3] || 'LAPIDADO' 
+  // 💎 NEXUS: Extrair nome do negócio (Preferência pela nova coluna store_name)
+  const businessName = branding?.store_name || 'LAPIDADO' 
+  const slogan = `${businessName}: Mais que acessórios, a sua assinatura de estilo.`
 
   return (
     <html lang="pt-BR" className="scroll-smooth">

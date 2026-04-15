@@ -13,6 +13,7 @@ interface Branding {
   address: string | null;
   website: string | null;
   tiktok: string | null;
+  store_name: string | null;
 }
 
 export default function Footer() {
@@ -21,7 +22,7 @@ export default function Footer() {
 
   useEffect(() => {
     async function loadBranding() {
-      const { data } = await supabase.from('branding').select('*').single()
+      const { data } = await supabase.from('branding').select('*').limit(1).single()
       if (data) setBranding(data as unknown as Branding)
     }
     loadBranding()
@@ -39,7 +40,7 @@ export default function Footer() {
             <Image src={branding.logo_url} alt="Logo" className="h-16 w-auto object-contain grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all duration-700" width={150} height={64} />
           ) : (
             <h3 className="text-2xl text-brand-primary uppercase tracking-widest opacity-50">
-              {branding.business_name || branding.instagram || 'MINHA VITRINE'}
+              {branding.store_name || branding.business_name || branding.instagram || 'LAPIDADO'}
             </h3>
           )}
         </div>
