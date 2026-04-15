@@ -22,31 +22,53 @@ export default async function Home({
   const activeCategory = params.category || 'Todos';
   const supabase = await createClient()
 
-  // 💎 NEXUS: Consulta resiliente para parcelamento e isolamento
-  const { data: brandingArray } = await supabase.from('branding').select('*').limit(1)
-  const branding = brandingArray?.[0]
+  // 💎 NEXUS: Consulta Ultra-Resiliente para o catálogo público
+  const { data: { user } } = await supabase.auth.getUser()
+  let branding = null
+
+  if (user) {
+    const { data: userBranding } = await supabase.from('branding').select('*').eq('user_id', user.id).limit(1)
+    branding = userBranding?.[0]
+  }
+  
+  if (!branding) {
+    const { data: orphanedBranding } = await supabase.from('branding').select('*').is('user_id', null).limit(1)
+    branding = orphanedBranding?.[0]
+  }
+
+  if (!branding) {
+    const { data: anyBranding } = await supabase.from('branding').select('*').limit(1)
+    branding = anyBranding?.[0]
+  }
+
   const installments = parseInt(branding?.facebook?.split('|')[1] || '10')
   const currentUserId = branding?.user_id
 
-  const { data: dbCategories, error: catError } = await supabase
-    .from('categories')
-    .select('id, name')
-    .eq('user_id', currentUserId) // 💎 FILTRO CRÍTICO
-    .order('name')
+  // 💎 NEXUS: Consultas de Categorias e Produtos (Pega do dono OU órfãos)
+  let catQuery = supabase.from('categories').select('id, name')
+  if (currentUserId) {
+    catQuery = catQuery.or(`user_id.eq.${currentUserId},user_id.is.null`)
+  } else {
+    catQuery = catQuery.is('user_id', null)
+  }
   
+  const { data: dbCategories, error: catError } = await catQuery.order('name')
   const categoryNames = ['Todos', ...(dbCategories?.map(c => c.name) || [])]
   
-  let query = supabase
-    .from('products')
-    .select('*, categories!inner(name)')
-    .eq('user_id', currentUserId) // 💎 FILTRO CRÍTICO
-    .order('created_at', { ascending: false })
-
-  if (activeCategory !== 'Todos') {
-    query = query.eq('categories.name', activeCategory)
+  let prodQuery = supabase.from('products').select('*, categories!inner(name)')
+  if (currentUserId) {
+    prodQuery = prodQuery.or(`user_id.eq.${currentUserId},user_id.is.null`)
+  } else {
+    prodQuery = prodQuery.is('user_id', null)
   }
 
-  const { data: products, error: prodError } = await query
+  let finalQuery = prodQuery.order('created_at', { ascending: false })
+
+  if (activeCategory !== 'Todos') {
+    finalQuery = finalQuery.eq('categories.name', activeCategory)
+  }
+
+  const { data: products, error: prodError } = await finalQuery
 
   // 💎 VERIFICAR SE É ADMIN LOGADO PARA MOSTRAR BOTÃO DE RETORNO
   const { data: { session } } = await supabase.auth.getSession();

@@ -24,18 +24,27 @@ export default async function RootLayout({
 }>) {
   const supabase = await createClient()
   
-  // 💎 NEXUS: Consulta resiliente para Multi-Tenancy
-  // Se estiver logado, tenta pegar o branding do usuário, senão pega o primeiro disponível
+  // 💎 NEXUS: Consulta Ultra-Resiliente para Multi-Tenancy
   const { data: { user } } = await supabase.auth.getUser()
-  
-  let query = supabase.from('branding').select('*')
-  
+  let branding = null
+
   if (user) {
-    query = query.eq('user_id', user.id)
+    // 1. Tenta buscar a marca do usuário logado
+    const { data: userBranding } = await supabase.from('branding').select('*').eq('user_id', user.id).limit(1)
+    branding = userBranding?.[0]
   }
   
-  const { data: brandingArray } = await query.limit(1)
-  const branding = brandingArray?.[0]
+  if (!branding) {
+    // 2. Se não achou, tenta buscar a marca original (que está sem user_id)
+    const { data: orphanedBranding } = await supabase.from('branding').select('*').is('user_id', null).limit(1)
+    branding = orphanedBranding?.[0]
+  }
+
+  if (!branding) {
+    // 3. Fallback final: pega qualquer marca disponível
+    const { data: anyBranding } = await supabase.from('branding').select('*').limit(1)
+    branding = anyBranding?.[0]
+  }
 
   // Cores dinâmicas com fallback de luxo
   const primary = branding?.primary_color || '#4a322e'
