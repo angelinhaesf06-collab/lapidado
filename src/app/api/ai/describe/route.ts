@@ -29,8 +29,8 @@ export async function POST(req: Request) {
       Retorne APENAS o JSON puro, sem markdown.
     `;
 
-    // 🚀 SEQUÊNCIA DE MODELOS DE ALTA PERFORMANCE (Nomes corrigidos e atualizados)
-    const models = ["gemini-1.5-flash-latest", "gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro-latest"];
+    // 🚀 SEQUÊNCIA DE MODELOS DE ALTA PERFORMANCE (Atualizado para v2.5 em 2026)
+    const models = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"];
     let lastError = null;
 
     for (const modelName of models) {
