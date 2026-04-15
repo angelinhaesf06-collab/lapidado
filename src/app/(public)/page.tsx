@@ -103,7 +103,7 @@ export default async function Home({
             products.map((product) => (
               <div key={product.id} className="group flex flex-col items-center">
                 <Link href={`/product/${product.id}`} className="w-full">
-                  <div className="aspect-[4/5] w-full bg-white rounded-[16px] md:rounded-[40px] overflow-hidden mb-3 md:mb-10 shadow-sm border border-brand-secondary/10 relative transition-all duration-700">
+                  <div className="aspect-[4/5] w-full bg-white rounded-[40px] md:rounded-[64px] overflow-hidden mb-6 md:mb-10 shadow-[0_20px_60px_rgba(74,50,46,0.08)] border border-white relative transition-all duration-700 group-hover:shadow-[0_40px_80px_rgba(74,50,46,0.12)]">
                     <Image 
                       src={product.image_url} 
                       alt={product.name} 
@@ -112,13 +112,13 @@ export default async function Home({
                     />
                   </div>
                   
-                  <div className="px-1 text-center w-full mb-4">
-                    <h4 className="text-[9px] md:text-sm font-bold md:font-normal tracking-[0.05em] md:tracking-[0.2em] uppercase text-brand-primary mb-1 md:mb-3 truncate w-full">{product.name}</h4>
-                    <div className="flex flex-col gap-0.5 md:gap-2">
-                      <span className="text-[12px] md:text-lg font-bold md:font-light text-brand-primary">
+                  <div className="px-4 text-center w-full mb-8">
+                    <h4 className="text-[10px] md:text-[13px] font-black tracking-[0.2em] md:tracking-[0.4em] uppercase text-brand-primary mb-2 truncate w-full">{product.name}</h4>
+                    <div className="flex flex-col gap-1 md:gap-3">
+                      <span className="text-[14px] md:text-[22px] font-bold text-brand-primary">
                         R$ {product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </span>
-                      <p className="text-brand-secondary text-[7px] md:text-[9px] font-bold md:font-light tracking-tighter md:tracking-widest uppercase opacity-80">
+                      <p className="text-brand-secondary text-[8px] md:text-[10px] font-black tracking-widest uppercase opacity-60">
                         {installments}x de R$ {(product.price / installments).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} sem juros
                       </p>
                     </div>
