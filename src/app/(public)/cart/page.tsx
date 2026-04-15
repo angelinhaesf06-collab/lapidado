@@ -10,6 +10,7 @@ import { useCart } from '@/lib/cart-context'
 export default function CartPage() {
   const { cart, removeFromCart, total, itemCount } = useCart()
   const [storePhone, setStorePhone] = useState('5511999999999')
+  const [storeName, setStoreName] = useState('LAPIDADO')
   const [installments, setInstallments] = useState(10)
   
   // Dados do Cliente
@@ -21,6 +22,14 @@ export default function CartPage() {
       const supabase = createClient()
       const { data } = await supabase.from('branding').select('*').single()
       if (data) {
+        if (data.business_name) {
+          setStoreName(data.business_name)
+        } else if (data.store_name) {
+          setStoreName(data.store_name)
+        } else if (data.facebook?.split('|')[3]) {
+          setStoreName(data.facebook.split('|')[3])
+        }
+
         if (data.phone) {
           let cleanPhone = data.phone.replace(/\D/g, '')
           if (cleanPhone && cleanPhone.length <= 11) cleanPhone = '55' + cleanPhone
@@ -47,7 +56,7 @@ export default function CartPage() {
     }
 
     const message = encodeURIComponent(
-      `*NOVO PEDIDO - LAPIDADO* ✨\n\n` +
+      `*NOVO PEDIDO - ${storeName.toUpperCase()}* ✨\n\n` +
       `*CLIENTE:* ${customerName.toUpperCase()}\n` +
       (customerAddress ? `*ENDEREÇO:* ${customerAddress.toUpperCase()}\n` : '') +
       `\n*ITENS SELECIONADOS:*\n` +

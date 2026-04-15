@@ -118,6 +118,7 @@ export default function BrandingPage() {
           id: brandingId,
           data: {
             user_id: user.id, 
+            business_name: businessName,
             store_name: businessName.toUpperCase(), // 💎 NOVO CAMPO WHITE-LABEL
             facebook: `${tagline.toUpperCase()}|${installments}|${topBanner.toUpperCase()}|${businessName}`,
             tiktok: warrantyTime.toUpperCase(), 
