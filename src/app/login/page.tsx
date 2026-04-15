@@ -26,8 +26,7 @@ export default function LoginPage() {
       })
 
       if (error) {
-        // Se a senha estiver errada ou usuário não existir, mostramos o erro real
-        setError(`Erro: ${error.message}. Verifique se os dados estão corretos ou se o e-mail foi confirmado.`)
+        setError(error.message)
         setLoading(false)
         return
       }
@@ -35,84 +34,85 @@ export default function LoginPage() {
       router.push('/admin')
       router.refresh()
     } catch {
-      setError('Ocorreu um erro inesperado. Tente novamente mais tarde.')
+      setError('Ocorreu um erro inesperado. Tente novamente.')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center px-4 bg-[#fffafa]">
-      <div className="bg-white p-10 rounded-[48px] shadow-2xl shadow-rose-100 w-full max-w-md border border-rose-50 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-[#fffaf9]">
+      {/* Background Decorativo Sutil */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
+         <div className="absolute -top-20 -left-20 w-80 h-80 bg-rose-200/30 rounded-full blur-3xl" />
+         <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-[#c99090]/20 rounded-full blur-3xl" />
+      </div>
+
+      <div className="bg-white p-12 rounded-[56px] shadow-[0_32px_80px_rgba(74,50,46,0.08)] w-full max-w-lg border border-rose-50 relative z-10 transition-all">
         
-        <div className="text-center mb-10 relative z-10">
-          <h1 className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.4em] mb-8">Catálogo Lapidado</h1>
-          <div className="bg-rose-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Gem className="text-[#c99090]" size={36} />
+        {/* Branding Elegante */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-[#fffaf9] rounded-full mb-8 shadow-sm border border-rose-50/50">
+            <Gem className="text-[#c99090]" size={32} strokeWidth={1.5} />
           </div>
-          <h2 className="text-3xl font-bold text-[#4a322e]">Olá, Empresária!</h2>
-          <p className="text-[#7a5c58] text-sm mt-2 font-medium italic">&quot;Nossa tecnologia, sua criatividade. Juntas, lapidamos o extraordinário.&quot; ✨</p>
+          <h1 className="text-[9px] font-black text-[#c99090] uppercase tracking-[0.6em] mb-4">Lapidado App</h1>
+          <h2 className="text-4xl font-bold text-[#4a322e] tracking-tight mb-3">Seu Espaço</h2>
+          <p className="text-[#8b6e6a] text-[13px] font-medium italic tracking-wide">
+            &quot;Sua visão lapidada com perfeição.&quot;
+          </p>
         </div>
 
+        {/* Alerta de Erro Refinado */}
         {error && (
-          <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl text-rose-800 text-xs font-medium text-center">
-            {error}
+          <div className="mb-8 p-4 bg-rose-50/50 border-l-4 border-rose-200 rounded-xl text-[#7a5c58] text-[11px] font-bold uppercase tracking-widest text-center animate-in fade-in slide-in-from-top-2 duration-300">
+             ⚠️ {error}
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-5 relative z-10">
-          <div>
-            <label className="block text-[10px] font-black text-[#c99090] uppercase tracking-[0.2em] mb-2 ml-2">Seu E-mail de Acesso</label>
+        <form onSubmit={handleLogin} className="space-y-8">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.3em] ml-2 block opacity-80">E-mail de Acesso</label>
             <input 
               type="email" 
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-6 py-4 rounded-3xl bg-rose-50/50 border-2 border-transparent focus:border-[#c99090] focus:bg-white outline-none transition-all text-[#4a322e]"
-              placeholder="angela@exemplo.com"
+              className="w-full px-8 py-5 rounded-[28px] bg-[#fffaf9]/50 border-2 border-transparent focus:border-rose-100 focus:bg-white outline-none transition-all text-[#4a322e] text-sm font-semibold placeholder:text-stone-300 shadow-inner"
+              placeholder="seu@email.com"
             />
           </div>
-          <div>
-            <label className="block text-[10px] font-black text-[#c99090] uppercase tracking-[0.2em] mb-2 ml-2">Sua Senha Mestra</label>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.3em] ml-2 block opacity-80">Senha Mestra</label>
             <input 
               type="password" 
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-6 py-4 rounded-3xl bg-rose-50/50 border-2 border-transparent focus:border-[#c99090] focus:bg-white outline-none transition-all text-[#4a322e]"
+              className="w-full px-8 py-5 rounded-[28px] bg-[#fffaf9]/50 border-2 border-transparent focus:border-rose-100 focus:bg-white outline-none transition-all text-[#4a322e] text-sm font-semibold placeholder:text-stone-300 shadow-inner"
               placeholder="••••••••"
             />
           </div>
+
+          {/* Botão de Ação Sólido */}
           <button 
             disabled={loading}
-            className="w-full bg-[#4a322e] text-white py-5 rounded-3xl font-bold hover:bg-[#c99090] transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-rose-200 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-full bg-[#4a322e] text-white py-6 rounded-[32px] text-xs font-black uppercase tracking-[0.3em] shadow-2xl shadow-rose-200/50 hover:bg-[#c99090] hover:shadow-rose-300/40 transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3"
           >
             {loading ? (
               <Loader2 className="animate-spin" size={20} />
             ) : (
-              'Acessar Meu Espaço 💎'
+              <><span>Acessar Meu Acervo</span> <Gem size={16} /></>
             )}
           </button>
         </form>
 
-        <div className="mt-4 pt-4 border-t border-dashed border-rose-100 flex flex-col gap-3">
-          <button 
-            onClick={() => {
-              setLoading(true);
-              router.push('/admin');
-              setTimeout(() => router.refresh(), 100);
-            }}
-            className="w-full bg-[#c99090] text-white py-4 rounded-3xl font-bold hover:bg-[#4a322e] transition-all flex items-center justify-center gap-2 shadow-lg shadow-rose-100"
-          >
-            Acesso Rápido (Entrar Agora) 🚀
-          </button>
-        </div>
-
-        <div className="mt-8 text-center relative z-10">
-          <p className="text-[#7a5c58] text-sm font-medium">
-            Ainda não tem acesso?{' '}
-            <Link href="/register" className="text-[#c99090] font-bold hover:underline transition-all">
-              Cadastrar Nova Empresária
+        {/* Rodapé Minimalista */}
+        <div className="mt-12 text-center border-t border-rose-50 pt-8">
+          <p className="text-[#8b6e6a] text-[11px] font-semibold uppercase tracking-widest">
+            Não é cadastrada?{' '}
+            <Link href="/register" className="text-[#c99090] font-black hover:opacity-80 transition-opacity">
+              Criar Conta
             </Link>
           </p>
         </div>
