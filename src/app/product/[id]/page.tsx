@@ -21,17 +21,24 @@ export default async function ProductPage({
     .eq('id', id)
     .single()
 
-  // 2. Buscar branding para parcelamento e garantia personalizada (Consulta Resiliente)
-  const { data: brandingArray } = await supabase.from('branding').select('*').limit(1)
-  const branding = brandingArray?.[0]
-  const warrantyText = branding?.instagram || '6 MESES'
+  if (!product) {
+    notFound();
+  }
+
+  // 2. Buscar branding específico do dono deste produto
+  const { data: branding } = await supabase
+    .from('branding')
+    .select('*')
+    .eq('user_id', product.user_id)
+    .single()
+
+  const storeSlug = branding?.slug || ''
   
   // Extrair parcelamento do campo facebook (formato: Tagline|Parcelas|Banner)
   const installments = parseInt(branding?.facebook?.split('|')[1] || '10')
 
-  if (!product) {
-    notFound();
-  }
+  // URL de retorno com o slug da loja
+  const backUrl = `/?catalogo=true${storeSlug ? `&loja=${storeSlug}` : ''}`
 
   // 3. Lógica para limpar descrição e extrair banho (resiliente)
   let displayDescription = product.description || ''
@@ -102,14 +109,6 @@ export default async function ProductPage({
           {branding?.tiktok && (
             <p className="mt-20 text-[9px] text-brand-primary/60 font-light opacity-50 tracking-[0.3em] uppercase text-center max-w-xs">
               💎 {branding.tiktok.toUpperCase().includes('GARANTIA') ? branding.tiktok : `${branding.tiktok} DE GARANTIA`}
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-GARANTIA') ? branding.tiktok : `${branding.tiktok} DE GARANTIA`}
             </p>
           )}
         </div>
