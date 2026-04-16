@@ -68,6 +68,11 @@ export default async function RootLayout({
   const businessName = branding?.store_name || 'LAPIDADO' 
   const slogan = `${businessName}: Mais que acessórios, a sua assinatura de estilo.`
 
+  // 💎 NEXUS: Lógica de Visibilidade da Tarja (Apenas na Vitrine e Catálogo)
+  const headersList = await headers();
+  const fullPath = headersList.get('x-invoke-path') || '';
+  const isPublicPage = fullPath === '/' || fullPath.startsWith('/product') || fullPath === '/cart';
+
   return (
     <html lang="pt-BR" className="scroll-smooth">
       <head>
@@ -83,7 +88,7 @@ export default async function RootLayout({
         }}
       >
         <CartProvider>
-          {user && (
+          {user && isPublicPage && (
             <div className="bg-brand-primary text-white py-2 px-4 flex justify-center items-center gap-4 sticky top-0 z-[100] shadow-lg animate-in slide-in-from-top duration-500">
               <p className="text-[8px] font-black uppercase tracking-[0.3em]">Logada como Admin 💎</p>
               <Link href="/admin" className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest transition-all">
