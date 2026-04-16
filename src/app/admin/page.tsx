@@ -45,7 +45,19 @@ export default function AdminDashboard() {
           if (sales) {
             totalSalesCount = sales.length
             monthlyRevenue = sales.reduce((acc, s) => acc + (Number(s.sale_price) * Number(s.quantity)), 0)
-            monthlyProfit = sales.reduce((acc, s) => acc + ((Number(s.sale_price) - Number(s.cost_price)) * Number(s.quantity)), 0)
+            
+            // 💎 NEXUS: Cálculo de Lucro Real Ultra-Preciso
+            monthlyProfit = sales.reduce((acc, s) => {
+              const salePrice = Number(s.sale_price) || 0
+              const quantity = Number(s.quantity) || 0
+              
+              // Tenta pegar o custo da venda, se não tiver, busca o custo original do produto
+              const productOrigin = products.find(p => p.id === s.product_id)
+              const costPrice = Number(s.cost_price) || Number(productOrigin?.cost_price) || 0
+              
+              const profitPerUnit = salePrice - costPrice
+              return acc + (profitPerUnit * quantity)
+            }, 0)
           }
 
           setStats({
