@@ -61,12 +61,10 @@ export default function AdminLayout({
         <div className="flex flex-col items-center gap-4 mb-16 px-2 text-center">
           {branding.logo ? (
             <div className="relative w-full h-16 mb-2">
-              <Image 
-                src={branding.logo || ''} 
+              <img 
+                src={branding.logo} 
                 alt="Logo" 
-                className="object-contain" 
-                fill 
-                priority
+                className="w-full h-full object-contain" 
               />
             </div>
           ) : (
