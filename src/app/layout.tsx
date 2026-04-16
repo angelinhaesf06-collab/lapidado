@@ -6,6 +6,7 @@ import Footer from '@/components/footer';
 import { CartProvider } from '@/lib/cart-context';
 import Link from 'next/link';
 import { LayoutDashboard } from 'lucide-react';
+import { headers } from 'next/headers';
 
 const montserrat = Montserrat({ 
   subsets: ["latin"], 
