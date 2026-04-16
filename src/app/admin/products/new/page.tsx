@@ -166,11 +166,12 @@ export default function NewProductPage() {
       const productData = {
         name: name.toUpperCase(),
         price: parseFloat(salePrice),
+        cost_price: parseFloat(costPrice) || 0, // 💎 NEXUS: Gravando na coluna real
         stock_quantity: parseInt(stock) || 0,
         category_id: category,
-        description: `${description.toUpperCase()}\n\n---\nDATA:{"finish": "${materialFinish}", "cost": ${parseFloat(costPrice) || 0}}`,
+        description: description.toUpperCase(),
         image_url: uploadedUrls[0] || '',
-        user_id: user.id // 💎 NEXUS: VÍNCULO OBRIGATÓRIO DE DONO
+        user_id: user.id
       }
       const response = await fetch('/api/admin/save', {
         method: 'POST',

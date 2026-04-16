@@ -104,7 +104,7 @@ export default function SalesPage() {
         user_id: user.id,
         quantity,
         sale_price: selectedProduct.price,
-        cost_price: selectedProduct.cost_price || 0,
+        cost_price: selectedProduct.cost_price || 0, // 💎 NEXUS: Usando a nova coluna oficial
         customer_name: customerName
       })
 
