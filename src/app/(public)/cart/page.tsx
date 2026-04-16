@@ -55,11 +55,13 @@ export default function CartPage() {
       return
     }
 
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+    
     const message = encodeURIComponent(
-      `*NOVO PEDIDO - ${storeName.toUpperCase()}* ✨\n\n` +
-      `*CLIENTE:* ${customerName.toUpperCase()}\n` +
-      (customerAddress ? `*ENDEREÇO:* ${customerAddress.toUpperCase()}\n` : '') +
-      `\n*ITENS SELECIONADOS:*\n` +
+      `*🛒 NOVO PEDIDO - ${storeName.toUpperCase()}* ✨\n\n` +
+      `*👤 CLIENTE:* ${customerName.toUpperCase()}\n` +
+      (customerAddress ? `*📍 ENDEREÇO:* ${customerAddress.toUpperCase()}\n` : '') +
+      `\n*💎 JOIAS SELECIONADAS:*\n` +
       cart.map(item => {
         let finish = item.material_finish || ''
         if (!finish && item.description?.includes('DATA:')) {
@@ -68,13 +70,17 @@ export default function CartPage() {
             if (match) finish = JSON.parse(match[1]).finish
           } catch {}
         }
-        return `- ${item.name}${finish ? ` (${finish})` : ''} - R$ ${item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-      }).join('\n') +
-      `\n\n*RESUMO FINANCEIRO:*\n` +
-      `VALOR TOTAL: R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
-      `OPÇÃO CARTÃO: ${installments}X DE R$ ${installmentValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
-      `OPÇÃO PIX (5% OFF): R$ ${pixValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n` +
-      `*PODEMOS COMBINAR O ENVIO?*`
+        // Link para a peça na vitrine para que a Angela veja a foto
+        const productLink = `${baseUrl}/product/${item.id}?catalogo=true`
+        return `• *${item.name}*${finish ? ` (${finish})` : ''}\n  💰 R$ ${item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n  🔗 _Ver foto:_ ${productLink}`
+      }).join('\n\n') +
+      `\n\n*💳 RESUMO FINANCEIRO:*\n` +
+      `--------------------------\n` +
+      `*TOTAL:* R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
+      `*NO CARTÃO:* ${installments}X DE R$ ${installmentValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
+      `*NO PIX (5% OFF):* R$ ${pixValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
+      `--------------------------\n\n` +
+      `*Olá, ${storeName}! Acabei de montar minha sacola no seu catálogo. Podemos combinar o envio?*`
     )
     window.open(`https://wa.me/${storePhone}?text=${message}`, '_blank')
   }
