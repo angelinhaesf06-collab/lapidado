@@ -160,6 +160,9 @@ export default function NewProductPage() {
           if (uploadData.url) uploadedUrls.push(uploadData.url)
         }
       }
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Sessão expirada. Faça login novamente.')
+
       const productData = {
         name: name.toUpperCase(),
         price: parseFloat(salePrice),
@@ -167,6 +170,7 @@ export default function NewProductPage() {
         category_id: category,
         description: `${description.toUpperCase()}\n\n---\nDATA:{"finish": "${materialFinish}", "cost": ${parseFloat(costPrice) || 0}}`,
         image_url: uploadedUrls[0] || '',
+        user_id: user.id // 💎 NEXUS: VÍNCULO OBRIGATÓRIO DE DONO
       }
       const response = await fetch('/api/admin/save', {
         method: 'POST',

@@ -1,10 +1,9 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
-// 💎 NEXUS: INICIALIZAÇÃO DE ELITE (Forçando Versão Estável v1)
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-// Nota: Se o SDK não suportar a opção apiVersion no construtor, 
-// ele usará o padrão da versão instalada.
+// 💎 NEXUS: INICIALIZAÇÃO DE ELITE (Suporte a chaves AIza e AQ)
+const apiKey = process.env.GEMINI_API_KEY!;
+const genAI = new GoogleGenerativeAI(apiKey);
 
 // Função de espera (sleep) para o retry
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
