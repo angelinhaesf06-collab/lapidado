@@ -48,7 +48,7 @@ export default function AdminLayout({
 
   const shareToWhatsApp = () => {
     const url = `${window.location.origin}/?catalogo=true${branding.slug ? `&loja=${branding.slug}` : ''}`
-    const text = `Olá! Conheça o novo catálogo digital da *${branding.name}*. Peças exclusivas e brilho em cada detalhe: ${url}`
+    const text = `Olá! Conheça o novo catálogo digital da *${branding.name.toUpperCase()}*. Peças exclusivas e brilho em cada detalhe: ${url}`
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
   }
 
