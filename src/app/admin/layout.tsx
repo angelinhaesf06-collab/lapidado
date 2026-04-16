@@ -148,22 +148,22 @@ export default function AdminLayout({
              </div>
            </div>
 
-           {/* 📱 ABAS RÁPIDAS MOBILE */}
-           <nav className="flex overflow-x-auto no-scrollbar py-2 px-2 gap-1 bg-rose-50/20">
+           {/* 📱 GRADE DE ABAS RÁPIDAS MOBILE */}
+           <nav className="grid grid-cols-3 gap-1.5 p-3 bg-rose-50/20">
              {navItems.map((item) => {
                const isActive = pathname === item.href
                return (
                  <Link 
                    key={item.name}
                    href={item.href} 
-                   className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${
+                   className={`flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl text-[7px] font-black uppercase tracking-tighter transition-all border ${
                      isActive 
-                     ? 'bg-brand-primary text-white shadow-md' 
-                     : 'text-brand-secondary/60 hover:text-brand-primary'
+                     ? 'bg-brand-primary text-white border-brand-primary shadow-md' 
+                     : 'bg-white text-brand-secondary/60 border-brand-secondary/5 hover:text-brand-primary'
                    }`}
                  >
-                   <item.icon size={12} />
-                   {item.name}
+                   <item.icon size={14} />
+                   <span className="text-center leading-none">{item.name}</span>
                  </Link>
                )
              })}

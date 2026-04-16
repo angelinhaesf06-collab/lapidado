@@ -140,7 +140,7 @@ export default async function Home({
                   </div>
                   
                   <div className="px-4 text-center w-full mb-8">
-                    <h4 className="text-[10px] md:text-[13px] font-black tracking-[0.2em] md:tracking-[0.4em] uppercase text-brand-primary mb-2 truncate w-full">{product.name}</h4>
+                    <h4 className="text-[10px] md:text-[13px] font-black tracking-[0.2em] md:tracking-[0.4em] uppercase text-brand-primary mb-2 w-full leading-relaxed">{product.name}</h4>
                     <div className="flex flex-col gap-1 md:gap-3">
                       <span className="text-[14px] md:text-[22px] font-bold text-brand-primary">
                         R$ {product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
