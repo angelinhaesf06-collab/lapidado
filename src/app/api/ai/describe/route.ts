@@ -29,16 +29,15 @@ export async function POST(req: Request) {
       Retorne APENAS o JSON puro, sem markdown.
     `;
 
-    // 🚀 SEQUÊNCIA DE MODELOS DE ALTA PERFORMANCE (Atualizado para v2.5 em 2026)
-    const models = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"];
+    // 🚀 SEQUÊNCIA DE MODELOS OFICIAIS (Versões Estáveis e Atuais)
+    const models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp"];
     let lastError = null;
 
     for (const modelName of models) {
-      for (let i = 0; i < 2; i++) {
+      for (let i = 0; i < 3; i++) { // Aumentado para 3 tentativas
         try {
           console.log(`💎 NEXUS: DISPARANDO ${modelName} (TENTATIVA ${i+1})...`);
           
-          // O segredo está em garantir o nome do modelo sem prefixos extras se o SDK já os colocar
           const model = genAI.getGenerativeModel({ model: modelName });
           
           const result = await model.generateContent([
@@ -58,19 +57,22 @@ export async function POST(req: Request) {
           lastError = err as Error;
           const msg = (err as Error).message.toLowerCase();
           
-          if (msg.includes("404") || msg.includes("not found")) {
-            console.warn(`⚠️ NEXUS: ${modelName} NÃO LOCALIZADO. PULANDO...`);
-            break;
+          // Se o modelo não existir no projeto/região, pula para o próximo da lista
+          if (msg.includes("404") || msg.includes("not found") || msg.includes("model")) {
+            console.warn(`⚠️ NEXUS: ${modelName} NÃO DISPONÍVEL. PULANDO...`);
+            break; 
           }
 
-          if ((msg.includes("503") || msg.includes("overloaded")) && i < 1) {
-            console.warn(`⚠️ NEXUS: CANAL ${modelName} CONGESTIONADO. RECALIBRANDO EM 2s...`);
-            await sleep(2000);
+          // Se estiver sobrecarregado (503 ou 429), espera um pouco mais a cada vez
+          if ((msg.includes("503") || msg.includes("overloaded") || msg.includes("429")) && i < 2) {
+            const waitTime = (i + 1) * 3000; // 3s, 6s...
+            console.warn(`⚠️ NEXUS: CANAL ${modelName} CONGESTIONADO. ESPERANDO ${waitTime/1000}s...`);
+            await sleep(waitTime);
             continue;
           }
           
           console.error(`❌ NEXUS: FALHA NO CANAL ${modelName}:`, (err as Error).message);
-          break;
+          break; // Se deu outro erro (ex: chave inválida), pula o modelo
         }
       }
     }
