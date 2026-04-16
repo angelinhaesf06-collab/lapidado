@@ -6,6 +6,7 @@ import Footer from '@/components/footer';
 import { CartProvider } from '@/lib/cart-context';
 import Link from 'next/link';
 import { LayoutDashboard } from 'lucide-react';
+import { headers } from 'next/headers';
 
 const montserrat = Montserrat({ 
   subsets: ["latin"], 
@@ -51,6 +52,10 @@ export default async function RootLayout({
   const primary = (branding?.primary_color && isValidHex(branding.primary_color)) ? branding.primary_color : '#4a322e';
   const secondary = (branding?.secondary_color && isValidHex(branding.secondary_color)) ? branding.secondary_color : '#c99090';
   const businessName = branding?.store_name || 'LAPIDADO' 
+
+  // 💎 NEXUS: Identificação de Rota para Visibilidade da Tarja
+  const headersList = await headers();
+  const pathname = headersList.get('x-invoke-path') || '';
 
   return (
     <html lang="pt-BR" className="scroll-smooth">
