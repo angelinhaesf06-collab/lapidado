@@ -47,9 +47,20 @@ export default async function RootLayout({
     branding = anyBranding?.[0]
   }
 
-  // Cores dinâmicas com fallback de luxo
-  const primary = branding?.primary_color || '#4a322e'
-  const secondary = branding?.secondary_color || '#c99090'
+  // 💎 NEXUS: Validação de cores para garantir HEX válido
+  const isValidHex = (color: string | null | undefined): boolean => {
+    if (!color) return false;
+    const hexRegex = /^#([A-Fa-f0-9]{3,4}){1,2}$/;
+    return hexRegex.test(color);
+  };
+
+  // Cores dinâmicas com fallback de luxo e validação rigorosa
+  const primary = (branding?.primary_color && isValidHex(branding.primary_color)) 
+    ? branding.primary_color 
+    : '#4a322e';
+  const secondary = (branding?.secondary_color && isValidHex(branding.secondary_color))
+    ? branding.secondary_color
+    : '#c99090';
   
   // 💎 NEXUS: Extrair nome do negócio (Preferência pela nova coluna store_name)
   const businessName = branding?.store_name || 'LAPIDADO' 

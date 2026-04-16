@@ -9,10 +9,11 @@ export const revalidate = 3600 // Cache de 1 hora para velocidade máxima
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; catalogo?: string }>;
+  searchParams: Promise<{ category?: string; catalogo?: string; loja?: string }>;
 }) {
   const params = await searchParams;
   const isPublicCatalog = params.catalogo === 'true';
+  const storeSlug = params.loja;
 
   // 💎 REGRA DE NEGÓCIO: Se abrir lapidado.com.br seco, vai pro login
   if (!isPublicCatalog) {
@@ -22,29 +23,36 @@ export default async function Home({
   const activeCategory = params.category || 'Todos';
   const supabase = await createClient()
 
-  // 💎 NEXUS: Consulta Ultra-Resiliente para o catálogo público
-  const { data: { user } } = await supabase.auth.getUser()
+  // 💎 NEXUS: Identificação de Loja por Slug ou Fallback
   let branding = null
+  
+  if (storeSlug) {
+    // 1. Busca específica por slug (Loja identificada na URL)
+    const { data: storeBranding } = await supabase.from('branding').select('*').eq('slug', storeSlug).single()
+    branding = storeBranding
+  }
 
-  if (user) {
-    const { data: userBranding } = await supabase.from('branding').select('*').eq('user_id', user.id).limit(1)
-    branding = userBranding?.[0]
+  if (!branding) {
+    // 2. Se não houver slug, busca o usuário logado (Admin em preview)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { data: userBranding } = await supabase.from('branding').select('*').eq('user_id', user.id).limit(1)
+      branding = userBranding?.[0]
+    }
   }
   
   if (!branding) {
-    const { data: orphanedBranding } = await supabase.from('branding').select('*').is('user_id', null).limit(1)
-    branding = orphanedBranding?.[0]
-  }
-
-  if (!branding) {
+    // 3. Fallback: Qualquer loja (Para evitar tela branca)
     const { data: anyBranding } = await supabase.from('branding').select('*').limit(1)
     branding = anyBranding?.[0]
   }
 
-  const installments = parseInt(branding?.facebook?.split('|')[1] || '10')
   const currentUserId = branding?.user_id
+  const installments = parseInt(branding?.facebook?.split('|')[1] || '10')
 
-  // 💎 NEXUS: Consultas Ultra-Resilientes (Se houver dono, filtra. Se não, mostra tudo o que for público)
+  // 💎 NEXUS: Filtro Mandatário pelo Dono da Loja
+  // Se o currentUserId for null (caso de teste/admin manual), mostra tudo.
+  // Se houver ID, isola COMPLETAMENTE o catálogo.
   let catQuery = supabase.from('categories').select('id, name')
   if (currentUserId) {
     catQuery = catQuery.eq('user_id', currentUserId)
@@ -66,6 +74,9 @@ export default async function Home({
 
   const { data: products, error: prodError } = await finalQuery
 
+  // Injetar o slug nos links para manter o tenant durante a navegação
+  const storeParam = storeSlug ? `&loja=${storeSlug}` : ''
+
   return (
     <div className="flex flex-col w-full min-h-screen">
       {/* 💎 DEBUG MÁGICO: Só aparece se houver erro real no banco */}
@@ -76,20 +87,30 @@ export default async function Home({
       )}
       {/* Navegação Mobile e Desktop Superior - Agora mais próxima do topo */}
       <nav className="bg-white/80 backdrop-blur-md border-b border-brand-secondary/10 sticky top-[56px] md:top-[72px] z-40 shadow-sm">
-        <div className="max-w-7xl mx-auto px-2 py-2 md:py-3 flex flex-wrap justify-center gap-2 md:gap-6">
-          {categoryNames.map((cat) => (
-            <Link 
-              key={cat}
-              href={`/?catalogo=true&category=${cat === 'Todos' ? '' : cat}`}
-              className={`px-3 py-1.5 transition-all font-bold text-[9px] md:text-[10px] tracking-[0.1em] md:tracking-[0.2em] uppercase rounded-full border ${
-                activeCategory === cat
-                ? "bg-brand-primary text-white border-brand-primary shadow-md" 
-                : "text-brand-primary/70 hover:text-brand-primary bg-brand-secondary/5 border-brand-secondary/10"
-              }`}
-            >
-              {cat}
-            </Link>
-          ))}
+        <div className="max-w-7xl mx-auto px-2 py-2 md:py-3 flex flex-wrap justify-center gap-2 md:gap-6 min-h-[40px] items-center">
+          {dbCategories && dbCategories.length > 0 ? (
+            categoryNames.map((cat) => (
+              <Link 
+                key={cat}
+                href={`/?catalogo=true&category=${cat === 'Todos' ? '' : cat}`}
+                className={`px-3 py-1.5 transition-all font-bold text-[9px] md:text-[10px] tracking-[0.1em] md:tracking-[0.2em] uppercase rounded-full border ${
+                  activeCategory === cat
+                  ? "bg-brand-primary text-white border-brand-primary shadow-md" 
+                  : "text-brand-primary/70 hover:text-brand-primary bg-brand-secondary/5 border-brand-secondary/10"
+                }`}
+              >
+                {cat}
+              </Link>
+            ))
+          ) : (
+            <div className="flex items-center gap-3 px-4 py-1 animate-fade-in">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-secondary/40 animate-pulse" />
+              <span className="text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase text-brand-primary/40">
+                Explorando Coleções Exclusivas
+              </span>
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-secondary/40 animate-pulse" />
+            </div>
+          )}
         </div>
       </nav>
 
@@ -113,7 +134,8 @@ export default async function Home({
                       src={product.image_url} 
                       alt={product.name} 
                       fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-1000" 
+                      className="object-cover group-hover:scale-110 transition-transform duration-1000 z-10" 
+                      sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
                     />
                   </div>
                   

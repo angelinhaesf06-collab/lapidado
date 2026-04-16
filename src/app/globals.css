@@ -37,3 +37,12 @@ body {
 /* Utilitários de Cor de Borda Dinâmicos */
 .border-brand-primary { border-color: var(--brand-primary); }
 .border-brand-secondary { border-color: var(--brand-secondary); }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
+}

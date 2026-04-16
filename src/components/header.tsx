@@ -99,13 +99,16 @@ export default function Header() {
 
         {/* SACOLA (DIREITA) */}
         <div className="flex items-center gap-2 md:gap-4">
-          <Link href="/cart" className="group relative p-2 md:p-3 rounded-full hover:bg-brand-secondary/5 transition-all text-brand-primary">
-             <ShoppingBag className="w-5 h-5 md:w-6 md:h-6" strokeWidth={1.5} />
-             {itemCount > 0 && (
-               <span className="absolute top-0 right-0 w-4 h-4 bg-brand-primary text-white text-[8px] flex items-center justify-center rounded-full border border-white shadow-sm font-black animate-in zoom-in duration-300">
-                 {itemCount}
-               </span>
-             )}
+          <Link href="/cart?catalogo=true" className="group flex items-center gap-2 p-2 md:p-3 rounded-full hover:bg-brand-secondary/5 transition-all text-brand-primary">
+             <div className="relative">
+               <ShoppingBag className="w-5 h-5 md:w-6 md:h-6" strokeWidth={1.5} />
+               {itemCount > 0 && (
+                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-primary text-white text-[8px] flex items-center justify-center rounded-full border border-white shadow-sm font-black animate-in zoom-in duration-300">
+                   {itemCount}
+                 </span>
+               )}
+             </div>
+             <span className="hidden md:block text-[10px] font-black uppercase tracking-[0.2em]">Sacola</span>
           </Link>
         </div>
       </div>
