@@ -88,10 +88,10 @@ export default function Header() {
           )}
         </Link>
 
-        {/* FRASE DE IMPACTO (CENTRO - ESCONDIDA NO MOBILE PARA GANHAR ESPAÇO) */}
+        {/* FRASE DE IMPACTO (CENTRO - AGORA VISÍVEL EM TODOS OS DISPOSITIVOS) */}
         {branding?.tagline && (
-          <div className="hidden lg:block flex-1 px-8 text-center">
-            <p className="text-[9px] font-black tracking-[0.4em] uppercase text-brand-primary/70 leading-none">
+          <div className="flex-1 px-2 md:px-8 text-center">
+            <p className="text-[6px] md:text-[9px] font-black tracking-[0.2em] md:tracking-[0.4em] uppercase text-brand-primary/70 leading-tight md:leading-none line-clamp-2 md:line-clamp-none">
               {branding.tagline}
             </p>
           </div>
