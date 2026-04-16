@@ -92,7 +92,7 @@ export default async function Home({
             categoryNames.map((cat) => (
               <Link 
                 key={cat}
-                href={`/?catalogo=true&category=${cat === 'Todos' ? '' : cat}`}
+                href={`/?catalogo=true&category=${cat === 'Todos' ? '' : cat}${storeParam}`}
                 className={`px-3 py-1.5 transition-all font-bold text-[9px] md:text-[10px] tracking-[0.1em] md:tracking-[0.2em] uppercase rounded-full border ${
                   activeCategory === cat
                   ? "bg-brand-primary text-white border-brand-primary shadow-md" 
@@ -154,7 +154,7 @@ export default async function Home({
                 
                 {/* 💎 BOTÃO DE COMPRA DIRETA (MÁGICA NEXUS) */}
                 <div className="w-full max-w-[140px] md:max-w-none px-2 md:px-6 flex flex-col items-center gap-4">
-                  <Link href={`/product/${product.id}?catalogo=true`} className="text-[9px] md:text-[11px] font-black uppercase tracking-[0.3em] text-brand-secondary hover:text-brand-primary transition-all border-b border-transparent hover:border-brand-secondary/40 pb-1">
+                  <Link href={`/product/${product.id}?catalogo=true${storeParam}`} className="text-[9px] md:text-[11px] font-black uppercase tracking-[0.3em] text-brand-secondary hover:text-brand-primary transition-all border-b border-transparent hover:border-brand-secondary/40 pb-1">
                     Espiar Peça
                   </Link>
                   <AddToCartButton product={product} />
