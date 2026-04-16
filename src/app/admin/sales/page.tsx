@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { TrendingUp, ShoppingCart, DollarSign, Calendar, User, Package, Plus, Loader2, ArrowLeft, Search, Filter, Gem, Check } from 'lucide-react'
+import { TrendingUp, ShoppingCart, DollarSign, Calendar, User, Package, Plus, Loader2, ArrowLeft, Search, Filter, Gem, Check, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
@@ -75,6 +75,20 @@ export default function SalesPage() {
   async function loadCategories() {
     const { data } = await supabase.from('categories').select('*').order('name')
     if (data) setCategories(data)
+  }
+
+  async function handleDeleteSale(id: string) {
+    if (!confirm('DESEJA REALMENTE EXCLUIR ESTA VENDA? 💎\nISSO NÃO DEVOLVE O ITEM AO ESTOQUE AUTOMATICAMENTE.')) return
+
+    try {
+      const { error } = await supabase.from('sales').delete().eq('id', id)
+      if (error) throw error
+      
+      setSales(sales.filter(s => s.id !== id))
+      alert('VENDA EXCLUÍDA COM SUCESSO!')
+    } catch (err) {
+      alert('ERRO AO EXCLUIR VENDA.')
+    }
   }
 
   async function handleRegisterSale() {
@@ -157,7 +171,7 @@ export default function SalesPage() {
           <div className="flex justify-center py-20"><Loader2 className="animate-spin text-brand-secondary" /></div>
         ) : (
           sales.map((sale) => (
-            <div key={sale.id} className="bg-white p-4 rounded-[30px] border border-brand-secondary/5 shadow-sm flex items-center gap-4">
+            <div key={sale.id} className="bg-white p-4 rounded-[30px] border border-brand-secondary/5 shadow-sm flex items-center gap-4 group">
               <div className="w-14 h-14 rounded-2xl overflow-hidden bg-brand-secondary/5 relative">
                 <Image src={sale.products?.image_url || ''} alt="" fill className="object-cover" />
               </div>
@@ -168,8 +182,16 @@ export default function SalesPage() {
                   {sale.customer_name && <span>• {sale.customer_name}</span>}
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-xs font-bold text-brand-primary">R$ {(sale.sale_price * sale.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+              <div className="flex items-center gap-4">
+                <div className="text-right">
+                  <p className="text-xs font-bold text-brand-primary">R$ {(sale.sale_price * sale.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                </div>
+                <button 
+                  onClick={() => handleDeleteSale(sale.id)}
+                  className="p-2 text-rose-200 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-all opacity-0 group-hover:opacity-100"
+                >
+                  <Trash2 size={16} />
+                </button>
               </div>
             </div>
           ))
