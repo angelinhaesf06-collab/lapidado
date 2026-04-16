@@ -110,6 +110,16 @@ export default function LoginPage() {
             )}
           </button>
         </form>
+
+        {/* 💎 ACESSO PARA NOVAS EMPRESÁRIAS */}
+        <div className="mt-12 text-center border-t border-rose-50 pt-8">
+          <p className="text-[#8b6e6a] text-[11px] font-semibold uppercase tracking-widest">
+            Ainda não é parceira?{' '}
+            <Link href="/register" className="text-[#c99090] font-black hover:opacity-80 transition-opacity">
+              Começar Agora
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   )
