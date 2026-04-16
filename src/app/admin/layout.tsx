@@ -12,7 +12,7 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
-  const [branding, setBranding] = useState<{name: string, logo: string | null}>({name: 'LAPIDADO', logo: null})
+  const [branding, setBranding] = useState<{name: string, logo: string | null, slug: string | null}>({name: 'LAPIDADO', logo: null, slug: null})
   const supabase = createClient()
 
   useEffect(() => {
@@ -20,7 +20,7 @@ export default function AdminLayout({
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         const { data } = await supabase.from('branding')
-          .select('store_name, business_name, logo_url, facebook')
+          .select('store_name, business_name, logo_url, facebook, slug')
           .eq('user_id', user.id)
           .single()
         
@@ -28,7 +28,8 @@ export default function AdminLayout({
           const [tagline, installments, banner, bName] = (data.facebook || '').split('|')
           setBranding({
             name: data.business_name || data.store_name || bName || 'LAPIDADO',
-            logo: data.logo_url || null
+            logo: data.logo_url || null,
+            slug: data.slug || null
           })
         }
       }
@@ -46,7 +47,7 @@ export default function AdminLayout({
   ]
 
   const shareToWhatsApp = () => {
-    const url = `${window.location.origin}/?catalogo=true`
+    const url = `${window.location.origin}/?catalogo=true${branding.slug ? `&loja=${branding.slug}` : ''}`
     const text = `Olá! Conheça o novo catálogo digital da *${branding.name}*. Peças exclusivas e brilho em cada detalhe: ${url}`
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
   }

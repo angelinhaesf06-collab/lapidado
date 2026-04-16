@@ -56,7 +56,7 @@ export default async function ProductPage({
   return (
     <div className="max-w-7xl mx-auto px-4 py-20 flex flex-col items-center">
       <div className="w-full mb-20 text-center">
-        <Link href="/?catalogo=true" className="text-[10px] font-light tracking-[0.4em] uppercase text-brand-secondary hover:text-brand-primary transition-colors">
+        <Link href={backUrl} className="text-[10px] font-light tracking-[0.4em] uppercase text-brand-secondary hover:text-brand-primary transition-colors">
           ← Voltar ao Catálogo
         </Link>
       </div>
@@ -102,6 +102,14 @@ export default async function ProductPage({
           {branding?.tiktok && (
             <p className="mt-20 text-[9px] text-brand-primary/60 font-light opacity-50 tracking-[0.3em] uppercase text-center max-w-xs">
               💎 {branding.tiktok.toUpperCase().includes('GARANTIA') ? branding.tiktok : `${branding.tiktok} DE GARANTIA`}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+GARANTIA') ? branding.tiktok : `${branding.tiktok} DE GARANTIA`}
             </p>
           )}
         </div>

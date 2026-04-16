@@ -110,16 +110,6 @@ export default function LoginPage() {
             )}
           </button>
         </form>
-
-        {/* Rodapé Minimalista */}
-        <div className="mt-12 text-center border-t border-rose-50 pt-8">
-          <p className="text-[#8b6e6a] text-[11px] font-semibold uppercase tracking-widest">
-            Não é cadastrada?{' '}
-            <Link href="/register" className="text-[#c99090] font-black hover:opacity-80 transition-opacity">
-              Criar Conta
-            </Link>
-          </p>
-        </div>
       </div>
     </div>
   )
