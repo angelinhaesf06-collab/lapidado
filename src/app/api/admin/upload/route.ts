@@ -35,7 +35,10 @@ export async function POST(req: Request) {
 
     const { data: { publicUrl } } = supabaseAdmin.storage.from(bucket).getPublicUrl(fileName)
 
-    return NextResponse.json({ url: publicUrl })
+    // 💎 NEXUS: Cache-Buster (Timestamp) para forçar atualização visual imediata
+    const urlWithCacheBuster = `${publicUrl}?t=${Date.now()}`
+
+    return NextResponse.json({ url: urlWithCacheBuster })
 
   } catch (err) {
     const error = err as Error

@@ -130,21 +130,44 @@ export default function AdminLayout({
 
       {/* CONTEÚDO PRINCIPAL */}
       <main className="flex-1 w-full overflow-x-hidden">
-        {/* BARRA SUPERIOR MOBILE (Apenas telas pequenas) */}
-        <div className="md:hidden bg-white border-b border-brand-secondary/10 p-4 flex justify-between items-center sticky top-0 z-50">
-           <div className="flex items-center gap-3">
-             <Gem size={20} className="text-brand-primary" />
-             <span className="text-[10px] font-black uppercase tracking-widest text-brand-primary">{branding.name}</span>
+        {/* BARRA SUPERIOR MOBILE (Ajustada com todas as abas) */}
+        <div className="md:hidden bg-white border-b border-brand-secondary/10 sticky top-0 z-50 shadow-sm">
+           <div className="p-4 flex justify-between items-center border-b border-brand-secondary/5">
+             <div className="flex items-center gap-2">
+               <Gem size={16} className="text-brand-primary" />
+               <span className="text-[9px] font-black uppercase tracking-widest text-brand-primary">{branding.name}</span>
+             </div>
+             
+             <div className="flex gap-2">
+               <Link href="/?catalogo=true" target="_blank" className="p-1.5 bg-brand-secondary/10 rounded-full text-brand-primary">
+                  <ExternalLink size={14} />
+               </Link>
+               <button onClick={shareToWhatsApp} className="p-1.5 bg-[#25D366] rounded-full text-white">
+                  <Share2 size={14} />
+               </button>
+             </div>
            </div>
-           
-           <div className="flex gap-2">
-             <Link href="/?catalogo=true" target="_blank" className="p-2 bg-brand-secondary/10 rounded-full text-brand-primary">
-                <ExternalLink size={18} />
-             </Link>
-             <button onClick={shareToWhatsApp} className="p-2 bg-[#25D366] rounded-full text-white">
-                <Share2 size={18} />
-             </button>
-           </div>
+
+           {/* 📱 ABAS RÁPIDAS MOBILE */}
+           <nav className="flex overflow-x-auto no-scrollbar py-2 px-2 gap-1 bg-rose-50/20">
+             {navItems.map((item) => {
+               const isActive = pathname === item.href
+               return (
+                 <Link 
+                   key={item.name}
+                   href={item.href} 
+                   className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${
+                     isActive 
+                     ? 'bg-brand-primary text-white shadow-md' 
+                     : 'text-brand-secondary/60 hover:text-brand-primary'
+                   }`}
+                 >
+                   <item.icon size={12} />
+                   {item.name}
+                 </Link>
+               )
+             })}
+           </nav>
         </div>
 
         <div className="px-4 py-8 md:px-12 md:py-16">

@@ -81,6 +81,15 @@ export default async function RootLayout({
         }}
       >
         <CartProvider>
+          {user && (
+            <div className="bg-brand-primary text-white py-2 px-4 flex justify-center items-center gap-4 sticky top-0 z-[100] shadow-lg animate-in slide-in-from-top duration-500">
+              <p className="text-[8px] font-black uppercase tracking-[0.3em]">Logada como Admin 💎</p>
+              <Link href="/admin" className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest transition-all">
+                <LayoutDashboard size={12} />
+                Voltar ao Painel
+              </Link>
+            </div>
+          )}
           <main className="flex-1">
             {children}
           </main>
