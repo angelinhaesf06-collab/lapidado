@@ -102,14 +102,13 @@ export default function RegisterPage() {
         }
       }
 
-      // 💎 SE PRECISAR DE CONFIRMAÇÃO DE E-MAIL
-      if (data.user && data.session === null) {
-        setWaitingConfirmation(true)
-      } else {
+      // 💎 AUTO-LOGIN NEXUS: Removendo burocracia de e-mail
+      if (data.user) {
         setSuccess(true)
+        // Se já tiver sessão, vai pro admin, senão pro login confirmar
         setTimeout(() => {
-          router.push('/login')
-        }, 3000)
+          router.push('/login?message=Conta criada com sucesso! 💎')
+        }, 2000)
       }
       
     } catch (err) {
