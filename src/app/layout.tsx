@@ -67,13 +67,13 @@ export default async function RootLayout({
         }}
       >
         <CartProvider>
-          {/* 💎 NEXUS: Barra de Admin Ultra-Simplificada para evitar erros de Build */}
-          {user && (
+          {/* 💎 NEXUS: Barra de Admin VISÍVEL APENAS NA VITRINE PÚBLICA */}
+          {user && !pathname?.startsWith('/admin') && pathname !== '/login' && pathname !== '/register' && (
             <div className="bg-brand-primary text-white py-2 px-4 flex justify-center items-center gap-4 sticky top-0 z-[100] shadow-lg">
-              <p className="text-[8px] font-black uppercase tracking-[0.3em]">Ambiente Admin 💎</p>
+              <p className="text-[8px] font-black uppercase tracking-[0.3em]">Modo Lojista Ativo 💎</p>
               <Link href="/admin" className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest transition-all">
                 <LayoutDashboard size={12} />
-                Painel de Gestão
+                Gerenciar Catálogo
               </Link>
             </div>
           )}
