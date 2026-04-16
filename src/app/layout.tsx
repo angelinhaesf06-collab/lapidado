@@ -4,9 +4,7 @@ import "./globals.css";
 import { createClient } from '@/lib/supabase/server';
 import Footer from '@/components/footer';
 import { CartProvider } from '@/lib/cart-context';
-import Link from 'next/link';
-import { LayoutDashboard } from 'lucide-react';
-import { headers } from 'next/headers';
+import AdminBar from '@/components/admin-bar';
 
 const montserrat = Montserrat({ 
   subsets: ["latin"], 
@@ -53,10 +51,6 @@ export default async function RootLayout({
   const secondary = (branding?.secondary_color && isValidHex(branding.secondary_color)) ? branding.secondary_color : '#c99090';
   const businessName = branding?.store_name || 'LAPIDADO' 
 
-  // 💎 NEXUS: Identificação de Rota para Visibilidade da Tarja
-  const headersList = await headers();
-  const pathname = headersList.get('x-invoke-path') || '';
-
   return (
     <html lang="pt-BR" className="scroll-smooth">
       <head>
@@ -72,16 +66,7 @@ export default async function RootLayout({
         }}
       >
         <CartProvider>
-          {/* 💎 NEXUS: Barra de Admin VISÍVEL APENAS NA VITRINE PÚBLICA */}
-          {user && !pathname?.startsWith('/admin') && pathname !== '/login' && pathname !== '/register' && (
-            <div className="bg-brand-primary text-white py-2 px-4 flex justify-center items-center gap-4 sticky top-0 z-[100] shadow-lg">
-              <p className="text-[8px] font-black uppercase tracking-[0.3em]">Modo Lojista Ativo 💎</p>
-              <Link href="/admin" className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest transition-all">
-                <LayoutDashboard size={12} />
-                Gerenciar Catálogo
-              </Link>
-            </div>
-          )}
+          <AdminBar user={user} />
           <main className="flex-1">
             {children}
           </main>
