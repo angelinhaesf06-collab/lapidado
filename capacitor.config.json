@@ -1,0 +1,10 @@
+{
+  "appId": "br.com.lapidado.app",
+  "appName": "LAPIDADO",
+  "webDir": "out",
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "https://lapidado.com.br",
+    "cleartext": true
+  }
+}
