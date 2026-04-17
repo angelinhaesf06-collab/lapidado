@@ -70,13 +70,13 @@ export default function Header() {
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 md:px-8 py-3 md:py-5 flex md:flex-row items-center justify-between gap-2 md:gap-4">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-3 md:py-5 relative">
         
-        {/* ESTRUTURA MOBILE: 3 COLUNAS IGUAIS PARA FORÇAR O CENTRO */}
-        <div className="grid grid-cols-[1fr_2fr_1fr] items-center w-full md:flex md:flex-row md:justify-between md:gap-8">
+        {/* ESTRUTURA DE ALTA PRECISÃO: Logo (Esq), Frase (Centro Absoluto), Sacola (Dir) */}
+        <div className="flex items-center justify-between w-full">
           
           {/* LOGOTIPO (ESQUERDA) */}
-          <Link href="/?catalogo=true" className="flex-shrink-0 group justify-self-start">
+          <Link href="/?catalogo=true" className="flex-shrink-0 group z-10">
             {branding?.logo_url ? (
               <div className="relative w-20 md:w-48 h-8 md:h-14 transition-all duration-500 group-hover:scale-105">
                  <Image src={branding.logo_url} alt={branding.store_name || "Logo"} className="object-contain object-left" fill priority />
@@ -90,17 +90,17 @@ export default function Header() {
             )}
           </Link>
 
-          {/* FRASE DE IMPACTO (CENTRO REAL) */}
+          {/* FRASE DE IMPACTO (CENTRO ABSOLUTO NO DESKTOP E MOBILE) */}
           {branding?.tagline && (
-            <div className="px-1 text-center justify-self-center">
-              <p className="text-[7px] md:text-[9px] font-black tracking-[0.1em] md:tracking-[0.4em] uppercase text-brand-primary leading-tight line-clamp-2">
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[40%] md:max-w-[50%] pointer-events-none">
+              <p className="text-[7px] md:text-[10px] font-black tracking-[0.1em] md:tracking-[0.5em] uppercase text-brand-primary leading-tight line-clamp-2 text-center">
                 {branding.tagline}
               </p>
             </div>
           )}
 
           {/* SACOLA (DIREITA) */}
-          <div className="flex items-center justify-self-end">
+          <div className="flex items-center z-10">
             <Link href="/cart?catalogo=true" className="group flex items-center gap-2 p-1.5 md:p-3 rounded-xl bg-brand-primary/10 hover:bg-brand-primary transition-all text-brand-primary hover:text-white">
                <div className="relative">
                  <ShoppingBag className="w-5 h-5 md:w-6 md:h-6" strokeWidth={1.5} />
