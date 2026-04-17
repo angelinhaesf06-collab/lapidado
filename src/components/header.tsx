@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ShoppingBag, User } from 'lucide-react'
+import { ShoppingBag } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
 import { useCart } from '@/lib/cart-context'
@@ -41,7 +41,7 @@ export default function Header() {
 
         if (brandingData) {
           const rawTagline = brandingData.facebook || ''
-          const [tagline, installments, banner] = rawTagline.split('|')
+          const [tagline, , banner] = rawTagline.split('|')
           
           setBranding({ 
             logo_url: brandingData.logo_url,
@@ -62,10 +62,10 @@ export default function Header() {
     <header className="bg-brand-primary/5 backdrop-blur-xl border-b border-brand-primary/10 sticky top-0 z-50 shadow-sm transition-all duration-700">
       
       {/* BANNER MINIMALISTA (DNA CROMÁTICO) */}
-      {(branding as any)?.topBanner && (
+      {branding?.topBanner && (
         <div className="w-full bg-brand-primary py-1.5 text-center overflow-hidden shadow-inner">
            <p className="text-white text-[7px] md:text-[9px] font-black uppercase tracking-[0.4em] md:tracking-[0.6em] animate-pulse">
-             ✨ {(branding as any).topBanner} ✨
+             ✨ {branding.topBanner} ✨
            </p>
         </div>
       )}

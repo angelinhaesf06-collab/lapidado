@@ -33,7 +33,18 @@ export async function POST(req: Request) {
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseKey)
 
-    // GERAR SLUG AUTOMÁTICO PARA CATEGORIAS
+    // 💎 NEXUS: VALIDAÇÃO DE SEGURANÇA MULTI-TENANT
+    // Para operações via Client SDK, o RLS cuida disso. 
+    // Como estamos usando Service Role (Admin), precisamos garantir o isolamento manualmente.
+    if (data.user_id && id) {
+       // Se estamos editando, o registro DEVE pertencer ao user_id enviado
+       const { data: check } = await supabaseAdmin.from(table).select('user_id').eq('id', id).single();
+       if (check && check.user_id !== data.user_id) {
+         return NextResponse.json({ error: 'VIOLAÇÃO DE ISOLAMENTO: Registro pertence a outra marca.' }, { status: 403 });
+       }
+    }
+
+    // GERAR SLUG AUTOMÁTICO PARA CATEGORIAS (ISOALDO POR USER)
     if (table === 'categories' && data.name) {
       data.slug = data.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').trim()
     }
@@ -43,7 +54,7 @@ export async function POST(req: Request) {
     // LÓGICA INTELIGENTE PARA BRANDING: Sempre opera no único registro existente
     if (table === 'branding') {
       // Tenta buscar o primeiro registro para obter o ID caso ele não tenha sido enviado
-      const { data: existing, error: fetchError } = await supabaseAdmin.from('branding').select('id').limit(1).maybeSingle();
+      const { data: existing } = await supabaseAdmin.from('branding').select('id').limit(1).maybeSingle();
       
       console.log('💎 NEXUS: VERIFICANDO REGISTRO EXISTENTE...', existing?.id);
 

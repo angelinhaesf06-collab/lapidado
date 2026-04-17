@@ -1,97 +1,106 @@
-import { createClient } from '@/lib/supabase/server'
+'use client'
+
+import { useEffect, useState, Suspense } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import Image from 'next/image'
 import AddToCartButton from '@/components/cart/add-to-cart-button'
-import { redirect } from 'next/navigation'
-import { Suspense } from 'react'
-import ShowcaseSkeleton from '@/components/showcase-skeleton'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
+import { CartItem } from '@/lib/cart-context'
 
-export const revalidate = 60 // Cache mais rápido para refletir mudanças na hora
+interface Category {
+  id: string
+  name: string
+}
 
-export default async function Home({
-  searchParams,
-}: {
-  searchParams: Promise<{ category?: string; catalogo?: string; loja?: string }>;
-}) {
-  const params = await searchParams;
-  const isPublicCatalog = params.catalogo === 'true';
-  const storeSlug = params.loja;
+interface Branding {
+  id: string
+  user_id: string
+  slug: string
+  store_name: string
+  facebook?: string
+  [key: string]: unknown
+}
 
-  // 💎 REGRA DE NEGÓCIO: Se abrir lapidado.com.br seco, vai pro login
-  if (!isPublicCatalog) {
-    redirect('/login');
-  }
-
-  const activeCategory = params.category || 'Todos';
-  const supabase = await createClient()
-
-  // 💎 NEXUS: Identificação de Loja por Slug (ISOLAMENTO TOTAL)
-  let branding = null
+function HomeContent() {
+  const searchParams = useSearchParams()
+  const [products, setProducts] = useState<CartItem[]>([])
+  const [dbCategories, setDbCategories] = useState<Category[]>([])
+  const [branding, setBranding] = useState<Branding | null>(null)
+  const [loading, setLoading] = useState(true)
   
-  if (storeSlug) {
-    const { data: storeBranding } = await supabase.from('branding').select('*').eq('slug', storeSlug).single()
-    branding = storeBranding
+  const isPublicCatalog = searchParams.get('catalogo') === 'true'
+  const storeSlug = searchParams.get('loja')
+  const activeCategory = searchParams.get('category') || 'Todos'
+  const supabase = createClient()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!isPublicCatalog) {
+      router.push('/login')
+      return
+    }
+
+    async function loadData() {
+      setLoading(true)
+      
+      let currentBranding = null
+      if (storeSlug) {
+        const { data } = await supabase.from('branding').select('*').eq('slug', storeSlug).single()
+        currentBranding = data
+      }
+
+      if (!currentBranding) {
+        const { data } = await supabase.from('branding').select('*').eq('store_name', 'YES MORE GOLD').limit(1).maybeSingle()
+        currentBranding = data
+      }
+      
+      if (!currentBranding) {
+        const { data } = await supabase.from('branding').select('*').limit(1).maybeSingle()
+        currentBranding = data
+      }
+
+      setBranding(currentBranding)
+      const currentUserId = currentBranding?.user_id || '00000000-0000-0000-0000-000000000000'
+
+      const { data: cats } = await supabase.from('categories').select('id, name').eq('user_id', currentUserId).order('name')
+      setDbCategories(cats || [])
+
+      let prodQuery = supabase.from('products').select('*, categories!inner(name)').eq('user_id', currentUserId)
+      if (activeCategory !== 'Todos') {
+        prodQuery = prodQuery.eq('categories.name', activeCategory)
+      }
+
+      const { data: prods } = await prodQuery.order('created_at', { ascending: false })
+      setProducts(prods || [])
+      setLoading(false)
+    }
+
+    loadData()
+  }, [isPublicCatalog, storeSlug, activeCategory, router, supabase])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin text-brand-secondary" size={40} />
+      </div>
+    )
   }
 
-  // Se não houver loja especificada, tentamos carregar a loja padrão (YES MORE GOLD)
-  if (!branding) {
-    const { data: defaultBranding } = await supabase.from('branding').select('*').eq('store_name', 'YES MORE GOLD').limit(1).maybeSingle()
-    branding = defaultBranding
-  }
-  
-  // Se ainda assim não houver nada, pega a primeira disponível (último recurso)
-  if (!branding) {
-    const { data: anyBranding } = await supabase.from('branding').select('*').limit(1).maybeSingle()
-    branding = anyBranding
-  }
-
-  const currentUserId = branding?.user_id
+  const categoryNames = ['Todos', ...dbCategories.map(c => c.name)]
   const installments = parseInt(branding?.facebook?.split('|')[1] || '10')
-
-  // 💎 NEXUS: Filtro Mandatário pelo Dono da Loja
-  // Se o currentUserId for null (caso de teste/admin manual), mostra tudo.
-  // Se houver ID, isola COMPLETAMENTE o catálogo.
-  let catQuery = supabase.from('categories').select('id, name')
-  if (currentUserId) {
-    catQuery = catQuery.eq('user_id', currentUserId)
-  }
-  
-  const { data: dbCategories, error: catError } = await catQuery.order('name')
-  const categoryNames = ['Todos', ...(dbCategories?.map(c => c.name) || [])]
-  
-  let prodQuery = supabase.from('products').select('*, categories!inner(name)')
-  if (currentUserId) {
-    prodQuery = prodQuery.eq('user_id', currentUserId)
-  }
-
-  let finalQuery = prodQuery.order('created_at', { ascending: false })
-
-  if (activeCategory !== 'Todos') {
-    finalQuery = finalQuery.eq('categories.name', activeCategory)
-  }
-
-  const { data: products, error: prodError } = await finalQuery
-
-  // Injetar o slug nos links para manter o tenant durante a navegação
   const storeParam = storeSlug ? `&loja=${storeSlug}` : ''
 
   return (
     <div className="flex flex-col w-full min-h-screen">
-      {/* 💎 DEBUG MÁGICO: Só aparece se houver erro real no banco */}
-      {(catError || prodError) && (
-        <div className="bg-black text-white text-[8px] p-2 text-center">
-          ERRO_P: {prodError?.message || 'OK'} | ERRO_C: {catError?.message || 'OK'} 
-        </div>
-      )}
-      {/* Navegação Mobile e Desktop Superior - Agora mais próxima do topo */}
       <nav className="bg-white/80 backdrop-blur-md border-b border-brand-secondary/10 sticky top-[56px] md:top-[72px] z-40 shadow-sm">
         <div className="max-w-7xl mx-auto px-2 py-2 md:py-3 flex flex-wrap justify-center gap-2 md:gap-6 min-h-[40px] items-center">
-          {dbCategories && dbCategories.length > 0 ? (
+          {dbCategories.length > 0 ? (
             categoryNames.map((cat) => (
               <Link 
                 key={cat}
                 href={`/?catalogo=true&category=${cat === 'Todos' ? '' : cat}${storeParam}`}
-                prefetch={true}
                 className={`px-3 py-1.5 transition-all font-bold text-[9px] md:text-[10px] tracking-[0.1em] md:tracking-[0.2em] uppercase rounded-full border ${
                   activeCategory === cat
                   ? "bg-brand-primary text-white border-brand-primary shadow-md" 
@@ -102,12 +111,10 @@ export default async function Home({
               </Link>
             ))
           ) : (
-            <div className="flex items-center gap-3 px-4 py-1 animate-fade-in">
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-secondary/40 animate-pulse" />
+            <div className="flex items-center gap-3 px-4 py-1">
               <span className="text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase text-brand-primary/40">
-                Explorando Coleções Exclusivas
+                Coleções Exclusivas
               </span>
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-secondary/40 animate-pulse" />
             </div>
           )}
         </div>
@@ -119,22 +126,21 @@ export default async function Home({
             {activeCategory === 'Todos' ? 'Coleção Completa' : activeCategory}
           </h2>
           <div className="w-12 h-[1px] bg-brand-secondary/30 mx-auto mb-2" />
-          <p className="text-brand-secondary text-[8px] md:text-[9px] font-bold tracking-[0.2em] uppercase opacity-60">{(products?.length || 0)} Itens Selecionados</p>
+          <p className="text-brand-secondary text-[8px] md:text-[9px] font-bold tracking-[0.2em] uppercase opacity-60">{products.length} Itens Selecionados</p>
         </div>
 
-        {/* Grid de Vitrine Otimizada */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 md:gap-x-10 gap-y-10 md:gap-y-20 px-1">
-          {products && products.length > 0 ? (
+          {products.length > 0 ? (
             products.map((product) => (
               <div key={product.id} className="group flex flex-col items-center">
-                <Link href={`/product/${product.id}?catalogo=true`} className="w-full">
-                  <div className="aspect-[4/5] w-full bg-white rounded-[40px] md:rounded-[64px] overflow-hidden mb-6 md:mb-10 shadow-[0_20px_60px_rgba(74,50,46,0.08)] border border-white relative transition-all duration-700 group-hover:shadow-[0_40px_80px_rgba(74,50,46,0.12)]">
+                <Link href={`/product?id=${product.id}&catalogo=true${storeParam}`} className="w-full">
+                  <div className="aspect-[4/5] w-full bg-white rounded-[40px] md:rounded-[64px] overflow-hidden mb-6 md:mb-10 shadow-[0_20px_60px_rgba(74,50,46,0.08)] border border-white relative transition-all duration-700">
                     <Image 
                       src={product.image_url} 
                       alt={product.name} 
                       fill
                       className="object-cover group-hover:scale-110 transition-transform duration-1000 z-10" 
-                      sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                      sizes="(max-width: 768px) 50vw, 25vw"
                     />
                   </div>
                   
@@ -150,12 +156,7 @@ export default async function Home({
                     </div>
                   </div>
                 </Link>
-                
-                {/* 💎 BOTÃO DE COMPRA DIRETA (MÁGICA NEXUS) */}
                 <div className="w-full max-w-[140px] md:max-w-none px-2 md:px-6 flex flex-col items-center gap-4">
-                  <Link href={`/product/${product.id}?catalogo=true${storeParam}`} className="text-[9px] md:text-[11px] font-black uppercase tracking-[0.3em] text-brand-secondary hover:text-brand-primary transition-all border-b border-transparent hover:border-brand-secondary/40 pb-1">
-                    Espiar Peça
-                  </Link>
                   <AddToCartButton product={product} />
                 </div>
               </div>
@@ -168,5 +169,13 @@ export default async function Home({
         </div>
       </div>
     </div>
+  )
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-brand-secondary" size={40} /></div>}>
+      <HomeContent />
+    </Suspense>
   )
 }

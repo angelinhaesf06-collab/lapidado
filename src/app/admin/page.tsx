@@ -1,12 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ShoppingBag, PlusCircle, Gem, Loader2, DollarSign, Pencil, AlertCircle, TrendingUp, BarChart3, Package, ShoppingCart } from 'lucide-react'
+import { PlusCircle, AlertCircle, TrendingUp, Package, ShoppingCart } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
 export default function AdminDashboard() {
-  const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({
     totalItems: 0,
     lowStock: 0,
@@ -21,7 +20,6 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     async function loadDashboardData() {
-      setLoading(true)
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
@@ -72,8 +70,6 @@ export default function AdminDashboard() {
         }
       } catch (err) {
         console.error("Erro ao carregar dashboard:", err)
-      } finally {
-        setLoading(false)
       }
     }
     loadDashboardData()

@@ -48,11 +48,12 @@ export async function POST(req: Request) {
     console.error(`❌ ERRO NO MOTOR DE IA:`, data.error?.message || "Erro desconhecido");
     throw new Error(data.error?.message || "O Google recusou o processamento da imagem.");
 
-  } catch (error: any) {
-    console.error("ERRO OPERACIONAL IA:", error.message);
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error("ERRO OPERACIONAL IA:", err.message);
     return NextResponse.json({ 
       error: "IA EM MANUTENÇÃO.", 
-      details: error.message 
+      details: err.message 
     }, { status: 503 });
   }
 }

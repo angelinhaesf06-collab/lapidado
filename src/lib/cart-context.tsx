@@ -2,14 +2,14 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
 
-interface CartItem {
+export interface CartItem {
   id: string
   name: string
   price: number
   image_url: string
   material_finish?: string
   description?: string
-  [key: string]: any
+  [key: string]: unknown
 }
 
 interface CartContextType {

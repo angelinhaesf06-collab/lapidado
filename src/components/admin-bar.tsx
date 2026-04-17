@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { LayoutDashboard, LogOut } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
-export default function AdminBar({ user }: { user: any }) {
+export default function AdminBar({ user }: { user: unknown }) {
   const pathname = usePathname()
   const supabase = createClient()
 

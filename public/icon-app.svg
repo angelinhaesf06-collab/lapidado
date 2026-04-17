@@ -1,57 +1,67 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Filtros para Efeito 3D e Brilho -->
   <defs>
-    <filter id="metalEffect" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="blur"/>
-      <feSpecularLighting in="blur" surfaceScale="5" specularConstant="1" specularExponent="20" lighting-color="#white" result="specular">
-        <fePointLight x="-5000" y="-10000" z="20000"/>
-      </feSpecularLighting>
-      <feComposite in="specular" in2="SourceAlpha" operator="in" result="specularOut"/>
-      <feComposite in="SourceGraphic" in2="specularOut" operator="over"/>
+    <!-- Gradiente de Metal Rose Gold Realista -->
+    <linearGradient id="roseMetal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#C18C7E;stop-opacity:1" />
+      <stop offset="20%" style="stop-color:#E5B8AC;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#F5D5CB;stop-opacity:1" />
+      <stop offset="80%" style="stop-color:#D49E8F;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#A67265;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Filtro de Sombra e Profundidade 3D -->
+    <filter id="shadow3d" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="10" flood-color="#4A2C24" flood-opacity="0.5"/>
     </filter>
 
-    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#D4A395;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#E8C3BA;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#B07D6E;stop-opacity:1" />
-    </linearGradient>
-
-    <linearGradient id="textGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#4A2C24;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#63443A;stop-opacity:1" />
-    </linearGradient>
+    <!-- Filtro de Brilho Extremo -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
   </defs>
 
-  <!-- Fundo Metálico Rose Gold -->
-  <rect width="512" height="512" rx="100" fill="url(#bgGradient)"/>
-  
-  <!-- Círculo Cravejado -->
-  <circle cx="256" cy="220" r="140" stroke="#4A2C24" stroke-width="4" opacity="0.3"/>
-  <circle cx="256" cy="220" r="130" stroke="white" stroke-width="2" opacity="0.5"/>
+  <!-- Fundo Metálico Arredondado (idêntico à foto) -->
+  <rect width="512" height="512" rx="120" fill="url(#roseMetal)"/>
+  <rect width="512" height="512" rx="120" fill="white" opacity="0.1"/>
 
-  <!-- Letra L Cravejada com Diamantes -->
-  <g filter="url(#metalEffect)">
-    <!-- Base do L -->
-    <path d="M210 110V310H310" stroke="#4A2C24" stroke-width="25" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Círculo Cravejado de Diamantes -->
+  <circle cx="256" cy="220" r="150" stroke="#4A2C24" stroke-width="2" opacity="0.2"/>
+  <g filter="url(#glow)">
+    <circle cx="256" cy="220" r="142" stroke="white" stroke-width="4" stroke-dasharray="2 6" stroke-linecap="round"/>
+  </g>
+
+  <!-- DIAMANTE CENTRAL CRAVEJADO (Substituindo o A) -->
+  <g filter="url(#shadow3d)">
+    <!-- Silhueta do Diamante em Bronze -->
+    <path d="M256 80 L360 170 L256 360 L152 170 Z" fill="#4A2C24" opacity="0.15"/>
+    <path d="M152 170 H360" stroke="#4A2C24" stroke-width="1" opacity="0.2"/>
     
-    <!-- Diamantes no L (Simulados por círculos com brilho) -->
-    <g fill="white">
-      <circle cx="210" cy="120" r="6"/> <circle cx="210" cy="150" r="6"/>
-      <circle cx="210" cy="180" r="6"/> <circle cx="210" cy="210" r="6"/>
-      <circle cx="210" cy="240" r="6"/> <circle cx="210" cy="270" r="6"/>
-      <circle cx="210" cy="300" r="6"/> <circle cx="240" cy="310" r="6"/>
-      <circle cx="270" cy="310" r="6"/> <circle cx="300" cy="310" r="6"/>
+    <!-- Pontos de Diamante Cravejado (Brancos Brilhantes) -->
+    <g fill="white" filter="url(#glow)">
+      <!-- Topo -->
+      <circle cx="256" cy="90" r="5"/> <circle cx="220" cy="115" r="4"/> <circle cx="292" cy="115" r="4"/>
+      <!-- Meio -->
+      <circle cx="165" cy="170" r="6"/> <circle cx="200" cy="170" r="6"/> <circle cx="256" cy="170" r="8"/> <circle cx="312" cy="170" r="6"/> <circle cx="347" cy="170" r="6"/>
+      <!-- Corpo Inferior -->
+      <circle cx="210" cy="230" r="5"/> <circle cx="302" cy="230" r="5"/>
+      <circle cx="230" cy="280" r="4"/> <circle cx="282" cy="280" r="4"/>
+      <circle cx="256" cy="340" r="6"/>
     </g>
   </g>
 
-  <!-- Brilhos Estrelares -->
-  <path d="M380 120L385 135L400 140L385 145L380 160L375 145L360 140L375 135Z" fill="white">
-     <animate attributeName="opacity" values="0;1;0" dur="2s" repeatCount="indefinite" />
-  </path>
-  <path d="M120 180L123 190L135 193L123 196L120 206L117 196L105 193L117 190Z" fill="white" opacity="0.6">
-     <animate attributeName="opacity" values="1;0;1" dur="3s" repeatCount="indefinite" />
-  </path>
+  <!-- Brilhos Estrelares (idênticos à foto) -->
+  <g fill="white">
+    <path d="M380 100 L383 115 L395 118 L383 121 L380 136 L377 121 L365 118 L377 115 Z">
+      <animate attributeName="opacity" values="0;1;0" dur="2s" repeatCount="indefinite" />
+    </path>
+    <path d="M130 140 L132 150 L140 152 L132 154 L130 164 L128 154 L120 152 L128 150 Z" opacity="0.8">
+      <animate attributeName="opacity" values="1;0;1" dur="3s" repeatCount="indefinite" />
+    </path>
+  </g>
 
-  <!-- Texto LAPIDADO em Bronze Profundo -->
-  <text x="256" y="450" text-anchor="middle" fill="url(#textGradient)" style="font-family: 'Times New Roman', serif; font-weight: bold; font-size: 60px; letter-spacing: 5px; text-transform: uppercase;">LAPIDADO</text>
+  <!-- Texto LAPIDADO (Fonte Serifada de Luxo, cor Bronze Profundo) -->
+  <text x="256" y="460" text-anchor="middle" fill="#4A2C24" style="font-family: 'Times New Roman', serif; font-weight: 800; font-size: 72px; letter-spacing: 4px; text-transform: uppercase; filter: drop-shadow(0 2px 2px rgba(255,255,255,0.3));">LAPIDADO</text>
 </svg>

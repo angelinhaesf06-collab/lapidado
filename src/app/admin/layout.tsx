@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { TrendingUp, ShoppingCart, Package, Gem, PlusCircle, LayoutDashboard, LogOut, ExternalLink, Share2 } from 'lucide-react'
+import { ShoppingCart, Package, Gem, PlusCircle, LayoutDashboard, LogOut, ExternalLink, Share2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import Image from 'next/image'
 
 export default function AdminLayout({
   children,
@@ -25,7 +26,7 @@ export default function AdminLayout({
           .single()
         
         if (data) {
-          const [tagline, installments, banner, bName] = (data.facebook || '').split('|')
+          const [,,, bName] = (data.facebook || '').split('|')
           setBranding({
             name: data.business_name || data.store_name || bName || 'LAPIDADO',
             logo: data.logo_url || null,
@@ -67,10 +68,11 @@ export default function AdminLayout({
         <div className="flex flex-col items-center gap-4 mb-16 px-2 text-center">
           {branding.logo ? (
             <div className="relative w-full h-16 mb-2">
-              <img 
+              <Image 
                 src={branding.logo} 
                 alt="Logo" 
-                className="w-full h-full object-contain" 
+                fill
+                className="object-contain" 
               />
             </div>
           ) : (

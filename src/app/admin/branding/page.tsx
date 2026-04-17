@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Upload, Phone, Camera, Loader2, Palette, Gem, MapPin, Camera as InstagramIcon, Music2, Pencil } from 'lucide-react'
+import { Phone, Camera, Loader2, Palette, Gem, Pencil } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
 

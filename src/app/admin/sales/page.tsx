@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { TrendingUp, ShoppingCart, DollarSign, Calendar, User, Package, Plus, Loader2, ArrowLeft, Search, Filter, Gem, Check, Trash2 } from 'lucide-react'
-import Link from 'next/link'
+import { useState, useEffect, useCallback } from 'react'
+import { ShoppingCart, Loader2, ArrowLeft, Search, Check, Trash2, Plus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
 
@@ -20,30 +19,39 @@ interface Sale {
   }
 }
 
+interface Product {
+  id: string
+  name: string
+  price: number
+  cost_price: number
+  image_url: string
+  stock_quantity: number
+  categories?: { name: string }
+}
+
+interface Category {
+  id: string
+  name: string
+}
+
 export default function SalesPage() {
   const [sales, setSales] = useState<Sale[]>([])
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
-  const [products, setProducts] = useState<any[]>([])
-  const [categories, setCategories] = useState<any[]>([])
+  const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [activeCategory, setActiveCategory] = useState('Todas')
   const [searchQuery, setSearchQuery] = useState('')
   
   const supabase = createClient()
 
   // Estado para nova venda
-  const [selectedProduct, setSelectedProduct] = useState<any>(null)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [quantity, setQuantity] = useState(1)
   const [customerName, setCustomerName] = useState('')
   const [isSaving, setIsSaving] = useState(false)
 
-  useEffect(() => {
-    loadSales()
-    loadProducts()
-    loadCategories()
-  }, [])
-
-  async function loadSales() {
+  const loadSales = useCallback(async () => {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
@@ -54,11 +62,11 @@ export default function SalesPage() {
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
     
-    if (data) setSales(data as any)
+    if (data) setSales(data as unknown as Sale[])
     setLoading(false)
-  }
+  }, [supabase])
 
-  async function loadProducts() {
+  const loadProducts = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
@@ -69,13 +77,19 @@ export default function SalesPage() {
       .gt('stock_quantity', 0)
       .order('name')
     
-    if (data) setProducts(data)
-  }
+    if (data) setProducts(data as unknown as Product[])
+  }, [supabase])
 
-  async function loadCategories() {
+  const loadCategories = useCallback(async () => {
     const { data } = await supabase.from('categories').select('*').order('name')
-    if (data) setCategories(data)
-  }
+    if (data) setCategories(data as Category[])
+  }, [supabase])
+
+  useEffect(() => {
+    loadSales()
+    loadProducts()
+    loadCategories()
+  }, [loadSales, loadProducts, loadCategories])
 
   async function handleDeleteSale(id: string) {
     if (!confirm('DESEJA REALMENTE EXCLUIR ESTA VENDA? 💎\nISSO NÃO DEVOLVE O ITEM AO ESTOQUE AUTOMATICAMENTE.')) return
@@ -86,7 +100,7 @@ export default function SalesPage() {
       
       setSales(sales.filter(s => s.id !== id))
       alert('VENDA EXCLUÍDA COM SUCESSO!')
-    } catch (err) {
+    } catch {
       alert('ERRO AO EXCLUIR VENDA.')
     }
   }
@@ -124,7 +138,7 @@ export default function SalesPage() {
       loadSales()
       loadProducts()
       alert('VENDA REGISTRADA COM SUCESSO! 💎')
-    } catch (err) {
+    } catch {
       alert('ERRO AO REGISTRAR VENDA.')
     } finally {
       setIsSaving(false)

@@ -26,12 +26,11 @@ export default function ProductsListPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    // 💎 NEXUS: Consulta resiliente para restaurar acervo antigo
-    // Busca produtos do usuário logado OU produtos que ainda não têm user_id
+    // 💎 NEXUS: Consulta estritamente isolada (apenas produtos deste usuário)
     const { data } = await supabase
       .from('products')
       .select('*, categories(name)')
-      .or(`user_id.eq.${user.id},user_id.is.null`)
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false })
     if (data) setProducts(data as unknown as Product[])
     setLoading(false)
@@ -115,7 +114,7 @@ export default function ProductsListPage() {
                    </button>
                    
                    <Link 
-                    href={`/admin/products/edit/${product.id}`} 
+                    href={`/admin/products/edit?id=${product.id}`} 
                     className="p-4 bg-white rounded-full text-brand-primary hover:scale-110 transition-all shadow-lg"
                     title="Editar"
                    >
@@ -124,7 +123,7 @@ export default function ProductsListPage() {
 
                    <button 
                     onClick={() => {
-                      const msg = encodeURIComponent(`OLÁ! ✨ OLHA QUE LINDA ESSA JOIA: *${product.name}*\n\n💎 VALOR: R$ ${Number(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\nCONFIRA MAIS DETALHES AQUI: ${window.location.origin}/product/${product.id}`)
+                      const msg = encodeURIComponent(`OLÁ! ✨ OLHA QUE LINDA ESSA JOIA: *${product.name}*\n\n💎 VALOR: R$ ${Number(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\nCONFIRA MAIS DETALHES AQUI: ${window.location.origin}/product?id=${product.id}`)
                       window.open(`https://wa.me/?text=${msg}`, '_blank')
                     }}
                     className="p-4 bg-[#25D366] rounded-full text-white hover:scale-110 transition-all shadow-lg"
@@ -139,7 +138,7 @@ export default function ProductsListPage() {
                         navigator.share({
                           title: product.name,
                           text: `💎 ${product.name} - R$ ${Number(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\nConfira no catálogo Lapidado!`,
-                          url: `${window.location.origin}/product/${product.id}`,
+                          url: `${window.location.origin}/product?id=${product.id}`,
                         }).catch(() => {});
                       } else {
                         window.open('https://www.instagram.com/', '_blank');

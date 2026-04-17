@@ -15,6 +15,8 @@ const eslintConfig = [
       ".next/**",
       "out/**",
       "build/**",
+      "android/**",
+      "assets/**",
       "next-env.d.ts",
       ".aiox-core/**",
       "_assets_backup/**",

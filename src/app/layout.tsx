@@ -1,10 +1,13 @@
-import type { Metadata } from "next";
+'use client'
+
 import { Montserrat } from "next/font/google";
 import "./globals.css";
-import { createClient } from '@/lib/supabase/server';
+import { useEffect, useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
 import Footer from '@/components/footer';
 import { CartProvider } from '@/lib/cart-context';
 import AdminBar from '@/components/admin-bar';
+import { usePathname } from 'next/navigation';
 
 const montserrat = Montserrat({ 
   subsets: ["latin"], 
@@ -12,35 +15,36 @@ const montserrat = Montserrat({
   variable: '--font-montserrat' 
 });
 
-import { headers } from 'next/headers';
-
-export const metadata: Metadata = {
-  title: "Lapidado — Catálogo de Semijoias",
-  description: "Exclusividade e brilho em cada detalhe.",
-};
-
-export const dynamic = 'force-dynamic'
-
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = await createClient()
-  
-  // 💎 NEXUS: Consulta Ultra-Resiliente para Multi-Tenancy
-  const { data: { user } } = await supabase.auth.getUser()
-  let branding = null
+  const [user, setUser] = useState<unknown>(null);
+  const [branding, setBranding] = useState<unknown>(null);
+  const supabase = createClient();
+  const pathname = usePathname();
 
-  if (user) {
-    const { data: userBranding } = await supabase.from('branding').select('*').eq('user_id', user.id).limit(1).maybeSingle()
-    branding = userBranding
-  }
-  
-  if (!branding) {
-    const { data: anyBranding } = await supabase.from('branding').select('*').limit(1).maybeSingle()
-    branding = anyBranding
-  }
+  useEffect(() => {
+    async function loadIdentity() {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      setUser(currentUser);
+
+      let currentBranding = null;
+      if (currentUser) {
+        const { data } = await supabase.from('branding').select('*').eq('user_id', currentUser.id).limit(1).maybeSingle();
+        currentBranding = data;
+      }
+      
+      if (!currentBranding) {
+        const { data } = await supabase.from('branding').select('*').limit(1).maybeSingle();
+        currentBranding = data;
+      }
+
+      setBranding(currentBranding);
+    }
+    loadIdentity();
+  }, [supabase]);
 
   // 💎 NEXUS: Validação de cores
   const isValidHex = (color: string | null | undefined): boolean => {
@@ -49,27 +53,20 @@ export default async function RootLayout({
     return hexRegex.test(color);
   };
 
-  const primary = (branding?.primary_color && isValidHex(branding.primary_color)) ? branding.primary_color : '#4a322e';
-  const secondary = (branding?.secondary_color && isValidHex(branding.secondary_color)) ? branding.secondary_color : '#c99090';
-  const businessName = branding?.store_name || 'LAPIDADO' 
-
-  const headerList = await headers();
-  const pathname = headerList.get('x-pathname') || "";
-
-  // 💎 NEXUS: Regras de Visibilidade do Rodapé
+  const brand = branding as { primary_color?: string; secondary_color?: string } | null;
+  const primary = (brand?.primary_color && isValidHex(brand.primary_color)) ? brand.primary_color : '#4a322e';
+  const secondary = (brand?.secondary_color && isValidHex(brand.secondary_color)) ? brand.secondary_color : '#c99090';
+  
   const isAuthPage = pathname.includes('/login') || pathname.includes('/register');
   const isAdminPage = pathname.includes('/admin');
   const showFooter = !isAuthPage && !isAdminPage;
 
   return (
     <html lang="pt-BR" className="scroll-smooth">
-      <head>
-        <title>{`${businessName} — Catálogo de Semijoias`}</title>
-      </head>
       <body 
         className={`${montserrat.variable} font-montserrat bg-[#fffcfc] text-[#4a322e] min-h-screen flex flex-col antialiased`}
         style={{ 
-          // @ts-ignore
+          // @ts-expect-error - Custom properties are not yet in CSSProperties
           '--brand-primary': primary, 
           '--brand-secondary': secondary,
           '--background': '#fffcfc'

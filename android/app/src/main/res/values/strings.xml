@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">LAPIDADO</string>
+    <string name="title_activity_main">LAPIDADO</string>
+    <string name="package_name">br.com.lapidado.app</string>
+    <string name="custom_url_scheme">br.com.lapidado.app</string>
+</resources>

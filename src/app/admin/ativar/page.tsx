@@ -15,17 +15,23 @@ export default function AtivarPage() {
     setStatus('idle')
     
     try {
-      // 1. Cadastrar as categorias luxuosas
+      // 0. Pegar o usuário logado
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Você precisa estar logado para ativar as categorias.')
+
+      // 1. Cadastrar as categorias luxuosas com o user_id
       const categories = [
-        { name: 'Anel', slug: 'anel' },
-        { name: 'Brinco', slug: 'brinco' },
-        { name: 'Corrente', slug: 'corrente' },
-        { name: 'Conjunto', slug: 'conjunto' },
-        { name: 'Pulseira', slug: 'pulseira' },
-        { name: 'Tornozeleira', slug: 'tornozeleira' }
+        { name: 'BRINCOS', slug: 'brincos', user_id: user.id },
+        { name: 'COLARES', slug: 'colares', user_id: user.id },
+        { name: 'ANÉIS', slug: 'aneis', user_id: user.id },
+        { name: 'PULSEIRAS', slug: 'pulseiras', user_id: user.id },
+        { name: 'TORNOZELEIRAS', slug: 'tornozeleiras', user_id: user.id },
+        { name: 'CONJUNTOS', slug: 'conjuntos', user_id: user.id },
+        { name: 'RELOGIOS', slug: 'relogios', user_id: user.id },
+        { name: 'PROMOÇÃO', slug: 'promocao', user_id: user.id }
       ]
 
-      console.log('💎 Lapidando categorias...')
+      console.log('💎 Lapidando categorias para o usuário:', user.id)
       const { error: catError } = await supabase.from('categories').upsert(categories, { onConflict: 'name' })
       
       if (catError) throw catError

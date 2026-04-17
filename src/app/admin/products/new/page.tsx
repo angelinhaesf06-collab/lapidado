@@ -1,13 +1,12 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Gem, Loader2, Check, Calculator, PackageOpen, X, Plus, AlertCircle, CheckCircle2, Pencil } from 'lucide-react'
+import { Gem, Loader2, Check, X, Plus, AlertCircle, CheckCircle2, Pencil } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 
 export default function NewProductPage() {
-  const [uploadProgress, setUploadProgress] = useState(0)
   const [isSaving, setIsSaving] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
@@ -38,7 +37,7 @@ export default function NewProductPage() {
 
   const checkConnection = useCallback(async () => {
     try {
-      const { data, error } = await supabase.from('categories').select('id').limit(1)
+      const { error } = await supabase.from('categories').select('id').limit(1)
       if (error) throw error
       setDbStatus('ok')
     } catch (err) {
