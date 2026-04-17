@@ -3,8 +3,10 @@ import Link from 'next/link'
 import Image from 'next/image'
 import AddToCartButton from '@/components/cart/add-to-cart-button'
 import { redirect } from 'next/navigation'
+import { Suspense } from 'react'
+import ShowcaseSkeleton from '@/components/showcase-skeleton'
 
-export const revalidate = 3600 // Cache de 1 hora para velocidade máxima
+export const revalidate = 60 // Cache mais rápido para refletir mudanças na hora
 
 export default async function Home({
   searchParams,
@@ -23,28 +25,24 @@ export default async function Home({
   const activeCategory = params.category || 'Todos';
   const supabase = await createClient()
 
-  // 💎 NEXUS: Identificação de Loja por Slug ou Fallback
+  // 💎 NEXUS: Identificação de Loja por Slug (ISOLAMENTO TOTAL)
   let branding = null
   
   if (storeSlug) {
-    // 1. Busca específica por slug (Loja identificada na URL)
     const { data: storeBranding } = await supabase.from('branding').select('*').eq('slug', storeSlug).single()
     branding = storeBranding
   }
 
+  // Se não houver loja especificada, tentamos carregar a loja padrão (YES MORE GOLD)
   if (!branding) {
-    // 2. Se não houver slug, busca o usuário logado (Admin em preview)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      const { data: userBranding } = await supabase.from('branding').select('*').eq('user_id', user.id).limit(1)
-      branding = userBranding?.[0]
-    }
+    const { data: defaultBranding } = await supabase.from('branding').select('*').eq('store_name', 'YES MORE GOLD').limit(1).maybeSingle()
+    branding = defaultBranding
   }
   
+  // Se ainda assim não houver nada, pega a primeira disponível (último recurso)
   if (!branding) {
-    // 3. Fallback: Qualquer loja (Para evitar tela branca)
-    const { data: anyBranding } = await supabase.from('branding').select('*').limit(1)
-    branding = anyBranding?.[0]
+    const { data: anyBranding } = await supabase.from('branding').select('*').limit(1).maybeSingle()
+    branding = anyBranding
   }
 
   const currentUserId = branding?.user_id
@@ -93,6 +91,7 @@ export default async function Home({
               <Link 
                 key={cat}
                 href={`/?catalogo=true&category=${cat === 'Todos' ? '' : cat}${storeParam}`}
+                prefetch={true}
                 className={`px-3 py-1.5 transition-all font-bold text-[9px] md:text-[10px] tracking-[0.1em] md:tracking-[0.2em] uppercase rounded-full border ${
                   activeCategory === cat
                   ? "bg-brand-primary text-white border-brand-primary shadow-md" 
