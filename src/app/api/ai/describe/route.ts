@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
-// 💎 NEXUS: MOTOR DE IA LAPIDADO (Versão Oficial Estável para Chaves AQ.)
+// 🚀 ACELERAÇÃO MÁXIMA: Usando Edge Runtime para resposta instantânea
+export const runtime = 'edge';
+
+// 💎 NEXUS: MOTOR DE IA LAPIDADO (Versão Otimizada para Performance)
 export async function POST(req: Request) {
   try {
     const { image } = await req.json();
