@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+// 💎 NEXUS: MOTOR DE IA LAPIDADO (v2.5 - Edição Diamante)
 export async function POST(req: Request) {
   try {
     const { image } = await req.json();
@@ -12,14 +13,15 @@ export async function POST(req: Request) {
     const base64Data = image.split(",")[1] || image;
     
     // 💎 NEXUS: DETECÇÃO POLIGLOTA (VERTEX AI vs AI STUDIO)
+    // As chaves AQ. exigem o endpoint v1beta para funcionar com a sua conta
     const isVertex = apiKey.startsWith('AQ.');
-    const baseUrl = isVertex 
-      ? "https://aiplatform.googleapis.com/v1" // Google Cloud (Vertex Express Mode)
-      : "https://generativelanguage.googleapis.com/v1beta"; // AI Studio (Standard)
+    const baseUrl = "https://generativelanguage.googleapis.com/v1beta";
 
-    const url = `${baseUrl}/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // 🚀 MODELO DE ALTA PERFORMANCE (Descobrirmos que 2.5 é o seu modelo liberado)
+    const modelName = "gemini-2.5-flash";
+    const url = `${baseUrl}/models/${modelName}:generateContent?key=${apiKey}`;
 
-    console.log(`[IA_DEBUG] Usando endpoint: ${isVertex ? 'VERTEX AI (GCP)' : 'AI STUDIO'}`);
+    console.log(`[IA_DEBUG] Usando ${modelName} (${isVertex ? 'VERTEX KEY' : 'AI STUDIO KEY'})`);
 
     const response = await fetch(url, {
       method: 'POST',
@@ -27,7 +29,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         contents: [{
           parts: [
-            { text: "Você é um copywriter de joias de luxo. Analise a imagem e retorne APENAS um JSON: {\"name\": \"NOME EM MAIÚSCULAS\", \"category\": \"Categoria\", \"description\": \"Descrição luxuosa curta\", \"material\": \"Ouro 18k, Prata ou Ródio\"}" },
+            { text: "Você é um Copywriter Especialista em Vendas de Semijoias para o 'Catálogo Lapidado'. Analise a imagem e retorne um objeto JSON com: 1. 'name': Nome comercial forte (EM MAIÚSCULAS). 2. 'category': Categoria (Anéis, Colares, Brincos ou Pulseiras). 3. 'description': Descrição FOCO EM VENDA, destacando brilho e qualidade. 4. 'material': Banho real identificado (Ouro 18k, Prata 925 ou Ródio). Retorne APENAS o JSON puro." },
             { inline_data: { mime_type: "image/jpeg", data: base64Data } }
           ]
         }]
@@ -37,16 +39,11 @@ export async function POST(req: Request) {
     const data = await response.json();
 
     if (!response.ok) {
-      const errorStatus = response.status;
-      const errorCode = (errorStatus === 401 || errorStatus === 403) ? 'CHAVE_SEM_PERMISSAO' : 
-                        (errorStatus === 404) ? 'URL_ESTRUTURAL_ERRADA' : 'ERRO_DESCONHECIDO';
-
-      console.error(`[AI_ERROR] [${errorCode}] Status: ${errorStatus}`, data);
+      console.error(`[AI_ERROR] Status: ${response.status}`, data);
       
       return NextResponse.json({ 
         error: "O GOOGLE RECUSOU SUA CHAVE.", 
-        diagnostic: errorCode,
-        details: data.error?.message || "Verifique se a API Gemini está ativada no projeto correspondente."
+        details: data.error?.message || "Erro desconhecido na IA."
       }, { status: response.status });
     }
 
@@ -56,6 +53,7 @@ export async function POST(req: Request) {
     return NextResponse.json(JSON.parse(jsonMatch ? jsonMatch[0] : text));
 
   } catch (error: any) {
+    console.error("ERRO OPERACIONAL IA:", error.message);
     return NextResponse.json({ error: "FALHA NO MOTOR DE IA.", details: error.message }, { status: 500 });
   }
 }
