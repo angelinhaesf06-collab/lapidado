@@ -12,6 +12,8 @@ const montserrat = Montserrat({
   variable: '--font-montserrat' 
 });
 
+import { headers } from 'next/headers';
+
 export const metadata: Metadata = {
   title: "Lapidado — Catálogo de Semijoias",
   description: "Exclusividade e brilho em cada detalhe.",
@@ -51,6 +53,14 @@ export default async function RootLayout({
   const secondary = (branding?.secondary_color && isValidHex(branding.secondary_color)) ? branding.secondary_color : '#c99090';
   const businessName = branding?.store_name || 'LAPIDADO' 
 
+  const headerList = await headers();
+  const pathname = headerList.get('x-pathname') || "";
+
+  // 💎 NEXUS: Regras de Visibilidade do Rodapé
+  const isAuthPage = pathname.includes('/login') || pathname.includes('/register');
+  const isAdminPage = pathname.includes('/admin');
+  const showFooter = !isAuthPage && !isAdminPage;
+
   return (
     <html lang="pt-BR" className="scroll-smooth">
       <head>
@@ -71,7 +81,7 @@ export default async function RootLayout({
             {children}
           </main>
         </CartProvider>
-        <Footer />
+        {showFooter && <Footer />}
       </body>
     </html>
   );
