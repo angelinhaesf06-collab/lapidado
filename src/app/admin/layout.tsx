@@ -52,6 +52,11 @@ export default function AdminLayout({
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
   }
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    window.location.href = '/login'
+  }
+
   return (
     <div className="flex min-h-screen bg-[#fffcfc]">
       
@@ -123,9 +128,12 @@ export default function AdminLayout({
 
         {/* RODAPÉ DA SIDEBAR */}
         <div className="pt-8 border-t border-brand-secondary/10">
-           <Link href="/login" className="flex items-center gap-4 px-6 py-4 rounded-[24px] text-[10px] font-black uppercase tracking-[0.2em] text-brand-secondary/40 hover:text-rose-500 transition-all">
+           <button 
+             onClick={handleSignOut}
+             className="w-full flex items-center gap-4 px-6 py-4 rounded-[24px] text-[10px] font-black uppercase tracking-[0.2em] text-brand-secondary/40 hover:text-rose-500 transition-all"
+           >
               <LogOut size={20} /> Sair do Painel
-           </Link>
+           </button>
         </div>
       </aside>
 
@@ -168,6 +176,15 @@ export default function AdminLayout({
                  </Link>
                )
              })}
+             
+             {/* BOTÃO SAIR MOBILE */}
+             <button 
+               onClick={handleSignOut}
+               className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl text-[7px] font-black uppercase tracking-tighter transition-all border bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-100"
+             >
+               <LogOut size={14} />
+               <span className="text-center leading-none">Sair</span>
+             </button>
            </nav>
         </div>
 
