@@ -39,10 +39,16 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         contents: [{
           parts: [
-            { text: "Você é um Copywriter Especialista em Vendas de Semijoias para o 'Catálogo Lapidado'. Analise a imagem e retorne um objeto JSON com: 1. 'name': Nome comercial curto e direto (MÁX. 30 caracteres, EM MAIÚSCULAS). 2. 'category': Categoria (Anéis, Colares, Brincos ou Pulseiras). 3. 'description': Descrição CURTA e IMPACTANTE (MÁX. 120 caracteres), foco no brilho e elegância. 4. 'material': Banho real identificado (Ouro 18k, Prata 925 ou Ródio). Retorne APENAS o JSON puro, sem markdown ou explicações." },
+            { text: "Você é um Copywriter Especialista em Vendas de Semijoias para o 'Catálogo Lapidado'. Analise a imagem e retorne um objeto JSON com: 1. 'name': Nome comercial curto (MÁX. 30 caracteres, EM MAIÚSCULAS). 2. 'category': Categoria (Anéis, Colares, Brincos ou Pulseiras). 3. 'description': Copy IMPACTANTE em MÁXIMO 3 FRASES CURTAS (MÁX. 120 caracteres total). 4. 'material': Banho identificado (Ouro 18k, Prata 925 ou Ródio). Retorne APENAS o JSON puro, sem markdown." },
             { inline_data: { mime_type: "image/jpeg", data: base64Data } }
           ]
-        }]
+        }],
+        generationConfig: {
+          maxOutputTokens: 150, // 💎 NEXUS: Limite rígido de saída para economia
+          temperature: 0.4,
+          topP: 1,
+          topK: 32
+        }
       })
     });
 

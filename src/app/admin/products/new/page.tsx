@@ -91,7 +91,7 @@ export default function NewProductPage() {
       img.src = base64Str
       img.onload = () => {
         const canvas = document.createElement('canvas')
-        const MAX_WIDTH = 800
+        const MAX_WIDTH = 600 // 💎 NEXUS: Reduzido para economia de tokens
         let width = img.width
         let height = img.height
         if (width > MAX_WIDTH) {
@@ -102,7 +102,7 @@ export default function NewProductPage() {
         canvas.height = height
         const ctx = canvas.getContext('2d')
         ctx?.drawImage(img, 0, 0, width, height)
-        resolve(canvas.toDataURL('image/jpeg', 0.6))
+        resolve(canvas.toDataURL('image/jpeg', 0.5)) // 💎 NEXUS: Qualidade 0.5 para leveza máxima
       }
     })
   }
@@ -123,7 +123,11 @@ export default function NewProductPage() {
       if (!contentType || !contentType.includes('application/json')) {
         const text = await response.text()
         console.error('AI SERVER ERROR (HTML):', text)
-        throw new Error(`O motor de IA retornou um erro inesperado (HTML). Verifique se a variável NEXT_PUBLIC_GEMINI_API_KEY está configurada na Vercel.`)
+        throw new Error(`O motor de IA retornou um erro inesperado. Verifique a configuração da Vercel.`)
+      }
+
+      if (response.status === 429) {
+        throw new Error("Nossa IA está lapidando muitos textos agora. ✨ Aguarde alguns segundos e tente novamente.")
       }
 
       const data = await response.json()
