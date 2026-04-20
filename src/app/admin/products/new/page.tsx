@@ -177,6 +177,14 @@ export default function NewProductPage() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer LAPIDADO_ADMIN_2026` },
         body: JSON.stringify({ table: 'products', data: productData })
       })
+
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text()
+        console.error('SERVER ERROR (HTML):', text)
+        throw new Error(`O servidor retornou um erro inesperado (HTML). Verifique se as variáveis do Supabase estão configuradas na Vercel.`)
+      }
+
       const result = await response.json()
       if (!result.success) throw new Error(result.error)
       
