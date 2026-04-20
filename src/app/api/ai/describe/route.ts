@@ -7,11 +7,20 @@ export const runtime = 'edge';
 export async function POST(req: Request) {
   try {
     const { image } = await req.json();
-    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    
+    // 💎 NEXUS: BUSCA EXAUSTIVA POR CREDENCIAIS (Resiliência Vercel)
+    const apiKey = 
+      process.env.NEXT_PUBLIC_GEMINI_API_KEY || 
+      process.env.GEMINI_API_KEY || 
+      process.env.gemini_api_key ||
+      process.env.NEXT_PUBLIC_GEMINI_KEY;
 
-    if (!apiKey || apiKey.includes('MISSING')) {
-      console.error("❌ ERRO: Chave GEMINI_API_KEY não encontrada no ambiente.");
-      return NextResponse.json({ error: "CONFIGURAÇÃO: Chave de IA não encontrada." }, { status: 401 });
+    if (!apiKey || apiKey.length < 10) {
+      console.error("❌ ERRO CRÍTICO: Nenhuma variação de GEMINI_API_KEY encontrada no ambiente Vercel.");
+      return NextResponse.json({ 
+        error: "CONFIGURAÇÃO: Chave de IA não encontrada no servidor.",
+        details: "Certifique-se de que a variável NEXT_PUBLIC_GEMINI_API_KEY está configurada para ALL ENVIRONMENTS na Vercel e faça um REDEPLOY."
+      }, { status: 401 });
     }
 
     const base64Data = image.split(",")[1] || image;
