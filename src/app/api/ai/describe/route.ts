@@ -25,8 +25,8 @@ export async function POST(req: Request) {
 
     const base64Data = image.split(",")[1] || image;
     
-    // 💎 NEXUS: Usando o modelo 1.5-flash para maior estabilidade
-    const modelName = "gemini-1.5-flash";
+    // 💎 NEXUS: Usando o modelo flash-latest para garantir a versão mais estável e rápida disponível
+    const modelName = "gemini-flash-latest";
     const baseUrl = "https://generativelanguage.googleapis.com/v1beta";
 
     console.log(`💎 NEXUS: Acionando motor ${modelName}...`);
@@ -54,17 +54,27 @@ export async function POST(req: Request) {
 
     if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
       console.log(`✅ SUCESSO: Motor ${modelName} respondeu.`);
-      const text = data.candidates[0].content.parts[0].text;
+      let text = data.candidates[0].content.parts[0].text;
+      
+      // Limpeza de Markdown (caso a IA retorne ```json ... ```)
+      text = text.replace(/```json/g, "").replace(/```/g, "").trim();
+      
       const jsonMatch = text.match(/\{[\s\S]*\}/);
-      return NextResponse.json(JSON.parse(jsonMatch ? jsonMatch[0] : text));
+      const finalJson = JSON.parse(jsonMatch ? jsonMatch[0] : text);
+      return NextResponse.json(finalJson);
     }
 
-    const errorMessage = data.error?.message || "Erro desconhecido na API do Google";
-    console.error(`❌ FALHA NO MOTOR ${modelName}:`, errorMessage);
+    // Erro detalhado da API do Google
+    const errorBody = data.error || {};
+    const errorMessage = errorBody.message || "Erro desconhecido na API do Google";
+    const errorCode = errorBody.code || response.status;
+    
+    console.error(`❌ FALHA NO MOTOR ${modelName}: [${errorCode}] ${errorMessage}`);
     
     return NextResponse.json({ 
-      error: "MOTOR DE IA REJEITOU A REQUISIÇÃO.", 
-      details: errorMessage 
+      error: "O MOTOR DE IA REJEITOU A FOTO.", 
+      details: errorMessage,
+      code: errorCode
     }, { status: 400 });
 
   } catch (error: unknown) {

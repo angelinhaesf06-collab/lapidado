@@ -141,7 +141,14 @@ function ProductContent() {
           </div>
 
           <div className="w-fit">
-            <AddToCartButton product={{ ...prod, description: prod.description ?? undefined }} />
+            <AddToCartButton product={{ 
+              id: prod.id,
+              name: prod.name,
+              price: prod.price,
+              image_url: prod.image_url,
+              description: prod.description ?? undefined,
+              material_finish: materialFinish
+            }} />
           </div>
           
           {brand?.tiktok && (
