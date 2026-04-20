@@ -25,11 +25,11 @@ export async function POST(req: Request) {
 
     const base64Data = image.split(",")[1] || image;
     
-    // O modelo gemini-flash-latest é o único com cota liberada para chaves AQ.
-    const modelName = "gemini-flash-latest";
+    // 💎 NEXUS: Usando o modelo 1.5-flash para maior estabilidade
+    const modelName = "gemini-1.5-flash";
     const baseUrl = "https://generativelanguage.googleapis.com/v1beta";
 
-    console.log(`💎 NEXUS: Processando com ${modelName}...`);
+    console.log(`💎 NEXUS: Acionando motor ${modelName}...`);
     
     const url = `${baseUrl}/models/${modelName}:generateContent?key=${apiKey}`;
     
@@ -44,10 +44,8 @@ export async function POST(req: Request) {
           ]
         }],
         generationConfig: {
-          maxOutputTokens: 150, // 💎 NEXUS: Limite rígido de saída para economia
-          temperature: 0.4,
-          topP: 1,
-          topK: 32
+          maxOutputTokens: 150,
+          temperature: 0.4
         }
       })
     });
@@ -55,14 +53,19 @@ export async function POST(req: Request) {
     const data = await response.json();
 
     if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
-      console.log(`✅ SUCESSO: A IA descreveu a joia com perfeição!`);
+      console.log(`✅ SUCESSO: Motor ${modelName} respondeu.`);
       const text = data.candidates[0].content.parts[0].text;
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       return NextResponse.json(JSON.parse(jsonMatch ? jsonMatch[0] : text));
     }
 
-    console.error(`❌ ERRO NO MOTOR DE IA:`, data.error?.message || "Erro desconhecido");
-    throw new Error(data.error?.message || "O Google recusou o processamento da imagem.");
+    const errorMessage = data.error?.message || "Erro desconhecido na API do Google";
+    console.error(`❌ FALHA NO MOTOR ${modelName}:`, errorMessage);
+    
+    return NextResponse.json({ 
+      error: "MOTOR DE IA REJEITOU A REQUISIÇÃO.", 
+      details: errorMessage 
+    }, { status: 400 });
 
   } catch (error: unknown) {
     const err = error as Error;
