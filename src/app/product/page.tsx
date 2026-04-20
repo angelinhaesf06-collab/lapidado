@@ -61,6 +61,7 @@ function ProductContent() {
   }
 
   const prod = product as { 
+    id: string;
     name: string; 
     price: number; 
     description: string | null; 
