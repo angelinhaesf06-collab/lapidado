@@ -260,7 +260,7 @@ export default function NewProductPage() {
           {/* MÁGICA - AGORA NA COR PRIMÁRIA + DIAMANTE */}
           <div className="space-y-2">
             <button type="button" disabled={images.length === 0 || aiLoading} onClick={generateAIDescription} className="w-full py-4 rounded-xl bg-brand-primary text-white text-[8px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-sm disabled:opacity-50">
-              {aiLoading ? <Loader2 className="animate-spin" size={16} /> : <><Gem size={16} /> <span>Mágica Lapidado</span></>}
+              {aiLoading ? <><Loader2 className="animate-spin" size={16} /> <span>LAPIDANDO... ✨</span></> : <><Gem size={16} /> <span>Mágica Lapidado</span></>}
             </button>
             {aiError && (
               <div className="bg-rose-50 text-rose-500 text-[8px] font-black uppercase p-3 rounded-xl border border-rose-100 text-center animate-pulse">
