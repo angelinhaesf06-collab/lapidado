@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-// 🚀 ACELERAÇÃO MÁXIMA: Usando Edge Runtime para resposta instantânea
-export const runtime = 'edge';
+// 🚀 MOTOR ESTABILIZADO: Usando Node.js Runtime para garantir injeção de chaves
+export const runtime = 'nodejs';
 
 // 💎 NEXUS: MOTOR DE IA LAPIDADO (Versão Otimizada para Performance)
 export async function POST(req: Request) {
