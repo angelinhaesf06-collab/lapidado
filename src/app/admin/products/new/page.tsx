@@ -131,7 +131,9 @@ export default function NewProductPage() {
       }
 
       const data = await response.json()
-      if (data.error) throw new Error(data.error)
+      if (data.error) {
+        throw new Error(`${data.error}${data.details ? `: ${data.details}` : ''}`)
+      }
       if (data.name) setName(data.name.toUpperCase())
       setDescription(data.description ? data.description.toUpperCase() : '')
       if (data.category) {

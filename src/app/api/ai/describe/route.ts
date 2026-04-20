@@ -40,13 +40,19 @@ export async function POST(req: Request) {
         contents: [{
           parts: [
             { text: "Você é um Copywriter Especialista em Vendas de Semijoias para o 'Catálogo Lapidado'. Analise a imagem e retorne um objeto JSON com: 1. 'name': Nome comercial curto (MÁX. 30 caracteres, EM MAIÚSCULAS). 2. 'category': Categoria (Anéis, Colares, Brincos ou Pulseiras). 3. 'description': Copy IMPACTANTE em MÁXIMO 3 FRASES CURTAS (MÁX. 120 caracteres total). 4. 'material': Banho identificado (Ouro 18k, Prata 925 ou Ródio). Retorne APENAS o JSON puro, sem markdown." },
-            { inline_data: { mime_type: "image/jpeg", data: base64Data } }
+            { inlineData: { mimeType: "image/jpeg", data: base64Data } }
           ]
         }],
         generationConfig: {
           maxOutputTokens: 150,
           temperature: 0.4
-        }
+        },
+        safetySettings: [
+          { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+        ]
       })
     });
 
