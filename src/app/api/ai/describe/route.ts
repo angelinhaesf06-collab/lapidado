@@ -7,7 +7,7 @@ export const runtime = 'edge';
 export async function POST(req: Request) {
   try {
     const { image } = await req.json();
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 
     if (!apiKey || apiKey.includes('MISSING')) {
       return NextResponse.json({ error: "CONFIGURAÇÃO: Chave de IA não encontrada." }, { status: 401 });
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         contents: [{
           parts: [
-            { text: "Você é um Copywriter Especialista em Vendas de Semijoias para o 'Catálogo Lapidado'. Analise a imagem e retorne um objeto JSON com: 1. 'name': Nome comercial forte (EM MAIÚSCULAS). 2. 'category': Categoria (Anéis, Colares, Brincos ou Pulseiras). 3. 'description': Descrição FOCO EM VENDA, destacando brilho e qualidade. 4. 'material': Banho real identificado (Ouro 18k, Prata 925 ou Ródio). Retorne APENAS o JSON puro, sem markdown." },
+            { text: "Você é um Copywriter Especialista em Vendas de Semijoias para o 'Catálogo Lapidado'. Analise a imagem e retorne um objeto JSON com: 1. 'name': Nome comercial curto e direto (MÁX. 30 caracteres, EM MAIÚSCULAS). 2. 'category': Categoria (Anéis, Colares, Brincos ou Pulseiras). 3. 'description': Descrição CURTA e IMPACTANTE (MÁX. 120 caracteres), foco no brilho e elegância. 4. 'material': Banho real identificado (Ouro 18k, Prata 925 ou Ródio). Retorne APENAS o JSON puro, sem markdown ou explicações." },
             { inline_data: { mime_type: "image/jpeg", data: base64Data } }
           ]
         }]
