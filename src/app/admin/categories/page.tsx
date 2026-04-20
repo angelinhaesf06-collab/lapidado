@@ -59,6 +59,14 @@ export default function CategoriesPage() {
           } 
         })
       })
+
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        const errorText = await response.text()
+        console.error('Erro detalhado:', errorText)
+        throw new Error('O servidor retornou um erro inesperado (HTML). Verifique as variáveis de ambiente no painel da Vercel.')
+      }
+
       const result = await response.json()
       if (!result.success) throw new Error(result.error)
       setNewCategory('')
@@ -78,6 +86,14 @@ export default function CategoriesPage() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer LAPIDADO_ADMIN_2026` },
         body: JSON.stringify({ table: 'categories', id, data: { name: editingName.toUpperCase() } })
       })
+
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        const errorText = await response.text()
+        console.error('Erro detalhado:', errorText)
+        throw new Error('O servidor retornou um erro inesperado (HTML). Verifique as variáveis de ambiente no painel da Vercel.')
+      }
+
       const result = await response.json()
       if (!result.success) throw new Error(result.error)
       setEditingId(null)

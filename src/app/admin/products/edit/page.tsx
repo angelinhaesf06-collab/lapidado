@@ -141,6 +141,14 @@ function EditProductContent() {
         },
         body: JSON.stringify({ table: 'products', data: productData, id })
       })
+
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        const errorText = await response.text()
+        console.error('Erro detalhado:', errorText)
+        throw new Error('O servidor retornou um erro inesperado (HTML). Verifique as variáveis de ambiente no painel da Vercel.')
+      }
+
       const result = await response.json()
       if (!result.success) throw new Error(result.error)
       
