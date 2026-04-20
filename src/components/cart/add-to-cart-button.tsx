@@ -4,7 +4,14 @@ import { Gem, Check } from 'lucide-react'
 import { useState } from 'react'
 import { useCart } from '@/lib/cart-context'
 
-export default function AddToCartButton({ product }: { product: any }) {
+interface Product {
+  id: string | number;
+  name: string;
+  price: number;
+  [key: string]: unknown;
+}
+
+export default function AddToCartButton({ product }: { product: Product }) {
   const [added, setAdded] = useState(false)
   const { addToCart } = useCart()
 
