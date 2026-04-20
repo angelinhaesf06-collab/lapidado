@@ -7,9 +7,10 @@ export const runtime = 'edge';
 export async function POST(req: Request) {
   try {
     const { image } = await req.json();
-    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
 
     if (!apiKey || apiKey.includes('MISSING')) {
+      console.error("❌ ERRO: Chave GEMINI_API_KEY não encontrada no ambiente.");
       return NextResponse.json({ error: "CONFIGURAÇÃO: Chave de IA não encontrada." }, { status: 401 });
     }
 
