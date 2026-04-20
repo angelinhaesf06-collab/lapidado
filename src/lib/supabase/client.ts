@@ -1,16 +1,14 @@
 import { createBrowserClient } from '@supabase/ssr'
 
 export function createClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://vazio.supabase.co'
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'vazio'
 
-  if (!url || !key) {
-    console.error('❌ ERRO CRÍTICO: SUPABASE KEYS FALTANDO NO NAVEGADOR! Verifique as variáveis de ambiente na Vercel.')
-    // Em produção, queremos que o erro seja visível para diagnóstico
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    if (typeof window !== 'undefined') {
+      console.warn('💎 NEXUS: Chaves do Supabase não encontradas no navegador.')
+    }
   }
 
-  return createBrowserClient(
-    url || 'https://MISSING-URL.supabase.co',
-    key || 'MISSING-KEY'
-  )
+  return createBrowserClient(url, key)
 }

@@ -233,7 +233,10 @@ export default function NewProductPage() {
 
       <div className="flex justify-center mb-8">
         {dbStatus === 'ok' && <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-50 text-[8px] font-black uppercase text-green-600 tracking-widest shadow-sm border border-green-100"><CheckCircle2 size={10} /> Sistema Online</div>}
-        {dbStatus === 'error' && <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-rose-500 text-[8px] font-black uppercase text-white tracking-widest shadow-lg animate-bounce"><AlertCircle size={10} /> Erro de Conexão</div>}
+        {dbStatus === 'error' && <div className="flex flex-col items-center gap-2">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-rose-500 text-[8px] font-black uppercase text-white tracking-widest shadow-lg animate-bounce"><AlertCircle size={10} /> Erro de Conexão</div>
+          <p className="text-[6px] text-rose-400 uppercase font-bold mt-1 tracking-widest">Confirme as chaves do Supabase na Vercel 💎</p>
+        </div>}
       </div>
 
       <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-5">
