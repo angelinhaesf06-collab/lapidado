@@ -2,6 +2,8 @@ import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 
+export const runtime = 'nodejs'; // 💎 NEXUS: Garantindo compatibilidade total
+
 export async function POST(req: Request) {
   try {
     const { table, data, id } = await req.json()
