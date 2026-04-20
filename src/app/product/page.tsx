@@ -141,7 +141,7 @@ function ProductContent() {
           </div>
 
           <div className="w-fit">
-            <AddToCartButton product={prod} />
+            <AddToCartButton product={{ ...prod, description: prod.description ?? undefined }} />
           </div>
           
           {brand?.tiktok && (
