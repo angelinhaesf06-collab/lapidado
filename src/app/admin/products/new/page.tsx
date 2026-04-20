@@ -118,6 +118,14 @@ export default function NewProductPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image: compressed })
       })
+      
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text()
+        console.error('AI SERVER ERROR (HTML):', text)
+        throw new Error(`O motor de IA retornou um erro inesperado (HTML). Verifique se a variável NEXT_PUBLIC_GEMINI_API_KEY está configurada na Vercel.`)
+      }
+
       const data = await response.json()
       if (data.error) throw new Error(data.error)
       if (data.name) setName(data.name.toUpperCase())
