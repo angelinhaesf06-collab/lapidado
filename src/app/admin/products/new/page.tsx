@@ -137,8 +137,10 @@ export default function NewProductPage() {
         )
         if (foundCat) setCategory(foundCat.id)
       }
-    } catch {
-      setAiError("IA SOBRECARREGADA. CONTINUE MANUALMENTE. ✨")
+    } catch (err: unknown) {
+      const error = err as Error
+      console.error('DETALHE DO ERRO IA:', error.message)
+      setAiError(error.message.toUpperCase() || "IA SOBRECARREGADA. CONTINUE MANUALMENTE. ✨")
     } finally {
       setAiLoading(false)
     }
