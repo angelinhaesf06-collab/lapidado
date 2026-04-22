@@ -22,8 +22,31 @@ export default function Footer() {
 
   useEffect(() => {
     async function loadBranding() {
-      const { data } = await supabase.from('branding').select('*').limit(1).single()
-      if (data) setBranding(data as unknown as Branding)
+      try {
+        const urlParams = new URLSearchParams(window.location.search)
+        const storeSlug = urlParams.get('loja')
+
+        let brandingData = null
+
+        // 1. Prioriza slug na URL
+        if (storeSlug) {
+          const { data } = await supabase.from('branding').select('*').eq('slug', storeSlug).maybeSingle()
+          brandingData = data
+        }
+
+        // 2. Senão, busca por usuário logado (Admin)
+        if (!brandingData) {
+          const { data: { user } } = await supabase.auth.getUser()
+          if (user) {
+            const { data } = await supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle()
+            brandingData = data
+          }
+        }
+
+        if (brandingData) setBranding(brandingData as unknown as Branding)
+      } catch (e) {
+        console.error('Erro no Footer Branding', e)
+      }
     }
     loadBranding()
   }, [supabase])

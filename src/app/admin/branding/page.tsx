@@ -22,6 +22,7 @@ export default function BrandingPage() {
   const [warrantyTime, setWarrantyTime] = useState('') 
   const [installments, setInstallments] = useState('10')
   const [brandingId, setBrandingId] = useState<string | null>(null)
+  const [slug, setSlug] = useState('')
 
   const supabase = createClient()
 
@@ -33,7 +34,7 @@ export default function BrandingPage() {
 
         // 1. Tenta buscar a marca do usuário logado
         let { data } = await supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle()
-        
+
         // 2. Se não achou, tenta buscar a marca original (que está sem user_id) para migrar
         if (!data) {
           const { data: orphanedData } = await supabase.from('branding').select('*').is('user_id', null).limit(1).maybeSingle()
@@ -42,6 +43,7 @@ export default function BrandingPage() {
 
         if (data) {
           setBrandingId(data.id)
+          setSlug(data.slug || '')
           const rawTagline = data.facebook || ''
           const [text, inst, banner, bName] = rawTagline.split('|')
           setTagline(text || '') 
@@ -107,6 +109,16 @@ export default function BrandingPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Sessão expirada. Faça login novamente.')
 
+      // 💎 Gerar SLUG amigável (ex: "Minha Loja" -> "minha-loja")
+      const slug = businessName
+        .toLowerCase()
+        .trim()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+
       const response = await fetch('/api/admin/save', {
         method: 'POST',
         headers: { 
@@ -119,7 +131,8 @@ export default function BrandingPage() {
           data: {
             user_id: user.id, 
             business_name: businessName,
-            store_name: businessName.toUpperCase(), // 💎 NOVO CAMPO WHITE-LABEL
+            store_name: businessName.toUpperCase(),
+            slug: slug, // 💎 NOVO: Slug para link único
             facebook: `${tagline.toUpperCase()}|${installments}|${topBanner.toUpperCase()}|${businessName}`,
             tiktok: warrantyTime.toUpperCase(), 
             website: tiktok, 
@@ -240,6 +253,26 @@ export default function BrandingPage() {
           </div>
         </div>
       </div>
+
+      {slug && (
+        <div className="mt-8 bg-brand-primary/5 border border-brand-primary/10 rounded-[30px] p-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <h3 className="text-[8px] font-black text-brand-primary uppercase tracking-[0.3em] mb-2">Link do seu Catálogo 💎</h3>
+          <div className="flex flex-col md:flex-row items-center justify-center gap-3">
+            <code className="bg-white px-4 py-2 rounded-xl text-[10px] font-bold text-brand-primary border border-brand-primary/10 break-all">
+              https://www.lapidado.com.br/?catalogo=true&loja={slug}
+            </code>
+            <button 
+              onClick={() => {
+                navigator.clipboard.writeText(`https://www.lapidado.com.br/?catalogo=true&loja=${slug}`)
+                alert('LINK COPIADO! 🚀')
+              }}
+              className="px-4 py-2 bg-brand-primary text-white text-[8px] font-black uppercase rounded-xl hover:scale-105 transition-all shadow-md"
+            >
+              Copiar Link
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="flex justify-center mt-10 w-full px-4">
         <button 

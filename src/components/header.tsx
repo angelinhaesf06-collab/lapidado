@@ -21,22 +21,31 @@ export default function Header() {
   useEffect(() => {
     async function loadBranding() {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
+        const urlParams = new URLSearchParams(window.location.search)
+        const storeSlug = urlParams.get('loja')
+        const isPublic = urlParams.get('catalogo') === 'true'
+
         let brandingData = null
 
-        if (user) {
-          const { data: userBranding } = await supabase.from('branding').select('*').eq('user_id', user.id).limit(1).maybeSingle()
-          brandingData = userBranding
-        }
-        
-        if (!brandingData) {
-          const { data: orphanedBranding } = await supabase.from('branding').select('*').is('user_id', null).limit(1).maybeSingle()
-          brandingData = orphanedBranding
+        // 1. Se houver slug na URL (Vitrine Pública), prioriza ele
+        if (storeSlug) {
+          const { data } = await supabase.from('branding').select('*').eq('slug', storeSlug).maybeSingle()
+          brandingData = data
         }
 
+        // 2. Se não houver slug, mas o usuário estiver logado (Painel Admin), usa o ID dele
         if (!brandingData) {
-          const { data: anyBranding } = await supabase.from('branding').select('*').limit(1).maybeSingle()
-          brandingData = anyBranding
+          const { data: { user } } = await supabase.auth.getUser()
+          if (user) {
+            const { data } = await supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle()
+            brandingData = data
+          }
+        }
+        
+        // 3. Fallback apenas se for a vitrine padrão (sem slug e sem login)
+        if (!brandingData && isPublic && !storeSlug) {
+          const { data } = await supabase.from('branding').select('*').eq('store_name', 'YES MORE GOLD').limit(1).maybeSingle()
+          brandingData = data
         }
 
         if (brandingData) {
