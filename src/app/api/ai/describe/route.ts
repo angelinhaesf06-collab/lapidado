@@ -9,9 +9,9 @@ export const maxDuration = 30;
  */
 export async function POST(req: Request) {
   try {
-    const geminiKey = (process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "").trim();
+    const apiKey = (process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "").trim();
 
-    if (!geminiKey) {
+    if (!apiKey) {
       return NextResponse.json({ error: "ERRO_CONFIG", details: "Chave API ausente." }, { status: 401 });
     }
 
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
     
     // 🔄 URL ESTÁVEL v1 (A prova de falhas)
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
     
     const response = await fetch(url, {
       method: 'POST',
