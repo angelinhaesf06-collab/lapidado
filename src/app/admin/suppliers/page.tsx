@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Plus, Loader2, Phone, ExternalLink, Trash2, Search, Store, Receipt, ShoppingBag, X, Check, Camera, Sparkles, Pencil, Calendar, Coins, Hammer, Layers, Droplet } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import jsPDF from 'jsPDF'
+import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
 interface Supplier {
@@ -49,6 +49,7 @@ export default function SuppliersPage() {
   
   const [isFinishingPurchase, setIsFinishingPurchase] = useState(false)
   const [isReadingPhoto, setIsReadingPhoto] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
   const [searchQuery, setSearchQuery] = useState('')
   const [filterType, setFilterType] = useState<'TODOS' | 'BRUTO' | 'FOLHADO' | 'GALVANICA'>('TODOS')
@@ -78,7 +79,6 @@ export default function SuppliersPage() {
     if (item.bathType === 'OURO') {
       return (item.grams || 0) * (globalGoldPrice || 0) + (item.microns || 0) * (item.laborCost || 0);
     }
-    // Para Prata e Ródio, geralmente é peso x preço do metal ou apenas mão de obra por grama
     return (item.grams || 0) * (item.laborCost || 0);
   }
 
@@ -122,8 +122,20 @@ export default function SuppliersPage() {
       : [['ITEM', 'QNT', 'CUSTO UN.', 'TOTAL']]
 
     const body = items.map(i => supplier.category === 'GALVANICA'
-      ? [i.name.toUpperCase(), i.quantity, i.bathType, i.bathType === 'OURO' ? `${i.microns}mil / ${i.grams}g` : `${i.grams}g`, `R$ ${i.unitCost.toLocaleString('pt-BR')}`, `R$ ${(i.quantity * i.unitCost).toLocaleString('pt-BR')}`]
-      : [i.name.toUpperCase(), i.quantity, `R$ ${i.unitCost.toLocaleString('pt-BR')}`, `R$ ${(i.quantity * i.unitCost).toLocaleString('pt-BR')}`]
+      ? [
+          i.name.toUpperCase(), 
+          i.quantity, 
+          i.bathType || '-', 
+          i.bathType === 'OURO' ? `${i.microns || 0}mil / ${i.grams || 0}g` : `${i.grams || 0}g`, 
+          `R$ ${i.unitCost.toLocaleString('pt-BR')}`, 
+          `R$ ${(i.quantity * i.unitCost).toLocaleString('pt-BR')}`
+        ]
+      : [
+          i.name.toUpperCase(), 
+          i.quantity, 
+          `R$ ${i.unitCost.toLocaleString('pt-BR')}`, 
+          `R$ ${(i.quantity * i.unitCost).toLocaleString('pt-BR')}`
+        ]
     )
 
     autoTable(doc, { startY: 50, head, body, theme: 'striped', headStyles: { fillColor: [74, 50, 46] } })
@@ -251,9 +263,6 @@ export default function SuppliersPage() {
                         <option value="">-- SELECIONE --</option>
                         {products.map(p => <option key={p.id} value={p.id}>{p.name.toUpperCase()}</option>)}
                       </select>
-                      {!item.productId && <input type="text" placeholder="NOME MANUAL..." className="w-full mt-2 px-4 py-2 rounded-xl border border-dashed text-[9px] font-bold uppercase" value={item.name} onChange={(e) => {
-                        setPurchaseItems(prev => { const n = [...prev]; n[index].name = e.target.value; return n; });
-                      }}/>}
                     </div>
                     
                     {selectedSupplier.category === 'GALVANICA' && (
