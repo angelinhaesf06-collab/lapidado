@@ -24,14 +24,13 @@ export async function POST(req: Request) {
     const mimeMatch = image.match(/data:(.*?);base64/);
     const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
     
-    // 🚀 INICIALIZAÇÃO DO SDK
+    // 🚀 INICIALIZAÇÃO DO SDK (Usando Gemini 2.5 Flash conforme cota disponível)
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-flash-latest",
+      model: "gemini-2.5-flash",
       generationConfig: { 
         temperature: 0.1, 
-        maxOutputTokens: 300,
-        responseMimeType: "application/json"
+        maxOutputTokens: 1000
       }
     });
     

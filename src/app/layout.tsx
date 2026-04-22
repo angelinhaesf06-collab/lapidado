@@ -30,34 +30,46 @@ function RootLayoutContent({
 
   useEffect(() => {
     async function loadIdentity() {
-      // 1. Verificar usuário logado
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      setUser(currentUser);
+      try {
+        // 1. Verificar usuário logado
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        setUser(currentUser);
 
-      let currentBranding = null;
+        let currentBranding = null;
 
-      // 2. Prioridade 1: Buscar pela Loja (Slug) na URL - Ótimo para Catálogo Público
-      if (storeSlug) {
-        const { data } = await supabase.from('branding').select('*').eq('slug', storeSlug).limit(1).maybeSingle();
-        currentBranding = data;
+        // 2. Prioridade 1: Buscar pela Loja (Slug) na URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const slugFromUrl = urlParams.get('loja') || storeSlug;
+
+        if (slugFromUrl) {
+          console.log('💎 NEXUS: BUSCANDO POR SLUG:', slugFromUrl);
+          const { data } = await supabase.from('branding').select('*').eq('slug', slugFromUrl).maybeSingle();
+          currentBranding = data;
+        }
+
+        // 3. Prioridade 2: Buscar pelo Usuário Logado
+        if (!currentBranding && currentUser) {
+          console.log('💎 NEXUS: BUSCANDO POR USER_ID:', currentUser.id);
+          const { data } = await supabase.from('branding').select('*').eq('user_id', currentUser.id).maybeSingle();
+          currentBranding = data;
+        }
+        
+        // 4. Fallback: Buscar a primeira configuração existente (Geralmente a principal)
+        if (!currentBranding) {
+          console.log('💎 NEXUS: FALLBACK BRANDING');
+          const { data } = await supabase.from('branding').select('*').limit(1).maybeSingle();
+          currentBranding = data;
+        }
+
+        if (currentBranding) {
+          setBranding(currentBranding);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar branding:', error);
       }
-
-      // 3. Prioridade 2: Buscar pelo Usuário Logado - Ótimo para Painel Admin
-      if (!currentBranding && currentUser) {
-        const { data } = await supabase.from('branding').select('*').eq('user_id', currentUser.id).limit(1).maybeSingle();
-        currentBranding = data;
-      }
-      
-      // 4. Fallback: Buscar a primeira configuração existente
-      if (!currentBranding) {
-        const { data } = await supabase.from('branding').select('*').limit(1).maybeSingle();
-        currentBranding = data;
-      }
-
-      setBranding(currentBranding);
     }
     loadIdentity();
-  }, [supabase, storeSlug]);
+  }, [supabase, storeSlug, pathname]);
 
   // 💎 NEXUS: Validação de cores
   const isValidHex = (color: string | null | undefined): boolean => {

@@ -39,9 +39,10 @@ export async function POST(req: Request) {
     // Para operações via Client SDK, o RLS cuida disso. 
     // Como estamos usando Service Role (Admin), precisamos garantir o isolamento manualmente.
     if (data.user_id && id) {
-       // Se estamos editando, o registro DEVE pertencer ao user_id enviado
+       // Se estamos editando, o registro DEVE pertencer ao user_id enviado OU ser um registro órfão de branding
        const { data: check } = await supabaseAdmin.from(table).select('user_id').eq('id', id).single();
-       if (check && check.user_id !== data.user_id) {
+       
+       if (check && check.user_id && check.user_id !== data.user_id) {
          return NextResponse.json({ error: 'VIOLAÇÃO DE ISOLAMENTO: Registro pertence a outra marca.' }, { status: 403 });
        }
     }
@@ -53,19 +54,39 @@ export async function POST(req: Request) {
 
     let result;
     
-    // LÓGICA INTELIGENTE PARA BRANDING: Sempre opera no único registro existente
+    // 🚀 LÓGICA INTELIGENTE PARA BRANDING: Sempre opera no registro do usuário
     if (table === 'branding') {
-      // Tenta buscar o primeiro registro para obter o ID caso ele não tenha sido enviado
-      const { data: existing } = await supabaseAdmin.from('branding').select('id').limit(1).maybeSingle();
+      const userId = data.user_id;
       
-      console.log('💎 NEXUS: VERIFICANDO REGISTRO EXISTENTE...', existing?.id);
+      // Busca se já existe um branding para este usuário específico
+      const { data: existing } = await supabaseAdmin
+        .from('branding')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      console.log('💎 NEXUS: VERIFICANDO BRANDING PARA USER:', userId, 'EXISTENTE:', existing?.id);
 
-      if (existing?.id || id) {
-        // Se existe um registro ou temos o ID, faz o update
-        result = await supabaseAdmin.from(table).update(data).eq('id', existing?.id || id).select();
+      if (existing?.id) {
+        // UPDATE no registro do usuário
+        result = await supabaseAdmin.from(table).update(data).eq('id', existing.id).select();
       } else {
-        // Se a tabela estiver vazia, faz o primeiro insert
-        result = await supabaseAdmin.from(table).insert([data]).select();
+        // Tenta buscar um registro órfão (sem user_id) para assumir o controle, se houver
+        const { data: orphaned } = await supabaseAdmin
+          .from('branding')
+          .select('id')
+          .is('user_id', null)
+          .limit(1)
+          .maybeSingle();
+
+        if (orphaned?.id) {
+          console.log('💎 NEXUS: ASSUMINDO REGISTRO ÓRFÃO:', orphaned.id);
+          result = await supabaseAdmin.from(table).update(data).eq('id', orphaned.id).select();
+        } else {
+          // Se não há nada, cria um novo
+          console.log('💎 NEXUS: CRIANDO NOVO REGISTRO DE BRANDING');
+          result = await supabaseAdmin.from(table).insert([data]).select();
+        }
       }
     } else if (id) {
       // UPDATE para tabelas com ID específico (Produtos, Categorias)

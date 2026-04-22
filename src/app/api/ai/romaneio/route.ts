@@ -24,16 +24,14 @@ export async function POST(req: Request) {
     const mimeMatch = image.match(/data:(.*?);base64/);
     const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
 
-    // 🚀 INICIALIZAÇÃO DO SDK
+    // 🚀 INICIALIZAÇÃO DO SDK (Usando Gemini 2.5 Flash conforme cota disponível)
     const genAI = new GoogleGenerativeAI(geminiKey);
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-flash-latest",
+      model: "gemini-2.5-flash",
       generationConfig: {
-        temperature: 0.1,
-        responseMimeType: "application/json"
+        temperature: 0.1
       }
     });
-
     const prompt = `
       Você é um assistente especialista em joalheria da marca LAPIDADO. 
       Analise o romaneio/lista de compras fornecida na imagem e extraia os itens.

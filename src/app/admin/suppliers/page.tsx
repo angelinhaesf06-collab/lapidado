@@ -79,18 +79,42 @@ export default function SuppliersPage() {
 
   useEffect(() => { loadData() }, [loadData])
 
-  // 💎 LÓGICA INDUSTRIAL: Cálculos de Galvânica
+  // 💎 LÓGICA INDUSTRIAL: Identêntica à Planilha da Ângela
   const calculateTotals = () => {
-    const subtotal = purchaseItems.reduce((acc, item) => acc + (item.weightKg * item.tablePrice), 0);
-    const totalFinal = subtotal + extraLabor;
-    const totalWeight = purchaseItems.reduce((acc, item) => acc + item.weightKg, 0);
+    const isIndustrial = selectedSupplier?.category === 'GALVANICA' || selectedSupplier?.category === 'BRUTO';
     
-    // Matemática Oculta: Ouro Gasto
+    // 1. Subtotal (Igual à coluna VALOR da planilha)
+    const subtotal = purchaseItems.reduce((acc, item) => {
+      return acc + (item.weightKg * item.tablePrice);
+    }, 0);
+
+    // 2. Transparência do Ouro (Apenas linhas de OURO)
     const goldItems = purchaseItems.filter(i => i.material === 'OURO');
     const goldGrams = goldItems.reduce((acc, i) => acc + (i.weightKg * i.teor), 0);
-    const goldRealCost = goldGrams * goldQuote;
+    const goldRealCost = Math.round(goldGrams * goldQuote * 100) / 100;
 
-    return { subtotal, totalFinal, totalWeight, goldGrams, goldRealCost };
+    // 3. Mão de Obra por Milésimos (Soma de todos os Pesos * Teores * Taxa MO)
+    const totalMO = purchaseItems.reduce((acc, item) => {
+      if (isIndustrial && extraLabor > 0) {
+        return acc + (item.weightKg * item.teor * extraLabor);
+      }
+      return acc;
+    }, 0);
+
+    // 4. Total Final com arredondamento preciso
+    const subtotalRounded = Math.round(subtotal * 100) / 100;
+    const totalMORounded = Math.round(totalMO * 100) / 100;
+    const totalFinal = Math.round((subtotalRounded + (selectedSupplier?.category === 'GALVANICA' ? totalMORounded : extraLabor)) * 100) / 100;
+    const totalWeight = purchaseItems.reduce((acc, item) => acc + item.weightKg, 0);
+
+    return { 
+      subtotal: subtotalRounded, 
+      totalFinal, 
+      totalWeight, 
+      goldGrams: Math.round(goldGrams * 1000) / 1000, 
+      goldRealCost, 
+      totalMO: totalMORounded 
+    };
   }
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,22 +153,24 @@ export default function SuppliersPage() {
     doc.setFontSize(10); doc.setTextColor(74, 50, 46)
     doc.text(`FORNECEDOR: ${supplier.name}`, 20, 42); doc.text(`DATA: ${date}`, 190, 42, { align: 'right' })
 
-    const head = supplier.category === 'GALVANICA' 
+    const head = (supplier.category === 'GALVANICA' || supplier.category === 'BRUTO')
       ? [['DESCRIÇÃO', 'MAT.', 'PESO (KG)', 'TEOR', 'TABELA (KG)', 'TOTAL']]
       : [['ITEM', 'QNT', 'CUSTO UN.', 'TOTAL']]
 
-    const body = items.map(i => supplier.category === 'GALVANICA'
+    const body = items.map(i => (supplier.category === 'GALVANICA' || supplier.category === 'BRUTO')
       ? [i.name.toUpperCase(), i.material, i.weightKg.toFixed(3), `${i.teor} mil`, `R$ ${i.tablePrice.toLocaleString('pt-BR')}`, `R$ ${(i.weightKg * i.tablePrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`]
       : [i.name.toUpperCase(), i.quantity, `R$ ${i.unitCost.toLocaleString('pt-BR')}`, `R$ ${(i.quantity * i.unitCost).toLocaleString('pt-BR')}`]
     )
 
     autoTable(doc, { startY: 48, head, body, theme: 'striped', headStyles: { fillColor: [74, 50, 46] } })
 
-    if (supplier.category === 'GALVANICA') {
+    if (supplier.category === 'GALVANICA' || supplier.category === 'BRUTO') {
       const finalY = (doc as any).lastAutoTable.finalY + 10;
       doc.setFontSize(10);
       doc.text(`PESO TOTAL: ${totals.totalWeight.toFixed(3)} KG`, 20, finalY);
-      doc.text(`TRANSPARÊNCIA OURO GASTO: ${totals.goldGrams.toFixed(2)}g (R$ ${totals.goldRealCost.toLocaleString('pt-BR')})`, 20, finalY + 6);
+      if (supplier.category === 'GALVANICA') {
+        doc.text(`TRANSPARÊNCIA OURO GASTO: ${totals.goldGrams.toFixed(2)}g (R$ ${totals.goldRealCost.toLocaleString('pt-BR')})`, 20, finalY + 6);
+      }
       doc.setFontSize(12);
       doc.text(`TOTAL FINAL: R$ ${totals.totalFinal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 190, finalY + 10, { align: 'right' });
     }
@@ -164,10 +190,11 @@ export default function SuppliersPage() {
       
       if (purchase) {
         for (const item of purchaseItems) {
-          const lineCost = selectedSupplier.category === 'GALVANICA' ? (item.weightKg * item.tablePrice) : item.unitCost;
+          const isIndustrial = selectedSupplier.category === 'GALVANICA' || selectedSupplier.category === 'BRUTO';
+          const lineCost = isIndustrial ? (item.weightKg * item.tablePrice) : item.unitCost;
           await supabase.from('purchase_items').insert({ 
             purchase_id: purchase.id, product_id: item.productId || null, name: item.name.toUpperCase(), quantity: 1, unit_cost: lineCost,
-            notes: selectedSupplier.category === 'GALVANICA' ? `${item.material} | ${item.weightKg}kg | ${item.teor}mil` : ''
+            notes: isIndustrial ? `${item.material} | ${item.weightKg}kg | ${item.teor}mil` : ''
           })
         }
       }
@@ -186,6 +213,18 @@ export default function SuppliersPage() {
       else await supabase.from('suppliers').insert(data)
       closeFormModal(); loadData()
     } catch { alert('ERRO.') } finally { setIsSaving(false) }
+  }
+
+  async function handleDeleteSupplier(id: string) {
+    if (!confirm('DESEJA EXCLUIR ESTE FORNECEDOR? ESTA AÇÃO NÃO PODE SER DESFEITA. 💎')) return
+    try {
+      const { error } = await supabase.from('suppliers').delete().eq('id', id)
+      if (error) throw error
+      setSuppliers(prev => prev.filter(s => s.id !== id))
+      alert('FORNECEDOR EXCLUÍDO! 🗑️')
+    } catch (err: any) {
+      alert('ERRO AO EXCLUIR: ' + err.message)
+    }
   }
 
   const closeFormModal = () => {
@@ -226,6 +265,7 @@ export default function SuppliersPage() {
             <button onClick={() => { setSelectedSupplier(s); setShowPurchaseModal(true) }} className="w-full bg-brand-primary text-white py-3 rounded-2xl flex items-center justify-center gap-2 text-[9px] font-black uppercase shadow-lg mt-auto"><Receipt size={14}/> Registrar Compra</button>
             <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
               <button onClick={() => openEditModal(s)} className="p-2 text-brand-secondary hover:text-brand-primary"><Pencil size={16}/></button>
+              <button onClick={() => handleDeleteSupplier(s.id)} className="p-2 text-rose-300 hover:text-rose-500"><Trash2 size={16}/></button>
             </div>
           </div>
         ))}
@@ -247,11 +287,13 @@ export default function SuppliersPage() {
                 <div className="bg-brand-primary/5 p-4 rounded-3xl flex items-center gap-3">
                   <Calendar className="text-brand-primary" size={20}/><div className="flex-1"><label className="text-[8px] font-black uppercase block">Data</label><input type="date" className="bg-transparent text-xs font-bold w-full" value={purchaseDate} onChange={(e) => setPurchaseDate(e.target.value)}/></div>
                 </div>
-                {selectedSupplier.category === 'GALVANICA' && (
+                {(selectedSupplier.category === 'GALVANICA' || selectedSupplier.category === 'BRUTO') && (
                   <>
-                    <div className="bg-amber-50 p-4 rounded-3xl border border-amber-200 flex items-center gap-3">
-                      <Coins className="text-amber-600" size={20}/><div className="flex-1"><label className="text-[8px] font-black uppercase block">Ouro do Dia (R$)</label><input type="number" className="bg-transparent text-xs font-bold w-full" value={goldQuote} onChange={(e) => setGoldQuote(parseFloat(e.target.value) || 0)}/></div>
-                    </div>
+                    {selectedSupplier.category === 'GALVANICA' && (
+                      <div className="bg-amber-50 p-4 rounded-3xl border border-amber-200 flex items-center gap-3">
+                        <Coins className="text-amber-600" size={20}/><div className="flex-1"><label className="text-[8px] font-black uppercase block">Ouro do Dia (R$)</label><input type="number" className="bg-transparent text-xs font-bold w-full" value={goldQuote} onChange={(e) => setGoldQuote(parseFloat(e.target.value) || 0)}/></div>
+                      </div>
+                    )}
                     <div className="bg-blue-50 p-4 rounded-3xl border border-blue-200 flex items-center gap-3">
                       <Hammer className="text-blue-600" size={20}/><div className="flex-1"><label className="text-[8px] font-black uppercase block">M. Obra Extra (R$)</label><input type="number" className="bg-transparent text-xs font-bold w-full" value={extraLabor} onChange={(e) => setExtraLabor(parseFloat(e.target.value) || 0)}/></div>
                     </div>
@@ -279,15 +321,15 @@ export default function SuppliersPage() {
                       </div>
                     )}
                     <div className="md:col-span-2">
-                      <label className="text-[7px] font-black uppercase block mb-1">{selectedSupplier.category === 'GALVANICA' ? 'Peso (KG)' : 'Quantidade'}</label>
-                      <input type="number" className="w-full px-3 py-2 rounded-xl bg-white border border-brand-secondary/10 text-[10px] font-bold text-center" value={selectedSupplier.category === 'GALVANICA' ? item.weightKg : item.quantity} onChange={(e) => {
+                      <label className="text-[7px] font-black uppercase block mb-1">{(selectedSupplier.category === 'GALVANICA' || selectedSupplier.category === 'BRUTO') ? 'Peso (KG)' : 'Quantidade'}</label>
+                      <input type="number" className="w-full px-3 py-2 rounded-xl bg-white border border-brand-secondary/10 text-[10px] font-bold text-center" value={(selectedSupplier.category === 'GALVANICA' || selectedSupplier.category === 'BRUTO') ? item.weightKg : item.quantity} onChange={(e) => {
                         const n = [...purchaseItems]; 
-                        if (selectedSupplier.category === 'GALVANICA') n[index].weightKg = parseFloat(e.target.value) || 0;
+                        if (selectedSupplier.category === 'GALVANICA' || selectedSupplier.category === 'BRUTO') n[index].weightKg = parseFloat(e.target.value) || 0;
                         else n[index].quantity = parseInt(e.target.value) || 0;
                         setPurchaseItems(n);
                       }}/>
                     </div>
-                    {selectedSupplier.category === 'GALVANICA' && (
+                    {(selectedSupplier.category === 'GALVANICA' || selectedSupplier.category === 'BRUTO') && (
                       <div className="md:col-span-1">
                         <label className="text-[7px] font-black uppercase block mb-1">Teor</label>
                         <input type="number" className="w-full px-3 py-2 rounded-xl bg-white border border-brand-secondary/10 text-[10px] font-bold text-center" value={item.teor} onChange={(e) => {
@@ -296,14 +338,22 @@ export default function SuppliersPage() {
                       </div>
                     )}
                     <div className="md:col-span-3">
-                      <label className="text-[7px] font-black uppercase block mb-1">{selectedSupplier.category === 'GALVANICA' ? 'Valor Tabela (R$/KG)' : 'Custo Unitário (R$)'}</label>
-                      <input type="number" className="w-full px-3 py-2 rounded-xl bg-white border border-brand-secondary/10 text-[10px] font-bold" value={selectedSupplier.category === 'GALVANICA' ? item.tablePrice : item.unitCost} onChange={(e) => {
+                      <label className="text-[7px] font-black uppercase block mb-1">{(selectedSupplier.category === 'GALVANICA' || selectedSupplier.category === 'BRUTO') ? 'Valor Tabela (R$/KG)' : 'Custo Unitário (R$)'}</label>
+                      <input type="number" className="w-full px-3 py-2 rounded-xl bg-white border border-brand-secondary/10 text-[10px] font-bold" value={(selectedSupplier.category === 'GALVANICA' || selectedSupplier.category === 'BRUTO') ? item.tablePrice : item.unitCost} onChange={(e) => {
                         const n = [...purchaseItems];
-                        if (selectedSupplier.category === 'GALVANICA') n[index].tablePrice = parseFloat(e.target.value) || 0;
+                        if (selectedSupplier.category === 'GALVANICA' || selectedSupplier.category === 'BRUTO') n[index].tablePrice = parseFloat(e.target.value) || 0;
                         else n[index].unitCost = parseFloat(e.target.value) || 0;
                         setPurchaseItems(n);
                       }}/>
                     </div>
+                    {(selectedSupplier.category === 'GALVANICA' || selectedSupplier.category === 'BRUTO') && (
+                      <div className="md:col-span-1">
+                        <label className="text-[7px] font-black uppercase block mb-1 text-right">Total</label>
+                        <p className="text-[10px] font-black text-brand-primary text-right py-2">
+                          R$ {(item.weightKg * item.tablePrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                    )}
                     <div className="md:col-span-1 flex justify-end"><button onClick={() => setPurchaseItems(purchaseItems.filter((_, i) => i !== index))} className="p-2 text-rose-300 hover:text-rose-500"><Trash2 size={16}/></button></div>
                   </div>
                 ))}
@@ -312,20 +362,23 @@ export default function SuppliersPage() {
             </div>
 
             <div className="p-6 border-t border-brand-secondary/10 bg-white flex flex-col md:flex-row justify-between items-center gap-6">
-              {selectedSupplier.category === 'GALVANICA' ? (
-                <div className="flex flex-col md:flex-row gap-8 bg-brand-primary/5 p-4 rounded-3xl border border-brand-primary/10">
-                  <div className="text-center md:text-left">
-                    <p className="text-[7px] font-black uppercase tracking-widest text-brand-secondary flex items-center gap-1"><Info size={10}/> Transparência do Ouro</p>
-                    <div className="flex gap-4 mt-1">
-                      <div><span className="text-[8px] block opacity-50">CONSUMO</span><span className="text-xs font-bold text-amber-700">{goldGrams.toFixed(2)}g</span></div>
-                      <div><span className="text-[8px] block opacity-50">VALOR METAL</span><span className="text-xs font-bold text-amber-700">R$ {goldRealCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
+              {(selectedSupplier.category === 'GALVANICA' || selectedSupplier.category === 'BRUTO') ? (
+                <div className="flex flex-col md:flex-row gap-8 bg-brand-primary/5 p-4 rounded-3xl border border-brand-primary/10 w-full md:w-auto">
+                  {selectedSupplier.category === 'GALVANICA' && (
+                    <div className="text-center md:text-left">
+                      <p className="text-[7px] font-black uppercase tracking-widest text-brand-secondary flex items-center gap-1"><Info size={10}/> Transparência do Ouro</p>
+                      <div className="flex gap-4 mt-1">
+                        <div><span className="text-[8px] block opacity-50">CONSUMO</span><span className="text-xs font-bold text-amber-700">{goldGrams.toFixed(2)}g</span></div>
+                        <div><span className="text-[8px] block opacity-50">VALOR METAL</span><span className="text-xs font-bold text-amber-700">R$ {goldRealCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-center md:text-left border-l border-brand-primary/20 pl-8">
+                  )}
+                  <div className={`text-center md:text-left ${selectedSupplier.category === 'GALVANICA' ? 'border-l border-brand-primary/20 pl-8' : ''}`}>
                     <p className="text-[7px] font-black uppercase tracking-widest text-brand-secondary">Resumo Financeiro</p>
                     <div className="flex gap-4 mt-1">
                       <div><span className="text-[8px] block opacity-50">PESO TOTAL</span><span className="text-xs font-bold">{totalWeight.toFixed(3)} KG</span></div>
-                      <div><span className="text-[8px] block opacity-50">VALOR FINAL</span><span className="text-xs font-bold text-brand-primary">R$ {totalFinal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
+                      <div><span className="text-[8px] block opacity-50">SUBTOTAL</span><span className="text-xs font-bold">R$ {subtotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
+                      <div className="pl-4 border-l border-brand-primary/20"><span className="text-[8px] block opacity-50">TOTAL FINAL</span><span className="text-xs font-bold text-brand-primary">R$ {totalFinal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
                     </div>
                   </div>
                 </div>
