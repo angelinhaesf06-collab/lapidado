@@ -127,10 +127,12 @@ function HomeContent() {
       <div className="max-w-7xl mx-auto px-4 py-8 md:py-12 w-full text-center">
         <div className="mb-8 md:mb-16">
           <h2 className="text-xl md:text-2xl font-light tracking-[0.2em] uppercase text-brand-primary mb-2">
-            {activeCategory === 'Todos' ? 'Coleção Completa' : activeCategory}
+            {activeCategory === 'Todos' ? (branding?.store_name || 'Coleção Completa') : activeCategory}
           </h2>
           <div className="w-12 h-[1px] bg-brand-secondary/30 mx-auto mb-2" />
-          <p className="text-brand-secondary text-[8px] md:text-[9px] font-bold tracking-[0.2em] uppercase opacity-60">{products.length} Itens Selecionados</p>
+          <p className="text-brand-secondary text-[8px] md:text-[9px] font-bold tracking-[0.2em] uppercase opacity-60">
+            {products.length} Itens Selecionados {branding?.store_name && `por ${branding.store_name}`}
+          </p>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 md:gap-x-10 gap-y-10 md:gap-y-20 px-1">
