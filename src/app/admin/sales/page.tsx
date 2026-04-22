@@ -42,6 +42,7 @@ export default function SalesPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [activeCategory, setActiveCategory] = useState('Todas')
   const [searchQuery, setSearchQuery] = useState('')
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().substring(0, 7)) // YYYY-MM
   
   const supabase = createClient()
 
@@ -108,6 +109,16 @@ export default function SalesPage() {
   async function handleRegisterSale() {
     if (!selectedProduct || quantity <= 0) return
 
+    if (quantity > selectedProduct.stock_quantity) {
+      alert(`ESTOQUE INSUFICIENTE! VOCÊ TEM APENAS ${selectedProduct.stock_quantity} PEÇAS. 💎`)
+      return
+    }
+
+    const isLastPiece = selectedProduct.stock_quantity === quantity
+    if (isLastPiece) {
+      if (!confirm('ESTA É A ÚLTIMA PEÇA DESTE ITEM NO ESTOQUE! 💎\nAPÓS ESTA VENDA, ELA SUMIRÁ AUTOMATICAMENTE DO SEU CATÁLOGO PÚBLICO ATÉ QUE VOCÊ ADICIONE MAIS ESTOQUE.\n\nDESEJA CONTINUAR?')) return
+    }
+
     setIsSaving(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -151,8 +162,10 @@ export default function SalesPage() {
     return matchesCategory && matchesSearch
   })
 
-  const totalRevenue = sales.reduce((acc, sale) => acc + (sale.sale_price * sale.quantity), 0)
-  const totalProfit = sales.reduce((acc, sale) => acc + ((sale.sale_price - sale.cost_price) * sale.quantity), 0)
+  const filteredSales = sales.filter(sale => sale.created_at.startsWith(selectedMonth))
+
+  const totalRevenue = filteredSales.reduce((acc, sale) => acc + (sale.sale_price * sale.quantity), 0)
+  const totalProfit = filteredSales.reduce((acc, sale) => acc + ((sale.sale_price - sale.cost_price) * sale.quantity), 0)
 
   return (
     <div className="max-w-5xl mx-auto pb-20">
@@ -161,13 +174,25 @@ export default function SalesPage() {
         <p className="text-brand-secondary text-[10px] font-black tracking-[0.4em] uppercase mt-2">Sua vitrine de sucessos reais 💰</p>
       </div>
 
+      <div className="flex justify-center mb-10">
+        <div className="bg-white px-6 py-3 rounded-[30px] border border-brand-secondary/10 shadow-sm flex items-center gap-4">
+          <span className="text-[9px] font-black text-brand-primary uppercase tracking-widest">RELATÓRIO DE:</span>
+          <input 
+            type="month" 
+            value={selectedMonth} 
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="bg-rose-50/50 border-none text-xs font-bold text-brand-primary uppercase outline-none focus:ring-0"
+          />
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 gap-4 mb-10">
         <div className="bg-white p-6 rounded-[30px] border border-brand-secondary/10 shadow-sm text-center">
-          <p className="text-[7px] font-black text-brand-secondary uppercase tracking-widest mb-1">Faturamento Total</p>
+          <p className="text-[7px] font-black text-brand-secondary uppercase tracking-widest mb-1">Faturamento {selectedMonth}</p>
           <h4 className="text-xl font-bold text-brand-primary">R$ {totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h4>
         </div>
         <div className="bg-brand-primary p-6 rounded-[30px] text-center shadow-lg">
-          <p className="text-[7px] font-black text-brand-secondary/80 uppercase tracking-widest mb-1">Lucro Real</p>
+          <p className="text-[7px] font-black text-brand-secondary/80 uppercase tracking-widest mb-1">Lucro Real {selectedMonth}</p>
           <h4 className="text-xl font-bold text-white">R$ {totalProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h4>
         </div>
       </div>

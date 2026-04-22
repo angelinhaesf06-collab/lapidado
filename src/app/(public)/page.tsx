@@ -67,7 +67,11 @@ function HomeContent() {
       const { data: cats } = await supabase.from('categories').select('id, name').eq('user_id', currentUserId).order('name')
       setDbCategories(cats || [])
 
-      let prodQuery = supabase.from('products').select('*, categories!inner(name)').eq('user_id', currentUserId)
+      let prodQuery = supabase.from('products')
+        .select('*, categories!inner(name)')
+        .eq('user_id', currentUserId)
+        .gt('stock_quantity', 0)
+      
       if (activeCategory !== 'Todos') {
         prodQuery = prodQuery.eq('categories.name', activeCategory)
       }

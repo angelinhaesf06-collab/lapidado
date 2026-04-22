@@ -1,37 +1,30 @@
 import { NextResponse } from "next/server";
 
-// 🚀 MOTOR ESTABILIZADO: Usando Node.js Runtime para garantir injeção de chaves
 export const runtime = 'nodejs';
 
-// 💎 NEXUS: MOTOR DE IA LAPIDADO (Versão Otimizada para Performance)
+/**
+ * 💎 MOTOR LAPIDADO: IGNICAO DEFINITIVA 2026
+ * Forçando v1beta e motor 1.5-flash para máxima compatibilidade.
+ */
 export async function POST(req: Request) {
   try {
-    const { image } = await req.json();
-    
-    // 💎 NEXUS: BUSCA EXAUSTIVA POR CREDENCIAIS (Resiliência Vercel)
-    const apiKey = 
-      process.env.NEXT_PUBLIC_GEMINI_API_KEY || 
-      process.env.GEMINI_API_KEY || 
-      process.env.gemini_api_key ||
-      process.env.NEXT_PUBLIC_GEMINI_KEY;
+    const geminiKey = (process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "").trim();
 
-    if (!apiKey || apiKey.length < 10) {
-      console.error("❌ ERRO CRÍTICO: Nenhuma variação de GEMINI_API_KEY encontrada no ambiente Vercel.");
-      return NextResponse.json({ 
-        error: "CONFIGURAÇÃO: Chave de IA não encontrada no servidor.",
-        details: "Certifique-se de que a variável NEXT_PUBLIC_GEMINI_API_KEY está configurada para ALL ENVIRONMENTS na Vercel e faça um REDEPLOY."
-      }, { status: 401 });
+    if (!geminiKey) {
+      return NextResponse.json({ error: "FALHA_IGNICAO_2026", details: "Chave GEMINI_API_KEY não encontrada." }, { status: 401 });
     }
 
-    const base64Data = image.split(",")[1] || image;
-    
-    // 💎 NEXUS: Usando o modelo flash-latest para garantir a versão mais estável e rápida disponível
-    const modelName = "gemini-flash-latest";
-    const baseUrl = "https://generativelanguage.googleapis.com/v1beta";
+    const bodyText = await req.text();
+    if (!bodyText) return NextResponse.json({ error: "FALHA_IGNICAO_2026", details: "Corpo vazio." }, { status: 400 });
 
-    console.log(`💎 NEXUS: Acionando motor ${modelName}...`);
+    const payload = JSON.parse(bodyText);
+    const { image } = payload;
+    if (!image) return NextResponse.json({ error: "FALHA_IGNICAO_2026", details: "Sem imagem." }, { status: 400 });
+
+    const base64Data = image.includes(",") ? image.split(",")[1] : image;
     
-    const url = `${baseUrl}/models/${modelName}:generateContent?key=${apiKey}`;
+    // 🔄 CICLO: v1beta + gemini-1.5-flash (O ID mais compatível da história)
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
     
     const response = await fetch(url, {
       method: 'POST',
@@ -39,56 +32,40 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         contents: [{
           parts: [
-            { text: "Você é um Copywriter Especialista em Vendas de Semijoias para o 'Catálogo Lapidado'. Analise a imagem e retorne um objeto JSON com: 1. 'name': Nome comercial curto (MÁX. 30 caracteres, EM MAIÚSCULAS). 2. 'category': Categoria (Anéis, Colares, Brincos ou Pulseiras). 3. 'description': Copy IMPACTANTE em MÁXIMO 3 FRASES CURTAS (MÁX. 120 caracteres total). 4. 'material': Banho identificado (Ouro 18k, Prata 925 ou Ródio). Retorne APENAS o JSON puro, sem markdown." },
+            { text: "Analyze the jewellery. Return ONLY JSON: {\"name\": \"...\", \"category\": \"...\", \"description\": \"...\", \"material\": \"...\"}" },
             { inlineData: { mimeType: "image/jpeg", data: base64Data } }
           ]
         }],
-        generationConfig: {
-          maxOutputTokens: 150,
-          temperature: 0.4
-        },
-        safetySettings: [
-          { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-          { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-          { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-          { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-        ]
+        generationConfig: { temperature: 0.1, maxOutputTokens: 300 }
       })
     });
 
-    const data = await response.json();
-
-    if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
-      console.log(`✅ SUCESSO: Motor ${modelName} respondeu.`);
-      let text = data.candidates[0].content.parts[0].text;
-      
-      // Limpeza de Markdown (caso a IA retorne ```json ... ```)
-      text = text.replace(/```json/g, "").replace(/```/g, "").trim();
-      
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      const finalJson = JSON.parse(jsonMatch ? jsonMatch[0] : text);
-      return NextResponse.json(finalJson);
+    const responseText = await response.text();
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      return NextResponse.json({ error: "FALHA_IGNICAO_2026", details: "Erro no parse do Google.", raw: responseText.substring(0, 50) }, { status: 500 });
     }
 
-    // Erro detalhado da API do Google
-    const errorBody = data.error || {};
-    const errorMessage = errorBody.message || "Erro desconhecido na API do Google";
-    const errorCode = errorBody.code || response.status;
-    
-    console.error(`❌ FALHA NO MOTOR ${modelName}: [${errorCode}] ${errorMessage}`);
-    
+    if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
+      let aiText = data.candidates[0].content.parts[0].text.trim();
+      const start = aiText.indexOf('{');
+      const end = aiText.lastIndexOf('}');
+      const finalJson = (start !== -1 && end !== -1) ? aiText.substring(start, end + 1) : aiText;
+      return NextResponse.json(JSON.parse(finalJson));
+    }
+
     return NextResponse.json({ 
-      error: "O MOTOR DE IA REJEITOU A FOTO.", 
-      details: errorMessage,
-      code: errorCode
+      error: "FALHA_IGNICAO_2026", 
+      details: data.error?.message || "O Google recusou a conexão.",
+      status: response.status
     }, { status: 400 });
 
   } catch (error: unknown) {
-    const err = error as Error;
-    console.error("ERRO OPERACIONAL IA:", err.message);
     return NextResponse.json({ 
-      error: "IA EM MANUTENÇÃO.", 
-      details: err.message 
-    }, { status: 503 });
+      error: "FALHA_IGNICAO_2026", 
+      details: (error as Error).message 
+    }, { status: 500 });
   }
 }
