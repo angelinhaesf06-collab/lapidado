@@ -1,9 +1,18 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { ShoppingCart, Loader2, ArrowLeft, Search, Check, Trash2, Plus } from 'lucide-react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { ShoppingCart, Loader2, ArrowLeft, Search, Check, Trash2, Plus, TrendingUp } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
+import { 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer 
+} from 'recharts'
 
 interface Sale {
   id: string
@@ -167,6 +176,27 @@ export default function SalesPage() {
   const totalRevenue = filteredSales.reduce((acc, sale) => acc + (sale.sale_price * sale.quantity), 0)
   const totalProfit = filteredSales.reduce((acc, sale) => acc + ((sale.sale_price - sale.cost_price) * sale.quantity), 0)
 
+  // 📈 Dados para o Gráfico (Últimos 6 meses)
+  const chartData = useMemo(() => {
+    const months = []
+    const now = new Date(selectedMonth + '-01')
+    
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const monthStr = d.toISOString().substring(0, 7)
+      
+      const monthlyRevenue = sales
+        .filter(s => s.created_at.startsWith(monthStr))
+        .reduce((acc, s) => acc + (s.sale_price * s.quantity), 0)
+      
+      months.push({
+        name: d.toLocaleDateString('pt-BR', { month: 'short' }).toUpperCase(),
+        faturamento: monthlyRevenue
+      })
+    }
+    return months
+  }, [sales, selectedMonth])
+
   return (
     <div className="max-w-5xl mx-auto pb-20">
       <div className="text-center mb-16">
@@ -186,7 +216,7 @@ export default function SalesPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-10">
+      <div className="grid grid-cols-2 gap-4 mb-8">
         <div className="bg-white p-6 rounded-[30px] border border-brand-secondary/10 shadow-sm text-center">
           <p className="text-[7px] font-black text-brand-secondary uppercase tracking-widest mb-1">Faturamento {selectedMonth}</p>
           <h4 className="text-xl font-bold text-brand-primary">R$ {totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h4>
@@ -194,6 +224,57 @@ export default function SalesPage() {
         <div className="bg-brand-primary p-6 rounded-[30px] text-center shadow-lg">
           <p className="text-[7px] font-black text-brand-secondary/80 uppercase tracking-widest mb-1">Lucro Real {selectedMonth}</p>
           <h4 className="text-xl font-bold text-white">R$ {totalProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h4>
+        </div>
+      </div>
+
+      {/* 📊 GRÁFICO DE PERFORMANCE */}
+      <div className="bg-white p-8 rounded-[40px] border border-brand-secondary/10 shadow-sm mb-10">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="p-2 bg-brand-primary/10 rounded-xl text-brand-primary"><TrendingUp size={18} /></div>
+          <div>
+            <h3 className="text-[10px] font-black text-brand-primary uppercase tracking-widest">Desempenho Semestral</h3>
+            <p className="text-[7px] font-bold text-brand-secondary uppercase">Evolução do seu faturamento real</p>
+          </div>
+        </div>
+        
+        <div className="h-[200px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData}>
+              <defs>
+                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#4a322e" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#4a322e" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f1f1" />
+              <XAxis 
+                dataKey="name" 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{fontSize: 8, fontWeight: 900, fill: '#c99090'}} 
+                dy={10}
+              />
+              <YAxis hide />
+              <Tooltip 
+                contentStyle={{ 
+                  borderRadius: '20px', 
+                  border: 'none', 
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+                  fontSize: '10px',
+                  fontWeight: 'bold',
+                  textTransform: 'uppercase'
+                }} 
+              />
+              <Area 
+                type="monotone" 
+                dataKey="faturamento" 
+                stroke="#4a322e" 
+                strokeWidth={3}
+                fillOpacity={1} 
+                fill="url(#colorRevenue)" 
+              />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
@@ -205,11 +286,11 @@ export default function SalesPage() {
       </button>
 
       <div className="space-y-4">
-        <h3 className="text-[9px] font-black text-brand-primary uppercase tracking-[0.3em] mb-4 ml-2">Vendas Realizadas</h3>
+        <h3 className="text-[9px] font-black text-brand-primary uppercase tracking-[0.3em] mb-4 ml-2">Vendas em {selectedMonth}</h3>
         {loading ? (
           <div className="flex justify-center py-20"><Loader2 className="animate-spin text-brand-secondary" /></div>
         ) : (
-          sales.map((sale) => (
+          filteredSales.map((sale) => (
             <div key={sale.id} className="bg-white p-4 rounded-[30px] border border-brand-secondary/5 shadow-sm flex items-center gap-4 group">
               <div className="w-14 h-14 rounded-2xl overflow-hidden bg-brand-secondary/5 relative">
                 <Image src={sale.products?.image_url || ''} alt="" fill className="object-cover" />
