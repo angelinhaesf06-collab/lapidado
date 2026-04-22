@@ -4,8 +4,8 @@ export const runtime = 'nodejs';
 export const maxDuration = 30;
 
 /**
- * 💎 MOTOR LAPIDADO: VERSÃO FINAL 2026.4
- * Sistema 100% estabilizado e otimizado.
+ * 💎 MOTOR LAPIDADO: VERSÃO FINAL 2026.5
+ * Sistema 100% blindado e otimizado para produção.
  */
 export async function POST(req: Request) {
   try {
