@@ -4,8 +4,8 @@ export const runtime = 'nodejs';
 export const maxDuration = 30;
 
 /**
- * 💎 MOTOR LAPIDADO: MÉTODO DIRETO (MÁXIMA COMPATIBILIDADE)
- * Ativado com as chaves confirmadas no painel da Vercel.
+ * 💎 MOTOR LAPIDADO: VERSÃO FINAL 2026.4
+ * Sistema 100% estabilizado e otimizado.
  */
 export async function POST(req: Request) {
   try {
