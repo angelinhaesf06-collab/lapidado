@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, Loader2, Phone, ExternalLink, Trash2, Search, Store, Receipt, ShoppingBag, X, Check } from 'lucide-react'
+import { Plus, Loader2, Phone, ExternalLink, Trash2, Search, Store, Receipt, ShoppingBag, X, Check, Camera, Sparkles } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -20,6 +20,7 @@ interface Product {
   id: string
   name: string
   stock_quantity: number
+  price?: number
 }
 
 interface PurchaseItem {
@@ -40,6 +41,7 @@ export default function SuppliersPage() {
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null)
   const [purchaseItems, setPurchaseItems] = useState<PurchaseItem[]>([{ name: '', quantity: 1, unitCost: 0 }])
   const [isFinishingPurchase, setIsFinishingPurchase] = useState(false)
+  const [isReadingPhoto, setIsReadingPhoto] = useState(false)
 
   const [isSaving, setIsSaving] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -60,7 +62,7 @@ export default function SuppliersPage() {
     const { data: supData } = await supabase.from('suppliers').select('*').eq('user_id', user.id).order('name')
     if (supData) setSuppliers(supData as Supplier[])
 
-    const { data: prodData } = await supabase.from('products').select('id, name, stock_quantity').eq('user_id', user.id).order('name')
+    const { data: prodData } = await supabase.from('products').select('id, name, stock_quantity, price').eq('user_id', user.id).order('name')
     if (prodData) setProducts(prodData as Product[])
 
     setLoading(false)
@@ -69,6 +71,43 @@ export default function SuppliersPage() {
   useEffect(() => {
     loadData()
   }, [loadData])
+
+  // 🤖 MÁGICA LAPIDADO: LEITURA DE FOTO
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsReadingPhoto(true)
+    const reader = new FileReader()
+    reader.onload = async (event) => {
+      const base64 = event.target?.result as string
+      try {
+        const res = await fetch('/api/ai/romaneio', {
+          method: 'POST',
+          body: JSON.stringify({ image: base64 })
+        })
+        const data = await res.json()
+        if (Array.isArray(data)) {
+          // Tenta vincular os nomes lidos aos IDs de produtos existentes
+          const mappedItems = data.map(item => {
+            const foundProd = products.find(p => p.name.toUpperCase().includes(item.name.toUpperCase()) || item.name.toUpperCase().includes(p.name.toUpperCase()))
+            return {
+              ...item,
+              productId: foundProd?.id
+            }
+          })
+          setPurchaseItems(mappedItems)
+          alert('ROMANEIO LIDO COM SUCESSO! 💎✨ CONFERE OS ITENS ABAIXO.')
+        }
+      } catch (err) {
+        console.error(err)
+        alert('ERRO AO LER FOTO. TENTE NOVAMENTE COM UMA FOTO MAIS NÍTIDA.')
+      } finally {
+        setIsReadingPhoto(false)
+      }
+    }
+    reader.readAsDataURL(file)
+  }
 
   // 📄 FUNÇÃO PARA GERAR PDF DO ROMANEIO
   const generatePDF = (supplierName: string, items: PurchaseItem[], total: number) => {
@@ -104,13 +143,59 @@ export default function SuppliersPage() {
       head: [['ITEM / PRODUTO', 'QNT', 'CUSTO UNIT.', 'SUBTOTAL']],
       body: tableData,
       theme: 'striped',
-      headStyles: { fillStyle: 'solid', fillColor: [74, 50, 46], textColor: [255, 255, 255], fontSize: 9 },
+      headStyles: { fillColor: [74, 50, 46], textColor: [255, 255, 255], fontSize: 9 },
       bodyStyles: { fontSize: 8 },
       foot: [['', '', 'TOTAL INVESTIDO', `R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`]],
       footStyles: { fillColor: [201, 144, 144], textColor: [255, 255, 255], fontStyle: 'bold' }
     })
 
     doc.save(`romaneio-${supplierName.toLowerCase()}-${date.replace(/\//g, '-')}.pdf`)
+  }
+
+  // 📄 FUNÇÃO PARA GERAR PDF DO ROMANEIO DA LOJA (ESTOQUE ATUAL)
+  const generateStorePDF = () => {
+    if (products.length === 0) {
+      alert('NÃO HÁ PRODUTOS NO ESTOQUE PARA GERAR O ROMANEIO. 💎')
+      return
+    }
+
+    const doc = new jsPDF()
+    const date = new Date().toLocaleDateString('pt-BR')
+
+    // Design Luxuoso (DNA da Marca)
+    doc.setFontSize(22)
+    doc.setTextColor(74, 50, 46) // brand-primary
+    doc.text('LAPIDADO', 105, 20, { align: 'center' })
+    
+    doc.setFontSize(10)
+    doc.setTextColor(201, 144, 144) // brand-secondary
+    doc.text('ROMANEIO DE ESTOQUE ATUAL', 105, 28, { align: 'center' })
+
+    doc.setDrawColor(201, 144, 144)
+    doc.line(20, 35, 190, 35)
+
+    doc.setFontSize(12)
+    doc.setTextColor(74, 50, 46)
+    doc.text(`CATÁLOGO: LAPIDADO - MEU ACERVO`, 20, 45)
+    doc.text(`DATA: ${date}`, 190, 45, { align: 'right' })
+
+    const tableData = products.map(p => [
+      p.name.toUpperCase(),
+      p.stock_quantity,
+      `R$ ${(p.price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      `R$ ${(p.stock_quantity * (p.price || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+    ])
+
+    autoTable(doc, {
+      startY: 55,
+      head: [['PRODUTO / JOIA', 'QNT', 'PREÇO VENDA', 'TOTAL']],
+      body: tableData,
+      theme: 'striped',
+      headStyles: { fillColor: [74, 50, 46], textColor: [255, 255, 255], fontSize: 9 },
+      bodyStyles: { fontSize: 8 },
+    })
+
+    doc.save(`romaneio-estoque-${date.replace(/\//g, '-')}.pdf`)
   }
 
   const handleFinishPurchase = async () => {
@@ -135,7 +220,7 @@ export default function SuppliersPage() {
 
       if (pError) throw pError
 
-      // 2. Criar Itens e Atualizar Estoque
+      // 2. Criar Itens
       for (const item of purchaseItems) {
         await supabase.from('purchase_items').insert({
           purchase_id: purchase.id,
@@ -144,16 +229,6 @@ export default function SuppliersPage() {
           quantity: item.quantity,
           unit_cost: item.unitCost
         })
-
-        // 💎 ATUALIZAÇÃO AUTOMÁTICA DE ESTOQUE
-        if (item.productId) {
-          const currentProd = products.find(p => p.id === item.productId)
-          if (currentProd) {
-            await supabase.from('products').update({
-              stock_quantity: (currentProd.stock_quantity || 0) + item.quantity
-            }).eq('id', item.productId)
-          }
-        }
       }
 
       generatePDF(selectedSupplier.name, purchaseItems, total)
@@ -237,6 +312,12 @@ export default function SuppliersPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
+        <button 
+          onClick={generateStorePDF}
+          className="bg-white border-2 border-brand-primary text-brand-primary px-8 py-4 rounded-[25px] font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 shadow-md hover:bg-brand-primary hover:text-white transition-all"
+        >
+          <Receipt size={18} /> Romaneio da Loja
+        </button>
         <button 
           onClick={() => setShowAddModal(true)}
           className="bg-brand-primary text-white px-8 py-4 rounded-[25px] font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl hover:scale-105 transition-all"
@@ -325,15 +406,23 @@ export default function SuppliersPage() {
                   <Store size={12} /> {selectedSupplier.name}
                 </p>
               </div>
-              <button onClick={() => setShowPurchaseModal(false)} className="p-3 hover:bg-rose-100 rounded-full text-brand-primary transition-all">
-                <X size={24} />
-              </button>
+              <div className="flex items-center gap-2">
+                {/* 🤖 BOTAO DE MÁGICA IA */}
+                <label className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full border-2 border-brand-primary text-[9px] font-black uppercase tracking-widest transition-all ${isReadingPhoto ? 'bg-brand-primary/10 opacity-50' : 'hover:bg-brand-primary hover:text-white'}`}>
+                   {isReadingPhoto ? <Loader2 size={14} className="animate-spin" /> : <><Sparkles size={14} /> Ler Foto</>}
+                   <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} disabled={isReadingPhoto} />
+                </label>
+
+                <button onClick={() => setShowPurchaseModal(false)} className="p-3 hover:bg-rose-100 rounded-full text-brand-primary transition-all">
+                  <X size={24} />
+                </button>
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-8 space-y-4 bg-rose-50/5">
               <div className="bg-brand-primary/5 p-4 rounded-3xl mb-4 border border-brand-primary/10">
                 <p className="text-[8px] font-black text-brand-primary uppercase tracking-widest mb-1 text-center">Instrução 💎</p>
-                <p className="text-[7px] text-brand-secondary font-bold uppercase text-center">Selecione uma joia cadastrada para atualizar o estoque automaticamente ou digite o nome de um novo item.</p>
+                <p className="text-[7px] text-brand-secondary font-bold uppercase text-center">Tire uma foto do romaneio impresso ou preencha manualmente os itens abaixo.</p>
               </div>
 
               {purchaseItems.map((item, index) => (
