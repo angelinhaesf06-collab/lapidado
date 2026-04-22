@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, Loader2, Phone, ExternalLink, Trash2, Search, Store } from 'lucide-react'
+import { Plus, Loader2, Phone, ExternalLink, Trash2, Search, Store, Receipt, ShoppingBag, X, Check } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 interface Supplier {
   id: string
@@ -14,14 +16,34 @@ interface Supplier {
   notes?: string
 }
 
+interface Product {
+  id: string
+  name: string
+  stock_quantity: number
+}
+
+interface PurchaseItem {
+  productId?: string
+  name: string
+  quantity: number
+  unitCost: number
+}
+
 export default function SuppliersPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
+  const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
+  
+  // 💎 ESTADOS PARA ROMANEIO (COMPRA)
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false)
+  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null)
+  const [purchaseItems, setPurchaseItems] = useState<PurchaseItem[]>([{ name: '', quantity: 1, unitCost: 0 }])
+  const [isFinishingPurchase, setIsFinishingPurchase] = useState(false)
+
   const [isSaving, setIsSaving] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
-  // Estado para novo fornecedor
   const [name, setName] = useState('')
   const [category, setCategory] = useState('')
   const [phone, setPhone] = useState('')
@@ -30,24 +52,121 @@ export default function SuppliersPage() {
 
   const supabase = createClient()
 
-  const loadSuppliers = useCallback(async () => {
+  const loadData = useCallback(async () => {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const { data } = await supabase
-      .from('suppliers')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('name')
-    
-    if (data) setSuppliers(data as Supplier[])
+    const { data: supData } = await supabase.from('suppliers').select('*').eq('user_id', user.id).order('name')
+    if (supData) setSuppliers(supData as Supplier[])
+
+    const { data: prodData } = await supabase.from('products').select('id, name, stock_quantity').eq('user_id', user.id).order('name')
+    if (prodData) setProducts(prodData as Product[])
+
     setLoading(false)
   }, [supabase])
 
   useEffect(() => {
-    loadSuppliers()
-  }, [loadSuppliers])
+    loadData()
+  }, [loadData])
+
+  // 📄 FUNÇÃO PARA GERAR PDF DO ROMANEIO
+  const generatePDF = (supplierName: string, items: PurchaseItem[], total: number) => {
+    const doc = new jsPDF()
+    const date = new Date().toLocaleDateString('pt-BR')
+
+    // Design Luxuoso (DNA da Marca)
+    doc.setFontSize(22)
+    doc.setTextColor(74, 50, 46) // brand-primary
+    doc.text('LAPIDADO', 105, 20, { align: 'center' })
+    
+    doc.setFontSize(10)
+    doc.setTextColor(201, 144, 144) // brand-secondary
+    doc.text('ROMANEIO DE COMPRA E REPOSIÇÃO', 105, 28, { align: 'center' })
+
+    doc.setDrawColor(201, 144, 144)
+    doc.line(20, 35, 190, 35)
+
+    doc.setFontSize(12)
+    doc.setTextColor(74, 50, 46)
+    doc.text(`FORNECEDOR: ${supplierName}`, 20, 45)
+    doc.text(`DATA: ${date}`, 190, 45, { align: 'right' })
+
+    const tableData = items.map(item => [
+      item.name.toUpperCase(),
+      item.quantity,
+      `R$ ${item.unitCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      `R$ ${(item.quantity * item.unitCost).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+    ])
+
+    autoTable(doc, {
+      startY: 55,
+      head: [['ITEM / PRODUTO', 'QNT', 'CUSTO UNIT.', 'SUBTOTAL']],
+      body: tableData,
+      theme: 'striped',
+      headStyles: { fillStyle: 'solid', fillColor: [74, 50, 46], textColor: [255, 255, 255], fontSize: 9 },
+      bodyStyles: { fontSize: 8 },
+      foot: [['', '', 'TOTAL INVESTIDO', `R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`]],
+      footStyles: { fillColor: [201, 144, 144], textColor: [255, 255, 255], fontStyle: 'bold' }
+    })
+
+    doc.save(`romaneio-${supplierName.toLowerCase()}-${date.replace(/\//g, '-')}.pdf`)
+  }
+
+  const handleFinishPurchase = async () => {
+    if (!selectedSupplier || purchaseItems.some(i => !i.name || i.quantity <= 0)) {
+      alert('PREENCHA TODOS OS ITENS CORRETAMENTE! 💎')
+      return
+    }
+
+    setIsFinishingPurchase(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('No user')
+
+      const total = purchaseItems.reduce((acc, i) => acc + (i.quantity * i.unitCost), 0)
+
+      // 1. Criar Registro de Compra
+      const { data: purchase, error: pError } = await supabase.from('purchases').insert({
+        user_id: user.id,
+        supplier_id: selectedSupplier.id,
+        total_amount: total
+      }).select().single()
+
+      if (pError) throw pError
+
+      // 2. Criar Itens e Atualizar Estoque
+      for (const item of purchaseItems) {
+        await supabase.from('purchase_items').insert({
+          purchase_id: purchase.id,
+          product_id: item.productId || null,
+          name: item.name.toUpperCase(),
+          quantity: item.quantity,
+          unit_cost: item.unitCost
+        })
+
+        // 💎 ATUALIZAÇÃO AUTOMÁTICA DE ESTOQUE
+        if (item.productId) {
+          const currentProd = products.find(p => p.id === item.productId)
+          if (currentProd) {
+            await supabase.from('products').update({
+              stock_quantity: (currentProd.stock_quantity || 0) + item.quantity
+            }).eq('id', item.productId)
+          }
+        }
+      }
+
+      generatePDF(selectedSupplier.name, purchaseItems, total)
+      alert('COMPRA FINALIZADA E ESTOQUE ATUALIZADO! 🚀💎')
+      setShowPurchaseModal(false)
+      loadData()
+    } catch (err) {
+      console.error(err)
+      alert('ERRO AO FINALIZAR COMPRA.')
+    } finally {
+      setIsFinishingPurchase(false)
+    }
+  }
 
   async function handleAddSupplier() {
     if (!name || !category) return
@@ -74,7 +193,7 @@ export default function SuppliersPage() {
       setPhone('')
       setLink('')
       setNotes('')
-      loadSuppliers()
+      loadData()
       alert('FORNECEDOR CADASTRADO COM SUCESSO! 💎')
     } catch {
       alert('ERRO AO CADASTRAR FORNECEDOR.')
@@ -131,7 +250,7 @@ export default function SuppliersPage() {
           <div className="col-span-full flex justify-center py-20"><Loader2 className="animate-spin text-brand-secondary" /></div>
         ) : filteredSuppliers.length > 0 ? (
           filteredSuppliers.map((s) => (
-            <div key={s.id} className="bg-white p-6 rounded-[40px] border border-brand-secondary/5 shadow-sm hover:shadow-md transition-all group relative">
+            <div key={s.id} className="bg-white p-6 rounded-[40px] border border-brand-secondary/5 shadow-sm hover:shadow-md transition-all group relative flex flex-col h-full">
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-12 h-12 rounded-2xl bg-brand-primary/10 flex items-center justify-center text-brand-primary">
                   <Store size={24} />
@@ -146,25 +265,37 @@ export default function SuppliersPage() {
                 <p className="text-[9px] text-brand-secondary/70 mb-6 italic leading-relaxed">"{s.notes}"</p>
               )}
 
-              <div className="flex items-center gap-2 mt-auto">
-                {s.phone && (
-                  <a 
-                    href={`https://wa.me/${s.phone.replace(/\D/g, '')}`} 
-                    target="_blank" 
-                    className="flex-1 bg-rose-50 text-brand-primary py-3 rounded-2xl flex items-center justify-center gap-2 hover:bg-rose-100 transition-all text-[9px] font-bold uppercase"
-                  >
-                    <Phone size={14} /> WhatsApp
-                  </a>
-                )}
-                {s.link && (
-                  <a 
-                    href={s.link} 
-                    target="_blank" 
-                    className="flex-1 bg-brand-primary text-white py-3 rounded-2xl flex items-center justify-center gap-2 hover:opacity-90 transition-all text-[9px] font-bold uppercase"
-                  >
-                    <ExternalLink size={14} /> Site
-                  </a>
-                )}
+              <div className="space-y-2 mt-auto">
+                <button 
+                  onClick={() => {
+                    setSelectedSupplier(s)
+                    setShowPurchaseModal(true)
+                  }}
+                  className="w-full bg-brand-primary text-white py-3 rounded-2xl flex items-center justify-center gap-2 hover:opacity-90 transition-all text-[9px] font-black uppercase tracking-widest shadow-lg"
+                >
+                  <Receipt size={14} /> Registrar Compra
+                </button>
+
+                <div className="flex items-center gap-2">
+                  {s.phone && (
+                    <a 
+                      href={`https://wa.me/${s.phone.replace(/\D/g, '')}`} 
+                      target="_blank" 
+                      className="flex-1 bg-rose-50 text-brand-primary py-3 rounded-2xl flex items-center justify-center gap-2 hover:bg-rose-100 transition-all text-[9px] font-bold uppercase"
+                    >
+                      <Phone size={14} /> Whats
+                    </a>
+                  )}
+                  {s.link && (
+                    <a 
+                      href={s.link} 
+                      target="_blank" 
+                      className="flex-1 bg-white border border-brand-secondary/10 text-brand-primary py-3 rounded-2xl flex items-center justify-center gap-2 hover:bg-rose-50 transition-all text-[9px] font-bold uppercase"
+                    >
+                      <ExternalLink size={14} /> Site
+                    </a>
+                  )}
+                </div>
               </div>
 
               <button 
@@ -183,6 +314,135 @@ export default function SuppliersPage() {
         )}
       </div>
 
+      {/* 🧾 MODAL DE REGISTRO DE COMPRA (ROMANEIO) */}
+      {showPurchaseModal && selectedSupplier && (
+        <div className="fixed inset-0 bg-brand-primary/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-4xl h-[85vh] rounded-[40px] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-500">
+            <div className="p-8 border-b border-brand-secondary/10 flex justify-between items-center bg-rose-50/20">
+              <div>
+                <h3 className="text-xl font-bold text-brand-primary uppercase">Novo Romaneio</h3>
+                <p className="text-[9px] font-black text-brand-secondary uppercase tracking-widest flex items-center gap-2 mt-1">
+                  <Store size={12} /> {selectedSupplier.name}
+                </p>
+              </div>
+              <button onClick={() => setShowPurchaseModal(false)} className="p-3 hover:bg-rose-100 rounded-full text-brand-primary transition-all">
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-8 space-y-4 bg-rose-50/5">
+              <div className="bg-brand-primary/5 p-4 rounded-3xl mb-4 border border-brand-primary/10">
+                <p className="text-[8px] font-black text-brand-primary uppercase tracking-widest mb-1 text-center">Instrução 💎</p>
+                <p className="text-[7px] text-brand-secondary font-bold uppercase text-center">Selecione uma joia cadastrada para atualizar o estoque automaticamente ou digite o nome de um novo item.</p>
+              </div>
+
+              {purchaseItems.map((item, index) => (
+                <div key={index} className="bg-white p-6 rounded-[30px] border border-brand-secondary/10 shadow-sm grid grid-cols-1 md:grid-cols-12 gap-4 items-end animate-in fade-in duration-300">
+                  <div className="md:col-span-5">
+                    <label className="text-[7px] font-black text-brand-secondary uppercase tracking-widest block mb-2">Item / Produto</label>
+                    <div className="relative">
+                      <ShoppingBag className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-secondary/40" size={14} />
+                      <select 
+                        className="w-full pl-10 pr-4 py-3 rounded-2xl bg-rose-50/30 border border-transparent focus:border-brand-secondary outline-none text-[9px] font-bold uppercase appearance-none"
+                        value={item.productId || ''}
+                        onChange={(e) => {
+                          const prodId = e.target.value
+                          const prod = products.find(p => p.id === prodId)
+                          const newItems = [...purchaseItems]
+                          newItems[index] = { ...newItems[index], productId: prodId, name: prod?.name || '' }
+                          setPurchaseItems(newItems)
+                        }}
+                      >
+                        <option value="">-- SELECIONE OU DIGITE ABAIXO --</option>
+                        {products.map(p => <option key={p.id} value={p.id}>{p.name.toUpperCase()}</option>)}
+                      </select>
+                    </div>
+                    {!item.productId && (
+                      <input 
+                        type="text" 
+                        placeholder="NOME DO ITEM PERSONALIZADO..." 
+                        className="w-full mt-2 px-5 py-3 rounded-2xl bg-white border border-dashed border-brand-secondary/30 text-[9px] font-bold uppercase outline-none focus:border-brand-primary"
+                        value={item.name}
+                        onChange={(e) => {
+                          const newItems = [...purchaseItems]
+                          newItems[index].name = e.target.value
+                          setPurchaseItems(newItems)
+                        }}
+                      />
+                    )}
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="text-[7px] font-black text-brand-secondary uppercase tracking-widest block mb-2">Quantidade</label>
+                    <input 
+                      type="number" 
+                      className="w-full px-4 py-3 rounded-2xl bg-rose-50/30 border border-transparent text-[10px] font-bold text-center"
+                      value={item.quantity}
+                      onChange={(e) => {
+                        const newItems = [...purchaseItems]
+                        newItems[index].quantity = parseInt(e.target.value) || 0
+                        setPurchaseItems(newItems)
+                      }}
+                    />
+                  </div>
+
+                  <div className="md:col-span-3">
+                    <label className="text-[7px] font-black text-brand-secondary uppercase tracking-widest block mb-2">Custo Unitário (R$)</label>
+                    <input 
+                      type="number" 
+                      className="w-full px-4 py-3 rounded-2xl bg-rose-50/30 border border-transparent text-[10px] font-bold text-center"
+                      value={item.unitCost}
+                      onChange={(e) => {
+                        const newItems = [...purchaseItems]
+                        newItems[index].unitCost = parseFloat(e.target.value) || 0
+                        setPurchaseItems(newItems)
+                      }}
+                    />
+                  </div>
+
+                  <div className="md:col-span-2 flex justify-end">
+                    <button 
+                      onClick={() => {
+                        if (purchaseItems.length > 1) {
+                          setPurchaseItems(purchaseItems.filter((_, i) => i !== index))
+                        }
+                      }}
+                      className="p-3 text-rose-300 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-all"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              <button 
+                onClick={() => setPurchaseItems([...purchaseItems, { name: '', quantity: 1, unitCost: 0 }])}
+                className="w-full py-4 border-2 border-dashed border-brand-secondary/20 rounded-[30px] text-[8px] font-black uppercase text-brand-secondary hover:bg-brand-secondary/5 transition-all flex items-center justify-center gap-2 mt-4"
+              >
+                <Plus size={14} /> Adicionar mais um item ao romaneio
+              </button>
+            </div>
+
+            <div className="p-8 border-t border-brand-secondary/10 bg-white flex flex-col md:flex-row justify-between items-center gap-6">
+              <div className="text-center md:text-left">
+                <p className="text-[8px] font-black text-brand-secondary uppercase tracking-widest">Valor Total do Romaneio</p>
+                <h4 className="text-2xl font-bold text-brand-primary">
+                  R$ {purchaseItems.reduce((acc, i) => acc + (i.quantity * i.unitCost), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </h4>
+              </div>
+              <button 
+                onClick={handleFinishPurchase}
+                disabled={isFinishingPurchase}
+                className="w-full md:w-auto bg-brand-primary text-white px-12 py-5 rounded-[25px] font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl flex items-center justify-center gap-3 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+              >
+                {isFinishingPurchase ? <Loader2 className="animate-spin" size={18} /> : <><Check size={18} /> Finalizar & Baixar Romaneio (PDF)</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ➕ MODAL DE ADICIONAR FORNECEDOR (EXISTENTE) */}
       {showAddModal && (
         <div className="fixed inset-0 bg-brand-primary/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-md rounded-[40px] p-8 shadow-2xl animate-in fade-in zoom-in duration-300">
