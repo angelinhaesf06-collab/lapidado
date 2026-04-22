@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export const runtime = 'nodejs';
 export const maxDuration = 45;
 
 /**
- * 💎 MOTOR LAPIDADO: ROMANEIO v1 ESTÁVEL
+ * 💎 MOTOR LAPIDADO: ROMANEIO v2 ESTÁVEL (SDK)
+ * Atualizado para garantir extração precisa via gemini-flash-latest
  */
 export async function POST(req: Request) {
   try {
@@ -22,52 +24,40 @@ export async function POST(req: Request) {
     const mimeMatch = image.match(/data:(.*?);base64/);
     const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
 
-    // 🔄 URL ESTÁVEL v1
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
+    // 🚀 INICIALIZAÇÃO DO SDK
+    const genAI = new GoogleGenerativeAI(geminiKey);
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-flash-latest",
+      generationConfig: {
+        temperature: 0.1,
+        responseMimeType: "application/json"
+      }
+    });
 
     const prompt = `
       Você é um assistente especialista em joalheria da marca LAPIDADO. 
-      Analise o romaneio e extraia os itens.
-      Retorne APENAS o array JSON: [{"name": "ITEM", "quantity": 1, "unitCost": 0.00}]
+      Analise o romaneio/lista de compras fornecida na imagem e extraia os itens.
+      Retorne obrigatoriamente um array JSON de objetos: [{"name": "NOME DO ITEM", "quantity": 1, "unitCost": 0.00}]
     `;
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: prompt },
-            { inlineData: { mimeType: mimeType, data: base64Data } }
-          ]
-        }],
-        generationConfig: { temperature: 0.1 }
-      })
-    });
+    const result = await model.generateContent([
+      prompt,
+      { inlineData: { mimeType, data: base64Data } }
+    ]);
 
-    const responseText = await response.text();
-    let data;
+    const response = await result.response;
+    const aiText = response.text().trim();
+
     try {
-      data = JSON.parse(responseText);
+      const items = JSON.parse(aiText);
+      return NextResponse.json(items);
     } catch (e) {
-      return NextResponse.json({ error: "ERRO_PARSE", details: "Falha ao ler resposta do Google." }, { status: 500 });
-    }
-
-    if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
-      let aiText = data.candidates[0].content.parts[0].text.trim();
       const start = aiText.indexOf('[');
       const end = aiText.lastIndexOf(']');
-      
-      if (start === -1) throw new Error("A IA não conseguiu gerar a lista.");
-
+      if (start === -1) throw new Error("A IA não conseguiu gerar a lista estruturada.");
       const jsonStr = aiText.substring(start, end + 1);
       return NextResponse.json(JSON.parse(jsonStr));
     }
-
-    return NextResponse.json({ 
-      error: "ERRO_IA_ROMANEIO", 
-      details: data.error?.message || "O motor v1 falhou no romaneio." 
-    }, { status: 500 });
 
   } catch (error: any) {
     console.error("ERRO ROMANEIO:", error.message);

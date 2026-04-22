@@ -18,7 +18,7 @@ async function runCheck() {
   console.log(`🔑 PREFIXO: ${apiKey.substring(0, 8)}...`);
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const modelsToTest = ["gemini-flash-latest", "gemini-2.5-flash", "gemini-1.5-flash"];
+  const modelsToTest = ["gemini-flash-latest", "gemini-1.5-flash"];
   
   let success = false;
 

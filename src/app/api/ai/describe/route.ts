@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
 
 /**
- * 💎 MOTOR LAPIDADO: REPARO DE EMERGÊNCIA
- * Mudando para v1beta para resolver o erro 404 do modelo Flash.
+ * 💎 MOTOR LAPIDADO: ESTABILIZAÇÃO VIA SDK OFICIAL
+ * Atualizado para usar gemini-flash-latest via @google/generative-ai
  */
 export async function POST(req: Request) {
   try {
@@ -23,55 +24,43 @@ export async function POST(req: Request) {
     const mimeMatch = image.match(/data:(.*?);base64/);
     const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
     
-    // 🔄 TENTATIVA COM v1beta (Mais comum para o modelo Flash em contas gratuitas)
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-    
-    const prompt = "Jewellery analysis. Return ONLY JSON: {\"name\": \"...\", \"category\": \"...\", \"description\": \"...\"}.";
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: prompt },
-            { inlineData: { mimeType: mimeType, data: base64Data } }
-          ]
-        }],
-        generationConfig: { 
-          temperature: 0.1, 
-          maxOutputTokens: 300
-        }
-      })
+    // 🚀 INICIALIZAÇÃO DO SDK
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-flash-latest",
+      generationConfig: { 
+        temperature: 0.1, 
+        maxOutputTokens: 300,
+        responseMimeType: "application/json"
+      }
     });
+    
+    const prompt = "Analise esta joia e extraia as informações necessárias. Retorne obrigatoriamente um JSON com: {\"name\": \"NOME DA PEÇA EM MAIÚSCULO\", \"category\": \"CATEGORIA\", \"description\": \"DESCRIÇÃO CURTA E LUXUOSA\"}.";
 
-    const responseText = await response.text();
-    let data;
+    const result = await model.generateContent([
+      prompt,
+      { inlineData: { mimeType, data: base64Data } }
+    ]);
+
+    const response = await result.response;
+    const aiText = response.text().trim();
+
     try {
-      data = JSON.parse(responseText);
+      // O Gemini com responseMimeType: "application/json" já retorna JSON puro
+      const finalJson = JSON.parse(aiText);
+      return NextResponse.json(finalJson);
     } catch (e) {
-      return NextResponse.json({ error: "ERRO_PARSE", raw: responseText.substring(0, 100) }, { status: 500 });
-    }
-
-    if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
-      let aiText = data.candidates[0].content.parts[0].text.trim();
+      // Fallback em caso de algum caractere extra
       const start = aiText.indexOf('{');
       const end = aiText.lastIndexOf('}');
-      const finalJson = (start !== -1 && end !== -1) ? aiText.substring(start, end + 1) : aiText;
-      return NextResponse.json(JSON.parse(finalJson));
+      const cleaned = (start !== -1 && end !== -1) ? aiText.substring(start, end + 1) : aiText;
+      return NextResponse.json(JSON.parse(cleaned));
     }
 
-    // Se o v1beta falhar, o erro será exibido aqui com detalhes
-    return NextResponse.json({ 
-      error: "ERRO_MOTOR_BETA", 
-      details: data.error?.message || "O motor v1beta também recusou a chamada.",
-      google_error_code: data.error?.code,
-      status: response.status
-    }, { status: response.status || 400 });
-
   } catch (error: any) {
+    console.error("ERRO CRÍTICO IA:", error.message);
     return NextResponse.json({ 
-      error: "FALHA_CRITICA", 
+      error: "FALHA_MOTOR_IA", 
       details: error.message 
     }, { status: 500 });
   }
