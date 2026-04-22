@@ -4,8 +4,8 @@ export const runtime = 'nodejs';
 export const maxDuration = 30;
 
 /**
- * 💎 MOTOR LAPIDADO: VERSÃO FINAL 2026.5
- * Sistema 100% blindado e otimizado para produção.
+ * 💎 MOTOR LAPIDADO: REPARO DE EMERGÊNCIA
+ * Mudando para v1beta para resolver o erro 404 do modelo Flash.
  */
 export async function POST(req: Request) {
   try {
@@ -23,10 +23,10 @@ export async function POST(req: Request) {
     const mimeMatch = image.match(/data:(.*?);base64/);
     const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
     
-    // 🔄 URL DIRETA: O método mais estável que confirmamos funcionar no seu projeto
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // 🔄 TENTATIVA COM v1beta (Mais comum para o modelo Flash em contas gratuitas)
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
     
-    const prompt = "Jewellery analysis. Return ONLY JSON: {\"name\": \"...\", \"category\": \"...\", \"description\": \"...\"}. Be premium.";
+    const prompt = "Jewellery analysis. Return ONLY JSON: {\"name\": \"...\", \"category\": \"...\", \"description\": \"...\"}.";
 
     const response = await fetch(url, {
       method: 'POST',
@@ -39,10 +39,8 @@ export async function POST(req: Request) {
           ]
         }],
         generationConfig: { 
-          temperature: 0.2, 
-          maxOutputTokens: 300,
-          topP: 0.8,
-          topK: 40
+          temperature: 0.1, 
+          maxOutputTokens: 300
         }
       })
     });
@@ -52,31 +50,28 @@ export async function POST(req: Request) {
     try {
       data = JSON.parse(responseText);
     } catch (e) {
-      return NextResponse.json({ error: "ERRO_PARSE_GOOGLE", raw: responseText.substring(0, 100) }, { status: 500 });
+      return NextResponse.json({ error: "ERRO_PARSE", raw: responseText.substring(0, 100) }, { status: 500 });
     }
 
     if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
       let aiText = data.candidates[0].content.parts[0].text.trim();
-      
-      // Extração robusta de JSON (Nexus 2026)
       const start = aiText.indexOf('{');
       const end = aiText.lastIndexOf('}');
       const finalJson = (start !== -1 && end !== -1) ? aiText.substring(start, end + 1) : aiText;
-      
       return NextResponse.json(JSON.parse(finalJson));
     }
 
-    // Caso o Google retorne um erro específico (como 404, 403, etc)
+    // Se o v1beta falhar, o erro será exibido aqui com detalhes
     return NextResponse.json({ 
-      error: "ERRO_GOOGLE_API", 
-      details: data.error?.message || "O motor v1 recusou a chamada.",
+      error: "ERRO_MOTOR_BETA", 
+      details: data.error?.message || "O motor v1beta também recusou a chamada.",
+      google_error_code: data.error?.code,
       status: response.status
     }, { status: response.status || 400 });
 
   } catch (error: any) {
-    console.error("ERRO CRÍTICO NO MOTOR:", error.message);
     return NextResponse.json({ 
-      error: "FALHA_TOTAL_MOTOR", 
+      error: "FALHA_CRITICA", 
       details: error.message 
     }, { status: 500 });
   }
