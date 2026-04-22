@@ -6,7 +6,6 @@ export const maxDuration = 45;
 
 /**
  * 💎 MOTOR LAPIDADO: ROMANEIO v2 ESTÁVEL (SDK)
- * Atualizado para garantir extração precisa via gemini-flash-latest
  */
 export async function POST(req: Request) {
   try {
@@ -24,14 +23,10 @@ export async function POST(req: Request) {
     const mimeMatch = image.match(/data:(.*?);base64/);
     const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
 
-    // 🚀 INICIALIZAÇÃO DO SDK (Usando Gemini 2.5 Flash conforme cota disponível)
+    // 🚀 MODELO 2.0 FLASH (CONFIRMADO NA CHAVE)
     const genAI = new GoogleGenerativeAI(geminiKey);
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.5-flash",
-      generationConfig: {
-        temperature: 0.1
-      }
-    });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
     const prompt = `
       Você é um assistente especialista em joalheria da marca LAPIDADO. 
       Analise o romaneio/lista de compras fornecida na imagem e extraia os itens.
@@ -46,16 +41,12 @@ export async function POST(req: Request) {
     const response = await result.response;
     const aiText = response.text().trim();
 
-    try {
-      const items = JSON.parse(aiText);
-      return NextResponse.json(items);
-    } catch (e) {
-      const start = aiText.indexOf('[');
-      const end = aiText.lastIndexOf(']');
-      if (start === -1) throw new Error("A IA não conseguiu gerar a lista estruturada.");
-      const jsonStr = aiText.substring(start, end + 1);
-      return NextResponse.json(JSON.parse(jsonStr));
-    }
+    const start = aiText.indexOf('[');
+    const end = aiText.lastIndexOf(']');
+    if (start === -1 || end === -1) throw new Error("A IA não conseguiu gerar a lista estruturada.");
+    
+    const jsonStr = aiText.substring(start, end + 1);
+    return NextResponse.json(JSON.parse(jsonStr));
 
   } catch (error: any) {
     console.error("ERRO ROMANEIO:", error.message);

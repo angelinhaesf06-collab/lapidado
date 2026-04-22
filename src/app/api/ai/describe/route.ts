@@ -6,7 +6,6 @@ export const maxDuration = 30;
 
 /**
  * 💎 MOTOR LAPIDADO: ESTABILIZAÇÃO VIA SDK OFICIAL
- * Atualizado para usar gemini-flash-latest via @google/generative-ai
  */
 export async function POST(req: Request) {
   try {
@@ -24,15 +23,9 @@ export async function POST(req: Request) {
     const mimeMatch = image.match(/data:(.*?);base64/);
     const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
     
-    // 🚀 INICIALIZAÇÃO DO SDK (Usando Gemini 2.5 Flash conforme cota disponível)
+    // 🚀 MODELO 2.0 FLASH (CONFIRMADO NA CHAVE)
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.5-flash",
-      generationConfig: { 
-        temperature: 0.1, 
-        maxOutputTokens: 1000
-      }
-    });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     
     const prompt = "Analise esta joia e extraia as informações necessárias. Retorne obrigatoriamente um JSON com: {\"name\": \"NOME DA PEÇA EM MAIÚSCULO\", \"category\": \"CATEGORIA\", \"description\": \"DESCRIÇÃO CURTA E LUXUOSA\"}.";
 
@@ -44,17 +37,15 @@ export async function POST(req: Request) {
     const response = await result.response;
     const aiText = response.text().trim();
 
-    try {
-      // O Gemini com responseMimeType: "application/json" já retorna JSON puro
-      const finalJson = JSON.parse(aiText);
-      return NextResponse.json(finalJson);
-    } catch (e) {
-      // Fallback em caso de algum caractere extra
-      const start = aiText.indexOf('{');
-      const end = aiText.lastIndexOf('}');
-      const cleaned = (start !== -1 && end !== -1) ? aiText.substring(start, end + 1) : aiText;
-      return NextResponse.json(JSON.parse(cleaned));
+    // Limpeza de Markdown (caso a IA coloque ```json ...)
+    const start = aiText.indexOf('{');
+    const end = aiText.lastIndexOf('}');
+    if (start === -1 || end === -1) {
+      throw new Error("Resposta da IA não contém JSON válido: " + aiText);
     }
+    const finalJson = aiText.substring(start, end + 1);
+    
+    return NextResponse.json(JSON.parse(finalJson));
 
   } catch (error: any) {
     console.error("ERRO CRÍTICO IA:", error.message);
