@@ -91,7 +91,7 @@ export default function NewProductPage() {
       img.src = base64Str
       img.onload = () => {
         const canvas = document.createElement('canvas')
-        const MAX_WIDTH = 400 // 💎 NEXUS: Ultra-leve para evitar timeout
+        const MAX_WIDTH = 800 // 💎 NEXUS: Equilíbrio perfeito entre detalhe e economia
         let width = img.width
         let height = img.height
         if (width > MAX_WIDTH) {
@@ -102,7 +102,7 @@ export default function NewProductPage() {
         canvas.height = height
         const ctx = canvas.getContext('2d')
         ctx?.drawImage(img, 0, 0, width, height)
-        resolve(canvas.toDataURL('image/jpeg', 0.3)) // 💎 NEXUS: Qualidade 0.3 para o Gemini ler rápido
+        resolve(canvas.toDataURL('image/jpeg', 0.6)) // 💎 NEXUS: Qualidade 0.6 para visão nítida
       }
     })
   }

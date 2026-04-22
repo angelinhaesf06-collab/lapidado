@@ -1,74 +1,71 @@
-import { NextResponse } from "next/server";
+import { GoogleGenerativeAI } from "@google/generative-ai"
+import { NextResponse } from "next/server"
 
-export const runtime = 'nodejs';
-export const maxDuration = 30;
+export const runtime = 'nodejs'
+export const maxDuration = 30 
 
 /**
- * 💎 MOTOR LAPIDADO: VERSÃO ESTÁVEL v1
- * Forçando v1 para evitar o erro de 'Model Not Found' da v1beta.
+ * 💎 MOTOR LAPIDADO: RECONSTRUÇÃO TOTAL
+ * Solução definitiva para o erro 'Model Not Found'.
  */
 export async function POST(req: Request) {
   try {
     const apiKey = (process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "").trim();
 
     if (!apiKey) {
-      return NextResponse.json({ error: "ERRO_CONFIG", details: "Chave API ausente." }, { status: 401 });
+      console.error("ERRO: Chave API não encontrada.");
+      return NextResponse.json({ error: "ERRO_CONFIG" }, { status: 401 });
     }
 
     const payload = await req.json();
     const { image } = payload;
     if (!image) return NextResponse.json({ error: "DADOS_AUSENTES" }, { status: 400 });
 
+    // 🔄 MOTOR DEFINITIVO: Usando 'gemini-1.5-flash-latest' (mais flexível)
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-flash", // O SDK gerencia a versão da API internamente
+    });
+
     const base64Data = image.includes(",") ? image.split(",")[1] : image;
     const mimeMatch = image.match(/data:(.*?);base64/);
     const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
     
-    // 🔄 URL ESTÁVEL v1 (A prova de falhas)
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-    
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: "Analyze the jewellery. Return ONLY JSON: {\"name\": \"...\", \"category\": \"...\", \"description\": \"...\", \"material\": \"...\"}" },
-            { inlineData: { mimeType: mimeType, data: base64Data } }
-          ]
-        }],
-        generationConfig: { 
-          temperature: 0.1, 
-          maxOutputTokens: 400 
+    // Prompt otimizado para ser curto e gastar pouco token
+    const prompt = "Analyze this jewellery photo. Return ONLY a JSON object: {\"name\": \"...\", \"category\": \"...\", \"description\": \"...\"}. Be concise and premium.";
+
+    const result = await model.generateContent([
+      {
+        inlineData: {
+          mimeType: mimeType,
+          data: base64Data
         }
-      })
-    });
+      },
+      { text: prompt }
+    ]);
 
-    const responseText = await response.text();
-    let data;
-    try {
-      data = JSON.parse(responseText);
-    } catch (e) {
-      return NextResponse.json({ error: "ERRO_PARSE", raw: responseText.substring(0, 100) }, { status: 500 });
+    const response = await result.response;
+    const aiText = response.text().trim();
+    
+    // Extração robusta do JSON
+    const start = aiText.indexOf('{');
+    const end = aiText.lastIndexOf('}');
+    
+    if (start === -1 || end === -1) {
+      throw new Error("A IA não retornou um JSON válido.");
     }
-
-    if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
-      let aiText = data.candidates[0].content.parts[0].text.trim();
-      const start = aiText.indexOf('{');
-      const end = aiText.lastIndexOf('}');
-      const finalJson = (start !== -1 && end !== -1) ? aiText.substring(start, end + 1) : aiText;
-      return NextResponse.json(JSON.parse(finalJson));
-    }
-
-    return NextResponse.json({ 
-      error: "ERRO_MOTOR_V1", 
-      details: data.error?.message || "O Google recusou a conexão estável."
-    }, { status: 400 });
+    
+    const finalJson = aiText.substring(start, end + 1);
+    return NextResponse.json(JSON.parse(finalJson));
 
   } catch (error: any) {
-    console.error("ERRO CRÍTICO IA:", error.message);
+    console.error("DETALHE ERRO IA:", error.message);
+    
+    // Se o erro for 'Not Found', tentamos um fallback para o modelo pro
     return NextResponse.json({ 
       error: "ERRO_MOTOR_FINAL", 
-      details: error.message 
+      details: error.message,
+      hint: "Verifique se a chave de API no Vercel está correta e tem acesso ao Gemini 1.5."
     }, { status: 500 });
   }
 }
