@@ -4,7 +4,7 @@
   "webDir": "out",
   "bundledWebRuntime": false,
   "server": {
-    "url": "https://lapidado.com.br",
+    "url": "https://lapidado-app.vercel.app",
     "cleartext": true
   }
 }
