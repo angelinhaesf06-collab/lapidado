@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, Loader2, Phone, ExternalLink, Trash2, Search, Store, Receipt, ShoppingBag, X, Check, Camera, Sparkles } from 'lucide-react'
+import { Plus, Loader2, Phone, ExternalLink, Trash2, Search, Store, Receipt, ShoppingBag, X, Check, Camera, Sparkles, Pencil, Calendar } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -35,11 +35,13 @@ export default function SuppliersPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
+  const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null)
   
   // 💎 ESTADOS PARA ROMANEIO (COMPRA)
   const [showPurchaseModal, setShowPurchaseModal] = useState(false)
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null)
   const [purchaseItems, setPurchaseItems] = useState<PurchaseItem[]>([{ name: '', quantity: 1, unitCost: 0 }])
+  const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().split('T')[0])
   const [isFinishingPurchase, setIsFinishingPurchase] = useState(false)
   const [isReadingPhoto, setIsReadingPhoto] = useState(false)
 
@@ -72,7 +74,27 @@ export default function SuppliersPage() {
     loadData()
   }, [loadData])
 
-  // 🤖 MÁGICA LAPIDADO: LEITURA DE FOTO
+  const openEditModal = (s: Supplier) => {
+    setEditingSupplier(s)
+    setName(s.name)
+    setCategory(s.category)
+    setPhone(s.phone || '')
+    setLink(s.link || '')
+    setNotes(s.notes || '')
+    setShowAddModal(true)
+  }
+
+  const closeFormModal = () => {
+    setShowAddModal(false)
+    setEditingSupplier(null)
+    setName('')
+    setCategory('')
+    setPhone('')
+    setLink('')
+    setNotes('')
+  }
+
+  // 🤖 MÁGICA LAPIDADO: LEITURA DE ARQUIVO (FOTO OU PDF)
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -97,11 +119,11 @@ export default function SuppliersPage() {
             }
           })
           setPurchaseItems(mappedItems)
-          alert('ROMANEIO LIDO COM SUCESSO! 💎✨ CONFERE OS ITENS ABAIXO.')
+          alert('ARQUIVO PROCESSADO COM SUCESSO! 💎✨ CONFERE OS ITENS ABAIXO.')
         }
       } catch (err) {
         console.error(err)
-        alert('ERRO AO LER FOTO. TENTE NOVAMENTE COM UMA FOTO MAIS NÍTIDA.')
+        alert('ERRO AO PROCESSAR ARQUIVO. CERTIFIQUE-SE DE QUE O DOCUMENTO É LEGÍVEL.')
       } finally {
         setIsReadingPhoto(false)
       }
@@ -110,9 +132,9 @@ export default function SuppliersPage() {
   }
 
   // 📄 FUNÇÃO PARA GERAR PDF DO ROMANEIO
-  const generatePDF = (supplierName: string, items: PurchaseItem[], total: number) => {
+  const generatePDF = (supplierName: string, items: PurchaseItem[], total: number, dateStr: string) => {
     const doc = new jsPDF()
-    const date = new Date().toLocaleDateString('pt-BR')
+    const formattedDate = dateStr.split('-').reverse().join('/')
 
     // Design Luxuoso (DNA da Marca)
     doc.setFontSize(22)
@@ -129,7 +151,7 @@ export default function SuppliersPage() {
     doc.setFontSize(12)
     doc.setTextColor(74, 50, 46)
     doc.text(`FORNECEDOR: ${supplierName}`, 20, 45)
-    doc.text(`DATA: ${date}`, 190, 45, { align: 'right' })
+    doc.text(`DATA DA COMPRA: ${formattedDate}`, 190, 45, { align: 'right' })
 
     const tableData = items.map(item => [
       item.name.toUpperCase(),
@@ -149,7 +171,7 @@ export default function SuppliersPage() {
       footStyles: { fillColor: [201, 144, 144], textColor: [255, 255, 255], fontStyle: 'bold' }
     })
 
-    doc.save(`romaneio-${supplierName.toLowerCase()}-${date.replace(/\//g, '-')}.pdf`)
+    doc.save(`romaneio-${supplierName.toLowerCase()}-${dateStr}.pdf`)
   }
 
   // 📄 FUNÇÃO PARA GERAR PDF DO ROMANEIO DA LOJA (ESTOQUE ATUAL)
@@ -211,11 +233,12 @@ export default function SuppliersPage() {
 
       const total = purchaseItems.reduce((acc, i) => acc + (i.quantity * i.unitCost), 0)
 
-      // 1. Criar Registro de Compra
+      // 1. Criar Registro de Compra com a Data selecionada
       const { data: purchase, error: pError } = await supabase.from('purchases').insert({
         user_id: user.id,
         supplier_id: selectedSupplier.id,
-        total_amount: total
+        total_amount: total,
+        created_at: new Date(purchaseDate).toISOString() // Forçar a data escolhida
       }).select().single()
 
       if (pError) throw pError
@@ -231,8 +254,8 @@ export default function SuppliersPage() {
         })
       }
 
-      generatePDF(selectedSupplier.name, purchaseItems, total)
-      alert('COMPRA FINALIZADA E ESTOQUE ATUALIZADO! 🚀💎')
+      generatePDF(selectedSupplier.name, purchaseItems, total, purchaseDate)
+      alert('COMPRA FINALIZADA COM SUCESSO! 🚀💎')
       setShowPurchaseModal(false)
       loadData()
     } catch (err) {
@@ -243,7 +266,7 @@ export default function SuppliersPage() {
     }
   }
 
-  async function handleAddSupplier() {
+  async function handleSaveSupplier() {
     if (!name || !category) return
 
     setIsSaving(true)
@@ -251,27 +274,29 @@ export default function SuppliersPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('No user found')
 
-      const { error } = await supabase.from('suppliers').insert({
+      const supplierData = {
         user_id: user.id,
         name: name.toUpperCase(),
         category: category.toUpperCase(),
         phone,
         link,
         notes
-      })
+      }
 
-      if (error) throw error
+      if (editingSupplier) {
+        const { error } = await supabase.from('suppliers').update(supplierData).eq('id', editingSupplier.id)
+        if (error) throw error
+        alert('FORNECEDOR ATUALIZADO COM SUCESSO! 💎')
+      } else {
+        const { error } = await supabase.from('suppliers').insert(supplierData)
+        if (error) throw error
+        alert('FORNECEDOR CADASTRADO COM SUCESSO! 💎')
+      }
 
-      setShowAddModal(false)
-      setName('')
-      setCategory('')
-      setPhone('')
-      setLink('')
-      setNotes('')
+      closeFormModal()
       loadData()
-      alert('FORNECEDOR CADASTRADO COM SUCESSO! 💎')
     } catch {
-      alert('ERRO AO CADASTRAR FORNECEDOR.')
+      alert('ERRO AO SALVAR FORNECEDOR.')
     } finally {
       setIsSaving(false)
     }
@@ -379,12 +404,20 @@ export default function SuppliersPage() {
                 </div>
               </div>
 
-              <button 
-                onClick={() => handleDeleteSupplier(s.id)}
-                className="absolute top-4 right-4 p-2 text-rose-200 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
-              >
-                <Trash2 size={16} />
-              </button>
+              <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                <button 
+                  onClick={() => openEditModal(s)}
+                  className="p-2 text-brand-secondary hover:text-brand-primary transition-all"
+                >
+                  <Pencil size={16} />
+                </button>
+                <button 
+                  onClick={() => handleDeleteSupplier(s.id)}
+                  className="p-2 text-rose-200 hover:text-rose-500 transition-all"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
             </div>
           ))
         ) : (
@@ -407,10 +440,10 @@ export default function SuppliersPage() {
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                {/* 🤖 BOTAO DE MÁGICA IA */}
+                {/* 🤖 BOTAO DE MÁGICA IA (FOTO OU PDF) */}
                 <label className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full border-2 border-brand-primary text-[9px] font-black uppercase tracking-widest transition-all ${isReadingPhoto ? 'bg-brand-primary/10 opacity-50' : 'hover:bg-brand-primary hover:text-white'}`}>
-                   {isReadingPhoto ? <Loader2 size={14} className="animate-spin" /> : <><Sparkles size={14} /> Ler Foto</>}
-                   <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} disabled={isReadingPhoto} />
+                   {isReadingPhoto ? <Loader2 size={14} className="animate-spin" /> : <><Sparkles size={14} /> Anexar Foto/PDF</>}
+                   <input type="file" className="hidden" accept="image/*,application/pdf" onChange={handlePhotoUpload} disabled={isReadingPhoto} />
                 </label>
 
                 <button onClick={() => setShowPurchaseModal(false)} className="p-3 hover:bg-rose-100 rounded-full text-brand-primary transition-all">
@@ -420,9 +453,23 @@ export default function SuppliersPage() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-8 space-y-4 bg-rose-50/5">
-              <div className="bg-brand-primary/5 p-4 rounded-3xl mb-4 border border-brand-primary/10">
-                <p className="text-[8px] font-black text-brand-primary uppercase tracking-widest mb-1 text-center">Instrução 💎</p>
-                <p className="text-[7px] text-brand-secondary font-bold uppercase text-center">Tire uma foto do romaneio impresso ou preencha manualmente os itens abaixo.</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="bg-brand-primary/5 p-4 rounded-3xl border border-brand-primary/10 flex items-center gap-4">
+                  <Calendar className="text-brand-primary" size={20} />
+                  <div className="flex-1">
+                    <label className="text-[8px] font-black text-brand-primary uppercase tracking-widest block mb-1">Data da Compra</label>
+                    <input 
+                      type="date" 
+                      className="bg-transparent border-none outline-none text-xs font-bold text-brand-primary w-full"
+                      value={purchaseDate}
+                      onChange={(e) => setPurchaseDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="bg-brand-primary/5 p-4 rounded-3xl border border-brand-primary/10 flex flex-col justify-center">
+                  <p className="text-[8px] font-black text-brand-primary uppercase tracking-widest mb-1 text-center">Instrução 💎</p>
+                  <p className="text-[7px] text-brand-secondary font-bold uppercase text-center">Anexe o arquivo ou preencha manualmente abaixo.</p>
+                </div>
               </div>
 
               {purchaseItems.map((item, index) => (
@@ -531,11 +578,13 @@ export default function SuppliersPage() {
         </div>
       )}
 
-      {/* ➕ MODAL DE ADICIONAR FORNECEDOR (EXISTENTE) */}
+      {/* ➕ MODAL DE ADICIONAR/EDITAR FORNECEDOR */}
       {showAddModal && (
         <div className="fixed inset-0 bg-brand-primary/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-md rounded-[40px] p-8 shadow-2xl animate-in fade-in zoom-in duration-300">
-            <h3 className="text-xl font-bold text-brand-primary uppercase mb-6 text-center">Cadastrar Fornecedor</h3>
+            <h3 className="text-xl font-bold text-brand-primary uppercase mb-6 text-center">
+              {editingSupplier ? 'Editar Fornecedor' : 'Cadastrar Fornecedor'}
+            </h3>
             
             <div className="space-y-4">
               <div>
@@ -596,17 +645,17 @@ export default function SuppliersPage() {
 
             <div className="flex gap-4 mt-8">
               <button 
-                onClick={() => setShowAddModal(false)}
+                onClick={closeFormModal}
                 className="flex-1 py-4 text-[9px] font-black uppercase text-brand-secondary tracking-widest"
               >
                 Cancelar
               </button>
               <button 
-                onClick={handleAddSupplier}
+                onClick={handleSaveSupplier}
                 disabled={isSaving}
                 className="flex-1 bg-brand-primary text-white py-4 rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-2"
               >
-                {isSaving ? <Loader2 className="animate-spin" size={14} /> : 'Salvar Fornecedor'}
+                {isSaving ? <Loader2 className="animate-spin" size={14} /> : editingSupplier ? 'Atualizar' : 'Salvar'}
               </button>
             </div>
           </div>

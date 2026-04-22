@@ -1,71 +1,51 @@
-import { NextResponse } from "next/server";
+import { GoogleGenerativeAI } from "@google/generative-ai"
+import { NextResponse } from "next/server"
 
-export const runtime = 'nodejs';
+export const runtime = 'nodejs'
+export const maxDuration = 30 
 
-/**
- * 💎 MOTOR LAPIDADO: IGNICAO DEFINITIVA 2026
- * Forçando v1beta e motor 1.5-flash para máxima compatibilidade.
- */
 export async function POST(req: Request) {
   try {
-    const geminiKey = (process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "").trim();
+    const geminiKey = (process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "").trim()
 
     if (!geminiKey) {
-      return NextResponse.json({ error: "FALHA_IGNICAO_2026", details: "Chave GEMINI_API_KEY não encontrada." }, { status: 401 });
+      return NextResponse.json({ error: "ERRO_CONFIG", details: "Chave API ausente." }, { status: 401 })
     }
 
-    const bodyText = await req.text();
-    if (!bodyText) return NextResponse.json({ error: "FALHA_IGNICAO_2026", details: "Corpo vazio." }, { status: 400 });
+    const payload = await req.json()
+    const { image } = payload
+    if (!image) return NextResponse.json({ error: "DADOS_AUSENTES" }, { status: 400 })
 
-    const payload = JSON.parse(bodyText);
-    const { image } = payload;
-    if (!image) return NextResponse.json({ error: "FALHA_IGNICAO_2026", details: "Sem imagem." }, { status: 400 });
+    // 🔄 MOTOR FINAL: gemini-1.5-flash (sem prefixos manuais)
+    const genAI = new GoogleGenerativeAI(geminiKey)
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
 
-    const base64Data = image.includes(",") ? image.split(",")[1] : image;
+    const mimeMatch = image.match(/data:(.*?);base64/)
+    const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg"
+    const base64Data = image.includes(",") ? image.split(",")[1] : image
     
-    // 🔄 CICLO: v1beta + gemini-1.5-flash (O ID mais compatível da história)
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
+    const prompt = "Analyze the jewellery. Return ONLY JSON: {\"name\": \"...\", \"category\": \"...\", \"description\": \"...\", \"material\": \"...\"}"
+
+    const result = await model.generateContent([
+      prompt,
+      { inlineData: { mimeType, data: base64Data } }
+    ])
+
+    const response = await result.response
+    const aiText = response.text().trim()
     
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: "Analyze the jewellery. Return ONLY JSON: {\"name\": \"...\", \"category\": \"...\", \"description\": \"...\", \"material\": \"...\"}" },
-            { inlineData: { mimeType: "image/jpeg", data: base64Data } }
-          ]
-        }],
-        generationConfig: { temperature: 0.1, maxOutputTokens: 300 }
-      })
-    });
+    const start = aiText.indexOf('{')
+    const end = aiText.lastIndexOf('}')
+    if (start === -1) throw new Error("IA_JSON_INVALIDO")
+    
+    const finalJson = aiText.substring(start, end + 1)
+    return NextResponse.json(JSON.parse(finalJson))
 
-    const responseText = await response.text();
-    let data;
-    try {
-      data = JSON.parse(responseText);
-    } catch (e) {
-      return NextResponse.json({ error: "FALHA_IGNICAO_2026", details: "Erro no parse do Google.", raw: responseText.substring(0, 50) }, { status: 500 });
-    }
-
-    if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
-      let aiText = data.candidates[0].content.parts[0].text.trim();
-      const start = aiText.indexOf('{');
-      const end = aiText.lastIndexOf('}');
-      const finalJson = (start !== -1 && end !== -1) ? aiText.substring(start, end + 1) : aiText;
-      return NextResponse.json(JSON.parse(finalJson));
-    }
-
+  } catch (error: any) {
+    console.error("ERRO IA:", error.message)
     return NextResponse.json({ 
-      error: "FALHA_IGNICAO_2026", 
-      details: data.error?.message || "O Google recusou a conexão.",
-      status: response.status
-    }, { status: 400 });
-
-  } catch (error: unknown) {
-    return NextResponse.json({ 
-      error: "FALHA_IGNICAO_2026", 
-      details: (error as Error).message 
-    }, { status: 500 });
+      error: "ERRO_MOTOR_FINAL", 
+      details: error.message 
+    }, { status: 500 })
   }
 }
