@@ -3,12 +3,13 @@ import { cookies } from 'next/headers'
 
 export async function createClient() {
   const cookieStore = await cookies()
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  // 💎 NEXUS: Prevenindo erro de build 'Invalid supabaseUrl'
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder'
 
   return createServerClient(
-    url || 'https://placeholder.supabase.co',
-    key || 'placeholder-key',
+    url,
+    key,
     {
       cookies: {
         getAll() {
@@ -20,8 +21,7 @@ export async function createClient() {
               cookieStore.set(name, value, options)
             )
           } catch {
-            // O método setAll pode ser chamado de Server Components,
-            // onde cookies não podem ser modificados.
+            // O método setAll pode ser chamado de Server Components, onde cookies não podem ser modificados.
           }
         },
       },
