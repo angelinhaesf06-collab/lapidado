@@ -9,6 +9,7 @@ import { CartProvider } from '@/lib/cart-context';
 import AdminBar from '@/components/admin-bar';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
+import { Toaster } from 'sonner';
 
 const montserrat = Montserrat({ 
   subsets: ["latin"], 
@@ -97,6 +98,7 @@ function RootLayoutContent({
         '--background': '#fffcfc'
       }}
     >
+      <Toaster position="top-center" richColors />
       <CartProvider>
         <AdminBar user={user} />
         <main className="flex-1">

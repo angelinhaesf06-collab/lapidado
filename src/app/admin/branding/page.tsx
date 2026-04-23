@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Phone, Camera, Loader2, Palette, Gem, Pencil } from 'lucide-react'
+import { Phone, Camera, Loader2, Palette, Gem, Pencil, Building2, CreditCard } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
 
@@ -17,6 +17,8 @@ export default function BrandingPage() {
   const [secondaryColor, setSecondaryColor] = useState('#c99090')
   const [phone, setPhone] = useState('')
   const [address, setAddress] = useState('')
+  const [taxId, setTaxId] = useState('')
+  const [stateRegistration, setStateRegistration] = useState('')
   const [tiktok, setTiktok] = useState('')
   const [instagram, setInstagram] = useState('')
   const [warrantyTime, setWarrantyTime] = useState('') 
@@ -32,10 +34,8 @@ export default function BrandingPage() {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
 
-        // 1. Tenta buscar a marca do usuário logado
         let { data } = await supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle()
 
-        // 2. Se não achou, tenta buscar a marca original (que está sem user_id) para migrar
         if (!data) {
           const { data: orphanedData } = await supabase.from('branding').select('*').is('user_id', null).limit(1).maybeSingle()
           data = orphanedData
@@ -49,8 +49,7 @@ export default function BrandingPage() {
           setTagline(text || '') 
           setInstallments(inst || '10')
           setTopBanner(banner || '')
-          setBusinessName(data.store_name || bName || '') // Prioriza store_name
-
+          setBusinessName(data.store_name || bName || '')
           setTiktok(data.website || '') 
           setWarrantyTime(data.tiktok || '') 
           setPrimaryColor(data.primary_color || '#4a322e')
@@ -59,8 +58,9 @@ export default function BrandingPage() {
           setPhone(data.phone || '')
           setAddress(data.address || '')
           setInstagram(data.instagram || '')
+          setTaxId(data.tax_id || '')
+          setStateRegistration(data.state_registration || '')
         }
-
       } catch (e: unknown) {
         console.error('Erro ao carregar marca', e)
       }
@@ -77,18 +77,12 @@ export default function BrandingPage() {
     reader.onload = async (event) => {
       const base64 = event.target?.result as string
       setLogo(base64)
-
       try {
-        const res = await fetch('/api/ai/colors', {
-          method: 'POST',
-          body: JSON.stringify({ image: base64 })
-        })
+        const res = await fetch('/api/ai/colors', { method: 'POST', body: JSON.stringify({ image: base64 }) })
         const colors = await res.json()
         if (colors.primary) setPrimaryColor(colors.primary)
         if (colors.secondary) setSecondaryColor(colors.secondary)
-      } catch (err) {
-        console.error('Erro na extração do DNA cromático', err)
-      }
+      } catch (err) { console.error('Erro na extração cromática', err) }
     }
     reader.readAsDataURL(file)
   }
@@ -107,24 +101,13 @@ export default function BrandingPage() {
       }
 
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Sessão expirada. Faça login novamente.')
+      if (!user) throw new Error('Sessão expirada.')
 
-      // 💎 Gerar SLUG amigável (ex: "Minha Loja" -> "minha-loja")
-      const slug = businessName
-        .toLowerCase()
-        .trim()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9]/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '')
+      const newSlug = businessName.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
 
       const response = await fetch('/api/admin/save', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer LAPIDADO_ADMIN_2026`
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer LAPIDADO_ADMIN_2026` },
         body: JSON.stringify({
           table: 'branding',
           id: brandingId,
@@ -132,155 +115,130 @@ export default function BrandingPage() {
             user_id: user.id, 
             business_name: businessName,
             store_name: businessName.toUpperCase(),
-            slug: slug, // 💎 NOVO: Slug para link único
+            slug: newSlug,
             facebook: `${tagline.toUpperCase()}|${installments}|${topBanner.toUpperCase()}|${businessName}`,
             tiktok: warrantyTime.toUpperCase(), 
-            website: tiktok, 
+            website: tagline.toUpperCase(), // Restaura para a vitrine ler aqui também
             instagram: instagram,
             primary_color: primaryColor,
             secondary_color: secondaryColor,
             logo_url: currentLogoUrl,
             phone: phone,
-            address: address
+            address: address,
+            tax_id: taxId,
+            state_registration: stateRegistration
           }
         })
       })
 
-      const contentType = response.headers.get('content-type')
-      if (!contentType || !contentType.includes('application/json')) {
-        const errorText = await response.text()
-        console.error('Erro detalhado:', errorText)
-        throw new Error('O servidor retornou um erro inesperado (HTML). Verifique as variáveis de ambiente no painel da Vercel.')
-      }
-
-      const result = await response.json()
-      if (!result.success) throw new Error(result.error)
-
-      alert('IDENTIDADE DA MARCA ATUALIZADA! 💎✨')
+      if (!response.ok) throw new Error('Falha ao salvar dados.')
+      alert('IDENTIDADE ATUALIZADA! 💎')
       window.location.reload()
-    } catch (err: unknown) {
-      const error = err instanceof Error ? err : new Error(String(err))
-      alert('ERRO AO SALVAR: ' + error.message.toUpperCase())
-    } finally {
-      setSaving(false)
-    }
+    } catch (err: any) {
+      alert('ERRO: ' + err.message)
+    } finally { setSaving(false) }
   }
 
   if (loading) return <div className="flex justify-center p-20"><Loader2 className="animate-spin text-brand-secondary" size={32} /></div>
 
   return (
-    <div className="max-w-4xl mx-auto py-4 px-5 pb-20">
-      <div className="text-center mb-6">
-        <h1 className="text-[7px] font-black text-brand-secondary uppercase tracking-[0.4em] mb-1">ESPAÇO DA EMPRESÁRIA</h1>
-        <h2 className="text-lg md:text-xl font-bold text-brand-primary uppercase tracking-tight">DNA da Marca</h2>
+    <div className="max-w-4xl mx-auto py-8 px-6 pb-24">
+      <div className="text-center mb-10">
+        <h1 className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.4em] mb-2">ESPAÇO DA EMPRESÁRIA</h1>
+        <h2 className="text-2xl md:text-3xl font-bold text-brand-primary uppercase tracking-tight">DNA da Marca</h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white p-5 rounded-[30px] border border-rose-50 shadow-sm space-y-3">
-          <div className="flex items-center gap-2 mb-1"><Palette className="text-brand-secondary" size={14} /><h3 className="text-[9px] font-bold text-brand-primary uppercase tracking-wider">Visual</h3></div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="bg-white p-8 rounded-[40px] border border-brand-secondary/10 shadow-sm space-y-6">
+          <div className="flex items-center gap-3 mb-2"><Palette className="text-brand-secondary" size={18} /><h3 className="text-xs font-bold text-brand-primary uppercase tracking-wider">Identidade Visual</h3></div>
           
-          <div className="flex flex-col items-center gap-3">
-            <div className="relative w-20 h-20 rounded-full overflow-hidden border border-dashed border-rose-200 flex items-center justify-center bg-rose-50/20 group">
-              {logo ? <Image src={logo} alt="LOGO" fill className="object-contain p-2" /> : <Camera size={18} className="text-brand-secondary/30" />}
-              <label className="absolute inset-0 cursor-pointer flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="relative w-28 h-28 rounded-full overflow-hidden border-2 border-dashed border-brand-secondary/20 flex items-center justify-center bg-brand-secondary/5 group">
+              {logo ? <Image src={logo} alt="LOGO" fill className="object-contain p-3" /> : <Camera size={24} className="text-brand-secondary/30" />}
+              <label className="absolute inset-0 cursor-pointer flex items-center justify-center bg-black/0 hover:bg-black/5 transition-all">
                 <input type="file" className="hidden" onChange={handleLogoUpload} accept="image/*" />
               </label>
             </div>
+            <p className="text-[9px] font-bold text-brand-secondary/40 uppercase tracking-widest">Clique para alterar logo</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-[6px] font-black text-brand-secondary uppercase block mb-1">Primária</label>
-              <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="w-full h-8 rounded-lg cursor-pointer border-0" />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-brand-secondary uppercase block ml-1">Cor Primária</label>
+              <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="w-full h-12 rounded-2xl cursor-pointer border-0 shadow-sm" />
             </div>
-            <div>
-              <label className="text-[6px] font-black text-brand-secondary uppercase block mb-1">Secundária</label>
-              <input type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} className="w-full h-8 rounded-lg cursor-pointer border-0" />
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-brand-secondary uppercase block ml-1">Cor Secundária</label>
+              <input type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} className="w-full h-12 rounded-2xl cursor-pointer border-0 shadow-sm" />
             </div>
           </div>
 
-          <div>
-            <label className="text-[6px] font-black text-brand-secondary uppercase block mb-1">Nome da Loja (Link WhatsApp)</label>
-            <input type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="Ex: Lapidado" className="w-full px-3 py-2 rounded-xl bg-rose-50/20 border border-transparent focus:border-brand-secondary outline-none text-[9px] font-bold text-brand-primary" />
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-brand-secondary uppercase block ml-1">Nome da Loja</label>
+            <input type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-brand-secondary/5 text-sm font-bold text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all" />
           </div>
 
-          <div>
-            <label className="text-[6px] font-black text-brand-secondary uppercase block mb-1">Frase de Impacto</label>
-            <input type="text" value={tagline} onChange={(e) => setTagline(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-rose-50/20 border border-transparent focus:border-brand-secondary outline-none text-[9px] text-[#7a5c58]" />
-          </div>
-
-          <div>
-            <label className="text-[6px] font-black text-brand-secondary uppercase block mb-1">Frase do Topo (Banner)</label>
-            <input type="text" value={topBanner} onChange={(e) => setTopBanner(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-brand-primary/10 border border-transparent focus:border-brand-primary outline-none text-[9px] font-bold text-brand-primary" />
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-brand-secondary uppercase block ml-1">Frase de Impacto (Slogan)</label>
+            <input type="text" value={tagline} onChange={(e) => setTagline(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-brand-secondary/5 text-sm font-medium text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all" />
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-[30px] border border-rose-50 shadow-sm space-y-3">
-          <div className="flex items-center gap-2 mb-1"><Phone className="text-brand-secondary" size={14} /><h3 className="text-[9px] font-bold text-brand-primary uppercase tracking-wider">Contatos</h3></div>
+        <div className="bg-white p-8 rounded-[40px] border border-brand-secondary/10 shadow-sm space-y-6">
+          <div className="flex items-center gap-3 mb-2"><Phone className="text-brand-secondary" size={18} /><h3 className="text-xs font-bold text-brand-primary uppercase tracking-wider">Dados e Contatos</h3></div>
 
-          <div className="space-y-2">
-            <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="WHATSAPP" className="w-full px-3 py-2 rounded-xl bg-rose-50/20 text-[9px] outline-none" />
-            <input type="text" value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="INSTAGRAM" className="w-full px-3 py-2 rounded-xl bg-rose-50/20 text-[9px] outline-none" />
-            <input type="text" value={tiktok} onChange={(e) => setTiktok(e.target.value)} placeholder="TIKTOK" className="w-full px-3 py-2 rounded-xl bg-rose-50/20 text-[9px] outline-none" />
-            <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="ENDEREÇO" className="w-full px-3 py-2 rounded-xl bg-rose-50/20 text-[9px] outline-none" />
-          </div>
-
-          <div className="pt-2 border-t border-rose-50 flex flex-col items-center gap-3">
-            <div className="relative w-full max-w-[150px]">
-              <label className="text-[6px] font-black text-brand-secondary uppercase block mb-1 text-center">Garantia</label>
-              <input 
-                type="text" 
-                value={warrantyTime} 
-                onChange={(e) => setWarrantyTime(e.target.value.toUpperCase())} 
-                placeholder="GARANTIA..."
-                className="w-full px-3 py-2 rounded-xl bg-brand-secondary text-white text-[9px] font-black text-center outline-none shadow-sm tracking-[0.1em] placeholder:text-white/60" 
-              />
-              <Pencil size={10} className="absolute right-2 top-[60%] -translate-y-1/2 text-white/60" />
+          <div className="space-y-4">
+            <div className="space-y-1">
+               <label className="text-[10px] font-black text-brand-secondary uppercase ml-1">WhatsApp da Loja</label>
+               <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(00) 00000-0000" className="w-full px-5 py-4 rounded-2xl bg-brand-secondary/5 text-sm outline-none" />
+            </div>
+            
+            <div className="space-y-1">
+               <label className="text-[10px] font-black text-brand-secondary uppercase ml-1">Endereço Físico</label>
+               <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-brand-secondary/5 text-sm outline-none" />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-brand-secondary uppercase ml-1">CNPJ ou CPF</label>
+                <input type="text" value={taxId} onChange={(e) => setTaxId(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-brand-primary/5 text-sm outline-none font-bold" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-brand-secondary uppercase ml-1">I.E. (Opcional)</label>
+                <input type="text" value={stateRegistration} onChange={(e) => setStateRegistration(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-brand-primary/5 text-sm outline-none font-bold" />
+              </div>
             </div>
 
-            <div className="relative w-full max-w-[150px]">
-              <label className="text-[6px] font-black text-brand-secondary uppercase block mb-1 text-center">Parcelamento Máx.</label>
-              <select 
-                value={installments} 
-                onChange={(e) => setInstallments(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-brand-primary text-white text-[9px] font-black text-center outline-none shadow-sm tracking-[0.1em] appearance-none cursor-pointer"
-              >
-                {[1,2,3,4,5,6,7,8,9,10,11,12].map(n => (
-                  <option key={n} value={n} className="bg-white text-brand-primary">{n}X SEM JUROS</option>
-                ))}
-              </select>
+            <div className="grid grid-cols-2 gap-4 pt-2">
+               <div className="space-y-1">
+                  <label className="text-[10px] font-black text-brand-secondary uppercase ml-1">Instagram</label>
+                  <input type="text" value={instagram} onChange={(e) => setInstagram(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-brand-secondary/5 text-sm outline-none" />
+               </div>
+               <div className="space-y-1">
+                  <label className="text-[10px] font-black text-brand-secondary uppercase ml-1">TikTok</label>
+                  <input type="text" value={tiktok} onChange={(e) => setTiktok(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-brand-secondary/5 text-sm outline-none" />
+               </div>
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-brand-secondary/10 flex items-center justify-between gap-4">
+            <div className="flex-1 space-y-2">
+               <label className="text-[10px] font-black text-brand-secondary uppercase block ml-1 text-center">Garantia das Joias</label>
+               <input type="text" value={warrantyTime} onChange={(e) => setWarrantyTime(e.target.value.toUpperCase())} className="w-full px-4 py-4 rounded-2xl bg-brand-secondary text-white text-xs font-black text-center outline-none shadow-md" />
+            </div>
+            <div className="flex-1 space-y-2">
+               <label className="text-[10px] font-black text-brand-secondary uppercase block ml-1 text-center">Parcelamento Máx</label>
+               <select value={installments} onChange={(e) => setInstallments(e.target.value)} className="w-full px-4 py-4 rounded-2xl bg-brand-primary text-white text-xs font-black text-center outline-none shadow-md appearance-none">
+                 {[1,2,3,4,5,6,8,10,12].map(n => <option key={n} value={n} className="text-brand-primary bg-white">{n}X SEM JUROS</option>)}
+               </select>
             </div>
           </div>
         </div>
       </div>
 
-      {slug && (
-        <div className="mt-8 bg-brand-primary/5 border border-brand-primary/10 rounded-[30px] p-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <h3 className="text-[8px] font-black text-brand-primary uppercase tracking-[0.3em] mb-2">Link do seu Catálogo 💎</h3>
-          <div className="flex flex-col md:flex-row items-center justify-center gap-3">
-            <code className="bg-white px-4 py-2 rounded-xl text-[10px] font-bold text-brand-primary border border-brand-primary/10 break-all">
-              https://www.lapidado.com.br/?catalogo=true&loja={slug}
-            </code>
-            <button 
-              onClick={() => {
-                navigator.clipboard.writeText(`https://www.lapidado.com.br/?catalogo=true&loja=${slug}`)
-                alert('LINK COPIADO! 🚀')
-              }}
-              className="px-4 py-2 bg-brand-primary text-white text-[8px] font-black uppercase rounded-xl hover:scale-105 transition-all shadow-md"
-            >
-              Copiar Link
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className="flex justify-center mt-10 w-full px-4">
-        <button 
-          onClick={handleSave} 
-          disabled={saving} 
-          className="w-full max-w-[280px] py-4 rounded-[20px] bg-brand-primary text-white text-[9px] font-black uppercase tracking-widest shadow-xl hover:opacity-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-        >
-          {saving ? <Loader2 className="animate-spin" size={16} /> : <><Gem size={16} /> <span>SALVAR IDENTIDADE DA MARCA</span></>}
+      <div className="flex justify-center mt-12">
+        <button onClick={handleSave} disabled={saving} className="w-full max-w-sm py-5 rounded-[25px] bg-brand-primary text-white text-xs font-black uppercase tracking-[0.2em] shadow-2xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50">
+          {saving ? <Loader2 className="animate-spin" size={20} /> : <><Gem size={20} /> SALVAR IDENTIDADE DA MARCA</>}
         </button>
       </div>
     </div>

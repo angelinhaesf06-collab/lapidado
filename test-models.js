@@ -4,6 +4,7 @@ require('dotenv').config();
 async function listModels() {
   const apiKey = process.env.GEMINI_API_KEY;
   const url = `https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`;
+  console.log("URL de teste (chave mascarada):", url.replace(apiKey, apiKey ? apiKey.substring(0, 5) + "..." : "MISSING"));
   
   try {
     const res = await fetch(url);

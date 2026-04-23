@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { ShoppingCart, Loader2, ArrowLeft, Search, Check, Trash2, Plus, TrendingUp } from 'lucide-react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { ShoppingCart, Loader2, ArrowLeft, Search, Check, Trash2, Plus, TrendingUp, CreditCard, Banknote, FileText, CheckCircle2, Printer, X, ShieldCheck, Gem, Phone } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
+import { toast } from 'sonner'
 import { 
   AreaChart, 
   Area, 
@@ -21,7 +22,17 @@ interface Sale {
   quantity: number
   sale_price: number
   cost_price: number
-  customer_name: string
+  payment_method: string
+  installments: number
+  status: 'pago' | 'pendente'
+  total_value: number
+  customer_id: string
+  customers: {
+    name: string
+    cpf: string
+    address: string
+    phone: string
+  }
   products: {
     name: string
     image_url: string
@@ -38,343 +49,312 @@ interface Product {
   categories?: { name: string }
 }
 
+interface Customer {
+  id: string
+  name: string
+}
+
 interface Category {
   id: string
   name: string
+}
+
+interface Branding {
+  business_name: string
+  tax_id: string
+  state_registration: string
+  phone: string
+  address: string
+  logo_url: string
+  tiktok: string 
 }
 
 export default function SalesPage() {
   const [sales, setSales] = useState<Sale[]>([])
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showReceipt, setShowReceipt] = useState<Sale | null>(null)
+  const [branding, setBranding] = useState<Branding | null>(null)
   const [products, setProducts] = useState<Product[]>([])
+  const [customers, setCustomers] = useState<Customer[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [activeCategory, setActiveCategory] = useState('Todas')
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().substring(0, 7)) // YYYY-MM
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().substring(0, 7))
   
   const supabase = createClient()
+  const receiptRef = useRef<HTMLDivElement>(null)
 
-  // Estado para nova venda
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [quantity, setQuantity] = useState(1)
-  const [customerName, setCustomerName] = useState('')
+  const [customerId, setCustomerId] = useState('')
+  const [paymentMethod, setPaymentMethod] = useState('cartao')
+  const [installments, setInstallments] = useState(1)
   const [isSaving, setIsSaving] = useState(false)
 
   const loadSales = useCallback(async () => {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-
     const { data } = await supabase
       .from('sales')
-      .select('*, products(name, image_url)')
+      .select('*, products(name, image_url), customers(name, cpf, address, phone)')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-    
     if (data) setSales(data as unknown as Sale[])
     setLoading(false)
+  }, [supabase])
+
+  const loadBranding = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const { data } = await supabase.from('branding').select('*').eq('user_id', user.id).single()
+    if (data) setBranding(data)
   }, [supabase])
 
   const loadProducts = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-
     const { data } = await supabase
       .from('products')
       .select('*, categories(name)')
       .eq('user_id', user.id)
       .gt('stock_quantity', 0)
       .order('name')
-    
     if (data) setProducts(data as unknown as Product[])
   }, [supabase])
 
-  const loadCategories = useCallback(async () => {
-    const { data } = await supabase.from('categories').select('*').order('name')
-    if (data) setCategories(data as Category[])
+  const loadCustomers = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const { data } = await supabase.from('customers').select('id, name').eq('user_id', user.id).order('name')
+    if (data) setCustomers(data)
   }, [supabase])
 
   useEffect(() => {
     loadSales()
+    loadBranding()
     loadProducts()
-    loadCategories()
-  }, [loadSales, loadProducts, loadCategories])
+    loadCustomers()
+    const { data } = supabase.from('categories').select('*').order('name')
+    if (data) setCategories(data as Category[])
+  }, [loadSales, loadBranding, loadProducts, loadCustomers, supabase])
+
+  async function handleToggleStatus(sale: Sale) {
+    const newStatus = sale.status === 'pago' ? 'pendente' : 'pago'
+    try {
+      const { error } = await supabase.from('sales').update({ status: newStatus }).eq('id', sale.id)
+      if (error) throw error
+      toast.success(`Status atualizado!`)
+      loadSales()
+    } catch { toast.error('Erro ao atualizar.') }
+  }
 
   async function handleDeleteSale(id: string) {
-    if (!confirm('DESEJA REALMENTE EXCLUIR ESTA VENDA? 💎\nISSO NÃO DEVOLVE O ITEM AO ESTOQUE AUTOMATICAMENTE.')) return
-
+    if (!confirm('Excluir esta venda?')) return
     try {
       const { error } = await supabase.from('sales').delete().eq('id', id)
       if (error) throw error
-      
-      setSales(sales.filter(s => s.id !== id))
-      alert('VENDA EXCLUÍDA COM SUCESSO!')
-    } catch {
-      alert('ERRO AO EXCLUIR VENDA.')
-    }
+      toast.success('Venda excluída!')
+      loadSales()
+    } catch { toast.error('Erro ao excluir.') }
   }
 
   async function handleRegisterSale() {
-    if (!selectedProduct || quantity <= 0) return
-
-    if (quantity > selectedProduct.stock_quantity) {
-      alert(`ESTOQUE INSUFICIENTE! VOCÊ TEM APENAS ${selectedProduct.stock_quantity} PEÇAS. 💎`)
-      return
-    }
-
-    const isLastPiece = selectedProduct.stock_quantity === quantity
-    if (isLastPiece) {
-      if (!confirm('ESTA É A ÚLTIMA PEÇA DESTE ITEM NO ESTOQUE! 💎\nAPÓS ESTA VENDA, ELA SUMIRÁ AUTOMATICAMENTE DO SEU CATÁLOGO PÚBLICO ATÉ QUE VOCÊ ADICIONE MAIS ESTOQUE.\n\nDESEJA CONTINUAR?')) return
-    }
-
+    if (!selectedProduct || !customerId) return toast.error('Dados incompletos!')
     setIsSaving(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('No user found')
-
-      const { error: saleError } = await supabase.from('sales').insert({
-        product_id: selectedProduct.id,
-        user_id: user.id,
-        quantity,
-        sale_price: selectedProduct.price,
-        cost_price: selectedProduct.cost_price || 0, // 💎 NEXUS: Usando a nova coluna oficial
-        customer_name: customerName
-      })
-
+      if (!user) throw new Error('No user')
+      const totalValue = selectedProduct.price * quantity
+      const { data: saleData, error: saleError } = await supabase.from('sales').insert({
+        product_id: selectedProduct.id, user_id: user.id, customer_id: customerId, quantity,
+        sale_price: selectedProduct.price, cost_price: selectedProduct.cost_price || 0,
+        payment_method: paymentMethod, installments: paymentMethod === 'dinheiro' ? 1 : installments,
+        total_value: totalValue, status: 'pendente'
+      }).select().single()
       if (saleError) throw saleError
 
-      const { error: stockError } = await supabase
-        .from('products')
-        .update({ stock_quantity: selectedProduct.stock_quantity - quantity })
-        .eq('id', selectedProduct.id)
+      const numI = paymentMethod === 'dinheiro' ? 1 : installments
+      const instV = parseFloat((totalValue / numI).toFixed(2))
+      const instR = []
+      for (let i = 1; i <= numI; i++) {
+        const d = new Date(); d.setDate(d.getDate() + (30 * i))
+        instR.push({ sale_id: saleData.id, user_id: user.id, installment_number: i, value: i === numI ? totalValue - (instV * (numI - 1)) : instV, status: 'pendente', due_date: d.toISOString() })
+      }
+      await supabase.from('installments').insert(instR)
+      await supabase.from('products').update({ stock_quantity: selectedProduct.stock_quantity - quantity }).eq('id', selectedProduct.id)
 
-      if (stockError) throw stockError
-
-      setShowAddModal(false)
-      setSelectedProduct(null)
-      setQuantity(1)
-      setCustomerName('')
-      loadSales()
-      loadProducts()
-      alert('VENDA REGISTRADA COM SUCESSO! 💎')
-    } catch {
-      alert('ERRO AO REGISTRAR VENDA.')
-    } finally {
-      setIsSaving(false)
-    }
+      setShowAddModal(false); setSelectedProduct(null); setCustomerId(''); loadSales(); loadProducts();
+      toast.success('Venda Registrada! 💎')
+    } catch (err: any) { toast.error(err.message) } finally { setIsSaving(false) }
   }
 
-  const filteredProducts = products.filter(p => {
-    const matchesCategory = activeCategory === 'Todas' || p.categories?.name === activeCategory
-    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesCategory && matchesSearch
-  })
+  const handleWhatsApp = (sale: Sale) => {
+    if (!sale.customers?.phone) return toast.error('Cadastre o WhatsApp da cliente!')
+    const cleanPhone = sale.customers.phone.replace(/\D/g, '')
+    const msg = encodeURIComponent(`Olá ${sale.customers.name}! 💎\n\nAqui está o comprovante da sua compra na *${branding?.business_name}*:\n\n💍 *Peça:* ${sale.products.name}\n💰 *Valor:* R$ ${sale.total_value.toLocaleString('pt-BR')}\n💳 *Pagamento:* ${sale.payment_method}\n📜 *Garantia:* ${branding?.tiktok || '1 ano'}\n\nObrigado! ✨`)
+    window.open(`https://api.whatsapp.com/send?phone=55${cleanPhone}&text=${msg}`, '_blank')
+  }
 
   const filteredSales = sales.filter(sale => sale.created_at.startsWith(selectedMonth))
+  const [pendingReceivables, setPendingReceivables] = useState(0)
 
-  const totalRevenue = filteredSales.reduce((acc, sale) => acc + (sale.sale_price * sale.quantity), 0)
-  const totalProfit = filteredSales.reduce((acc, sale) => acc + ((sale.sale_price - sale.cost_price) * sale.quantity), 0)
-
-  // 📈 Dados para o Gráfico (Últimos 6 meses)
-  const chartData = useMemo(() => {
-    const months = []
-    const now = new Date(selectedMonth + '-01')
-    
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-      const monthStr = d.toISOString().substring(0, 7)
-      
-      const monthlyRevenue = sales
-        .filter(s => s.created_at.startsWith(monthStr))
-        .reduce((acc, s) => acc + (s.sale_price * s.quantity), 0)
-      
-      months.push({
-        name: d.toLocaleDateString('pt-BR', { month: 'short' }).toUpperCase(),
-        faturamento: monthlyRevenue
-      })
+  useEffect(() => {
+    async function loadRec() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data } = await supabase.from('installments').select('value').eq('user_id', user.id).eq('status', 'pendente').gte('due_date', `${selectedMonth}-01`).lte('due_date', `${selectedMonth}-31`)
+      setPendingReceivables(data?.reduce((acc, curr) => acc + Number(curr.value), 0) || 0)
     }
-    return months
-  }, [sales, selectedMonth])
+    loadRec()
+  }, [supabase, selectedMonth, sales])
 
   return (
-    <div className="max-w-5xl mx-auto pb-20">
-      <div className="text-center mb-16">
-        <h2 className="text-3xl font-bold tracking-tight uppercase text-brand-primary">Gestão de Vendas</h2>
-        <p className="text-brand-secondary text-[10px] font-black tracking-[0.4em] uppercase mt-2">Sua vitrine de sucessos reais 💰</p>
-      </div>
-
-      <div className="flex justify-center mb-10">
-        <div className="bg-white px-6 py-3 rounded-[30px] border border-brand-secondary/10 shadow-sm flex items-center gap-4">
-          <span className="text-[9px] font-black text-brand-primary uppercase tracking-widest">RELATÓRIO DE:</span>
-          <input 
-            type="month" 
-            value={selectedMonth} 
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="bg-rose-50/50 border-none text-xs font-bold text-brand-primary uppercase outline-none focus:ring-0"
-          />
+    <div className="max-w-5xl mx-auto pb-20 print:p-0">
+      <div className="print:hidden">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-black uppercase text-brand-primary tracking-tighter">Gestão de Vendas</h2>
+          <p className="text-[10px] font-black tracking-[0.3em] text-brand-secondary/60 uppercase">Controle Financeiro 💎</p>
         </div>
-      </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-8">
-        <div className="bg-white p-6 rounded-[30px] border border-brand-secondary/10 shadow-sm text-center">
-          <p className="text-[7px] font-black text-brand-secondary uppercase tracking-widest mb-1">Faturamento {selectedMonth}</p>
-          <h4 className="text-xl font-bold text-brand-primary">R$ {totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h4>
-        </div>
-        <div className="bg-brand-primary p-6 rounded-[30px] text-center shadow-lg">
-          <p className="text-[7px] font-black text-brand-secondary/80 uppercase tracking-widest mb-1">Lucro Real {selectedMonth}</p>
-          <h4 className="text-xl font-bold text-white">R$ {totalProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h4>
-        </div>
-      </div>
-
-      {/* 📊 GRÁFICO DE PERFORMANCE */}
-      <div className="bg-white p-8 rounded-[40px] border border-brand-secondary/10 shadow-sm mb-10">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="p-2 bg-brand-primary/10 rounded-xl text-brand-primary"><TrendingUp size={18} /></div>
-          <div>
-            <h3 className="text-[10px] font-black text-brand-primary uppercase tracking-widest">Desempenho Semestral</h3>
-            <p className="text-[7px] font-bold text-brand-secondary uppercase">Evolução do seu faturamento real</p>
+        <div className="flex justify-center mb-10 gap-4">
+          <div className="bg-white px-6 py-3 rounded-full border border-brand-secondary/10 shadow-sm flex items-center gap-4">
+            <input type="month" value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="bg-transparent border-none text-xs font-black text-brand-primary uppercase outline-none" />
           </div>
         </div>
-        
-        <div className="h-[200px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData}>
-              <defs>
-                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#4a322e" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#4a322e" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f1f1" />
-              <XAxis 
-                dataKey="name" 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{fontSize: 8, fontWeight: 900, fill: '#c99090'}} 
-                dy={10}
-              />
-              <YAxis hide />
-              <Tooltip 
-                contentStyle={{ 
-                  borderRadius: '20px', 
-                  border: 'none', 
-                  boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-                  fontSize: '10px',
-                  fontWeight: 'bold',
-                  textTransform: 'uppercase'
-                }} 
-              />
-              <Area 
-                type="monotone" 
-                dataKey="faturamento" 
-                stroke="#4a322e" 
-                strokeWidth={3}
-                fillOpacity={1} 
-                fill="url(#colorRevenue)" 
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+          <div className="bg-white p-6 rounded-[30px] border border-brand-secondary/10 text-center"><p className="text-[7px] font-black text-brand-secondary uppercase mb-1">Vendido</p><h4 className="text-xl font-bold text-brand-primary">R$ {filteredSales.reduce((acc, s) => acc + (s.total_value || 0), 0).toLocaleString('pt-BR')}</h4></div>
+          <div className="bg-amber-500 p-6 rounded-[30px] text-center shadow-lg"><p className="text-[7px] font-black text-white/80 uppercase mb-1">A Receber</p><h4 className="text-xl font-bold text-white">R$ {pendingReceivables.toLocaleString('pt-BR')}</h4></div>
+          <div className="bg-brand-primary p-6 rounded-[30px] text-center shadow-lg"><p className="text-[7px] font-black text-white/80 uppercase mb-1">Lucro Estimado</p><h4 className="text-xl font-bold text-white">R$ {filteredSales.reduce((acc, s) => acc + (((s.sale_price - s.cost_price) * s.quantity) || 0), 0).toLocaleString('pt-BR')}</h4></div>
+        </div>
+
+        <button onClick={() => setShowAddModal(true)} className="w-full bg-brand-primary text-white py-5 rounded-[25px] font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-xl mb-12"><Plus size={18} /> Nova Venda Real</button>
+
+        <div className="space-y-3">
+          {filteredSales.map((sale) => (
+            <div key={sale.id} className={`bg-white p-4 rounded-[25px] border flex items-center gap-4 group ${sale.status === 'pago' ? 'border-green-100 bg-green-50/10' : 'border-brand-secondary/5 shadow-sm'}`}>
+              <div className="w-12 h-12 rounded-xl overflow-hidden relative border border-brand-secondary/10 bg-rose-50/30">
+                {sale.products?.image_url && <Image src={sale.products.image_url} alt="" fill className="object-cover" />}
+              </div>
+              <div className="flex-1">
+                <h4 className="text-[10px] font-black text-brand-primary uppercase truncate max-w-[200px]">{sale.products?.name}</h4>
+                <p className="text-[8px] font-bold text-brand-secondary/50 uppercase">{sale.customers?.name} • {new Date(sale.created_at).toLocaleDateString('pt-BR')}</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <p className="text-xs font-black text-brand-primary">R$ {sale.total_value.toLocaleString('pt-BR')}</p>
+                  <button onClick={() => handleToggleStatus(sale)} className={`text-[6px] font-black uppercase px-2 py-0.5 rounded-full border ${sale.status === 'pago' ? 'bg-green-500 text-white' : 'text-brand-secondary/40'}`}>{sale.status === 'pago' ? 'PAGO' : 'PENDENTE'}</button>
+                </div>
+                <button onClick={() => setShowReceipt(sale)} className="p-2.5 bg-brand-secondary/5 text-brand-primary rounded-xl hover:bg-brand-primary hover:text-white transition-all"><Printer size={16} /></button>
+                <button onClick={() => handleDeleteSale(sale.id)} className="p-2 text-rose-200 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={16} /></button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      <button 
-        onClick={() => setShowAddModal(true)}
-        className="w-full bg-brand-primary text-white py-5 rounded-[25px] font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-xl hover:bg-brand-secondary transition-all mb-10"
-      >
-        <Plus size={18} /> Selecionar Peça e Vender
-      </button>
-
-      <div className="space-y-4">
-        <h3 className="text-[9px] font-black text-brand-primary uppercase tracking-[0.3em] mb-4 ml-2">Vendas em {selectedMonth}</h3>
-        {loading ? (
-          <div className="flex justify-center py-20"><Loader2 className="animate-spin text-brand-secondary" /></div>
-        ) : (
-          filteredSales.map((sale) => (
-            <div key={sale.id} className="bg-white p-4 rounded-[30px] border border-brand-secondary/5 shadow-sm flex items-center gap-4 group">
-              <div className="w-14 h-14 rounded-2xl overflow-hidden bg-brand-secondary/5 relative">
-                <Image src={sale.products?.image_url || ''} alt="" fill className="object-cover" />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-[10px] font-bold text-brand-primary uppercase">{sale.products?.name}</h4>
-                <div className="flex items-center gap-3 text-[8px] text-brand-secondary/60 uppercase font-black tracking-widest">
-                  <span>{new Date(sale.created_at).toLocaleDateString('pt-BR')}</span>
-                  {sale.customer_name && <span>• {sale.customer_name}</span>}
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="text-right">
-                  <p className="text-xs font-bold text-brand-primary">R$ {(sale.sale_price * sale.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                </div>
-                <button 
-                  onClick={() => handleDeleteSale(sale.id)}
-                  className="p-2 text-rose-200 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-all opacity-0 group-hover:opacity-100"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
+      {/* 📄 COMPROVANTE ENXUTO 💎 */}
+      {showReceipt && (
+        <div className="fixed inset-0 bg-white z-[300] flex flex-col p-8 md:p-12 print:p-0">
+          <div className="max-w-xl mx-auto w-full space-y-8">
+            <div className="flex justify-between items-center print:hidden border-b border-brand-secondary/10 pb-6 mb-4">
+               <button onClick={() => setShowReceipt(null)} className="p-2 bg-brand-secondary/5 rounded-full text-brand-primary"><ArrowLeft size={20} /></button>
+               <div className="flex gap-4">
+                  <button onClick={() => handleWhatsApp(showReceipt)} className="bg-[#25D366] text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase flex items-center gap-2"><Phone size={14} /> WhatsApp</button>
+                  <button onClick={() => window.print()} className="bg-brand-primary text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase flex items-center gap-2"><Printer size={14} /> Imprimir</button>
+               </div>
             </div>
-          ))
-        )}
-      </div>
 
+            <div className="space-y-10">
+               <div className="text-center space-y-2">
+                  <h1 className="text-2xl font-black text-brand-primary uppercase tracking-tighter">{branding?.business_name}</h1>
+                  <p className="text-[10px] font-bold text-brand-secondary/60 uppercase">{branding?.tax_id && `CNPJ/CPF: ${branding.tax_id}`} {branding?.state_registration && `• IE: ${branding.state_registration}`}</p>
+                  <p className="text-[10px] font-bold text-brand-secondary/60 uppercase">{branding?.address}</p>
+               </div>
+
+               <div className="bg-brand-secondary/5 p-6 rounded-3xl space-y-4">
+                  <div className="flex justify-between items-end border-b border-brand-primary/10 pb-4">
+                     <div><p className="text-[8px] font-black text-brand-primary/40 uppercase mb-1">Cliente</p><p className="text-sm font-black text-brand-primary uppercase">{showReceipt.customers?.name}</p></div>
+                     <div className="text-right"><p className="text-[8px] font-black text-brand-primary/40 uppercase mb-1">Data</p><p className="text-xs font-bold text-brand-primary">{new Date(showReceipt.created_at).toLocaleDateString('pt-BR')}</p></div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                     <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg overflow-hidden relative border border-white shadow-sm"><Image src={showReceipt.products.image_url} alt="" fill className="object-cover" /></div>
+                        <div><p className="text-xs font-black text-brand-primary uppercase">{showReceipt.products.name}</p><p className="text-[9px] font-bold text-brand-secondary/50 uppercase">{showReceipt.quantity} unidade(s)</p></div>
+                     </div>
+                     <div className="text-right"><p className="text-[8px] font-black text-brand-primary/40 uppercase mb-1">Total</p><p className="text-lg font-black text-brand-primary">R$ {showReceipt.total_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p></div>
+                  </div>
+               </div>
+
+               <div className="border-t border-dashed border-brand-secondary/20 pt-6">
+                  <p className="text-[9px] font-black text-brand-primary uppercase tracking-widest mb-3 flex items-center gap-2"><ShieldCheck size={14} /> Certificado de Garantia</p>
+                  <p className="text-[9px] text-brand-secondary/60 font-medium uppercase leading-relaxed text-justify">
+                    A marca *{branding?.business_name}* garante esta joia contra defeitos de fabricação e no banho pelo período de **{branding?.tiktok || '1 ano'}**. Esta garantia não cobre danos por mau uso, quebras ou contato com agentes químicos.
+                  </p>
+               </div>
+
+               <div className="text-center pt-8 opacity-20"><Gem className="mx-auto" size={24} /></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE ADICIONAR (UNCHANGED CODE ...) */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-brand-primary/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-4xl h-[85vh] rounded-[40px] flex flex-col shadow-2xl overflow-hidden">
-            <div className="p-8 border-b border-brand-secondary/10 flex flex-col md:flex-row justify-between items-center gap-6">
-              <div className="flex items-center gap-4">
-                <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-brand-secondary/5 rounded-full"><ArrowLeft size={20} /></button>
-                <h3 className="text-lg font-bold text-brand-primary uppercase">Escolha a Joia</h3>
-              </div>
-              <div className="flex items-center gap-4 w-full md:w-auto">
-                <div className="relative flex-1">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-secondary/40" size={16} />
-                  <input type="text" placeholder="BUSCAR NOME..." className="w-full pl-12 pr-4 py-3 rounded-2xl bg-rose-50/30 border border-brand-secondary/10 text-[10px] font-bold uppercase" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                </div>
-                <select className="p-3 rounded-2xl bg-rose-50/30 border border-brand-secondary/10 text-[10px] font-bold uppercase outline-none" value={activeCategory} onChange={(e) => setActiveCategory(e.target.value)}>
-                  <option value="Todas">TODAS</option>
-                  {categories.map(cat => <option key={cat.id} value={cat.name}>{cat.name.toUpperCase()}</option>)}
-                </select>
-              </div>
-            </div>
+        <div className="fixed inset-0 bg-brand-primary/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-4xl h-[85vh] rounded-[40px] flex flex-col overflow-hidden shadow-2xl">
+             <div className="p-6 border-b border-brand-secondary/10 flex justify-between items-center">
+                <h3 className="text-sm font-black text-brand-primary uppercase tracking-widest flex items-center gap-3"><ShoppingCart size={18} /> Nova Venda Real</h3>
+                <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-rose-50 rounded-full"><X size={20} /></button>
+             </div>
+             
+             <div className="flex-1 overflow-y-auto p-6 grid grid-cols-2 sm:grid-cols-4 gap-4 bg-rose-50/10">
+                {products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).map(p => (
+                  <button key={p.id} onClick={() => setSelectedProduct(p)} className={`p-3 rounded-[30px] border transition-all ${selectedProduct?.id === p.id ? 'bg-brand-primary border-brand-primary scale-105 shadow-xl' : 'bg-white border-brand-secondary/5'}`}>
+                    <div className="aspect-square w-full rounded-[20px] overflow-hidden mb-2 relative">
+                      <Image src={p.image_url} alt="" fill className="object-cover" />
+                      {selectedProduct?.id === p.id && <div className="absolute inset-0 bg-brand-primary/40 flex items-center justify-center text-white"><Check size={28} /></div>}
+                    </div>
+                    <p className={`text-[8px] font-black uppercase truncate ${selectedProduct?.id === p.id ? 'text-white' : 'text-brand-primary'}`}>{p.name}</p>
+                    <p className={`text-[7px] font-bold ${selectedProduct?.id === p.id ? 'text-white/60' : 'text-brand-secondary/40'}`}>R$ {p.price.toLocaleString('pt-BR')}</p>
+                  </button>
+                ))}
+             </div>
 
-            <div className="flex-1 overflow-y-auto p-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 bg-rose-50/10">
-              {filteredProducts.map(p => (
-                <button key={p.id} onClick={() => setSelectedProduct(p)} className={`flex flex-col items-center p-4 rounded-[30px] border transition-all ${selectedProduct?.id === p.id ? 'bg-brand-primary border-brand-primary shadow-xl scale-105' : 'bg-white border-brand-secondary/10 hover:border-brand-primary'}`}>
-                  <div className="aspect-square w-full rounded-2xl overflow-hidden mb-4 relative shadow-sm">
-                    <Image src={p.image_url} alt="" fill className="object-cover" />
-                    {selectedProduct?.id === p.id && <div className="absolute inset-0 bg-brand-primary/40 flex items-center justify-center text-white"><Check size={32} /></div>}
-                  </div>
-                  <h4 className={`text-[9px] font-bold uppercase tracking-widest text-center mb-1 truncate w-full ${selectedProduct?.id === p.id ? 'text-white' : 'text-brand-primary'}`}>{p.name}</h4>
-                  <p className={`text-[8px] font-black uppercase ${selectedProduct?.id === p.id ? 'text-white/70' : 'text-brand-secondary'}`}>{p.stock_quantity} EM ESTOQUE</p>
-                </button>
-              ))}
-            </div>
-
-            {selectedProduct && (
-              <div className="p-8 border-t border-brand-secondary/10 bg-white animate-in slide-in-from-bottom duration-500">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                  <div className="flex items-center gap-6">
-                    <div className="w-16 h-16 rounded-2xl overflow-hidden relative border border-brand-secondary/10"><Image src={selectedProduct.image_url} alt="" fill className="object-cover" /></div>
-                    <div>
-                      <h4 className="text-xs font-bold text-brand-primary uppercase">{selectedProduct.name}</h4>
-                      <p className="text-lg font-light text-brand-primary">R$ {selectedProduct.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+             {selectedProduct && (
+               <div className="p-6 bg-white border-t border-brand-secondary/10 space-y-4 animate-in slide-in-from-bottom duration-500">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                       <select className="w-full p-4 rounded-2xl bg-brand-secondary/5 border-none text-[10px] font-black uppercase outline-none focus:ring-2 focus:ring-brand-primary" value={customerId} onChange={e => setCustomerId(e.target.value)}>
+                          <option value="">SELECIONE A CLIENTE</option>
+                          {customers.map(c => <option key={c.id} value={c.id}>{c.name.toUpperCase()}</option>)}
+                       </select>
+                       <div className="flex gap-2">
+                          {['cartao', 'promissoria', 'dinheiro'].map(m => (
+                             <button key={m} onClick={() => setPaymentMethod(m)} className={`flex-1 py-3 rounded-xl border text-[8px] font-black uppercase transition-all ${paymentMethod === m ? 'bg-brand-primary border-brand-primary text-white' : 'bg-white border-brand-secondary/10 text-brand-secondary/40'}`}>{m}</button>
+                          ))}
+                       </div>
+                    </div>
+                    <div className="space-y-4">
+                       <div className="flex items-center justify-between gap-4">
+                          <div className="flex-1">
+                             <label className="text-[7px] font-black uppercase text-brand-secondary/40 ml-2">Parcelas</label>
+                             <input type="number" min="1" max="12" className="w-full p-3 rounded-xl bg-brand-secondary/5 text-xs font-black outline-none" value={installments} onChange={e => setInstallments(Number(e.target.value))} disabled={paymentMethod === 'dinheiro'} />
+                          </div>
+                          <div className="flex-1">
+                             <label className="text-[7px] font-black uppercase text-brand-secondary/40 ml-2">Qtd</label>
+                             <input type="number" min="1" className="w-full p-3 rounded-xl bg-brand-secondary/5 text-xs font-black outline-none" value={quantity} onChange={e => setQuantity(Number(e.target.value))} />
+                          </div>
+                       </div>
+                       <button onClick={handleRegisterSale} disabled={isSaving} className="w-full bg-brand-primary text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 disabled:opacity-50">
+                         {isSaving ? <Loader2 className="animate-spin" size={16} /> : <><ShoppingCart size={16} /> FINALIZAR VENDA DE R$ {(selectedProduct.price * quantity).toLocaleString('pt-BR')}</>}
+                       </button>
                     </div>
                   </div>
-                  <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-                    <div className="flex items-center gap-3 bg-rose-50/50 p-2 rounded-2xl border border-brand-secondary/10">
-                      <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-10 h-10 rounded-xl bg-white flex items-center justify-center font-bold shadow-sm">-</button>
-                      <span className="w-8 text-center font-bold">{quantity}</span>
-                      <button onClick={() => setQuantity(Math.min(selectedProduct.stock_quantity, quantity + 1))} className="w-10 h-10 rounded-xl bg-white flex items-center justify-center font-bold shadow-sm">+</button>
-                    </div>
-                    <input type="text" placeholder="NOME DA CLIENTE..." className="p-4 rounded-2xl bg-rose-50/30 border border-brand-secondary/10 text-[10px] font-bold uppercase w-full md:w-48 outline-none focus:border-brand-primary" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
-                    <button onClick={handleRegisterSale} disabled={isSaving} className="bg-brand-primary text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-3 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
-                      {isSaving ? <Loader2 className="animate-spin" size={16} /> : <><ShoppingCart size={16} /> Confirmar Venda</>}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
+               </div>
+             )}
           </div>
         </div>
       )}
