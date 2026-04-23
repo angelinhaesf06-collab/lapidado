@@ -22,7 +22,6 @@ export async function POST(req: Request) {
     
     const genAI = new GoogleGenerativeAI(apiKey);
     
-    // 💎 NEXUS: CONFIGURAÇÃO DE SEGURANÇA PARA EVITAR BLOQUEIO DE FOTOS
     const safetySettings = [
       { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
       { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
@@ -30,9 +29,10 @@ export async function POST(req: Request) {
       { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
     ];
 
+    // 🚀 MOTOR LAPIDADO: GEMINI 2.5 FLASH (PLANO PAGO/DIAGNÓSTICO)
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
-      systemInstruction: "Você é um robô de catálogo. Analise a joia e responda APENAS um objeto JSON válido com 'name', 'category' e 'description'. A descrição deve ter no máximo 3 frases.",
+      model: "gemini-2.5-flash",
+      systemInstruction: "Você é um robô de catálogo. Analise a joia e responda APENAS um objeto JSON válido com 'name', 'category' e 'description'.",
     });
     
     let result;
@@ -45,38 +45,33 @@ export async function POST(req: Request) {
         },
         safetySettings
       });
+      
+      const response = await result.response;
+      let aiText = response.text().trim();
+
+      aiText = aiText.replace(/```json/g, "").replace(/```/g, "").trim();
+      const start = aiText.indexOf('{');
+      const end = aiText.lastIndexOf('}');
+      
+      if (start === -1 || end === -1) {
+        throw new Error("A IA não gerou um formato JSON válido.");
+      }
+
+      const cleanedJson = aiText.substring(start, end + 1);
+      return NextResponse.json(JSON.parse(cleanedJson));
+
     } catch (err: any) {
-      console.error("ERRO CHAMADA GEMINI:", err.message);
-      throw new Error("A IA recusou a imagem ou está offline. Tente outra foto.");
+      console.error("DETALHE DO ERRO GOOGLE:", err.message);
+      // Retorna o erro real para sabermos o que está acontecendo
+      return NextResponse.json({ 
+        error: "FALHA_MOTOR_IA", 
+        details: err.message 
+      }, { status: 500 });
     }
-
-    const response = await result.response;
-    
-    // Verifica se a resposta foi bloqueada por segurança
-    if (response.promptFeedback?.blockReason) {
-      throw new Error(`A imagem foi bloqueada pela IA por: ${response.promptFeedback.blockReason}`);
-    }
-
-    let aiText = response.text().trim();
-
-    // 💎 NEXUS: LIMPEZA ULTRA-ROBUSTA
-    aiText = aiText.replace(/```json/g, "").replace(/```/g, "").trim();
-
-    const start = aiText.indexOf('{');
-    const end = aiText.lastIndexOf('}');
-    
-    if (start === -1 || end === -1) {
-      console.error("RESPOSTA SEM JSON:", aiText);
-      throw new Error("A IA não conseguiu descrever esta peça. Tente novamente.");
-    }
-
-    const cleanedJson = aiText.substring(start, end + 1);
-    return NextResponse.json(JSON.parse(cleanedJson));
 
   } catch (error: any) {
-    console.error("ERRO CRÍTICO IA:", error.message);
     return NextResponse.json({ 
-      error: "FALHA_MOTOR_IA", 
+      error: "ERRO_CRITICO", 
       details: error.message 
     }, { status: 500 });
   }
