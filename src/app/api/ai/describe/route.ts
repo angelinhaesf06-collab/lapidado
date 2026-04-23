@@ -5,7 +5,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 30;
 
 /**
- * 💎 MOTOR LAPIDADO: ESTABILIZAÇÃO VIA SDK OFICIAL
+ * 💎 MOTOR LAPIDADO: ESTABILIZAÇÃO TOTAL (SYSTEM INSTRUCTIONS)
  */
 export async function POST(req: Request) {
   try {
@@ -23,15 +23,11 @@ export async function POST(req: Request) {
     const mimeMatch = image.match(/data:(.*?);base64/);
     const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
     
-    // 🚀 MOTOR LAPIDADO: GEMINI 2.5 FLASH (JSON PURO)
+    // 🚀 MOTOR LAPIDADO: CONFIGURAÇÃO DE ALTA PRECISÃO
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ 
       model: "gemini-2.5-flash",
-      generationConfig: { 
-        maxOutputTokens: 150, 
-        temperature: 0.2,
-        responseMimeType: "application/json"
-      }
+      systemInstruction: "Você é um robô que gera APENAS JSON. Nunca use conversas, saudações ou blocos de código. Responda estritamente com o objeto: {\"name\": \"...\", \"category\": \"...\", \"description\": \"...\"}. A descrição deve ter no máximo 3 frases luxuosas.",
     });
     
     let result;
@@ -40,32 +36,36 @@ export async function POST(req: Request) {
 
     while (retries > 0) {
       try {
-        result = await model.generateContent([
-          "Descreva esta joia. Retorne APENAS um JSON: {\"name\": \"NOME\", \"category\": \"CATEGORIA\", \"description\": \"3 frases curtas e luxuosas\"}.",
-          { inlineData: { mimeType, data: base64Data } }
-        ]);
-        break; // Sucesso! Sai do loop.
+        result = await model.generateContent({
+          contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
+          generationConfig: { 
+            maxOutputTokens: 200, 
+            temperature: 0.1,
+            responseMimeType: "application/json"
+          }
+        });
+        break; 
       } catch (err: any) {
         retries--;
-        if (retries === 0) throw err; // Se acabarem as tentativas, lança o erro.
-        console.warn(`⚠️ IA Ocupada (503). Tentando novamente em ${delay}ms... Restam ${retries} tentativas.`);
+        if (retries === 0) throw err;
         await new Promise(res => setTimeout(res, delay));
-        delay *= 2; // Aumento exponencial do tempo de espera (Backoff)
+        delay *= 2;
       }
     }
 
     const response = await result!.response;
     const aiText = response.text().trim();
 
-    // Limpeza de Markdown (caso a IA coloque ```json ...)
+    // 💎 NEXUS: PARSER ROBUSTO
     const start = aiText.indexOf('{');
     const end = aiText.lastIndexOf('}');
-    if (start === -1 || end === -1) {
-      throw new Error("Resposta da IA não contém JSON válido: " + aiText);
-    }
-    const finalJson = aiText.substring(start, end + 1);
     
-    return NextResponse.json(JSON.parse(finalJson));
+    if (start === -1 || end === -1) {
+      throw new Error(`Resposta inválida da IA (Sem JSON).`);
+    }
+
+    const cleanedJson = aiText.substring(start, end + 1);
+    return NextResponse.json(JSON.parse(cleanedJson));
 
   } catch (error: any) {
     console.error("ERRO CRÍTICO IA:", error.message);
