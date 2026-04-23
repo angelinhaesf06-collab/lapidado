@@ -29,27 +29,32 @@ export async function POST(req: Request) {
       { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
     ];
 
-    // 🚀 MOTOR LAPIDADO: GEMINI 2.5 FLASH (PLANO PAGO CONFIGURADO)
     const model = genAI.getGenerativeModel({ 
       model: "gemini-2.5-flash",
-      systemInstruction: "Você é um robô. Analise a foto e retorne APENAS o JSON: {\"name\": \"...\", \"category\": \"...\", \"description\": \"...\"}",
+      systemInstruction: "Você é um robô. Analise a foto da joia e responda APENAS um JSON: {\"name\": \"...\", \"category\": \"...\", \"description\": \"...\"}",
     });
     
     try {
       const result = await model.generateContent({
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
-        generationConfig: { maxOutputTokens: 500, temperature: 0.1 },
+        generationConfig: { maxOutputTokens: 600, temperature: 0.1 },
         safetySettings
       });
       
       const response = await result.response;
       let aiText = response.text().trim();
 
-      // Limpeza robusta via Regex
-      const jsonMatch = aiText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error("A IA não gerou dados estruturados.");
+      // 💎 NEXUS: CAPTURADOR DE JSON ULTRA-FLEXÍVEL
+      const start = aiText.indexOf('{');
+      const end = aiText.lastIndexOf('}');
+      
+      if (start === -1 || end === -1) {
+        // Se não achou JSON, manda o texto puro para eu ler o erro
+        throw new Error(`A IA não respondeu com JSON. Texto recebido: ${aiText.substring(0, 200)}`);
+      }
 
-      return NextResponse.json(JSON.parse(jsonMatch[0]));
+      const cleanedJson = aiText.substring(start, end + 1);
+      return NextResponse.json(JSON.parse(cleanedJson));
 
     } catch (err: any) {
       console.error("ERRO GOOGLE 2.5:", err.message);
