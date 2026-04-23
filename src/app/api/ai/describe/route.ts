@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     
     // 🚀 MOTOR LAPIDADO COM RESILIÊNCIA (RETRY LOGIC)
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     
     let result;
     let retries = 3;
