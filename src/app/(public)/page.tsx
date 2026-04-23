@@ -6,7 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import AddToCartButton from '@/components/cart/add-to-cart-button'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Gem } from 'lucide-react'
 import { CartItem } from '@/lib/cart-context'
 
 interface Category {
