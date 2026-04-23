@@ -29,11 +29,11 @@ export async function POST(req: Request) {
       { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
     ];
 
-    // 💎 NEXUS: FORÇANDO VERSÃO V1 ESTÁVEL
+    // 🚀 MOTOR LAPIDADO: GEMINI 2.5 FLASH (PLANO PAGO CONFIGURADO)
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
-      systemInstruction: "Você é um robô. Analise a foto e retorne apenas o JSON: {\"name\": \"...\", \"category\": \"...\", \"description\": \"...\"}",
-    }, { apiVersion: "v1" });
+      model: "gemini-2.5-flash",
+      systemInstruction: "Você é um robô. Analise a foto e retorne APENAS o JSON: {\"name\": \"...\", \"category\": \"...\", \"description\": \"...\"}",
+    });
     
     try {
       const result = await model.generateContent({
@@ -45,12 +45,14 @@ export async function POST(req: Request) {
       const response = await result.response;
       let aiText = response.text().trim();
 
+      // Limpeza robusta via Regex
       const jsonMatch = aiText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error("A IA não enviou dados formatados.");
+      if (!jsonMatch) throw new Error("A IA não gerou dados estruturados.");
 
       return NextResponse.json(JSON.parse(jsonMatch[0]));
 
     } catch (err: any) {
+      console.error("ERRO GOOGLE 2.5:", err.message);
       return NextResponse.json({ 
         error: "FALHA_MOTOR_IA", 
         details: err.message
