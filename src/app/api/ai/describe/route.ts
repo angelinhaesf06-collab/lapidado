@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -21,40 +21,53 @@ export async function POST(req: Request) {
     const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
     
     const genAI = new GoogleGenerativeAI(apiKey);
-    // 💎 NEXUS: Voltando para o 1.5-flash estável (v1) que é mais obediente a esquemas JSON
+    
+    // 💎 NEXUS: CONFIGURAÇÃO DE SEGURANÇA PARA EVITAR BLOQUEIO DE FOTOS
+    const safetySettings = [
+      { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+      { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+      { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+      { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+    ];
+
     const model = genAI.getGenerativeModel({ 
       model: "gemini-1.5-flash",
-      systemInstruction: "Você é um robô. Responda APENAS JSON puro. Nunca use blocos de código ou texto. Formato: {\"name\": \"...\", \"category\": \"...\", \"description\": \"...\"}",
-    }, { apiVersion: "v1" });
+      systemInstruction: "Você é um robô de catálogo. Analise a joia e responda APENAS um objeto JSON válido com 'name', 'category' e 'description'. A descrição deve ter no máximo 3 frases.",
+    });
     
     let result;
     try {
       result = await model.generateContent({
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
         generationConfig: { 
-          maxOutputTokens: 200, 
-          temperature: 0.1,
-          responseMimeType: "application/json"
-        }
+          maxOutputTokens: 250, 
+          temperature: 0.2
+        },
+        safetySettings
       });
     } catch (err: any) {
       console.error("ERRO CHAMADA GEMINI:", err.message);
-      throw new Error("A IA está ocupada ou a imagem foi recusada. Tente novamente.");
+      throw new Error("A IA recusou a imagem ou está offline. Tente outra foto.");
     }
 
     const response = await result.response;
+    
+    // Verifica se a resposta foi bloqueada por segurança
+    if (response.promptFeedback?.blockReason) {
+      throw new Error(`A imagem foi bloqueada pela IA por: ${response.promptFeedback.blockReason}`);
+    }
+
     let aiText = response.text().trim();
 
     // 💎 NEXUS: LIMPEZA ULTRA-ROBUSTA
-    // Se a IA mandou Markdown (```json ... ```), nós removemos
     aiText = aiText.replace(/```json/g, "").replace(/```/g, "").trim();
 
     const start = aiText.indexOf('{');
     const end = aiText.lastIndexOf('}');
     
     if (start === -1 || end === -1) {
-      console.error("CONTEÚDO ESTRANHO DA IA:", aiText);
-      throw new Error("A IA não gerou um formato válido. Tente outra foto.");
+      console.error("RESPOSTA SEM JSON:", aiText);
+      throw new Error("A IA não conseguiu descrever esta peça. Tente novamente.");
     }
 
     const cleanedJson = aiText.substring(start, end + 1);
