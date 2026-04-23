@@ -136,8 +136,11 @@ export default function SalesPage() {
     loadBranding()
     loadProducts()
     loadCustomers()
-    const { data } = supabase.from('categories').select('*').order('name')
-    if (data) setCategories(data as Category[])
+    const loadCats = async () => {
+      const { data } = await supabase.from('categories').select('*').order('name')
+      if (data) setCategories(data as Category[])
+    }
+    loadCats()
   }, [loadSales, loadBranding, loadProducts, loadCustomers, supabase])
 
   async function handleToggleStatus(sale: Sale) {

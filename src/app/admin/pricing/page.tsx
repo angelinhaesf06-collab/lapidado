@@ -109,8 +109,8 @@ export default function PricingPage() {
 
   const generateReportPDF = () => {
     const doc = new jsPDF()
-    const brandColor = [74, 50, 46] // Marrom Lapidado
-    const secondaryColor = [201, 144, 144] // Creme/Rosa
+    const brandColor: [number, number, number] = [74, 50, 46] // Marrom Lapidado
+    const secondaryColor: [number, number, number] = [201, 144, 144] // Creme/Rosa
 
     doc.setFontSize(22); doc.setTextColor(brandColor[0], brandColor[1], brandColor[2]); doc.text('LAPIDADO ERP', 105, 20, { align: 'center' })
     doc.setFontSize(10); doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]); doc.text('RELATÓRIO TÉCNICO DE PRECIFICAÇÃO', 105, 28, { align: 'center' })
