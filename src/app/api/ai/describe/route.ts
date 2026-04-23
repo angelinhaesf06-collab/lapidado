@@ -29,11 +29,11 @@ export async function POST(req: Request) {
       { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
     ];
 
-    // 🚀 MOTOR LAPIDADO: MODO RESILIENTE
+    // 🚀 MOTOR LAPIDADO: FORÇANDO v1 (ESTÁVEL)
     const model = genAI.getGenerativeModel({ 
       model: "gemini-1.5-flash",
-      systemInstruction: "Você é um assistente de joalheria. Descreva a joia da foto de forma luxuosa. Retorne APENAS um JSON: {\"name\": \"...\", \"category\": \"...\", \"description\": \"...\"}",
-    });
+      systemInstruction: "Você é um assistente de joalheria. Descreva a joia da foto. Retorne APENAS JSON: {\"name\": \"...\", \"category\": \"...\", \"description\": \"...\"}",
+    }, { apiVersion: 'v1' });
     
     try {
       const result = await model.generateContent({
@@ -45,7 +45,6 @@ export async function POST(req: Request) {
       const response = await result.response;
       let aiText = response.text().trim();
 
-      // 💎 NEXUS: TENTATIVA 1 - JSON PURO
       const start = aiText.indexOf('{');
       const end = aiText.lastIndexOf('}');
       
@@ -53,12 +52,9 @@ export async function POST(req: Request) {
         const cleanedJson = aiText.substring(start, end + 1);
         try {
           return NextResponse.json(JSON.parse(cleanedJson));
-        } catch (e) {
-          console.error("FALHA AO PARSEAR JSON, TENTANDO MODO TEXTO");
-        }
+        } catch (e) {}
       }
 
-      // 💎 NEXUS: TENTATIVA 2 - SE DER ERRO, MONTA O JSON NA MÃO
       return NextResponse.json({
         name: "JOIA IDENTIFICADA",
         category: "OUTROS",
@@ -66,17 +62,10 @@ export async function POST(req: Request) {
       });
 
     } catch (err: any) {
-      console.error("ERRO GOOGLE:", err.message);
-      return NextResponse.json({ 
-        error: "FALHA_MOTOR_IA", 
-        details: err.message
-      }, { status: 500 });
+      return NextResponse.json({ error: "FALHA_MOTOR_IA", details: err.message }, { status: 500 });
     }
 
   } catch (error: any) {
-    return NextResponse.json({ 
-      error: "ERRO_SISTEMA", 
-      details: error.message 
-    }, { status: 500 });
+    return NextResponse.json({ error: "ERRO_SISTEMA", details: error.message }, { status: 500 });
   }
 }
