@@ -29,11 +29,11 @@ export async function POST(req: Request) {
       { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
     ];
 
-    // 🚀 MOTOR LAPIDADO: FORÇANDO v1 (ESTÁVEL)
+    // 🚀 MOTOR LAPIDADO: GEMINI 2.5 FLASH (PLANO PAGO)
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
+      model: "gemini-2.5-flash",
       systemInstruction: "Você é um assistente de joalheria. Descreva a joia da foto. Retorne APENAS JSON: {\"name\": \"...\", \"category\": \"...\", \"description\": \"...\"}",
-    }, { apiVersion: 'v1' });
+    }, { apiVersion: 'v1beta' });
     
     try {
       const result = await model.generateContent({

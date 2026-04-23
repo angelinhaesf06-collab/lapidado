@@ -21,11 +21,11 @@ export async function POST(req: Request) {
     const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
 
     const genAI = new GoogleGenerativeAI(geminiKey);
-    // 🚀 MOTOR LAPIDADO: FORÇANDO v1 (ESTÁVEL)
+    // 🚀 MOTOR LAPIDADO: GEMINI 2.5 FLASH (v1beta)
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
+      model: "gemini-2.5-flash",
       systemInstruction: "Você é um robô extrator de dados. Retorne APENAS um array JSON: [{\"name\": \"...\", \"quantity\": 0, \"unitCost\": 0.0}]",
-    }, { apiVersion: 'v1' });
+    }, { apiVersion: 'v1beta' });
 
     const result = await model.generateContent({
       contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
