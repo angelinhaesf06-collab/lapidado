@@ -23,11 +23,15 @@ export async function POST(req: Request) {
     const mimeMatch = image.match(/data:(.*?);base64/);
     const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
 
-    // 🚀 MODELO 2.5 FLASH (OTIMIZADO PARA CUSTO)
+    // 🚀 MODELO 2.5 FLASH (JSON PURO)
     const genAI = new GoogleGenerativeAI(geminiKey);
     const model = genAI.getGenerativeModel({ 
       model: "gemini-2.5-flash",
-      generationConfig: { maxOutputTokens: 250, temperature: 0.2 }
+      generationConfig: { 
+        maxOutputTokens: 250, 
+        temperature: 0.1,
+        responseMimeType: "application/json"
+      }
     });
 
     const prompt = `
