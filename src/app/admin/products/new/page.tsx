@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Gem, Loader2, Check, X, Plus, AlertCircle, CheckCircle2, Pencil } from 'lucide-react'
+import { Gem, Loader2, Check, X, Plus, AlertCircle, CheckCircle2, TrendingUp } from 'lucide-react'
+
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -21,6 +22,10 @@ export default function NewProductPage() {
   const [category, setCategory] = useState('')
   const [materialFinish, setMaterialFinish] = useState('OURO 18K')
   const [categories, setCategories] = useState<{id: string, name: string}[]>([])
+  const [pricingRules, setPricingRules] = useState<{globalMarkup: number, categoryMarkups: Record<string, number>}>({
+    globalMarkup: 100,
+    categoryMarkups: {}
+  })
   
   const FINISH_OPTIONS = [
     'OURO 18K', 'PRATA', 'PRATA 925', 'OURO ROSE', 'RODIO BRANCO', 'RODIO NEGRO'
@@ -46,15 +51,38 @@ export default function NewProductPage() {
     }
   }, [supabase])
 
-  const loadCategories = useCallback(async () => {
-    const { data } = await supabase.from('categories').select('*').order('name')
-    if (data) setCategories(data)
+  const loadData = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    // Categorias
+    const { data: catData } = await supabase.from('categories').select('*').order('name')
+    if (catData) setCategories(catData)
+
+    // Regras de Precificação
+    const { data: brandingData } = await supabase.from('branding').select('notes').eq('user_id', user.id).maybeSingle()
+    if (brandingData?.notes && brandingData.notes.includes('PRICING_RULES:')) {
+      try {
+        const rules = JSON.parse(brandingData.notes.split('PRICING_RULES:')[1])
+        setPricingRules(rules)
+        setMargin(rules.globalMarkup.toString())
+      } catch (e) { console.error('Erro pricing rules:', e) }
+    }
   }, [supabase])
 
   useEffect(() => {
     checkConnection()
-    loadCategories()
-  }, [checkConnection, loadCategories])
+    loadData()
+  }, [checkConnection, loadData])
+
+  // ✨ MÁGICA: Aplicar markup da categoria selecionada
+  useEffect(() => {
+    if (category && pricingRules.categoryMarkups[category]) {
+      setMargin(pricingRules.categoryMarkups[category].toString())
+    } else {
+      setMargin(pricingRules.globalMarkup.toString())
+    }
+  }, [category, pricingRules])
 
   useEffect(() => {
     const cost = parseFloat(costPrice) || 0
@@ -314,25 +342,42 @@ export default function NewProductPage() {
             </div>
           </div>
 
-          {/* FINANCEIRO - COR SECUNDÁRIA NO PREÇO FINAL */}
-          <div className="p-4 rounded-[20px] bg-rose-50/40 border border-rose-100/50 space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-[6px] font-bold text-brand-secondary uppercase mb-1 block">Custo (R$)</label>
-                <input type="number" step="0.01" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-white border border-rose-100 font-bold text-[9px]" />
+          {/* FINANCEIRO - GESTÃO DE LUCRO & DASHBOARD */}
+          <div className="p-6 rounded-[35px] bg-white border border-brand-secondary/10 shadow-sm space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-[7px] font-black text-brand-secondary/40 uppercase ml-2">Custo da Peça (R$)</label>
+                <input 
+                  type="number" 
+                  step="0.01" 
+                  value={costPrice} 
+                  onChange={(e) => setCostPrice(e.target.value)} 
+                  className="w-full px-5 py-3 rounded-2xl bg-brand-secondary/5 text-sm font-bold text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all" 
+                  placeholder="0,00"
+                />
               </div>
-              <div>
-                <label className="text-[6px] font-bold text-brand-secondary uppercase mb-1 block">Lucro (%)</label>
-                <input type="number" value={margin} onChange={(e) => setMargin(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-white border border-rose-100 font-bold text-[9px]" />
+              <div className="space-y-1">
+                <label className="text-[7px] font-black text-brand-secondary/40 uppercase ml-2">Lucro Aplicado (%)</label>
+                <div className="w-full px-5 py-3 rounded-2xl bg-amber-50 border border-amber-100 text-sm font-black text-amber-700 flex justify-between items-center">
+                  <span>{margin}%</span>
+                  <TrendingUp size={14} className="opacity-40" />
+                </div>
               </div>
             </div>
-            
-            <div className="pt-2 border-t border-rose-100">
-               <label className="text-[7px] font-black text-brand-primary uppercase tracking-widest mb-1 block text-center">Preço Final de Venda</label>
+
+            <div className="pt-2 border-t border-brand-secondary/5">
+               <label className="text-[8px] font-black text-brand-primary uppercase tracking-[0.3em] mb-2 block text-center">Preço Final de Venda</label>
                <div className="relative">
-                 <input type="number" step="0.01" value={salePrice} onChange={(e) => setSalePrice(e.target.value)} className="w-full px-4 py-4 rounded-xl bg-brand-secondary text-white text-xl font-black outline-none shadow-sm text-center" />
-                 <Pencil size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50" />
+                 <span className="absolute left-6 top-1/2 -translate-y-1/2 text-brand-primary/20 font-bold text-lg">R$</span>
+                 <input 
+                   type="number" 
+                   step="0.01" 
+                   value={salePrice} 
+                   onChange={(e) => setSalePrice(e.target.value)} 
+                   className="w-full pl-14 pr-6 py-5 rounded-[25px] bg-brand-primary text-white text-3xl font-black outline-none shadow-xl shadow-brand-primary/20 text-center" 
+                 />
                </div>
+               <p className="text-[6px] font-bold text-center text-brand-secondary/40 uppercase mt-3 tracking-widest">Este valor alimenta seu lucro no Dashboard 💎</p>
             </div>
           </div>
 

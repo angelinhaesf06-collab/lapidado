@@ -323,8 +323,12 @@ export default function SalesPage() {
              <div className="flex-1 overflow-y-auto p-6 grid grid-cols-2 sm:grid-cols-4 gap-4 bg-rose-50/10">
                 {products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).map(p => (
                   <button key={p.id} onClick={() => setSelectedProduct(p)} className={`p-3 rounded-[30px] border transition-all ${selectedProduct?.id === p.id ? 'bg-brand-primary border-brand-primary scale-105 shadow-xl' : 'bg-white border-brand-secondary/5'}`}>
-                    <div className="aspect-square w-full rounded-[20px] overflow-hidden mb-2 relative">
-                      <Image src={p.image_url} alt="" fill className="object-cover" />
+                    <div className="aspect-square w-full rounded-[20px] overflow-hidden mb-2 relative bg-brand-secondary/5 flex items-center justify-center">
+                      {p.image_url ? (
+                        <Image src={p.image_url} alt="" fill className="object-cover" />
+                      ) : (
+                        <Gem size={20} className="text-brand-secondary/20" />
+                      )}
                       {selectedProduct?.id === p.id && <div className="absolute inset-0 bg-brand-primary/40 flex items-center justify-center text-white"><Check size={28} /></div>}
                     </div>
                     <p className={`text-[8px] font-black uppercase truncate ${selectedProduct?.id === p.id ? 'text-white' : 'text-brand-primary'}`}>{p.name}</p>

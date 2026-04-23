@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Phone, Camera, Loader2, Palette, Gem, Pencil, Building2, CreditCard } from 'lucide-react'
+import { Camera, Loader2, Palette, Phone, Gem } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
 
@@ -24,7 +24,6 @@ export default function BrandingPage() {
   const [warrantyTime, setWarrantyTime] = useState('') 
   const [installments, setInstallments] = useState('10')
   const [brandingId, setBrandingId] = useState<string | null>(null)
-  const [slug, setSlug] = useState('')
 
   const supabase = createClient()
 
@@ -43,7 +42,6 @@ export default function BrandingPage() {
 
         if (data) {
           setBrandingId(data.id)
-          setSlug(data.slug || '')
           const rawTagline = data.facebook || ''
           const [text, inst, banner, bName] = rawTagline.split('|')
           setTagline(text || '') 
@@ -134,8 +132,9 @@ export default function BrandingPage() {
       if (!response.ok) throw new Error('Falha ao salvar dados.')
       alert('IDENTIDADE ATUALIZADA! 💎')
       window.location.reload()
-    } catch (err: any) {
-      alert('ERRO: ' + err.message)
+    } catch (err: unknown) {
+      const error = err as Error
+      alert('ERRO: ' + error.message)
     } finally { setSaving(false) }
   }
 
@@ -181,6 +180,11 @@ export default function BrandingPage() {
           <div className="space-y-2">
             <label className="text-[10px] font-black text-brand-secondary uppercase block ml-1">Frase de Impacto (Slogan)</label>
             <input type="text" value={tagline} onChange={(e) => setTagline(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-brand-secondary/5 text-sm font-medium text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all" />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-brand-secondary uppercase block ml-1">Frase de Topo da Vitrine (Banner)</label>
+            <input type="text" value={topBanner} onChange={(e) => setTopBanner(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-brand-secondary/5 text-sm font-medium text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all" />
           </div>
         </div>
 

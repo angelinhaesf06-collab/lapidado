@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ShoppingCart, Package, Gem, PlusCircle, LayoutDashboard, LogOut, ExternalLink, Share2, Truck } from 'lucide-react'
+import { ShoppingCart, Package, Gem, PlusCircle, LayoutDashboard, LogOut, ExternalLink, Share2, Truck, Coins } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
 
@@ -47,6 +47,7 @@ export default function AdminLayout({
     { name: 'Produtos', href: '/admin/products', icon: Package },
     { name: 'Nova Peça', href: '/admin/products/new', icon: PlusCircle },
     { name: 'Fornecedores', href: '/admin/suppliers', icon: Truck },
+    { name: 'Precificação', href: '/admin/pricing', icon: Coins },
   ]
 
   const shareToWhatsApp = () => {

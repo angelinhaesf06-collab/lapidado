@@ -124,6 +124,15 @@ function HomeContent() {
         </div>
       </nav>
 
+      {/* 🎀 BANNER DE TOPO DINÂMICO */}
+      {branding?.facebook?.split('|')[2] && (
+        <div className="w-full bg-brand-primary py-3 px-4 text-center">
+          <p className="text-white text-[9px] md:text-[11px] font-black uppercase tracking-[0.3em]">
+            ✨ {branding.facebook.split('|')[2]} ✨
+          </p>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto px-4 py-8 md:py-12 w-full text-center">
         <div className="mb-8 md:mb-16">
           <h2 className="text-xl md:text-2xl font-light tracking-[0.2em] uppercase text-brand-primary mb-2">
