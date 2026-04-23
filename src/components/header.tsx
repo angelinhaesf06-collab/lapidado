@@ -88,7 +88,7 @@ export default function Header() {
           <Link href="/?catalogo=true" className="flex-shrink-0 group z-10">
             {branding?.logo_url ? (
               <div className="relative w-20 md:w-48 h-8 md:h-14 transition-all duration-500 group-hover:scale-105">
-                 <Image src={branding.logo_url} alt={branding.store_name || "Logo"} className="object-contain object-left" fill priority />
+                 <img src={branding.logo_url} alt={branding.store_name || "Logo"} className="w-full h-full object-contain object-left" />
               </div>
             ) : (
               <div className="flex items-center gap-2">

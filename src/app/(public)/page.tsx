@@ -145,13 +145,18 @@ function HomeContent() {
               <div key={product.id} className="group flex flex-col items-center">
                 <Link href={`/product?id=${product.id}&catalogo=true${storeParam}`} className="w-full">
                   <div className="aspect-[4/5] w-full bg-white rounded-[40px] md:rounded-[64px] overflow-hidden mb-6 md:mb-10 shadow-[0_20px_60px_rgba(74,50,46,0.08)] border border-white relative transition-all duration-700">
-                    <Image 
-                      src={product.image_url} 
-                      alt={product.name} 
-                      fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-1000 z-10" 
-                      sizes="(max-width: 768px) 50vw, 25vw"
-                    />
+                    {product.image_url ? (
+                      <img 
+                        src={product.image_url} 
+                        alt={product.name} 
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-brand-secondary/5">
+                        <Gem size={32} className="text-brand-secondary/20" />
+                      </div>
+                    )}
                   </div>
                   
                   <div className="px-4 text-center w-full mb-8">
