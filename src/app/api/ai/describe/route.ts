@@ -60,10 +60,10 @@ export async function POST(req: Request) {
         safetySettings
       });
     } catch (e) {
-      console.error("Gemini 2.5 falhou, tentando Fallback 1.5...");
-      // TENTA 2º: Fallback para Gemini 1.5 Flash (mais estável em picos)
-      const model15 = genAI.getGenerativeModel({ ...modelParams, model: "gemini-1.5-flash" }, { apiVersion: 'v1' });
-      result = await tryGenerate(model15, {
+      console.error("Gemini 2.5 falhou, tentando Fallback 2.0...");
+      // TENTA 2º: Fallback para Gemini 2.0 Flash (Equilíbrio entre potência e disponibilidade)
+      const model20 = genAI.getGenerativeModel({ ...modelParams, model: "gemini-2.0-flash" });
+      result = await tryGenerate(model20, {
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
         generationConfig: { maxOutputTokens: 500, temperature: 0.1 },
         safetySettings
