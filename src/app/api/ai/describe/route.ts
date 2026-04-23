@@ -30,37 +30,35 @@ export async function POST(req: Request) {
     ];
 
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.5-flash",
-      systemInstruction: "Você é um robô. Responda APENAS JSON. Nunca use conversas. Objeto: {\"name\": \"...\", \"category\": \"...\", \"description\": \"...\"}",
+      model: "gemini-1.5-flash",
+      systemInstruction: "Você é um robô. Analise a foto e retorne apenas o JSON: {\"name\": \"...\", \"category\": \"...\", \"description\": \"...\"}",
     });
     
     try {
       const result = await model.generateContent({
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
-        generationConfig: { maxOutputTokens: 300, temperature: 0.1 },
+        generationConfig: { maxOutputTokens: 500, temperature: 0.1 },
         safetySettings
       });
       
       const response = await result.response;
-      const aiText = response.text().trim();
+      let aiText = response.text().trim();
 
-      // Tenta encontrar o JSON no meio do texto
-      const start = aiText.indexOf('{');
-      const end = aiText.lastIndexOf('}');
+      // 💎 NEXUS: LIMPEZA POR EXPRESSÃO REGULAR (INQUEBRÁVEL)
+      const jsonMatch = aiText.match(/\{[\s\S]*\}/);
       
-      if (start === -1 || end === -1) {
-        // 💎 NEXUS: Se falhou, nos mostre o que ela escreveu de verdade!
-        throw new Error(`Texto da IA sem JSON: ${aiText.substring(0, 100)}...`);
+      if (!jsonMatch) {
+        throw new Error(`A IA não enviou dados formatados. Texto: ${aiText.substring(0, 50)}`);
       }
 
-      const cleanedJson = aiText.substring(start, end + 1);
+      const cleanedJson = jsonMatch[0];
       return NextResponse.json(JSON.parse(cleanedJson));
 
     } catch (err: any) {
-      console.error("DETALHE DO ERRO GOOGLE:", err.message);
+      console.error("ERRO GOOGLE/PARSER:", err.message);
       return NextResponse.json({ 
         error: "FALHA_MOTOR_IA", 
-        details: err.message || "Erro desconhecido na comunicação."
+        details: err.message
       }, { status: 500 });
     }
 
