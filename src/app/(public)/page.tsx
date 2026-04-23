@@ -57,7 +57,9 @@ function HomeContent() {
       }
 
       setBranding(currentBranding)
-      const currentUserId = currentBranding?.user_id || '00000000-0000-0000-0000-000000000000'
+      
+      // 💎 NEXUS: Prioriza o user_id da marca encontrada para carregar categorias e produtos
+      const currentUserId = currentBranding?.user_id || 'fc799d85-0264-4676-a0bb-cc27fca3b517'
 
       const { data: cats } = await supabase.from('categories').select('id, name').eq('user_id', currentUserId).order('name')
       setDbCategories(cats || [])
