@@ -29,32 +29,28 @@ export async function POST(req: Request) {
       { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
     ];
 
-    // 🚀 MOTOR LAPIDADO: GEMINI 2.5 FLASH (PLANO PAGO/DIAGNÓSTICO)
     const model = genAI.getGenerativeModel({ 
       model: "gemini-2.5-flash",
-      systemInstruction: "Você é um robô de catálogo. Analise a joia e responda APENAS um objeto JSON válido com 'name', 'category' e 'description'.",
+      systemInstruction: "Você é um robô. Responda APENAS JSON. Nunca use conversas. Objeto: {\"name\": \"...\", \"category\": \"...\", \"description\": \"...\"}",
     });
     
-    let result;
     try {
-      result = await model.generateContent({
+      const result = await model.generateContent({
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
-        generationConfig: { 
-          maxOutputTokens: 250, 
-          temperature: 0.2
-        },
+        generationConfig: { maxOutputTokens: 300, temperature: 0.1 },
         safetySettings
       });
       
       const response = await result.response;
-      let aiText = response.text().trim();
+      const aiText = response.text().trim();
 
-      aiText = aiText.replace(/```json/g, "").replace(/```/g, "").trim();
+      // Tenta encontrar o JSON no meio do texto
       const start = aiText.indexOf('{');
       const end = aiText.lastIndexOf('}');
       
       if (start === -1 || end === -1) {
-        throw new Error("A IA não gerou um formato JSON válido.");
+        // 💎 NEXUS: Se falhou, nos mostre o que ela escreveu de verdade!
+        throw new Error(`Texto da IA sem JSON: ${aiText.substring(0, 100)}...`);
       }
 
       const cleanedJson = aiText.substring(start, end + 1);
@@ -62,16 +58,15 @@ export async function POST(req: Request) {
 
     } catch (err: any) {
       console.error("DETALHE DO ERRO GOOGLE:", err.message);
-      // Retorna o erro real para sabermos o que está acontecendo
       return NextResponse.json({ 
         error: "FALHA_MOTOR_IA", 
-        details: err.message 
+        details: err.message || "Erro desconhecido na comunicação."
       }, { status: 500 });
     }
 
   } catch (error: any) {
     return NextResponse.json({ 
-      error: "ERRO_CRITICO", 
+      error: "ERRO_SISTEMA", 
       details: error.message 
     }, { status: 500 });
   }
