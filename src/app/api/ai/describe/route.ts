@@ -29,10 +29,11 @@ export async function POST(req: Request) {
       { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
     ];
 
+    // 💎 NEXUS: FORÇANDO VERSÃO V1 ESTÁVEL
     const model = genAI.getGenerativeModel({ 
       model: "gemini-1.5-flash",
       systemInstruction: "Você é um robô. Analise a foto e retorne apenas o JSON: {\"name\": \"...\", \"category\": \"...\", \"description\": \"...\"}",
-    });
+    }, { apiVersion: "v1" });
     
     try {
       const result = await model.generateContent({
@@ -44,18 +45,12 @@ export async function POST(req: Request) {
       const response = await result.response;
       let aiText = response.text().trim();
 
-      // 💎 NEXUS: LIMPEZA POR EXPRESSÃO REGULAR (INQUEBRÁVEL)
       const jsonMatch = aiText.match(/\{[\s\S]*\}/);
-      
-      if (!jsonMatch) {
-        throw new Error(`A IA não enviou dados formatados. Texto: ${aiText.substring(0, 50)}`);
-      }
+      if (!jsonMatch) throw new Error("A IA não enviou dados formatados.");
 
-      const cleanedJson = jsonMatch[0];
-      return NextResponse.json(JSON.parse(cleanedJson));
+      return NextResponse.json(JSON.parse(jsonMatch[0]));
 
     } catch (err: any) {
-      console.error("ERRO GOOGLE/PARSER:", err.message);
       return NextResponse.json({ 
         error: "FALHA_MOTOR_IA", 
         details: err.message
@@ -63,9 +58,6 @@ export async function POST(req: Request) {
     }
 
   } catch (error: any) {
-    return NextResponse.json({ 
-      error: "ERRO_SISTEMA", 
-      details: error.message 
-    }, { status: 500 });
+    return NextResponse.json({ error: "ERRO_SISTEMA", details: error.message }, { status: 500 });
   }
 }
