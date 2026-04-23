@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Plus, User, Search, MapPin, CreditCard, Loader2, Trash2, History, CheckCircle2, AlertCircle, ChevronDown, ChevronUp, FileText, Edit2, Save, X, Calendar, Phone } from 'lucide-react'
+import { Plus, User, Search, MapPin, CreditCard, Loader2, Trash2, History, CheckCircle2, AlertCircle, ChevronDown, ChevronUp, FileText, Edit2, Save, X, Calendar, Phone, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
 import Image from 'next/image'
 
@@ -43,6 +43,7 @@ export default function CustomersPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [isAdding, setIsAdding] = useState(false)
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
   const [expandedCustomer, setExpandedCustomer] = useState<string | null>(null)
   const [editingInstallment, setEditingInstallment] = useState<string | null>(null)
   const [editValue, setEditValue] = useState<string>('')
@@ -157,6 +158,31 @@ export default function CustomersPage() {
     }
   }
 
+  async function handleUpdateCustomer(e: React.FormEvent) {
+    e.preventDefault()
+    if (!editingCustomer) return
+
+    try {
+      const { error } = await supabase
+        .from('customers')
+        .update({
+          name: editingCustomer.name,
+          phone: editingCustomer.phone,
+          cpf: editingCustomer.cpf,
+          address: editingCustomer.address
+        })
+        .eq('id', editingCustomer.id)
+
+      if (error) throw error
+
+      toast.success('Dados da cliente atualizados! 💎')
+      setEditingCustomer(null)
+      loadCustomers()
+    } catch (error: any) {
+      toast.error('Erro ao atualizar: ' + error.message)
+    }
+  }
+
   async function handleDeleteCustomer(id: string) {
     if (!confirm('Deseja realmente excluir este cliente e todo seu histórico?')) return
     try {
@@ -179,7 +205,7 @@ export default function CustomersPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
         <div>
           <h1 className="text-3xl font-black text-brand-primary tracking-tight uppercase">Gestão de Clientes</h1>
-          <p className="text-brand-secondary/60 font-medium tracking-wide mt-1">Controle Financeiro e Fluxo de Recebimentos 💎</p>
+          <p className="text-brand-secondary/60 font-medium tracking-wide mt-1">Base de Dados e Controle Financeiro 💎</p>
         </div>
         
         <button onClick={() => setIsAdding(!isAdding)} className="flex items-center justify-center gap-2 bg-brand-primary text-white px-8 py-4 rounded-[20px] font-black uppercase text-[10px] tracking-[0.2em] shadow-lg shadow-brand-primary/20 hover:scale-105 transition-all">
@@ -187,6 +213,7 @@ export default function CustomersPage() {
         </button>
       </div>
 
+      {/* FORMULÁRIO DE CADASTRO */}
       {isAdding && (
         <div className="bg-white border border-brand-secondary/10 rounded-[32px] p-8 mb-12 shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
           <form onSubmit={handleAddCustomer} className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -196,6 +223,40 @@ export default function CustomersPage() {
             <div className="space-y-2"><label className="text-[10px] font-black uppercase text-brand-secondary/60 ml-2 tracking-widest">Endereço</label><input className="w-full bg-brand-secondary/5 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-brand-primary outline-none transition-all font-bold text-brand-primary" value={newCustomer.address} onChange={e => setNewCustomer({...newCustomer, address: e.target.value})} /></div>
             <div className="md:col-span-4 flex justify-end"><button type="submit" className="bg-brand-primary text-white px-12 py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] shadow-lg shadow-brand-primary/20">Salvar Cliente</button></div>
           </form>
+        </div>
+      )}
+
+      {/* FORMULÁRIO DE EDIÇÃO (MODAL) */}
+      {editingCustomer && (
+        <div className="fixed inset-0 bg-brand-primary/60 backdrop-blur-md z-[200] flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-2xl rounded-[40px] p-8 shadow-2xl animate-in zoom-in duration-300">
+            <div className="flex justify-between items-center mb-8">
+              <h3 className="text-xl font-black text-brand-primary uppercase tracking-tight">Editar Cliente 📝</h3>
+              <button onClick={() => setEditingCustomer(null)} className="p-2 hover:bg-rose-50 rounded-full text-brand-primary"><X size={24} /></button>
+            </div>
+            <form onSubmit={handleUpdateCustomer} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <div className="space-y-2">
+                 <label className="text-[10px] font-black uppercase text-brand-secondary/60 ml-2">Nome Completo</label>
+                 <input required className="w-full bg-brand-secondary/5 border-none rounded-2xl px-6 py-4 text-sm font-bold text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary" value={editingCustomer.name} onChange={e => setEditingCustomer({...editingCustomer, name: e.target.value})} />
+               </div>
+               <div className="space-y-2">
+                 <label className="text-[10px] font-black uppercase text-brand-secondary/60 ml-2">WhatsApp</label>
+                 <input required className="w-full bg-brand-secondary/5 border-none rounded-2xl px-6 py-4 text-sm font-bold text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary" value={editingCustomer.phone} onChange={e => setEditingCustomer({...editingCustomer, phone: e.target.value})} />
+               </div>
+               <div className="space-y-2">
+                 <label className="text-[10px] font-black uppercase text-brand-secondary/60 ml-2">CPF</label>
+                 <input className="w-full bg-brand-secondary/5 border-none rounded-2xl px-6 py-4 text-sm font-bold text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary" value={editingCustomer.cpf} onChange={e => setEditingCustomer({...editingCustomer, cpf: e.target.value})} />
+               </div>
+               <div className="space-y-2">
+                 <label className="text-[10px] font-black uppercase text-brand-secondary/60 ml-2">Endereço</label>
+                 <input className="w-full bg-brand-secondary/5 border-none rounded-2xl px-6 py-4 text-sm font-bold text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary" value={editingCustomer.address} onChange={e => setEditingCustomer({...editingCustomer, address: e.target.value})} />
+               </div>
+               <div className="md:col-span-2 flex gap-4 mt-4">
+                 <button type="button" onClick={() => setEditingCustomer(null)} className="flex-1 py-4 text-[10px] font-black uppercase text-brand-secondary">Cancelar</button>
+                 <button type="submit" className="flex-1 bg-brand-primary text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl flex items-center justify-center gap-2"><Save size={16} /> Salvar Alterações</button>
+               </div>
+            </form>
+          </div>
         </div>
       )}
 
@@ -209,7 +270,7 @@ export default function CustomersPage() {
       ) : (
         <div className="space-y-4">
           {filteredCustomers.map(customer => (
-            <div key={customer.id} className="bg-white border border-brand-secondary/5 rounded-[32px] overflow-hidden shadow-sm">
+            <div key={customer.id} className="bg-white border border-brand-secondary/5 rounded-[32px] overflow-hidden shadow-sm hover:border-brand-primary/10 transition-all">
               <div className="p-8">
                 <div className="flex flex-col md:flex-row justify-between gap-6">
                   <div className="flex items-center gap-6">
@@ -225,8 +286,11 @@ export default function CustomersPage() {
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="text-right"><p className="text-[8px] font-black text-brand-secondary/40 uppercase mb-1">Total Comprado</p><p className="text-xl font-black text-brand-primary">R$ {(customer.total_purchases || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p></div>
-                    <button onClick={() => setExpandedCustomer(expandedCustomer === customer.id ? null : customer.id)} className={`p-4 rounded-2xl transition-all ${expandedCustomer === customer.id ? 'bg-brand-primary text-white' : 'bg-brand-secondary/5 text-brand-primary'}`}>{expandedCustomer === customer.id ? <ChevronUp size={20} /> : <ChevronDown size={20} />}</button>
-                    <button onClick={() => handleDeleteCustomer(customer.id)} className="p-4 text-rose-200 hover:text-rose-500 transition-colors"><Trash2 size={20} /></button>
+                    <div className="flex gap-2 ml-4">
+                      <button onClick={() => setEditingCustomer(customer)} className="p-4 rounded-2xl bg-brand-secondary/5 text-brand-primary hover:bg-brand-primary hover:text-white transition-all" title="Editar Cliente"><Pencil size={18} /></button>
+                      <button onClick={() => setExpandedCustomer(expandedCustomer === customer.id ? null : customer.id)} className={`p-4 rounded-2xl transition-all ${expandedCustomer === customer.id ? 'bg-brand-primary text-white' : 'bg-brand-secondary/5 text-brand-primary hover:bg-brand-secondary/10'}`}>{expandedCustomer === customer.id ? <ChevronUp size={20} /> : <ChevronDown size={20} />}</button>
+                      <button onClick={() => handleDeleteCustomer(customer.id)} className="p-4 text-rose-200 hover:text-rose-500 transition-colors"><Trash2 size={20} /></button>
+                    </div>
                   </div>
                 </div>
               </div>

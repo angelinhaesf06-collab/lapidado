@@ -204,7 +204,17 @@ export default function SalesPage() {
     async function loadRec() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-      const { data } = await supabase.from('installments').select('value').eq('user_id', user.id).eq('status', 'pendente').gte('due_date', `${selectedMonth}-01`).lte('due_date', `${selectedMonth}-31`)
+      // 💎 Filtragem robusta por mês
+      const startDate = `${selectedMonth}-01T00:00:00Z`
+      const endDate = new Date(new Date(selectedMonth + '-01').getFullYear(), new Date(selectedMonth + '-01').getMonth() + 1, 0).toISOString().split('T')[0] + 'T23:59:59Z'
+
+      const { data } = await supabase
+        .from('installments')
+        .select('value')
+        .eq('user_id', user.id)
+        .eq('status', 'pendente')
+        .gte('due_date', startDate)
+        .lte('due_date', endDate)
       setPendingReceivables(data?.reduce((acc, curr) => acc + Number(curr.value), 0) || 0)
     }
     loadRec()
