@@ -61,8 +61,9 @@ export default function BrandingPage() {
         }
       } catch (e: unknown) {
         console.error('Erro ao carregar marca', e)
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
     loadBranding()
   }, [supabase])

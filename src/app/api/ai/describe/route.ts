@@ -23,18 +23,21 @@ export async function POST(req: Request) {
     const mimeMatch = image.match(/data:(.*?);base64/);
     const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
     
-    // 🚀 MOTOR LAPIDADO: GEMINI 2.5 FLASH (PLANO PAGO)
+    // 🚀 MOTOR LAPIDADO: GEMINI 2.5 FLASH (OTIMIZADO PARA CUSTO)
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-2.5-flash",
+      generationConfig: { maxOutputTokens: 150, temperature: 0.4 }
+    });
     
     let result;
     let retries = 3;
-    let delay = 1000; // 1 segundo inicial
+    let delay = 1000;
 
     while (retries > 0) {
       try {
         result = await model.generateContent([
-          "Analise esta joia e extraia as informações necessárias. Retorne obrigatoriamente um JSON com: {\"name\": \"NOME DA PEÇA EM MAIÚSCULO\", \"category\": \"CATEGORIA\", \"description\": \"DESCRIÇÃO CURTA E LUXUOSA\"}.",
+          "Descreva esta joia. Retorne APENAS um JSON: {\"name\": \"NOME\", \"category\": \"CATEGORIA\", \"description\": \"3 frases curtas e luxuosas\"}.",
           { inlineData: { mimeType, data: base64Data } }
         ]);
         break; // Sucesso! Sai do loop.

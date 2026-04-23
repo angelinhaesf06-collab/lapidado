@@ -135,8 +135,14 @@ export default function NewProductPage() {
     })
   }
 
+  const [aiUsed, setAiUsed] = useState(false)
+
   const generateAIDescription = async () => {
-    if (images.length === 0) return
+    if (images.length === 0 || aiLoading || aiUsed) return
+    
+    // 💎 NEXUS: ECONOMIA DE TOKENS - Só permite gerar se o campo nome estiver vazio ou se for forçado
+    if (name && !confirm("VOCÊ JÁ TEM UM NOME DEFINIDO. DESEJA USAR A IA E CONSUMIR CRÉDITOS?")) return
+
     setAiLoading(true)
     setAiError(null)
     try {
@@ -171,6 +177,7 @@ export default function NewProductPage() {
         )
         if (foundCat) setCategory(foundCat.id)
       }
+      setAiUsed(true) // 🔒 TRAVA DE SEGURANÇA ATIVADA
     } catch (err: unknown) {
       const error = err as Error
       console.error('DETALHE DO ERRO IA:', error.message)
