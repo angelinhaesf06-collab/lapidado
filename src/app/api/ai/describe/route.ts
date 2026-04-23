@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     const mimeMatch = image.match(/data:(.*?);base64/);
     const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
     
-    // 🚀 MOTOR LAPIDADO COM RESILIÊNCIA (RETRY LOGIC)
+    // 🚀 MOTOR LAPIDADO COM RESILIÊNCIA
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     
