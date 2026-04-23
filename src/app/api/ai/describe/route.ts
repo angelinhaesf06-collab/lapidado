@@ -4,9 +4,6 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 export const runtime = 'nodejs';
 export const maxDuration = 30;
 
-/**
- * 💎 MOTOR LAPIDADO: ESTABILIZAÇÃO TOTAL (SYSTEM INSTRUCTIONS)
- */
 export async function POST(req: Request) {
   try {
     const apiKey = (process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "").trim();
@@ -23,45 +20,41 @@ export async function POST(req: Request) {
     const mimeMatch = image.match(/data:(.*?);base64/);
     const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
     
-    // 🚀 MOTOR LAPIDADO: CONFIGURAÇÃO DE ALTA PRECISÃO
     const genAI = new GoogleGenerativeAI(apiKey);
+    // 💎 NEXUS: Voltando para o 1.5-flash estável (v1) que é mais obediente a esquemas JSON
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.5-flash",
-      systemInstruction: "Você é um robô que gera APENAS JSON. Nunca use conversas, saudações ou blocos de código. Responda estritamente com o objeto: {\"name\": \"...\", \"category\": \"...\", \"description\": \"...\"}. A descrição deve ter no máximo 3 frases luxuosas.",
-    });
+      model: "gemini-1.5-flash",
+      systemInstruction: "Você é um robô. Responda APENAS JSON puro. Nunca use blocos de código ou texto. Formato: {\"name\": \"...\", \"category\": \"...\", \"description\": \"...\"}",
+    }, { apiVersion: "v1" });
     
     let result;
-    let retries = 3;
-    let delay = 1000;
-
-    while (retries > 0) {
-      try {
-        result = await model.generateContent({
-          contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
-          generationConfig: { 
-            maxOutputTokens: 200, 
-            temperature: 0.1,
-            responseMimeType: "application/json"
-          }
-        });
-        break; 
-      } catch (err: any) {
-        retries--;
-        if (retries === 0) throw err;
-        await new Promise(res => setTimeout(res, delay));
-        delay *= 2;
-      }
+    try {
+      result = await model.generateContent({
+        contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
+        generationConfig: { 
+          maxOutputTokens: 200, 
+          temperature: 0.1,
+          responseMimeType: "application/json"
+        }
+      });
+    } catch (err: any) {
+      console.error("ERRO CHAMADA GEMINI:", err.message);
+      throw new Error("A IA está ocupada ou a imagem foi recusada. Tente novamente.");
     }
 
-    const response = await result!.response;
-    const aiText = response.text().trim();
+    const response = await result.response;
+    let aiText = response.text().trim();
 
-    // 💎 NEXUS: PARSER ROBUSTO
+    // 💎 NEXUS: LIMPEZA ULTRA-ROBUSTA
+    // Se a IA mandou Markdown (```json ... ```), nós removemos
+    aiText = aiText.replace(/```json/g, "").replace(/```/g, "").trim();
+
     const start = aiText.indexOf('{');
     const end = aiText.lastIndexOf('}');
     
     if (start === -1 || end === -1) {
-      throw new Error(`Resposta inválida da IA (Sem JSON).`);
+      console.error("CONTEÚDO ESTRANHO DA IA:", aiText);
+      throw new Error("A IA não gerou um formato válido. Tente outra foto.");
     }
 
     const cleanedJson = aiText.substring(start, end + 1);
