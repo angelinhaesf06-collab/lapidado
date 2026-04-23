@@ -4,7 +4,7 @@ import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/ge
 export const runtime = 'nodejs';
 export const maxDuration = 30;
 
-async function tryGenerate(model: any, content: any, config: any) {
+async function tryGenerate(model: any, content: any) {
   let retries = 3;
   let delay = 2000;
   
@@ -13,7 +13,6 @@ async function tryGenerate(model: any, content: any, config: any) {
       return await model.generateContent(content);
     } catch (err: any) {
       if (err.message.includes("503") || err.message.includes("Service Unavailable")) {
-        console.warn(`⚠️ Google ocupado. Tentando novamente em ${delay}ms...`);
         await new Promise(res => setTimeout(res, delay));
         retries--;
         delay *= 2;
@@ -22,7 +21,7 @@ async function tryGenerate(model: any, content: any, config: any) {
       }
     }
   }
-  throw new Error("O Google está muito sobrecarregado após várias tentativas.");
+  throw new Error("Servidores do Google ocupados.");
 }
 
 export async function POST(req: Request) {
@@ -47,12 +46,12 @@ export async function POST(req: Request) {
     ];
 
     const modelParams = { 
-      systemInstruction: "Você é um robô de catálogo. Responda APENAS JSON: {\"name\": \"...\", \"category\": \"...\", \"description\": \"...\"}"
+      systemInstruction: "Você é um robô de joalheria. Responda APENAS JSON: {\"name\": \"...\", \"category\": \"...\", \"description\": \"...\"}"
     };
 
     let result;
     try {
-      // TENTA 1º: Gemini 2.5 Flash
+      // 🚀 1ª OPÇÃO: Gemini 2.5 Flash (Compatível conforme print)
       const model25 = genAI.getGenerativeModel({ ...modelParams, model: "gemini-2.5-flash" });
       result = await tryGenerate(model25, {
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
@@ -60,10 +59,10 @@ export async function POST(req: Request) {
         safetySettings
       });
     } catch (e) {
-      console.error("Gemini 2.5 falhou, tentando Fallback 2.0...");
-      // TENTA 2º: Fallback para Gemini 2.0 Flash (Equilíbrio entre potência e disponibilidade)
-      const model20 = genAI.getGenerativeModel({ ...modelParams, model: "gemini-2.0-flash" });
-      result = await tryGenerate(model20, {
+      console.error("Gemini 2.5 falhou, tentando Fallback 3...");
+      // 🚀 2ª OPÇÃO: Gemini 3 Flash (Compatível conforme print)
+      const model3 = genAI.getGenerativeModel({ ...modelParams, model: "gemini-3-flash" });
+      result = await tryGenerate(model3, {
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
         generationConfig: { maxOutputTokens: 500, temperature: 0.1 },
         safetySettings

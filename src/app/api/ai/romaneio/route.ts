@@ -9,40 +9,47 @@ export async function POST(req: Request) {
     const geminiKey = (process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "").trim();
 
     if (!geminiKey) {
-      return NextResponse.json({ error: "ERRO_CONFIG", details: "Chave API ausente." }, { status: 401 });
+      return NextResponse.json({ error: "ERRO_CONFIG" }, { status: 401 });
     }
 
     const payload = await req.json();
     const { image } = payload;
-    if (!image) return NextResponse.json({ error: "ERRO_IA_ROMANEIO", details: "Arquivo não fornecido." }, { status: 400 });
+    if (!image) return NextResponse.json({ error: "ERRO_IA_ROMANEIO" }, { status: 400 });
 
     const base64Data = image.includes(",") ? image.split(",")[1] : image;
     const mimeMatch = image.match(/data:(.*?);base64/);
     const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
 
     const genAI = new GoogleGenerativeAI(geminiKey);
-    // 🚀 MOTOR LAPIDADO: GEMINI 2.5 FLASH (v1beta)
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.5-flash",
-      systemInstruction: "Você é um robô extrator de dados. Retorne APENAS um array JSON: [{\"name\": \"...\", \"quantity\": 0, \"unitCost\": 0.0}]",
-    }, { apiVersion: 'v1beta' });
+    const systemInstruction = "Você é um robô extrator. Retorne APENAS um array JSON: [{\"name\": \"...\", \"quantity\": 0, \"unitCost\": 0.0}]";
 
-    const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
-      generationConfig: { maxOutputTokens: 500, temperature: 0.1 }
-    });
+    let result;
+    try {
+      // 🚀 1ª OPÇÃO: Gemini 2.5 Flash
+      const model25 = genAI.getGenerativeModel({ model: "gemini-2.5-flash", systemInstruction });
+      result = await model25.generateContent({
+        contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
+        generationConfig: { maxOutputTokens: 800, temperature: 0.1 }
+      });
+    } catch (e) {
+      console.error("Gemini 2.5 falhou no romaneio, tentando 3...");
+      // 🚀 2ª OPÇÃO: Gemini 3 Flash
+      const model3 = genAI.getGenerativeModel({ model: "gemini-3-flash", systemInstruction });
+      result = await model3.generateContent({
+        contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
+        generationConfig: { maxOutputTokens: 800, temperature: 0.1 }
+      });
+    }
 
     const response = await result.response;
     const aiText = response.text().trim();
-
-    const start = aiText.indexOf('[');
-    const end = aiText.lastIndexOf(']');
+    const jsonMatch = aiText.match(/\[[\s\S]*\]/);
     
-    if (start !== -1 && end !== -1) {
-       return NextResponse.json(JSON.parse(aiText.substring(start, end + 1)));
+    if (jsonMatch) {
+       return NextResponse.json(JSON.parse(jsonMatch[0]));
     }
     
-    throw new Error("A IA não conseguiu gerar a lista estruturada.");
+    throw new Error("A IA não gerou a lista.");
 
   } catch (error: any) {
     return NextResponse.json({ error: "ERRO_IA_ROMANEIO", details: error.message }, { status: 500 });
