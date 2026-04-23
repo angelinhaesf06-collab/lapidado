@@ -151,6 +151,33 @@ export default function SuppliersPage() {
     } catch { alert('Erro ao salvar.') } finally { setIsFinishingPurchase(false) }
   }
 
+  async function handleSaveSupplier() {
+    if (!name) return
+    setIsSaving(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      const data = { user_id: user?.id, name: name.toUpperCase(), category, phone, link, notes }
+      
+      if (editingSupplier) {
+        const { error } = await supabase.from('suppliers').update(data).eq('id', editingSupplier.id)
+        if (error) throw error
+      } else {
+        const { error } = await supabase.from('suppliers').insert(data)
+        if (error) throw error
+      }
+      
+      setShowAddModal(false)
+      setEditingSupplier(null)
+      setName('')
+      loadData()
+      toast.success('Fornecedor salvo com sucesso! 💎')
+    } catch (err: any) { 
+      toast.error('Erro ao salvar fornecedor: ' + err.message) 
+    } finally { 
+      setIsSaving(false) 
+    }
+  }
+
   return (
     <div className="max-w-7xl mx-auto pb-24 px-6">
       <div className="text-center mb-12">
