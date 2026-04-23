@@ -42,9 +42,9 @@ export default function Header() {
           }
         }
         
-        // 3. Fallback apenas se for a vitrine padrão (sem slug e sem login)
-        if (!brandingData && isPublic && !storeSlug) {
-          const { data } = await supabase.from('branding').select('*').eq('store_name', 'YES MORE GOLD').limit(1).maybeSingle()
+        // 3. Fallback: Busca o branding mais recente (provavelmente o da empresária atual)
+        if (!brandingData) {
+          const { data } = await supabase.from('branding').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle()
           brandingData = data
         }
 

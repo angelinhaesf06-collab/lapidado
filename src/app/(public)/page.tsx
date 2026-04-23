@@ -52,12 +52,7 @@ function HomeContent() {
       }
 
       if (!currentBranding) {
-        const { data } = await supabase.from('branding').select('*').eq('store_name', 'YES MORE GOLD').limit(1).maybeSingle()
-        currentBranding = data
-      }
-      
-      if (!currentBranding) {
-        const { data } = await supabase.from('branding').select('*').limit(1).maybeSingle()
+        const { data } = await supabase.from('branding').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle()
         currentBranding = data
       }
 
