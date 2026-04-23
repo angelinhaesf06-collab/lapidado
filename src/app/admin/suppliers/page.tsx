@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { Plus, Loader2, Phone, ExternalLink, Trash2, Search, Store, Receipt, ShoppingBag, X, Check, Camera, Sparkles, Pencil, Calendar, Coins, Hammer, Layers, Droplet, Beaker, Info } from 'lucide-react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { Plus, Loader2, Phone, ExternalLink, Trash2, Search, Store, Receipt, ShoppingBag, X, Check, Camera, Sparkles, Pencil, Calendar, Coins, Hammer, Layers, Droplet, Beaker, Info, Calculator, FileText } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -16,28 +16,19 @@ interface Supplier {
   notes?: string
 }
 
-interface Product {
-  id: string
-  name: string
-  stock_quantity: number
-  price?: number
-}
-
 interface PurchaseItem {
-  productId?: string
   name: string
-  quantity: number
-  unitCost: number
-  // 💎 Unidade Padrão: Gramas
+  material: 'OURO' | 'PRATA' | 'RODIO' | 'VERNIZ' | 'COBRE' | 'OUTROS'
+  logicType: 'MILESIMOS' | 'FIXO'
   weightGrams: number
-  material: 'OURO' | 'RODIO' | 'PRATA' | 'VERNIZ' | 'COBRE' | 'OUTROS'
-  teor: number
-  tablePriceGram: number
+  milesimos: number
+  metalQuote: number
+  laborCost: number
+  fixedTablePrice: number // R$ por KG
 }
 
 export default function SuppliersPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
-  const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null)
@@ -45,16 +36,12 @@ export default function SuppliersPage() {
   const [showPurchaseModal, setShowPurchaseModal] = useState(false)
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null)
   const [purchaseItems, setPurchaseItems] = useState<PurchaseItem[]>([{ 
-    name: '', quantity: 1, unitCost: 0, weightGrams: 0, material: 'OURO', teor: 0, tablePriceGram: 0 
+    name: '', material: 'OURO', logicType: 'MILESIMOS', weightGrams: 0, milesimos: 0, metalQuote: 0, laborCost: 0, fixedTablePrice: 0 
   }])
   const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().split('T')[0])
-  const [goldQuote, setGoldQuote] = useState(0)
-  const [extraLabor, setExtraLabor] = useState(0)
   
   const [isFinishingPurchase, setIsFinishingPurchase] = useState(false)
-  const [isReadingPhoto, setIsReadingPhoto] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-
   const [searchQuery, setSearchQuery] = useState('')
   const [filterType, setFilterType] = useState<'TODOS' | 'BRUTO' | 'FOLHADO' | 'GALVANICA'>('TODOS')
 
@@ -70,258 +57,267 @@ export default function SuppliersPage() {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    const { data: supData } = await supabase.from('suppliers').select('*').eq('user_id', user.id).order('name')
-    if (supData) setSuppliers(supData as Supplier[])
-    const { data: prodData } = await supabase.from('products').select('id, name, stock_quantity, price').eq('user_id', user.id).order('name')
-    if (prodData) setProducts(prodData as Product[])
+    const { data } = await supabase.from('suppliers').select('*').eq('user_id', user.id).order('name')
+    if (data) setSuppliers(data as Supplier[])
     setLoading(false)
   }, [supabase])
 
   useEffect(() => { loadData() }, [loadData])
 
-  const calculateTotals = () => {
-    const isIndustrial = selectedSupplier?.category === 'GALVANICA' || selectedSupplier?.category === 'BRUTO';
+  const calculateLineTotal = (item: PurchaseItem) => {
+    const weightKG = item.weightGrams / 1000
+    if (item.logicType === 'MILESIMOS') {
+      const costMil = item.metalQuote + item.laborCost
+      return weightKG * (item.milesimos * costMil)
+    } else {
+      return weightKG * item.fixedTablePrice
+    }
+  }
+
+  const totals = useMemo(() => {
+    const subtotal = purchaseItems.reduce((acc, item) => acc + calculateLineTotal(item), 0)
+    const weight = purchaseItems.reduce((acc, item) => acc + item.weightGrams, 0)
+    return { subtotal, weight }
+  }, [purchaseItems])
+
+  const handleAddItem = () => {
+    setPurchaseItems([...purchaseItems, { 
+      name: '', material: 'OURO', logicType: 'MILESIMOS', weightGrams: 0, milesimos: 0, metalQuote: 0, laborCost: 0, fixedTablePrice: 0 
+    }])
+  }
+
+  const handleUpdateItem = (index: number, fields: Partial<PurchaseItem>) => {
+    const newItems = [...purchaseItems]
+    newItems[index] = { ...newItems[index], ...fields }
     
-    // 1. Subtotal (Baseado em Gramas)
-    const subtotal = purchaseItems.reduce((acc, item) => {
-      return acc + (item.weightGrams * item.tablePriceGram);
-    }, 0);
-
-    // 2. Transparência do Ouro (Peso G * Teor / 1000 = Gramas de Ouro puro)
-    const goldItems = purchaseItems.filter(i => i.material === 'OURO');
-    const goldGrams = goldItems.reduce((acc, i) => acc + (i.weightGrams * (i.teor / 1000)), 0);
-    const goldRealCost = goldGrams * goldQuote;
-
-    // 3. Mão de Obra por Milésimos (Peso G * Teor * Taxa MO)
-    const totalMO = purchaseItems.reduce((acc, item) => {
-      if (isIndustrial && extraLabor > 0) {
-        return acc + (item.weightGrams * item.teor * extraLabor);
+    // Auto-switch logic based on material
+    if (fields.material) {
+      if (fields.material === 'OURO' || fields.material === 'PRATA') {
+        newItems[index].logicType = 'MILESIMOS'
+      } else {
+        newItems[index].logicType = 'FIXO'
       }
-      return acc;
-    }, 0);
-
-    const totalFinal = subtotal + (selectedSupplier?.category === 'GALVANICA' ? totalMO : extraLabor);
-    const totalWeight = purchaseItems.reduce((acc, item) => acc + item.weightGrams, 0);
-
-    return { 
-      subtotal, 
-      totalFinal, 
-      totalWeight, 
-      goldGrams: Math.round(goldGrams * 1000) / 1000, 
-      goldRealCost, 
-      totalMO 
-    };
-  }
-
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; if (!file) return
-    setIsReadingPhoto(true)
-    const reader = new FileReader()
-    reader.onload = async (event) => {
-      const base64 = event.target?.result as string
-      try {
-        const res = await fetch('/api/ai/romaneio', { method: 'POST', body: JSON.stringify({ image: base64 }) })
-        const data = await res.json()
-        if (Array.isArray(data)) {
-          const mapped = data.map(item => ({ 
-            name: item.name, quantity: item.quantity || 1, weightGrams: 0, material: 'OURO' as const, teor: 0, tablePriceGram: 0, unitCost: 0
-          }))
-          setPurchaseItems(mapped as any); alert('DADOS EXTRAÍDOS! 💎')
-        }
-      } catch { alert('ERRO NO PROCESSAMENTO.') } finally { setIsReadingPhoto(false) }
     }
-    reader.readAsDataURL(file)
+    
+    setPurchaseItems(newItems)
   }
 
-  const generatePDF = (supplier: Supplier, items: PurchaseItem[], totals: any, dateStr: string) => {
+  const generatePDF = (supplier: Supplier, items: PurchaseItem[], finalTotals: any) => {
     const doc = new jsPDF()
-    const date = dateStr.split('-').reverse().join('/')
-    doc.setFontSize(20); doc.setTextColor(74, 50, 46); doc.text('LAPIDADO', 105, 20, { align: 'center' })
-    doc.setFontSize(10); doc.setTextColor(201, 144, 144); doc.text(`ROMANEIO INDUSTRIAL - ${supplier.category}`, 105, 27, { align: 'center' })
-    doc.line(20, 35, 190, 35)
-    doc.setFontSize(10); doc.setTextColor(74, 50, 46)
-    doc.text(`FORNECEDOR: ${supplier.name}`, 20, 42); doc.text(`DATA: ${date}`, 190, 42, { align: 'right' })
-
-    const head = (supplier.category === 'GALVANICA' || supplier.category === 'BRUTO')
-      ? [['DESCRIÇÃO', 'MAT.', 'PESO (G)', 'TEOR', 'TABELA (G)', 'TOTAL']]
-      : [['ITEM', 'QNT', 'CUSTO UN.', 'TOTAL']]
-
-    const body = items.map(i => (supplier.category === 'GALVANICA' || supplier.category === 'BRUTO')
-      ? [i.name.toUpperCase(), i.material, i.weightGrams.toFixed(2), `${i.teor} mil`, `R$ ${i.tablePriceGram.toLocaleString('pt-BR')}`, `R$ ${(i.weightGrams * i.tablePriceGram).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`]
-      : [i.name.toUpperCase(), i.quantity, `R$ ${i.unitCost.toLocaleString('pt-BR')}`, `R$ ${(i.quantity * i.unitCost).toLocaleString('pt-BR')}`]
-    )
-
-    autoTable(doc, { startY: 48, head, body, theme: 'striped', headStyles: { fillColor: [74, 50, 46] } })
-
-    if (supplier.category === 'GALVANICA' || supplier.category === 'BRUTO') {
-      const finalY = (doc as any).lastAutoTable.finalY + 10;
-      doc.setFontSize(10);
-      doc.text(`PESO TOTAL: ${totals.totalWeight.toFixed(2)} GRAMAS`, 20, finalY);
-      if (supplier.category === 'GALVANICA') {
-        doc.text(`TRANSPARÊNCIA OURO GASTO: ${totals.goldGrams.toFixed(2)}g (R$ ${totals.goldRealCost.toLocaleString('pt-BR')})`, 20, finalY + 6);
+    doc.setFontSize(22); doc.setTextColor(74, 50, 46); doc.text('LAPIDADO ERP', 105, 20, { align: 'center' })
+    doc.setFontSize(10); doc.setTextColor(201, 144, 144); doc.text(`ROMANEIO DE CUSTOS DE BANHO - ${supplier.name}`, 105, 28, { align: 'center' })
+    
+    const body = items.map(i => {
+      const total = calculateLineTotal(i)
+      if (i.logicType === 'MILESIMOS') {
+        return [i.name.toUpperCase(), i.material, `${i.weightGrams}g`, `${i.milesimos} mil`, `R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`]
       }
-      doc.setFontSize(12);
-      doc.text(`TOTAL FINAL: R$ ${totals.totalFinal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 190, finalY + 10, { align: 'right' });
-    }
+      return [i.name.toUpperCase(), i.material, `${i.weightGrams}g`, 'Tabela Fixa', `R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`]
+    })
+
+    autoTable(doc, {
+      startY: 40,
+      head: [['ITEM', 'MATERIAL', 'PESO', 'DETALHES', 'SUBTOTAL']],
+      body: body,
+      theme: 'grid',
+      headStyles: { fillColor: [74, 50, 46] }
+    })
+
+    const finalY = (doc as any).lastAutoTable.finalY + 10
+    doc.setFontSize(14); doc.text(`TOTAL DO ROMANEIO: R$ ${finalTotals.subtotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 190, finalY, { align: 'right' })
     doc.save(`romaneio-${supplier.name.toLowerCase()}.pdf`)
   }
 
-  const handleFinishPurchase = async () => {
+  const handleFinish = async () => {
     if (!selectedSupplier) return
     setIsFinishingPurchase(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      const totals = calculateTotals()
       const { data: purchase } = await supabase.from('purchases').insert({ 
-        user_id: user?.id, supplier_id: selectedSupplier.id, total_amount: totals.totalFinal, created_at: new Date(purchaseDate).toISOString() 
+        user_id: user?.id, supplier_id: selectedSupplier.id, total_amount: totals.subtotal, created_at: new Date(purchaseDate).toISOString() 
       }).select().single()
       
       if (purchase) {
         for (const item of purchaseItems) {
-          const isInd = selectedSupplier.category === 'GALVANICA' || selectedSupplier.category === 'BRUTO';
-          const cost = isInd ? (item.weightGrams * item.tablePriceGram) : item.unitCost;
           await supabase.from('purchase_items').insert({ 
-            purchase_id: purchase.id, product_id: item.productId || null, name: item.name.toUpperCase(), quantity: 1, unit_cost: cost,
-            notes: isInd ? `${item.material} | ${item.weightGrams}g | ${item.teor}mil` : ''
+            purchase_id: purchase.id, name: item.name.toUpperCase(), quantity: 1, unit_cost: calculateLineTotal(item),
+            notes: `${item.material} | ${item.weightGrams}g | ${item.logicType === 'MILESIMOS' ? item.milesimos + 'mil' : 'FIXO'}`
           })
         }
       }
-      generatePDF(selectedSupplier, purchaseItems, totals, purchaseDate)
+      generatePDF(selectedSupplier, purchaseItems, totals)
       setShowPurchaseModal(false); loadData()
-    } catch { alert('ERRO AO FINALIZAR.') } finally { setIsFinishingPurchase(false) }
+      toast.success('Romaneio salvo e PDF gerado! 💎')
+    } catch { alert('Erro ao salvar.') } finally { setIsFinishingPurchase(false) }
   }
-
-  async function handleSaveSupplier() {
-    if (!name) return
-    setIsSaving(true)
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      const data = { user_id: user?.id, name: name.toUpperCase(), category, phone, link, notes }
-      if (editingSupplier) await supabase.from('suppliers').update(data).eq('id', editingSupplier.id)
-      else await supabase.from('suppliers').insert(data)
-      setShowAddModal(false); setEditingSupplier(null); setName(''); loadData()
-    } catch { alert('ERRO.') } finally { setIsSaving(false) }
-  }
-
-  const filteredSuppliers = suppliers.filter(s => (filterType === 'TODOS' || s.category === filterType) && s.name.toLowerCase().includes(searchQuery.toLowerCase()))
-  const { subtotal, totalFinal, totalWeight, goldGrams, goldRealCost } = calculateTotals()
 
   return (
-    <div className="max-w-6xl mx-auto pb-20 px-4">
-      <div className="text-center mb-10">
-        <h2 className="text-3xl font-bold uppercase text-brand-primary">Gestão de Fornecedores</h2>
-        <p className="text-brand-secondary text-[10px] font-black tracking-[0.4em] uppercase mt-2">Unidade Industrial: Gramas (G) 💎</p>
+    <div className="max-w-7xl mx-auto pb-24 px-6">
+      <div className="text-center mb-12">
+        <h2 className="text-4xl font-black uppercase text-brand-primary tracking-tighter">Gestão de Fornecedores</h2>
+        <p className="text-brand-secondary text-[12px] font-black tracking-[0.4em] uppercase mt-2">Engenharia de Custos & ERP Industrial 💎</p>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
-        <input type="text" placeholder="BUSCAR..." className="flex-1 px-6 py-4 rounded-[25px] bg-white border border-brand-secondary/10 text-[10px] font-bold uppercase outline-none" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-        <div className="flex bg-white p-1 rounded-[25px] border border-brand-secondary/10">
-          {(['TODOS', 'BRUTO', 'FOLHADO', 'GALVANICA'] as const).map(t => (
-            <button key={t} onClick={() => setFilterType(t)} className={`px-4 py-2 rounded-[20px] text-[8px] font-black uppercase transition-all ${filterType === t ? 'bg-brand-primary text-white' : 'text-brand-secondary hover:bg-rose-50'}`}>{t}</button>
-          ))}
+      <div className="flex flex-col md:flex-row gap-4 mb-8">
+        <div className="relative flex-1 group">
+           <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-brand-secondary/40 group-focus-within:text-brand-primary transition-all" size={20} />
+           <input type="text" placeholder="BUSCAR FORNECEDOR OU TIPO..." className="w-full pl-16 pr-6 py-5 rounded-[30px] bg-white border border-brand-secondary/10 font-bold uppercase text-xs outline-none focus:ring-4 focus:ring-brand-primary/5 transition-all" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
         </div>
-        <button onClick={() => setShowAddModal(true)} className="bg-brand-primary text-white px-8 py-4 rounded-[25px] font-black text-[10px] uppercase flex items-center gap-2 shadow-xl hover:scale-105 transition-all"><Plus size={18}/> Novo Fornecedor</button>
+        <button onClick={() => setShowAddModal(true)} className="bg-brand-primary text-white px-10 py-5 rounded-[30px] font-black text-xs uppercase flex items-center justify-center gap-3 shadow-2xl hover:scale-[1.02] active:scale-95 transition-all"><Plus size={20}/> Novo Parceiro</button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {loading ? <div className="col-span-full text-center py-20"><Loader2 className="animate-spin inline text-brand-secondary"/></div> : filteredSuppliers.map((s) => (
-          <div key={s.id} className="bg-white p-6 rounded-[40px] border border-brand-secondary/5 shadow-sm hover:shadow-md transition-all group relative flex flex-col h-full">
-            <div className="flex items-center gap-4 mb-4">
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${s.category === 'GALVANICA' ? 'bg-amber-100 text-amber-700' : s.category === 'BRUTO' ? 'bg-zinc-100 text-zinc-700' : 'bg-rose-100 text-rose-700'}`}><Store size={24}/></div>
-              <div><h3 className="text-xs font-bold text-brand-primary uppercase">{s.name}</h3><span className="text-[7px] font-black px-2 py-1 rounded-full bg-brand-primary/5 text-brand-secondary uppercase tracking-widest">{s.category}</span></div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {loading ? <div className="col-span-full text-center py-20"><Loader2 className="animate-spin inline text-brand-secondary" size={40}/></div> : 
+          suppliers.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase())).map((s) => (
+          <div key={s.id} className="bg-white p-8 rounded-[45px] border border-brand-secondary/5 shadow-sm hover:shadow-2xl transition-all group relative">
+            <div className="flex items-center gap-5 mb-8">
+              <div className={`w-16 h-16 rounded-[24px] flex items-center justify-center shadow-inner ${s.category === 'GALVANICA' ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-brand-primary'}`}><Store size={32}/></div>
+              <div>
+                <h3 className="text-lg font-black text-brand-primary uppercase leading-tight">{s.name}</h3>
+                <span className="text-[9px] font-black px-3 py-1 rounded-full bg-brand-primary/5 text-brand-secondary uppercase tracking-[0.2em]">{s.category}</span>
+              </div>
             </div>
-            <button onClick={() => { setSelectedSupplier(s); setShowPurchaseModal(true) }} className="w-full bg-brand-primary text-white py-3 rounded-2xl flex items-center justify-center gap-2 text-[9px] font-black uppercase shadow-lg mt-auto"><Receipt size={14}/> Registrar Compra</button>
-            <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
-              <button onClick={() => { setEditingSupplier(s); setName(s.name); setCategory(s.category); setPhone(s.phone || ''); setLink(s.link || ''); setNotes(s.notes || ''); setShowAddModal(true) }} className="p-2 text-brand-secondary hover:text-brand-primary"><Pencil size={16}/></button>
-              <button onClick={() => { if(confirm('Excluir?')) supabase.from('suppliers').delete().eq('id', s.id).then(() => loadData()) }} className="p-2 text-rose-300 hover:text-rose-500"><Trash2 size={16}/></button>
+            
+            <div className="space-y-3 mb-8">
+               {s.phone && <div className="flex items-center gap-2 text-[10px] font-bold text-brand-secondary/60 uppercase"><Phone size={14} className="text-brand-primary/40"/> {s.phone}</div>}
+               <div className="flex items-center gap-2 text-[10px] font-bold text-brand-secondary/60 uppercase"><FileText size={14} className="text-brand-primary/40"/> {s.notes || 'Sem observações'}</div>
+            </div>
+
+            <button onClick={() => { setSelectedSupplier(s); setShowPurchaseModal(true) }} className="w-full bg-brand-primary text-white py-4 rounded-[20px] flex items-center justify-center gap-3 text-[10px] font-black uppercase shadow-lg shadow-brand-primary/20 hover:bg-brand-secondary transition-all">
+              <Calculator size={16}/> Lançar Custos de Banho
+            </button>
+            
+            <div className="absolute top-6 right-6 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+              <button onClick={() => { setEditingSupplier(s); setName(s.name); setCategory(s.category); setPhone(s.phone || ''); setNotes(s.notes || ''); setShowAddModal(true) }} className="p-3 bg-white rounded-xl shadow-md text-brand-secondary hover:text-brand-primary transition-all"><Pencil size={18}/></button>
             </div>
           </div>
         ))}
       </div>
 
+      {/* 🚀 MODAL DE LANÇAMENTO DE CUSTOS (FORMULAS) */}
       {showPurchaseModal && selectedSupplier && (
-        <div className="fixed inset-0 bg-brand-primary/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-6xl h-[95vh] rounded-[40px] shadow-2xl flex flex-col overflow-hidden">
-            <div className="p-6 border-b border-brand-secondary/10 flex justify-between items-center bg-rose-50/20">
-              <div><h3 className="text-xl font-bold text-brand-primary uppercase">Romaneio Industrial: {selectedSupplier.name}</h3></div>
-              <div className="flex items-center gap-3">
-                <label className="cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full border-2 border-brand-primary text-[9px] font-black uppercase hover:bg-brand-primary hover:text-white transition-all"><Sparkles size={14}/> Ler com IA <input type="file" className="hidden" onChange={handlePhotoUpload}/></label>
-                <button onClick={() => setShowPurchaseModal(false)} className="p-2 hover:bg-rose-100 rounded-full text-brand-primary"><X size={24}/></button>
+        <div className="fixed inset-0 bg-brand-primary/80 backdrop-blur-xl z-[200] flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-7xl h-[92vh] rounded-[50px] shadow-2xl flex flex-col overflow-hidden">
+            <div className="p-8 border-b border-brand-secondary/10 flex justify-between items-center bg-rose-50/20">
+              <div className="flex items-center gap-4">
+                 <div className="p-3 bg-brand-primary rounded-2xl text-white shadow-lg"><Calculator size={24}/></div>
+                 <div>
+                    <h3 className="text-2xl font-black text-brand-primary uppercase tracking-tighter">Cálculo ERP: {selectedSupplier.name}</h3>
+                    <p className="text-[10px] font-bold text-brand-secondary/50 uppercase tracking-[0.2em]">Fórmulas de milésimos e tabela fixa ativas</p>
+                 </div>
               </div>
+              <button onClick={() => setShowPurchaseModal(false)} className="p-4 hover:bg-rose-100 rounded-full text-brand-primary transition-all"><X size={32}/></button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-brand-primary/5 p-4 rounded-3xl flex items-center gap-3">
-                  <Calendar className="text-brand-primary" size={20}/><div className="flex-1"><label className="text-[8px] font-black uppercase block">Data</label><input type="date" className="bg-transparent text-xs font-bold w-full" value={purchaseDate} onChange={(e) => setPurchaseDate(e.target.value)}/></div>
+            <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-rose-50/5">
+              <div className="flex items-center gap-4 bg-white p-6 rounded-[30px] border border-brand-secondary/5 shadow-sm max-w-xs">
+                <Calendar className="text-brand-primary" size={24}/>
+                <div className="flex-1">
+                  <label className="text-[9px] font-black uppercase text-brand-secondary/40 block mb-1">Data do Processo</label>
+                  <input type="date" className="bg-transparent text-sm font-black w-full outline-none" value={purchaseDate} onChange={(e) => setPurchaseDate(e.target.value)}/>
                 </div>
-                {(selectedSupplier.category === 'GALVANICA' || selectedSupplier.category === 'BRUTO') && (
-                  <>
-                    {selectedSupplier.category === 'GALVANICA' && (
-                      <div className="bg-amber-50 p-4 rounded-3xl border border-amber-200 flex items-center gap-3">
-                        <Coins className="text-amber-600" size={20}/><div className="flex-1"><label className="text-[8px] font-black uppercase block">Ouro do Dia (R$)</label><input type="number" className="bg-transparent text-xs font-bold w-full" value={goldQuote} onChange={(e) => setGoldQuote(parseFloat(e.target.value) || 0)}/></div>
-                      </div>
-                    )}
-                    <div className="bg-blue-50 p-4 rounded-3xl border border-blue-200 flex items-center gap-3">
-                      <Hammer className="text-blue-600" size={20}/><div className="flex-1"><label className="text-[8px] font-black uppercase block text-blue-600">Taxa p/ Milésimo (MO)</label><input type="number" step="0.001" className="bg-transparent text-xs font-bold w-full" value={extraLabor} onChange={(e) => setExtraLabor(parseFloat(e.target.value) || 0)}/></div>
-                    </div>
-                  </>
-                )}
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {purchaseItems.map((item, index) => (
-                  <div key={index} className="bg-rose-50/10 p-5 rounded-[30px] border border-brand-secondary/5 grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
-                    <div className="md:col-span-3"><label className="text-[7px] font-black uppercase block mb-1">Descrição</label><input type="text" className="w-full px-3 py-2 rounded-xl bg-white border border-brand-secondary/10 text-[10px] font-bold uppercase" value={item.name} onChange={(e) => { const n = [...purchaseItems]; n[index].name = e.target.value; setPurchaseItems(n); }}/></div>
-                    {selectedSupplier.category === 'GALVANICA' && (
-                      <div className="md:col-span-2"><label className="text-[7px] font-black uppercase block mb-1">Material</label><select className="w-full px-3 py-2 rounded-xl bg-white border border-brand-secondary/10 text-[9px] font-bold" value={item.material} onChange={(e) => { const n = [...purchaseItems]; n[index].material = e.target.value as any; setPurchaseItems(n); }}><option value="OURO">OURO</option><option value="RODIO">RÓDIO</option><option value="PRATA">PRATA</option><option value="VERNIZ">VERNIZ</option><option value="COBRE">COBRE</option><option value="OUTROS">OUTROS</option></select></div>
+                  <div key={index} className="bg-white p-8 rounded-[40px] border border-brand-secondary/10 shadow-sm grid grid-cols-1 lg:grid-cols-12 gap-6 items-end group relative">
+                    <div className="lg:col-span-3 space-y-2">
+                      <label className="text-[9px] font-black uppercase text-brand-secondary/40 ml-2">Descrição da Carga</label>
+                      <input type="text" placeholder="EX: ANÉIS LISOS" className="w-full px-5 py-4 rounded-2xl bg-brand-secondary/5 text-xs font-black uppercase outline-none focus:ring-2 focus:ring-brand-primary/20" value={item.name} onChange={(e) => handleUpdateItem(index, { name: e.target.value })}/>
+                    </div>
+                    
+                    <div className="lg:col-span-2 space-y-2">
+                      <label className="text-[9px] font-black uppercase text-brand-secondary/40 ml-2">Serviço/Material</label>
+                      <select className="w-full px-5 py-4 rounded-2xl bg-brand-secondary/5 text-xs font-black outline-none appearance-none" value={item.material} onChange={(e) => handleUpdateItem(index, { material: e.target.value as any })}>
+                        <option value="OURO">BANHO OURO</option>
+                        <option value="PRATA">BANHO PRATA</option>
+                        <option value="RODIO">RÓDIO BRANCO/NEGRO</option>
+                        <option value="VERNIZ">VERNIZ/PROTEÇÃO</option>
+                        <option value="COBRE">COBRE/BASE</option>
+                      </select>
+                    </div>
+
+                    <div className="lg:col-span-1 space-y-2">
+                      <label className="text-[9px] font-black uppercase text-brand-secondary/40 ml-2 text-center block">Peso (G)</label>
+                      <input type="number" className="w-full px-2 py-4 rounded-2xl bg-brand-secondary/5 text-xs font-black text-center outline-none" value={item.weightGrams || ''} onChange={(e) => handleUpdateItem(index, { weightGrams: parseFloat(e.target.value) || 0 })}/>
+                    </div>
+
+                    {item.logicType === 'MILESIMOS' ? (
+                      <>
+                        <div className="lg:col-span-1 space-y-2">
+                          <label className="text-[9px] font-black uppercase text-brand-secondary/40 ml-2 text-center block">Milésimos</label>
+                          <input type="number" className="w-full px-2 py-4 rounded-2xl bg-amber-50 border border-amber-100 text-xs font-black text-center text-amber-700 outline-none" value={item.milesimos || ''} onChange={(e) => handleUpdateItem(index, { milesimos: parseFloat(e.target.value) || 0 })}/>
+                        </div>
+                        <div className="lg:col-span-2 space-y-2">
+                          <label className="text-[9px] font-black uppercase text-brand-secondary/40 ml-2 block">Cotação Metal (G)</label>
+                          <input type="number" className="w-full px-5 py-4 rounded-2xl bg-amber-50 border border-amber-100 text-xs font-black text-amber-700 outline-none" value={item.metalQuote || ''} onChange={(e) => handleUpdateItem(index, { metalQuote: parseFloat(e.target.value) || 0 })}/>
+                        </div>
+                        <div className="lg:col-span-2 space-y-2">
+                          <label className="text-[9px] font-black uppercase text-brand-secondary/40 ml-2 block">M.O. p/ Milésimo</label>
+                          <input type="number" className="w-full px-5 py-4 rounded-2xl bg-amber-50 border border-amber-100 text-xs font-black text-amber-700 outline-none" value={item.laborCost || ''} onChange={(e) => handleUpdateItem(index, { laborCost: parseFloat(e.target.value) || 0 })}/>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="lg:col-span-5 space-y-2">
+                        <label className="text-[9px] font-black uppercase text-brand-secondary/40 ml-2 block">Valor Tabela Fixa (R$ p/ KG)</label>
+                        <input type="number" className="w-full px-5 py-4 rounded-2xl bg-blue-50 border border-blue-100 text-xs font-black text-blue-700 outline-none" value={item.fixedTablePrice || ''} onChange={(e) => handleUpdateItem(index, { fixedTablePrice: parseFloat(e.target.value) || 0 })}/>
+                      </div>
                     )}
-                    <div className="md:col-span-2"><label className="text-[7px] font-black uppercase block mb-1">{(selectedSupplier.category === 'GALVANICA' || selectedSupplier.category === 'BRUTO') ? 'Peso (GRAMAS)' : 'Quantidade'}</label><input type="number" step="0.01" className="w-full px-3 py-2 rounded-xl bg-white border border-brand-secondary/10 text-[10px] font-bold text-center" value={(selectedSupplier.category === 'GALVANICA' || selectedSupplier.category === 'BRUTO') ? item.weightGrams : item.quantity} onChange={(e) => { const n = [...purchaseItems]; if (isInd(selectedSupplier)) n[index].weightGrams = parseFloat(e.target.value) || 0; else n[index].quantity = parseInt(e.target.value) || 0; setPurchaseItems(n); }}/></div>
-                    {isInd(selectedSupplier) && (<div className="md:col-span-1"><label className="text-[7px] font-black uppercase block mb-1">Teor</label><input type="number" className="w-full px-3 py-2 rounded-xl bg-white border border-brand-secondary/10 text-[10px] font-bold text-center" value={item.teor} onChange={(e) => { const n = [...purchaseItems]; n[index].teor = parseInt(e.target.value) || 0; setPurchaseItems(n); }}/></div>)}
-                    <div className="md:col-span-3"><label className="text-[7px] font-black uppercase block mb-1">{(isInd(selectedSupplier)) ? 'Tabela (R$ p/ Grama)' : 'Custo Unitário (R$)'}</label><input type="number" step="0.001" className="w-full px-3 py-2 rounded-xl bg-white border border-brand-secondary/10 text-[10px] font-bold" value={(isInd(selectedSupplier)) ? item.tablePriceGram : item.unitCost} onChange={(e) => { const n = [...purchaseItems]; if (isInd(selectedSupplier)) n[index].tablePriceGram = parseFloat(e.target.value) || 0; else n[index].unitCost = parseFloat(e.target.value) || 0; setPurchaseItems(n); }}/></div>
-                    <div className="md:col-span-1 flex justify-end"><button onClick={() => setPurchaseItems(purchaseItems.filter((_, i) => i !== index))} className="p-2 text-rose-300 hover:text-rose-500"><Trash2 size={16}/></button></div>
+
+                    <div className="lg:col-span-1 flex flex-col items-end justify-center pb-2">
+                       <p className="text-[8px] font-black text-brand-secondary/40 uppercase mb-1">Subtotal</p>
+                       <p className="text-sm font-black text-brand-primary tracking-tighter">R$ {calculateLineTotal(item).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                       <button onClick={() => setPurchaseItems(purchaseItems.filter((_, i) => i !== index))} className="absolute -top-4 -right-4 p-3 bg-rose-50 text-rose-500 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={16}/></button>
+                    </div>
                   </div>
                 ))}
               </div>
-              <button onClick={() => setPurchaseItems([...purchaseItems, { name: '', quantity: 1, unitCost: 0, weightGrams: 0, material: 'OURO', teor: 0, tablePriceGram: 0 }])} className="w-full py-4 border-2 border-dashed border-brand-secondary/20 rounded-[30px] text-[8px] font-black uppercase text-brand-secondary hover:bg-brand-secondary/5 flex items-center justify-center gap-2"><Plus size={14}/> Adicionar Nova Linha</button>
+              <button onClick={handleAddItem} className="w-full py-6 border-4 border-dashed border-brand-secondary/10 rounded-[40px] text-xs font-black uppercase text-brand-secondary/40 hover:bg-brand-secondary/5 hover:text-brand-primary transition-all flex items-center justify-center gap-3"><Plus size={20}/> Adicionar Outra Carga ao Romaneio</button>
             </div>
 
-            <div className="p-6 border-t border-brand-secondary/10 bg-white flex flex-col md:flex-row justify-between items-center gap-6">
-              {isInd(selectedSupplier) ? (
-                <div className="flex flex-col md:flex-row gap-8 bg-brand-primary/5 p-4 rounded-3xl border border-brand-primary/10 w-full md:w-auto">
-                  {selectedSupplier.category === 'GALVANICA' && (
-                    <div><p className="text-[7px] font-black uppercase tracking-widest text-brand-secondary flex items-center gap-1"><Info size={10}/> Transparência do Ouro</p><div className="flex gap-4 mt-1"><div><span className="text-[8px] block opacity-50">CONSUMO</span><span className="text-xs font-bold text-amber-700">{goldGrams.toFixed(2)}g</span></div><div><span className="text-[8px] block opacity-50">VALOR METAL</span><span className="text-xs font-bold text-amber-700">R$ {goldRealCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div></div></div>
-                  )}
-                  <div className={`text-center md:text-left ${selectedSupplier.category === 'GALVANICA' ? 'border-l border-brand-primary/20 pl-8' : ''}`}><p className="text-[7px] font-black uppercase tracking-widest text-brand-secondary">Resumo Financeiro</p><div className="flex gap-4 mt-1"><div><span className="text-[8px] block opacity-50">PESO TOTAL</span><span className="text-xs font-bold">{totalWeight.toFixed(2)} GRAMAS</span></div><div><span className="text-[8px] block opacity-50">SUBTOTAL</span><span className="text-xs font-bold">R$ {subtotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div><div className="pl-4 border-l border-brand-primary/20"><span className="text-[8px] block opacity-50">TOTAL FINAL</span><span className="text-xs font-bold text-brand-primary">R$ {totalFinal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div></div></div>
-                </div>
-              ) : (
-                <div><p className="text-[8px] font-black uppercase">Total do Romaneio</p><h4 className="text-2xl font-bold text-brand-primary">R$ {purchaseItems.reduce((acc, i) => acc + (i.quantity * i.unitCost), 0).toLocaleString('pt-BR')}</h4></div>
-              )}
-              <button onClick={handleFinishPurchase} disabled={isFinishingPurchase} className="bg-brand-primary text-white px-10 py-4 rounded-[25px] font-black text-[10px] uppercase shadow-2xl hover:scale-105 transition-all">{isFinishingPurchase ? <Loader2 className="animate-spin" size={18}/> : 'Finalizar & Baixar PDF'}</button>
+            <div className="p-10 border-t border-brand-secondary/10 bg-white flex flex-col md:flex-row justify-between items-center gap-10">
+              <div className="flex gap-12">
+                 <div className="text-center md:text-left">
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-secondary/40 mb-1">Peso Total da Carga</p>
+                    <div className="flex items-end gap-2">
+                       <span className="text-3xl font-black text-brand-primary">{totals.weight}</span>
+                       <span className="text-sm font-black text-brand-secondary/40 mb-1 uppercase">Gramas</span>
+                    </div>
+                 </div>
+                 <div className="text-center md:text-left">
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-secondary/40 mb-1">Investimento Total</p>
+                    <div className="flex items-end gap-2 text-brand-primary">
+                       <span className="text-sm font-black mb-1">R$</span>
+                       <span className="text-4xl font-black tracking-tighter">{totals.subtotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                 </div>
+              </div>
+              <button onClick={handleFinish} disabled={isFinishingPurchase} className="bg-brand-primary text-white px-16 py-6 rounded-[30px] font-black text-sm uppercase shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-4 disabled:opacity-50">
+                {isFinishingPurchase ? <Loader2 className="animate-spin" size={24}/> : <><Check size={24}/> FINALIZAR ROMANEIO & ERP</>}
+              </button>
             </div>
           </div>
         </div>
       )}
 
+      {/* MODAL ADICIONAR FORNECEDOR (SIMPLIFICADO) */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-brand-primary/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-[40px] p-8 shadow-2xl animate-in zoom-in duration-300">
-            <h3 className="text-xl font-bold text-brand-primary uppercase mb-6 text-center">{editingSupplier ? 'Editar' : 'Novo'} Fornecedor</h3>
-            <div className="space-y-4">
-              <div><label className="text-[7px] font-black block mb-1 uppercase">Nome</label><input type="text" className="w-full px-5 py-3 rounded-2xl bg-rose-50/30 border border-brand-secondary/10 text-[10px] font-bold uppercase" value={name} onChange={(e) => setName(e.target.value)}/></div>
-              <div><label className="text-[7px] font-black block mb-1 uppercase">Tipo</label><div className="grid grid-cols-3 gap-2">{(['BRUTO', 'FOLHADO', 'GALVANICA'] as const).map(t => (<button key={t} type="button" onClick={() => setCategory(t)} className={`py-2 rounded-xl text-[8px] font-black uppercase transition-all ${category === t ? 'bg-brand-primary text-white' : 'bg-rose-50 text-brand-secondary'}`}>{t}</button>))}</div></div>
-              <div className="grid grid-cols-2 gap-4">
-                <div><label className="text-[7px] font-black block mb-1 uppercase">Whats</label><input type="text" className="w-full px-5 py-3 rounded-2xl bg-rose-50/30 border border-brand-secondary/10 text-[10px] font-bold" value={phone} onChange={(e) => setPhone(e.target.value)}/></div>
-                <div><label className="text-[7px] font-black block mb-1 uppercase">Site</label><input type="text" className="w-full px-5 py-3 rounded-2xl bg-rose-50/30 border border-brand-secondary/10 text-[10px] font-bold" value={link} onChange={(e) => setLink(e.target.value)}/></div>
+        <div className="fixed inset-0 bg-brand-primary/80 backdrop-blur-md z-[200] flex items-center justify-center p-4">
+           <div className="bg-white w-full max-w-lg rounded-[50px] p-10 shadow-2xl animate-in zoom-in duration-300">
+              <h3 className="text-2xl font-black text-brand-primary uppercase mb-8 text-center">{editingSupplier ? 'Ajustar' : 'Novo'} Parceiro</h3>
+              <div className="space-y-5">
+                 <div className="space-y-1"><label className="text-[10px] font-black uppercase text-brand-secondary/40 ml-2">Nome do Fornecedor</label><input type="text" className="w-full px-6 py-4 rounded-2xl bg-brand-secondary/5 text-sm font-bold uppercase outline-none focus:ring-2 focus:ring-brand-primary" value={name} onChange={e => setName(e.target.value)} /></div>
+                 <div className="space-y-1"><label className="text-[10px] font-black uppercase text-brand-secondary/40 ml-2">WhatsApp</label><input type="text" className="w-full px-6 py-4 rounded-2xl bg-brand-secondary/5 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-primary" value={phone} onChange={e => setPhone(e.target.value)} /></div>
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1"><label className="text-[10px] font-black uppercase text-brand-secondary/40 ml-2">Categoria</label><select className="w-full px-4 py-4 rounded-2xl bg-brand-secondary/5 text-xs font-black outline-none" value={category} onChange={e => setCategory(e.target.value as any)}><option value="BRUTO">BRUTO</option><option value="GALVANICA">GALVANICA</option><option value="FOLHADO">FOLHADO</option></select></div>
+                    <div className="space-y-1"><label className="text-[10px] font-black uppercase text-brand-secondary/40 ml-2">Site/Link</label><input type="text" className="w-full px-6 py-4 rounded-2xl bg-brand-secondary/5 text-sm font-bold outline-none" value={link} onChange={e => setLink(e.target.value)} /></div>
+                 </div>
+                 <div className="space-y-1"><label className="text-[10px] font-black uppercase text-brand-secondary/40 ml-2">Observações Internas</label><textarea className="w-full px-6 py-4 rounded-2xl bg-brand-secondary/5 text-sm font-bold h-24 outline-none" value={notes} onChange={e => setNotes(e.target.value)} /></div>
               </div>
-              <div><label className="text-[7px] font-black block mb-1 uppercase">Notas</label><textarea className="w-full px-5 py-3 rounded-2xl bg-rose-50/30 border border-brand-secondary/10 text-[10px] font-bold h-20 outline-none" value={notes} onChange={(e) => setNotes(e.target.value)}/></div>
-            </div>
-            <div className="flex gap-4 mt-8"><button type="button" onClick={() => setShowAddModal(false)} className="flex-1 py-4 text-[9px] font-black uppercase text-brand-secondary">Cancelar</button><button type="button" onClick={handleSaveSupplier} disabled={isSaving} className="flex-1 bg-brand-primary text-white py-4 rounded-2xl font-black text-[9px] uppercase shadow-xl flex items-center justify-center gap-2">{isSaving ? <Loader2 className="animate-spin" size={14}/> : 'Salvar'}</button></div>
-          </div>
+              <div className="flex gap-4 mt-10"><button onClick={() => setShowAddModal(false)} className="flex-1 py-5 text-xs font-black uppercase text-brand-secondary">Cancelar</button><button onClick={handleSaveSupplier} disabled={isSaving} className="flex-1 bg-brand-primary text-white py-5 rounded-[25px] font-black text-xs uppercase shadow-xl flex items-center justify-center gap-2">{isSaving ? <Loader2 className="animate-spin" size={16}/> : 'Confirmar Registro'}</button></div>
+           </div>
         </div>
       )}
     </div>
   )
 }
-
-function isInd(s: Supplier | null) { return s?.category === 'GALVANICA' || s?.category === 'BRUTO' }
