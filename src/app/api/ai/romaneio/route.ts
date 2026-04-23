@@ -23,9 +23,9 @@ export async function POST(req: Request) {
     const mimeMatch = image.match(/data:(.*?);base64/);
     const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
 
-    // 🚀 MODELO 1.5 FLASH (Versão v1 estável)
+    // 🚀 MODELO 2.5 FLASH (PLANO PAGO)
     const genAI = new GoogleGenerativeAI(geminiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: "v1" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = `
       Você é um assistente especialista em joalheria da marca LAPIDADO. 

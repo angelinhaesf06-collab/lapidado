@@ -23,9 +23,9 @@ export async function POST(req: Request) {
     const mimeMatch = image.match(/data:(.*?);base64/);
     const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
     
-    // 🚀 MOTOR LAPIDADO: ESTABILIZAÇÃO v1
+    // 🚀 MOTOR LAPIDADO: GEMINI 2.5 FLASH (PLANO PAGO)
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: "v1" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     
     let result;
     let retries = 3;
