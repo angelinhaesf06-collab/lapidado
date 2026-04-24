@@ -152,7 +152,7 @@ function HomeContent() {
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 md:gap-x-10 gap-y-10 md:gap-y-20 px-1">
           {displayedProducts.length > 0 ? (
-            displayedProducts.map((product) => (
+            displayedProducts.map((product, index) => (
               <div key={product.id} className="group flex flex-col items-center">
                 <Link href={`/product?id=${product.id}&catalogo=true${storeParam}`} className="w-full">
                   <div className="aspect-[4/5] w-full bg-white rounded-[40px] md:rounded-[64px] overflow-hidden mb-6 md:mb-10 shadow-[0_20px_60px_rgba(74,50,46,0.08)] border border-white relative transition-all duration-700">
