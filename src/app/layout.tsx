@@ -128,6 +128,8 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="theme-color" content="#4A322E" />
         <link rel="apple-touch-icon" href="/logo-app.png" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover" />
       </head>
       <Suspense fallback={<body></body>}>
         <RootLayoutContent>{children}</RootLayoutContent>
