@@ -21,21 +21,22 @@ export default function AdminDashboard() {
   useEffect(() => {
     async function loadDashboardData() {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return
+        const { data: { user }, error: userError } = await supabase.auth.getUser()
+        if (userError || !user) {
+          console.error("Usuário não identificado")
+          return
+        }
 
-        // 1. DADOS DE PRODUTOS E ESTOQUE
-        const { data: products } = await supabase.from('products').select('*').eq('user_id', user.id)
-        
-        // 2. DADOS DE VENDAS
-        const { data: sales } = await supabase.from('sales').select('*').eq('user_id', user.id)
+        // 🔒 SEGURANÇA TOTAL: Todas as consultas travadas no ID do usuário logado
+        const [productsRes, salesRes, installmentsRes] = await Promise.all([
+          supabase.from('products').select('*').eq('user_id', user.id),
+          supabase.from('sales').select('*').eq('user_id', user.id),
+          supabase.from('installments').select('value').eq('user_id', user.id).eq('status', 'pendente')
+        ])
 
-        // 3. DADOS DE PARCELAS (A RECEBER)
-        const { data: installments } = await supabase
-          .from('installments')
-          .select('value')
-          .eq('user_id', user.id)
-          .eq('status', 'pendente')
+        const products = productsRes.data
+        const sales = salesRes.data
+        const installments = installmentsRes.data
 
         if (products) {
           const totalItems = products.reduce((acc, p) => acc + (Number(p.stock_quantity) || 0), 0)

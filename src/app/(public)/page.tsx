@@ -48,20 +48,23 @@ function HomeContent() {
       
       let currentBranding = null
       if (storeSlug) {
-        const { data } = await supabase.from('branding').select('*').eq('slug', storeSlug).single()
+        // 🔒 BUSCA ESTRITA: Só traz se o slug bater exatamente
+        const { data } = await supabase.from('branding').select('*').eq('slug', storeSlug).maybeSingle()
         currentBranding = data
       }
 
+      // 🛑 SEGURANÇA: Se não houver branding identificado pelo slug, não tenta adivinhar
       if (!currentBranding) {
-        const { data } = await supabase.from('branding').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle()
-        currentBranding = data
+         setAllProducts([])
+         setDbCategories([])
+         setLoading(false)
+         return
       }
 
       setBranding(currentBranding)
-      // 💎 NEXUS: Prioridade total para o ID da Angela (Dona da marca)
-      const currentUserId = currentBranding?.user_id || '4085e515-86ea-45ee-8fcf-6cbf572bf2e9'
+      const currentUserId = currentBranding.user_id
 
-      // Carrega categorias e TODOS os produtos com estoque de uma vez
+      // Carrega APENAS os dados vinculados ao dono desta marca específica
       const [catsRes, prodsRes] = await Promise.all([
         supabase.from('categories').select('id, name').eq('user_id', currentUserId).order('name'),
         supabase.from('products')
