@@ -47,13 +47,19 @@ function HomeContent() {
       setLoading(true)
       
       let currentBranding = null
-      if (storeSlug) {
-        // 🔒 BUSCA ESTRITA: Só traz se o slug bater exatamente
-        const { data } = await supabase.from('branding').select('*').eq('slug', storeSlug).maybeSingle()
-        currentBranding = data
+      
+      // 💎 NEXUS: Lógica de Identidade Inteligente
+      const slugToSearch = storeSlug || 'lapidado'
+      
+      const { data } = await supabase.from('branding').select('*').eq('slug', slugToSearch).maybeSingle()
+      currentBranding = data
+
+      // Se não achar pelo slug padrão, pega o primeiro que existir
+      if (!currentBranding) {
+        const { data: firstBrand } = await supabase.from('branding').select('*').limit(1).maybeSingle()
+        currentBranding = firstBrand
       }
 
-      // 🛑 SEGURANÇA: Se não houver branding identificado pelo slug, não tenta adivinhar
       if (!currentBranding) {
          setAllProducts([])
          setDbCategories([])
