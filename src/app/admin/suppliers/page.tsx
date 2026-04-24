@@ -17,6 +17,7 @@ interface Supplier {
   notes?: string
 }
 
+// 💎 LAPIDADO ERP - v2.5.0 - DEPLOY SEGURO
 export default function SuppliersPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [loading, setLoading] = useState(true)
