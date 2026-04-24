@@ -11,6 +11,7 @@ export default function CartPage() {
   const { cart, removeFromCart, total, itemCount } = useCart()
   const [storePhone, setStorePhone] = useState('5511999999999')
   const [storeName, setStoreName] = useState('LAPIDADO')
+  const [storeSlug, setStoreSlug] = useState('') // 💎 NEXUS: Identidade da loja
   const [installments, setInstallments] = useState(10)
   
   // Dados do Cliente
@@ -20,14 +21,24 @@ export default function CartPage() {
   useEffect(() => {
     const loadStoreData = async () => {
       const supabase = createClient()
-      const { data } = await supabase.from('branding').select('*').single()
+      const urlParams = new URLSearchParams(window.location.search)
+      const slugFromUrl = urlParams.get('loja')
+
+      let query = supabase.from('branding').select('*')
+      if (slugFromUrl) {
+        query = query.eq('slug', slugFromUrl)
+      } else {
+        query = query.order('created_at', { ascending: false }).limit(1)
+      }
+
+      const { data } = await query.maybeSingle()
+      
       if (data) {
+        setStoreSlug(data.slug)
         if (data.business_name) {
           setStoreName(data.business_name)
         } else if (data.store_name) {
           setStoreName(data.store_name)
-        } else if (data.facebook?.split('|')[3]) {
-          setStoreName(data.facebook.split('|')[3])
         }
 
         if (data.phone) {
@@ -35,7 +46,6 @@ export default function CartPage() {
           if (cleanPhone && cleanPhone.length <= 11) cleanPhone = '55' + cleanPhone
           setStorePhone(cleanPhone)
         }
-        // Extrair parcelas do facebook (Tagline|Parcelas|Banner)
         const parts = data.facebook?.split('|')
         if (parts && parts[1]) setInstallments(parseInt(parts[1]))
       }
@@ -44,46 +54,10 @@ export default function CartPage() {
   }, [])
 
   const installmentValue = total / installments
-  
-  // Cálculo de Desconto PIX (5%)
   const pixDiscount = 0.05
   const pixValue = total * (1 - pixDiscount)
 
-  const sendWhatsApp = () => {
-    if (!customerName) {
-      alert('POR FAVOR, INFORME SEU NOME PARA CONTINUAR. ✨')
-      return
-    }
-
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
-    
-    const message = encodeURIComponent(
-      `*🛒 NOVO PEDIDO - ${storeName.toUpperCase()}* ✨\n\n` +
-      `*👤 CLIENTE:* ${customerName.toUpperCase()}\n` +
-      (customerAddress ? `*📍 ENDEREÇO:* ${customerAddress.toUpperCase()}\n` : '') +
-      `\n*💎 JOIAS SELECIONADAS:*\n` +
-      cart.map(item => {
-        let finish = item.material_finish || ''
-        if (!finish && item.description?.includes('DATA:')) {
-          try {
-            const match = item.description.match(/DATA:({.*})/)
-            if (match) finish = JSON.parse(match[1]).finish
-          } catch {}
-        }
-        // Link para a peça na vitrine para que a Angela veja a foto
-        const productLink = `${baseUrl}/product/${item.id}?catalogo=true`
-        return `• *${item.name}*${finish ? ` (${finish})` : ''}\n  💰 R$ ${item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n  🔗 _Ver foto:_ ${productLink}`
-      }).join('\n\n') +
-      `\n\n*💳 RESUMO FINANCEIRO:*\n` +
-      `--------------------------\n` +
-      `*TOTAL:* R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
-      `*NO CARTÃO:* ${installments}X DE R$ ${installmentValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
-      `*NO PIX (5% OFF):* R$ ${pixValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
-      `--------------------------\n\n` +
-      `*Olá, ${storeName}! Acabei de montar minha sacola no seu catálogo. Podemos combinar o envio?*`
-    )
-    window.open(`https://wa.me/${storePhone}?text=${message}`, '_blank')
-  }
+  const storeParam = storeSlug ? `&loja=${storeSlug}` : ''
 
   if (itemCount === 0) {
     return (
@@ -91,7 +65,7 @@ export default function CartPage() {
         <ShoppingBag size={48} className="text-brand-secondary/30 mb-6" />
         <h2 className="text-2xl font-light tracking-[0.2em] uppercase text-brand-primary mb-4">Sua sacola está vazia</h2>
         <p className="text-brand-secondary text-[10px] tracking-widest uppercase mb-12 font-light">Escolha as joias que mais combinam com você</p>
-        <Link href="/?catalogo=true" className="bg-brand-primary text-white px-12 py-4 rounded-full font-light text-[10px] tracking-[0.3em] uppercase hover:bg-brand-secondary transition-colors">
+        <Link href={`/?catalogo=true${storeParam}`} className="bg-brand-primary text-white px-12 py-4 rounded-full font-light text-[10px] tracking-[0.3em] uppercase hover:bg-brand-secondary transition-colors">
           Voltar ao Catálogo
         </Link>
       </div>
@@ -187,7 +161,7 @@ export default function CartPage() {
           <MessageCircle size={20} /> Finalizar no WhatsApp
         </button>
         
-        <Link href="/?catalogo=true" className="inline-block mt-8 text-[9px] font-light tracking-[0.3em] uppercase text-brand-secondary hover:text-brand-primary transition-colors">
+        <Link href={`/?catalogo=true${storeParam}`} className="inline-block mt-8 text-[9px] font-light tracking-[0.3em] uppercase text-brand-secondary hover:text-brand-primary transition-colors">
           ← Adicionar mais joias
         </Link>
       </div>
