@@ -32,10 +32,10 @@ export async function POST(req: Request) {
         generationConfig: { maxOutputTokens: 800, temperature: 0.1 }
       });
     } catch (e) {
-      console.error("Gemini 2.5 falhou no romaneio, tentando 3...");
-      // 🚀 2ª OPÇÃO: Gemini 3 Flash
-      const model3 = genAI.getGenerativeModel({ model: "gemini-3-flash", systemInstruction });
-      result = await model3.generateContent({
+      console.error("Gemini 2.5 Flash falhou no romaneio, tentando Pro...");
+      // 🚀 2ª OPÇÃO: Gemini 2.5 Pro
+      const model25pro = genAI.getGenerativeModel({ model: "gemini-2.5-pro", systemInstruction });
+      result = await model25pro.generateContent({
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
         generationConfig: { maxOutputTokens: 800, temperature: 0.1 }
       });

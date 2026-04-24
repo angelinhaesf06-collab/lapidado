@@ -37,10 +37,11 @@ export default function SuppliersPage() {
   const [milQuantity, setMilQuantity] = useState<number>(0)
 
   // 2. ESTADOS PARA BRUTO / FOLHADO (LANÇAMENTO SIMPLES)
-  const [purchaseItems, setPurchaseItems] = useState<{name: string, quantity: number, unitCost: number}[]>([
+  const [purchaseItems, setPurchaseItems] = useState<{product_id?: string, name: string, quantity: number, unitCost: number}[]>([
     { name: '', quantity: 1, unitCost: 0 }
   ])
   
+  const [products, setProducts] = useState<any[]>([])
   const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().split('T')[0])
   const [isFinishingPurchase, setIsFinishingPurchase] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -55,57 +56,49 @@ export default function SuppliersPage() {
   const supabase = createClient()
   const [isAnalyzing, setIsAnalyzing] = useState(false)
 
-  const handleScanRomaneio = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  const loadData = useCallback(async () => {
+    setLoading(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    
+    // Carregar Fornecedores
+    const { data: suppliersData } = await supabase.from('suppliers').select('*').eq('user_id', user.id).order('name')
+    if (suppliersData) setSuppliers(suppliersData as Supplier[])
 
-    setIsAnalyzing(true)
-    const toastId = toast.loading('IA Lapidado analisando romaneio... 💎')
+    // Carregar Produtos para seleção
+    const { data: prodsData } = await supabase.from('products').select('id, name, price, cost_price').eq('user_id', user.id).order('name')
+    if (prodsData) setProducts(prodsData)
 
-    try {
-      const reader = new FileReader()
-      reader.onload = async () => {
-        const base64 = reader.result as string
-        
-        const res = await fetch('/api/ai/romaneio', {
-          method: 'POST',
-          body: JSON.stringify({ image: base64 }),
-          headers: { 'Content-Type': 'application/json' }
-        })
+    setLoading(false)
+  }, [supabase])
 
-        const data = await res.json()
+  useEffect(() => { loadData() }, [loadData])
 
-        if (data.error) throw new Error(data.details || 'Erro na IA')
-
-        if (Array.isArray(data) && data.length > 0) {
-          setPurchaseItems(data.map(item => ({
-            name: (item.name || 'ITEM SEM NOME').toUpperCase(),
-            quantity: item.quantity || 1,
-            unitCost: item.unitCost || 0
-          })))
-          toast.success(`${data.length} itens extraídos com sucesso! ✨`, { id: toastId })
-        } else {
-          toast.error('Nenhum item detectado no romaneio.', { id: toastId })
-        }
+  // 💎 NEXUS: Função para selecionar produto e preencher nome/custo
+  const handleSelectProduct = (index: number, productId: string) => {
+    const prod = products.find(p => p.id === productId)
+    if (prod) {
+      const newItems = [...purchaseItems]
+      newItems[index] = {
+        ...newItems[index],
+        product_id: prod.id,
+        name: prod.name.toUpperCase(),
+        unitCost: prod.cost_price || 0
       }
-      reader.readAsDataURL(file)
-    } catch (err: any) {
-      console.error(err)
-      toast.error('Falha ao ler romaneio: ' + err.message, { id: toastId })
-    } finally {
-      setIsAnalyzing(false)
+      setPurchaseItems(newItems)
     }
   }
 
   // 3. CÁLCULOS AUTOMATIZADOS (MEMO)
   const results = useMemo(() => {
-    // Cálculo Galvânica
+    // Cálculo Galvânica: (Cotação Ouro + Mão de Obra) * Milésimos * (Peso Total / 1000)
     const weightInKg = (batchWeightG || 0) / 1000
     let galvaPricePerKg = 0
     let galvaTotal = 0
     let costPerMil = 0
 
     if (selectedMaterial === 'OURO') {
+      // Aqui a mão de obra é somada ao valor do ouro e multiplicada pelos milésimos
       costPerMil = (goldQuote || 0) + (platingLabor || 0)
       galvaPricePerKg = costPerMil * (milQuantity || 0)
       galvaTotal = weightInKg * galvaPricePerKg
@@ -120,19 +113,6 @@ export default function SuppliersPage() {
 
     return { costPerMil, galvaPricePerKg, galvaTotal, simpleTotal }
   }, [selectedMaterial, goldQuote, platingLabor, milQuantity, batchWeightG, silverKgPrice, rhodiumKgPrice, varnishKgPrice, purchaseItems])
-
-  const loadData = useCallback(async () => {
-    setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    const { data } = await supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle()
-    
-    const { data: suppliersData } = await supabase.from('suppliers').select('*').eq('user_id', user.id).order('name')
-    if (suppliersData) setSuppliers(suppliersData as Supplier[])
-    setLoading(false)
-  }, [supabase])
-
-  useEffect(() => { loadData() }, [loadData])
 
   const handleFinish = async () => {
     if (!selectedSupplier) return
@@ -377,15 +357,34 @@ export default function SuppliersPage() {
                       {purchaseItems.map((item, index) => (
                         <div key={index} className="bg-white p-6 rounded-[30px] border border-brand-secondary/5 shadow-sm grid grid-cols-1 md:grid-cols-12 gap-4 items-end group relative">
                            <div className="md:col-span-6 space-y-1">
-                              <label className="text-[8px] font-black uppercase text-brand-secondary/40 ml-2">Descrição da Peça</label>
-                              <input type="text" value={item.name} onChange={(e) => { const newItems = [...purchaseItems]; newItems[index].name = e.target.value; setPurchaseItems(newItems)}} className="w-full px-5 py-4 rounded-2xl bg-brand-secondary/5 text-xs font-black uppercase outline-none focus:ring-2 focus:ring-brand-primary/20" placeholder="EX: ANEL CORAÇÃO"/>
+                              <label className="text-[8px] font-black uppercase text-brand-secondary/40 ml-2">Escolher Joia Cadastrada</label>
+                              <select 
+                                value={item.product_id || ''} 
+                                onChange={(e) => handleSelectProduct(index, e.target.value)}
+                                className="w-full px-5 py-4 rounded-2xl bg-brand-secondary/5 text-xs font-black uppercase outline-none focus:ring-2 focus:ring-brand-primary/20"
+                              >
+                                <option value="">SELECIONE UMA JOIA...</option>
+                                {products.map(p => (
+                                  <option key={p.id} value={p.id}>{p.name}</option>
+                                ))}
+                                <option value="manual">-- DIGITAR MANUALMENTE --</option>
+                              </select>
+                              {item.product_id === 'manual' && (
+                                <input 
+                                  type="text" 
+                                  value={item.name} 
+                                  onChange={(e) => { const newItems = [...purchaseItems]; newItems[index].name = e.target.value.toUpperCase(); setPurchaseItems(newItems)}} 
+                                  className="w-full mt-2 px-5 py-3 rounded-xl bg-white border border-brand-secondary/10 text-[10px] font-bold uppercase" 
+                                  placeholder="NOME DA PEÇA"
+                                />
+                              )}
                            </div>
                            <div className="md:col-span-2 space-y-1">
                               <label className="text-[8px] font-black uppercase text-brand-secondary/40 ml-2">Quantidade</label>
                               <input type="number" value={item.quantity || ''} onChange={(e) => { const newItems = [...purchaseItems]; newItems[index].quantity = parseInt(e.target.value) || 0; setPurchaseItems(newItems)}} className="w-full px-5 py-4 rounded-2xl bg-brand-secondary/5 text-xs font-black text-center outline-none"/>
                            </div>
                            <div className="md:col-span-3 space-y-1">
-                              <label className="text-[8px] font-black uppercase text-brand-secondary/40 ml-2">Preço Unitário</label>
+                              <label className="text-[8px] font-black uppercase text-brand-secondary/40 ml-2">Custo Unitário (R$)</label>
                               <input type="number" value={item.unitCost || ''} onChange={(e) => { const newItems = [...purchaseItems]; newItems[index].unitCost = parseFloat(e.target.value) || 0; setPurchaseItems(newItems)}} className="w-full px-5 py-4 rounded-2xl bg-brand-secondary/5 text-xs font-black outline-none" placeholder="R$ 0,00"/>
                            </div>
                            <button onClick={() => setPurchaseItems(purchaseItems.filter((_, i) => i !== index))} className="absolute -top-3 -right-3 p-3 bg-rose-50 text-rose-500 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={14}/></button>

@@ -69,8 +69,26 @@ interface Branding {
   tiktok: string 
 }
 
+interface Installment {
+  id: string
+  sale_id: string
+  installment_number: number
+  value: number
+  status: 'pago' | 'pendente'
+  due_date: string
+  sales: {
+    customers: {
+      name: string
+    }
+    products: {
+      name: string
+    }
+  }
+}
+
 export default function SalesPage() {
   const [sales, setSales] = useState<Sale[]>([])
+  const [installmentsList, setInstallmentsList] = useState<Installment[]>([])
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
   const [showReceipt, setShowReceipt] = useState<Sale | null>(null)
@@ -91,19 +109,47 @@ export default function SalesPage() {
   const [paymentMethod, setPaymentMethod] = useState('cartao')
   const [installments, setInstallments] = useState(1)
   const [isSaving, setIsSaving] = useState(false)
-
+  
   const loadSales = useCallback(async () => {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    const { data } = await supabase
+    
+    // Carrega Vendas
+    const { data: salesData } = await supabase
       .from('sales')
       .select('*, products(name, image_url), customers(name, cpf, address, phone)')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-    if (data) setSales(data as unknown as Sale[])
+    if (salesData) setSales(salesData as unknown as Sale[])
+
+    // Carrega Parcelas do Mês
+    const { data: instData } = await supabase
+      .from('installments')
+      .select('*, sales(customers(name), products(name))')
+      .eq('user_id', user.id)
+      .order('due_date', { ascending: true })
+    if (instData) setInstallmentsList(instData as unknown as Installment[])
+
     setLoading(false)
   }, [supabase])
+
+  // Função para dar baixa em parcela
+  async function handlePayInstallment(inst: Installment) {
+    const newStatus = inst.status === 'pago' ? 'pendente' : 'pago'
+    try {
+      const { error } = await supabase
+        .from('installments')
+        .update({ status: newStatus })
+        .eq('id', inst.id)
+      if (error) throw error
+      toast.success('Parcela atualizada!')
+      loadSales()
+    } catch { toast.error('Erro ao atualizar parcela.') }
+  }
+
+  // ... (keep useEffect and other functions)
+
 
   const loadBranding = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -202,23 +248,27 @@ export default function SalesPage() {
 
   const filteredSales = sales.filter(sale => sale.created_at.startsWith(selectedMonth))
   const [pendingReceivables, setPendingReceivables] = useState(0)
+  const [totalReceivables, setTotalReceivables] = useState(0)
 
   useEffect(() => {
     async function loadRec() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-      // 💎 Filtragem robusta por mês
-      const startDate = `${selectedMonth}-01T00:00:00Z`
-      const endDate = new Date(new Date(selectedMonth + '-01').getFullYear(), new Date(selectedMonth + '-01').getMonth() + 1, 0).toISOString().split('T')[0] + 'T23:59:59Z'
-
-      const { data } = await supabase
+      
+      // 💎 BUSCA TODAS AS PARCELAS PENDENTES
+      const { data: allPending } = await supabase
         .from('installments')
-        .select('value')
+        .select('value, due_date')
         .eq('user_id', user.id)
         .eq('status', 'pendente')
-        .gte('due_date', startDate)
-        .lte('due_date', endDate)
-      setPendingReceivables(data?.reduce((acc, curr) => acc + Number(curr.value), 0) || 0)
+      
+      if (allPending) {
+        setTotalReceivables(allPending.reduce((acc, curr) => acc + Number(curr.value), 0))
+        
+        // Filtragem por mês local para performance
+        const monthPending = allPending.filter(inst => inst.due_date.startsWith(selectedMonth))
+        setPendingReceivables(monthPending.reduce((acc, curr) => acc + Number(curr.value), 0))
+      }
     }
     loadRec()
   }, [supabase, selectedMonth, sales])
@@ -237,10 +287,26 @@ export default function SalesPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
-          <div className="bg-white p-6 rounded-[30px] border border-brand-secondary/10 text-center"><p className="text-[7px] font-black text-brand-secondary uppercase mb-1">Vendido</p><h4 className="text-xl font-bold text-brand-primary">R$ {filteredSales.reduce((acc, s) => acc + (s.total_value || 0), 0).toLocaleString('pt-BR')}</h4></div>
-          <div className="bg-amber-500 p-6 rounded-[30px] text-center shadow-lg"><p className="text-[7px] font-black text-white/80 uppercase mb-1">A Receber</p><h4 className="text-xl font-bold text-white">R$ {pendingReceivables.toLocaleString('pt-BR')}</h4></div>
-          <div className="bg-brand-primary p-6 rounded-[30px] text-center shadow-lg"><p className="text-[7px] font-black text-white/80 uppercase mb-1">Lucro Estimado</p><h4 className="text-xl font-bold text-white">R$ {filteredSales.reduce((acc, s) => acc + (((s.sale_price - s.cost_price) * s.quantity) || 0), 0).toLocaleString('pt-BR')}</h4></div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
+          <div className="bg-white p-6 rounded-[30px] border border-brand-secondary/10 text-center shadow-sm">
+            <p className="text-[7px] font-black text-brand-secondary uppercase mb-1">Vendido (Mês)</p>
+            <h4 className="text-xl font-bold text-brand-primary">R$ {filteredSales.reduce((acc, s) => acc + (s.total_value || 0), 0).toLocaleString('pt-BR')}</h4>
+          </div>
+          
+          <div className="bg-amber-500 p-6 rounded-[30px] text-center shadow-lg">
+            <p className="text-[7px] font-black text-white/80 uppercase mb-1">A Receber (Mês)</p>
+            <h4 className="text-xl font-bold text-white">R$ {pendingReceivables.toLocaleString('pt-BR')}</h4>
+          </div>
+
+          <div className="bg-brand-secondary p-6 rounded-[30px] text-center shadow-lg">
+            <p className="text-[7px] font-black text-white/80 uppercase mb-1">A Receber (Total)</p>
+            <h4 className="text-xl font-bold text-white">R$ {totalReceivables.toLocaleString('pt-BR')}</h4>
+          </div>
+
+          <div className="bg-brand-primary p-6 rounded-[30px] text-center shadow-lg">
+            <p className="text-[7px] font-black text-white/80 uppercase mb-1">Lucro Estimado (Mês)</p>
+            <h4 className="text-xl font-bold text-white">R$ {filteredSales.reduce((acc, s) => acc + ((s.total_value - (Number(s.cost_price || 0) * s.quantity)) || 0), 0).toLocaleString('pt-BR')}</h4>
+          </div>
         </div>
 
         <button onClick={() => setShowAddModal(true)} className="w-full bg-brand-primary text-white py-5 rounded-[25px] font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-xl mb-12"><Plus size={18} /> Nova Venda Real</button>
@@ -265,6 +331,70 @@ export default function SalesPage() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* 📜 CONTROLE DE PROMISSÓRIAS / PARCELAS */}
+        <div className="mt-20">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-10 h-10 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-600">
+              <FileText size={20} />
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-brand-primary uppercase tracking-tighter">Controle de Promissórias</h3>
+              <p className="text-[8px] font-bold text-brand-secondary/40 uppercase">Acompanhamento de Recebimentos</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-[35px] border border-brand-secondary/10 overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-brand-secondary/5">
+                    <th className="p-4 text-[7px] font-black uppercase text-brand-secondary/60 tracking-widest">Cliente</th>
+                    <th className="p-4 text-[7px] font-black uppercase text-brand-secondary/60 tracking-widest">Vencimento</th>
+                    <th className="p-4 text-[7px] font-black uppercase text-brand-secondary/60 tracking-widest">Parcela</th>
+                    <th className="p-4 text-[7px] font-black uppercase text-brand-secondary/60 tracking-widest">Valor</th>
+                    <th className="p-4 text-[7px] font-black uppercase text-brand-secondary/60 tracking-widest">Ação</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-brand-secondary/5">
+                  {installmentsList.filter(inst => inst.status === 'pendente').slice(0, 15).map((inst) => (
+                    <tr key={inst.id} className="hover:bg-brand-secondary/5 transition-colors">
+                      <td className="p-4">
+                        <p className="text-[10px] font-black text-brand-primary uppercase">{inst.sales?.customers?.name || 'Cliente Excluído'}</p>
+                        <p className="text-[7px] font-bold text-brand-secondary/40 uppercase truncate max-w-[120px]">{inst.sales?.products?.name}</p>
+                      </td>
+                      <td className="p-4">
+                        <p className="text-[9px] font-bold text-brand-primary">{new Date(inst.due_date).toLocaleDateString('pt-BR')}</p>
+                      </td>
+                      <td className="p-4">
+                        <span className="text-[8px] font-black px-2 py-0.5 rounded-full bg-brand-secondary/10 text-brand-primary uppercase">Nº {inst.installment_number}</span>
+                      </td>
+                      <td className="p-4">
+                        <p className="text-[10px] font-black text-brand-primary">R$ {inst.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                      </td>
+                      <td className="p-4">
+                        <button 
+                          onClick={() => handlePayInstallment(inst)}
+                          className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-green-500 text-white text-[8px] font-black uppercase shadow-sm hover:scale-105 transition-all"
+                        >
+                          <CheckCircle2 size={12} /> Dar Baixa
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {installmentsList.filter(inst => inst.status === 'pendente').length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="p-12 text-center">
+                        <div className="opacity-20 mb-2 flex justify-center"><CheckCircle2 size={32} /></div>
+                        <p className="text-[8px] font-black text-brand-secondary/40 uppercase tracking-widest">Nenhuma promissória pendente</p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
 

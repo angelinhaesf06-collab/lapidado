@@ -1,32 +1,32 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Loader2, Save, Percent, TrendingUp, Info, Gem, Calculator, FileText } from 'lucide-react'
+import { Loader2, Percent, TrendingUp, Gem, Calculator, FileText, Plus, X, Layers, ShoppingBag, Trash2, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
-interface PricingRules {
-  globalMarkup: number
-}
-
 export default function PricingPage() {
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [rules, setPricingRules] = useState<PricingRules>({
-    globalMarkup: 100
-  })
-
-  // ESTADOS DA CALCULADORA MANUAL
-  const [calcData, setCalcData] = useState({
+  const [rules, setPricingRules] = useState({ globalMarkup: 100 })
+  
+  // 1. ESTADO DA CALCULADORA (Entrada Única)
+  const [currentEntry, setCurrentEntry] = useState({
     name: '',
+    material: 'OURO',
     rawVal: 0,
     weightG: 0,
-    platingG: 0,
+    mils: 0,
+    goldPrice: 400,
+    labor: 0,
+    vernizKgPrice: 0,
     others: 0,
     markup: 100
   })
+
+  // 2. ESTADO DA LISTA (O que já foi calculado)
+  const [addedItems, setAddedItems] = useState<any[]>([])
 
   const supabase = createClient()
 
@@ -35,260 +35,270 @@ export default function PricingPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-
-      // Carregar regras de precificação da tabela branding (campo notes)
-      const { data: brandingData } = await supabase
-        .from('branding')
-        .select('notes')
-        .eq('user_id', user.id)
-        .maybeSingle()
-
+      const { data: brandingData } = await supabase.from('branding').select('notes').eq('user_id', user.id).maybeSingle()
       if (brandingData?.notes && brandingData.notes.includes('PRICING_RULES:')) {
         const jsonStr = brandingData.notes.split('PRICING_RULES:')[1]
         try {
           const loadedRules = JSON.parse(jsonStr)
           setPricingRules({ globalMarkup: loadedRules.globalMarkup || 100 })
-        } catch (e) {
-          console.error('Erro ao converter regras de precificação:', e)
-        }
+          setCurrentEntry(prev => ({ ...prev, markup: loadedRules.globalMarkup || 100 }))
+        } catch (e) { console.error(e) }
       }
-    } catch (err) {
-      console.error('Erro ao carregar dados:', err)
-      toast.error('Erro ao carregar configurações.')
-    } finally {
-      setLoading(false)
-    }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }, [supabase])
 
   useEffect(() => { loadData() }, [loadData])
 
-  const handleSave = async () => {
-    setSaving(true)
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      const { data: currentBranding } = await supabase
-        .from('branding')
-        .select('notes')
-        .eq('user_id', user.id)
-        .maybeSingle()
-
-      let baseNotes = currentBranding?.notes || ''
-      if (baseNotes.includes('PRICING_RULES:')) {
-        baseNotes = baseNotes.split('PRICING_RULES:')[0]
-      }
-
-      const updatedNotes = `${baseNotes}PRICING_RULES:${JSON.stringify(rules)}`
-
-      const { error } = await supabase
-        .from('branding')
-        .update({ notes: updatedNotes })
-        .eq('user_id', user.id)
-
-      if (error) throw error
-      toast.success('Markup global salvo! 💎')
-    } catch (err: unknown) {
-      const error = err as Error
-      toast.error('Erro ao salvar: ' + error.message)
-    } finally {
-      setSaving(false)
+  // 💎 NEXUS: Função de Cálculo mestre
+  const calculateData = (item: any) => {
+    if (item.material === 'FOLHADO') {
+      const totalCost = (Number(item.rawVal) || 0) + (Number(item.others) || 0)
+      const salePrice = totalCost * (Number(item.markup) / 100 + 1)
+      return { platingCost: 0, vernizCost: 0, totalCost, salePrice }
     }
+
+    const weightInKg = (Number(item.weightG) || 0) / 1000
+    let platingCost = 0
+    let vernizCost = 0
+
+    if (item.material === 'OURO') {
+      const costPerMil = (Number(item.goldPrice) || 0) + (Number(item.labor) || 0)
+      platingCost = (Number(item.mils) || 0) * costPerMil * weightInKg
+    } else {
+      platingCost = (Number(item.goldPrice) || 0) * weightInKg
+    }
+
+    if ((item.material === 'OURO' || item.material === 'PRATA') && item.vernizKgPrice > 0) {
+      vernizCost = (Number(item.vernizKgPrice) || 0) * weightInKg
+    }
+
+    const totalCost = (Number(item.rawVal) || 0) + (Number(item.others) || 0) + platingCost + vernizCost
+    const salePrice = totalCost * (Number(item.markup) / 100 + 1)
+    
+    return { platingCost, vernizCost, totalCost, salePrice }
   }
 
-  const updateCalc = (field: string, val: any) => {
-    setCalcData(prev => ({ ...prev, [field]: val }))
+  const handleAddItem = () => {
+    if (!currentEntry.name) return toast.error('Dê um nome para a peça! 💎')
+    const res = calculateData(currentEntry)
+    setAddedItems([...addedItems, { ...currentEntry, ...res, id: Date.now() }])
+    
+    // Limpa apenas o necessário para a próxima entrada
+    setCurrentEntry(prev => ({
+      ...prev,
+      name: '',
+      rawVal: 0,
+      weightG: 0,
+      others: 0
+    }))
+    toast.success('Peça adicionada ao romaneio! ✨')
   }
-
-  const manualResults = useMemo(() => {
-    const platingCost = (calcData.weightG || 0) * (calcData.platingG || 0)
-    const totalCost = (calcData.rawVal || 0) + platingCost + (calcData.others || 0)
-    const salePrice = totalCost * (calcData.markup / 100 + 1)
-    return { platingCost, totalCost, salePrice }
-  }, [calcData])
 
   const generateReportPDF = () => {
+    if (addedItems.length === 0) return toast.error('Adicione itens primeiro! 📸')
     const doc = new jsPDF()
-    const brandColor: [number, number, number] = [74, 50, 46] // Marrom Lapidado
-    const secondaryColor: [number, number, number] = [201, 144, 144] // Creme/Rosa
-
-    doc.setFontSize(22); doc.setTextColor(brandColor[0], brandColor[1], brandColor[2]); doc.text('LAPIDADO ERP', 105, 20, { align: 'center' })
-    doc.setFontSize(10); doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]); doc.text('RELATÓRIO TÉCNICO DE PRECIFICAÇÃO', 105, 28, { align: 'center' })
+    doc.setFontSize(22); doc.setTextColor(74, 50, 46); doc.text('LAPIDADO ERP', 105, 20, { align: 'center' })
+    doc.setFontSize(10); doc.setTextColor(201, 144, 144); doc.text('ROMANEIO INDUSTRIAL DE CARGA', 105, 28, { align: 'center' })
     
+    const tableBody = addedItems.map(item => [
+      item.name.toUpperCase(),
+      item.material,
+      item.material === 'FOLHADO' ? '---' : `${item.weightG}g`,
+      `R$ ${item.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      `R$ ${item.salePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+    ])
+
     autoTable(doc, {
       startY: 40,
-      head: [['DESCRIÇÃO DO CAMPO', 'VALOR DETALHADO']],
-      body: [
-        ['PEÇA / CÓDIGO', calcData.name.toUpperCase() || 'NÃO INFORMADO'],
-        ['VALOR BRUTO (PEÇA)', `R$ ${calcData.rawVal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`],
-        ['PESO DA PEÇA', `${calcData.weightG} G`],
-        ['VALOR GRAMA (BANHO)', `R$ ${calcData.platingG.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`],
-        ['CUSTO TOTAL DO BANHO', `R$ ${manualResults.platingCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`],
-        ['OUTROS GASTOS (EXTRAS)', `R$ ${calcData.others.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`],
-        ['MARKUP APLICADO', `${calcData.markup}%`],
-        ['---', '---'],
-        ['CUSTO TOTAL FINAL', `R$ ${manualResults.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`],
-        ['PREÇO DE VENDA SUGERIDO', `R$ ${manualResults.salePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`]
-      ],
+      head: [['PEÇA', 'TIPO', 'PESO', 'CUSTO TOTAL', 'PREÇO VENDA']],
+      body: tableBody,
       theme: 'grid',
-      headStyles: { fillColor: brandColor },
-      styles: { fontSize: 10, cellPadding: 5 }
+      headStyles: { fillColor: [74, 50, 46] }
     })
 
-    const finalName = calcData.name.toLowerCase() || 'avulsa'
-    doc.save(`precificacao-${finalName}.pdf`)
-    toast.success('Relatório de precificação gerado! 💎')
+    doc.save(`romaneio-${new Date().toLocaleDateString()}.pdf`)
   }
 
   if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="animate-spin text-brand-primary" size={40} /></div>
 
+  const activeRes = calculateData(currentEntry)
+  const isFolhado = currentEntry.material === 'FOLHADO'
+
   return (
-    <div className="max-w-5xl mx-auto pb-24">
-      {/* CABEÇALHO */}
+    <div className="max-w-6xl mx-auto pb-24 px-4 md:px-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
-        <div>
-          <h2 className="text-4xl font-black uppercase text-brand-primary tracking-tighter">Precificação Inteligente</h2>
-          <p className="text-brand-secondary text-[12px] font-black tracking-[0.4em] uppercase mt-2">Gestão de Margens & Lucratividade 💎</p>
+        <div className="text-center md:text-left">
+          <h2 className="text-3xl md:text-4xl font-black uppercase text-brand-primary tracking-tighter">Estação de Precificação</h2>
+          <p className="text-brand-secondary text-[10px] md:text-[12px] font-black tracking-[0.4em] uppercase mt-2">Engenharia de Custo Industrial 💎</p>
         </div>
-        <button 
-          onClick={handleSave} 
-          disabled={saving}
-          className="bg-brand-primary text-white px-10 py-5 rounded-[30px] font-black text-xs uppercase flex items-center justify-center gap-3 shadow-2xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
-        >
-          {saving ? <Loader2 className="animate-spin" size={20}/> : <><Save size={20}/> Salvar Configurações</>}
+        <button onClick={generateReportPDF} className="bg-brand-primary text-white px-8 py-5 rounded-[25px] font-black text-[10px] uppercase flex items-center justify-center gap-3 shadow-2xl hover:scale-[1.02] transition-all">
+           <FileText size={18}/> Exportar Romaneio PDF ({addedItems.length})
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
-        {/* CARD MARKUP GLOBAL */}
-        <div className="space-y-6">
-          <div className="bg-white p-8 rounded-[40px] border border-brand-secondary/10 shadow-sm space-y-6 h-full text-center">
-            <div className="flex items-center justify-center gap-3 text-brand-primary">
-              <TrendingUp size={24} />
-              <h3 className="text-sm font-black uppercase tracking-widest">Markup Global da Marca</h3>
-            </div>
-            <div className="p-10 rounded-[35px] bg-brand-primary text-white space-y-4 shadow-xl shadow-brand-primary/20">
-              <label className="text-[10px] font-black uppercase opacity-60 tracking-widest">Margem Padrão de Venda</label>
-              <div className="flex items-center justify-center gap-3">
-                <input 
-                  type="number" 
-                  value={rules.globalMarkup} 
-                  onChange={(e) => setPricingRules({globalMarkup: parseFloat(e.target.value) || 0})}
-                  className="bg-transparent text-6xl font-black outline-none w-32 border-b-4 border-white/20 focus:border-white transition-all text-center"
-                />
-                <Percent size={40} />
-              </div>
-              <p className="text-[10px] font-medium leading-relaxed opacity-80 pt-4">
-                Este multiplicador será aplicado automaticamente em todas as novas joias cadastradas no sistema.
-              </p>
-            </div>
-          </div>
+      {/* 🚀 CALCULADORA FIXA NO TOPO */}
+      <div className="bg-white rounded-[45px] border-2 border-brand-primary/10 shadow-2xl overflow-hidden mb-12">
+        <div className="bg-brand-primary/5 p-6 border-b border-brand-primary/10 flex flex-col md:flex-row gap-4 items-center">
+            <select 
+              value={currentEntry.material} 
+              onChange={(e) => setCurrentEntry({...currentEntry, material: e.target.value})}
+              className="bg-brand-primary text-white px-6 py-4 rounded-2xl font-black text-[10px] uppercase outline-none shadow-lg w-full md:w-auto"
+            >
+              <option value="OURO">BANHO OURO</option>
+              <option value="PRATA">BANHO PRATA</option>
+              <option value="RODIO">BANHO RÓDIO</option>
+              <option value="FOLHADO">FOLHADO PRONTO</option>
+            </select>
+            <input 
+              type="text" 
+              value={currentEntry.name} 
+              onChange={e => setCurrentEntry({...currentEntry, name: e.target.value.toUpperCase()})}
+              className="flex-1 w-full bg-white border border-brand-primary/20 px-8 py-4 rounded-2xl font-black text-xs uppercase outline-none focus:ring-4 focus:ring-brand-primary/10 transition-all" 
+              placeholder="DIGITE O NOME OU REFERÊNCIA DA PEÇA..."/>
         </div>
 
-        {/* INFO CARD */}
-        <div className="flex flex-col justify-center gap-6">
-          <div className="bg-amber-50 p-8 rounded-[40px] border border-amber-100 flex gap-5">
-             <div className="p-4 bg-white rounded-2xl shadow-sm text-amber-600 h-fit">
-                <Info size={24} />
+        <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-start">
+          
+          {/* BLOCO 1: BANHO */}
+          {!isFolhado ? (
+            <div className="space-y-4 bg-amber-50/30 p-6 rounded-[35px] border border-amber-100">
+               <div className="flex items-center gap-2 text-amber-700 mb-2"><Layers size={16}/><h4 className="text-[9px] font-black uppercase tracking-widest">Banho Técnico</h4></div>
+               <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[7px] font-black text-amber-800/40 uppercase ml-1">Peso (g)</label>
+                    <input type="number" value={currentEntry.weightG || ''} onChange={e => setCurrentEntry({...currentEntry, weightG: parseFloat(e.target.value) || 0})} className="w-full p-3 rounded-xl bg-white border border-amber-200 font-black text-xs outline-none" placeholder="0.00"/>
+                  </div>
+                  {currentEntry.material === 'OURO' && (
+                    <div className="space-y-1">
+                      <label className="text-[7px] font-black text-amber-800/40 uppercase ml-1">Milésimos</label>
+                      <input type="number" value={currentEntry.mils || ''} onChange={e => setCurrentEntry({...currentEntry, mils: parseFloat(e.target.value) || 0})} className="w-full p-3 rounded-xl bg-white border border-amber-200 font-black text-xs outline-none" placeholder="10"/>
+                    </div>
+                  )}
+               </div>
+               <div className="space-y-1">
+                  <label className="text-[7px] font-black text-amber-800/40 uppercase ml-1">{currentEntry.material === 'OURO' ? 'Cotação Ouro (g)' : `Preço KG ${currentEntry.material}`}</label>
+                  <input type="number" value={currentEntry.goldPrice || ''} onChange={e => setCurrentEntry({...currentEntry, goldPrice: parseFloat(e.target.value) || 0})} className="w-full p-3 rounded-xl bg-white border border-amber-200 font-black text-xs outline-none" placeholder="400.00"/>
+               </div>
+               {currentEntry.material === 'OURO' && (
+                 <div className="space-y-1">
+                    <label className="text-[7px] font-black text-amber-800/40 uppercase ml-1">M.O. p/ Milésimo</label>
+                    <input type="number" value={currentEntry.labor || ''} onChange={e => setCurrentEntry({...currentEntry, labor: parseFloat(e.target.value) || 0})} className="w-full p-3 rounded-xl bg-white border border-amber-200 font-black text-xs outline-none" placeholder="10.00"/>
+                 </div>
+               )}
+            </div>
+          ) : (
+            <div className="bg-brand-primary/5 p-6 rounded-[35px] border-2 border-dashed border-brand-primary/20 flex flex-col items-center justify-center text-center min-h-[200px]">
+               <ShoppingBag size={32} className="text-brand-primary/30 mb-2"/>
+               <p className="text-[10px] font-black text-brand-primary uppercase">Cálculo de Peça Pronta</p>
+            </div>
+          )}
+
+          {/* BLOCO 2: CUSTOS PEÇA */}
+          <div className="space-y-4 bg-rose-50/30 p-6 rounded-[35px] border border-rose-100">
+             <div className="flex items-center gap-2 text-rose-700 mb-2"><ShoppingBag size={16}/><h4 className="text-[9px] font-black uppercase tracking-widest">Valores de Base</h4></div>
+             <div className="space-y-1">
+                <label className="text-[7px] font-black text-rose-800/40 uppercase ml-1">{isFolhado ? 'Preço de Compra' : 'Valor Bruto'}</label>
+                <input type="number" value={currentEntry.rawVal || ''} onChange={e => setCurrentEntry({...currentEntry, rawVal: parseFloat(e.target.value) || 0})} className="w-full p-4 rounded-xl bg-white border border-rose-200 font-black text-sm outline-none" placeholder="0.00"/>
              </div>
-             <div>
-                <h4 className="text-sm font-black text-amber-900 uppercase mb-2">Entendendo o Markup</h4>
-                <p className="text-[11px] text-amber-800 font-medium leading-relaxed">
-                   O Markup é o multiplicador que você usa sobre o custo total da peça para chegar ao preço final. <br/><br/>
-                   • 100%: Preço de venda é o dobro do custo. <br/>
-                   • 150%: Preço de venda é o custo + 150% de lucro.
-                </p>
+             <div className="space-y-1">
+                <label className="text-[7px] font-black text-rose-800/40 uppercase ml-1">Outros (Tags/Pedras)</label>
+                <input type="number" value={currentEntry.others || ''} onChange={e => setCurrentEntry({...currentEntry, others: parseFloat(e.target.value) || 0})} className="w-full p-3 rounded-xl bg-white border border-rose-200 font-black text-xs outline-none" placeholder="0.00"/>
+             </div>
+             {!isFolhado && (currentEntry.material === 'OURO' || currentEntry.material === 'PRATA') && (
+               <div className="space-y-1 pt-2">
+                  <label className="text-[7px] font-black text-green-700 uppercase ml-1">Verniz (KG)</label>
+                  <input type="number" value={currentEntry.vernizKgPrice || ''} onChange={e => setCurrentEntry({...currentEntry, vernizKgPrice: parseFloat(e.target.value) || 0})} className="w-full p-3 rounded-xl bg-green-50 border border-green-200 font-black text-xs text-green-800 outline-none" placeholder="R$ 0.00"/>
+               </div>
+             )}
+          </div>
+
+          {/* BLOCO 3: MARGEM */}
+          <div className="space-y-4 bg-brand-primary p-6 rounded-[35px] text-white shadow-xl">
+             <div className="flex items-center gap-2 mb-2 opacity-60"><Percent size={16}/><h4 className="text-[9px] font-black uppercase tracking-widest">Lucratividade</h4></div>
+             <div className="space-y-1">
+                <label className="text-[7px] font-black uppercase opacity-40 ml-1">Markup (%)</label>
+                <input type="number" value={currentEntry.markup || ''} onChange={e => setCurrentEntry({...currentEntry, markup: parseFloat(e.target.value) || 0})} className="w-full p-4 rounded-xl bg-white/10 border border-white/20 font-black text-xl text-amber-200 outline-none"/>
+             </div>
+             <div className="pt-4 border-t border-white/10">
+                <p className="text-[7px] font-black uppercase opacity-40">Custo Total</p>
+                <p className="text-xl font-black">R$ {activeRes.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
              </div>
           </div>
-          <div className="bg-rose-50/50 p-8 rounded-[40px] border border-rose-100 flex gap-5">
-             <div className="p-4 bg-white rounded-2xl shadow-sm text-brand-primary h-fit">
-                <Gem size={24} />
+
+          {/* BLOCO 4: RESULTADO & ADICIONAR */}
+          <div className="h-full flex flex-col gap-4">
+             <div className="flex-1 bg-amber-400 p-6 rounded-[35px] text-brand-primary flex flex-col justify-center items-center text-center shadow-xl">
+                <p className="text-[8px] font-black uppercase opacity-60 mb-1">Preço Sugerido</p>
+                <p className="text-3xl font-black tracking-tighter">R$ {activeRes.salePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
              </div>
-             <div>
-                <h4 className="text-sm font-black text-brand-primary uppercase mb-2">Engenharia Financeira</h4>
-                <p className="text-[11px] text-brand-secondary font-medium leading-relaxed">
-                   Abaixo você encontra a calculadora técnica para precificar lotes ou peças avulsas com detalhamento de banho e peso.
-                </p>
-             </div>
+             <button onClick={handleAddItem} className="w-full py-5 rounded-[25px] bg-brand-primary text-white font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-brand-secondary transition-all shadow-2xl">
+                <Plus size={20}/> Adicionar à Lista
+             </button>
           </div>
+
         </div>
       </div>
 
-      {/* 🚀 CALCULADORA MANUAL DE PRECIFICAÇÃO (NOVA ESTRUTURA) */}
+      {/* 📜 LISTAGEM SIMPLES (ROMANEIO) */}
       <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-brand-primary rounded-2xl text-white shadow-lg"><Calculator size={24}/></div>
-          <div>
-            <h3 className="text-2xl font-black text-brand-primary uppercase tracking-tighter">Calculadora Manual de Precificação</h3>
-            <p className="text-[10px] font-bold text-brand-secondary/50 uppercase tracking-[0.2em]">Cálculo técnico para peças avulsas ou novos lotes</p>
-          </div>
+        <div className="flex items-center gap-3 px-4">
+          <CheckCircle2 size={24} className="text-brand-primary"/>
+          <h3 className="text-sm font-black uppercase text-brand-primary tracking-widest">Itens no Romaneio ({addedItems.length})</h3>
         </div>
 
-        <div className="bg-white p-10 rounded-[50px] border border-brand-secondary/10 shadow-xl space-y-10">
-          
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-             <div className="md:col-span-4 space-y-2">
-                <label className="text-[10px] font-black uppercase text-brand-secondary/40 ml-2">Nome ou Código da Peça</label>
-                <input type="text" value={calcData.name} onChange={e => updateCalc('name', e.target.value)} className="w-full px-6 py-5 rounded-2xl bg-brand-secondary/5 text-sm font-black uppercase outline-none focus:ring-2 focus:ring-brand-primary/20" placeholder="EX: ANEL SOLITÁRIO"/>
-             </div>
-             <div className="md:col-span-2 space-y-2">
-                <label className="text-[10px] font-black uppercase text-brand-secondary/40 ml-2">Valor Bruto (R$)</label>
-                <input type="number" value={calcData.rawVal || ''} onChange={e => updateCalc('rawVal', parseFloat(e.target.value) || 0)} className="w-full px-6 py-5 rounded-2xl bg-brand-secondary/5 text-sm font-black outline-none focus:ring-2 focus:ring-brand-primary/20" placeholder="0,00"/>
-             </div>
-             <div className="md:col-span-2 space-y-2">
-                <label className="text-[10px] font-black uppercase text-brand-secondary/40 ml-2">Peso Peça (G)</label>
-                <input type="number" value={calcData.weightG || ''} onChange={e => updateCalc('weightG', parseFloat(e.target.value) || 0)} className="w-full px-6 py-5 rounded-2xl bg-brand-secondary/5 text-sm font-black outline-none focus:ring-2 focus:ring-brand-primary/20" placeholder="0.00"/>
-             </div>
-             <div className="md:col-span-2 space-y-2">
-                <label className="text-[10px] font-black uppercase text-brand-secondary/40 ml-2">Valor Grama Banho</label>
-                <input type="number" value={calcData.platingG || ''} onChange={e => updateCalc('platingG', parseFloat(e.target.value) || 0)} className="w-full px-6 py-5 rounded-2xl bg-amber-50 border border-amber-100 text-sm font-black text-amber-900 outline-none" placeholder="0,00"/>
-             </div>
-             <div className="md:col-span-2 space-y-2">
-                <label className="text-[10px] font-black uppercase text-brand-secondary/40 ml-2">Outros Gastos</label>
-                <input type="number" value={calcData.others || ''} onChange={e => updateCalc('others', parseFloat(e.target.value) || 0)} className="w-full px-6 py-5 rounded-2xl bg-brand-secondary/5 text-sm font-black outline-none focus:ring-2 focus:ring-brand-primary/20" placeholder="Tags/Pedras"/>
-             </div>
-          </div>
-
-          <div className="pt-8 border-t border-brand-secondary/5 flex flex-col md:flex-row items-center gap-10">
-             
-             <div className="flex-1 space-y-6 w-full">
-                <div className="bg-brand-secondary/5 p-6 rounded-3xl flex items-center justify-between">
-                   <div className="flex items-center gap-3">
-                      <Percent className="text-brand-primary" size={20}/>
-                      <span className="text-xs font-black uppercase text-brand-primary">Margem de Lucro (Markup %)</span>
-                   </div>
-                   <input type="number" value={calcData.markup} onChange={e => updateCalc('markup', parseFloat(e.target.value) || 0)} className="bg-white px-6 py-3 rounded-xl border border-brand-secondary/10 text-lg font-black text-brand-primary w-32 text-center outline-none focus:ring-2 focus:ring-brand-primary/20"/>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                   <div className="bg-white p-6 rounded-3xl border border-brand-secondary/10 text-center">
-                      <p className="text-[9px] font-black uppercase text-brand-secondary/40 mb-1">Custo Total</p>
-                      <p className="text-xl font-black text-brand-primary">R$ {manualResults.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                   </div>
-                   <div className="bg-amber-50 p-6 rounded-3xl border border-amber-100 text-center">
-                      <p className="text-[9px] font-black uppercase text-amber-600/60 mb-1">Custo do Banho</p>
-                      <p className="text-xl font-black text-amber-700">R$ {manualResults.platingCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                   </div>
-                </div>
-             </div>
-
-             <div className="w-full md:w-[400px] bg-brand-primary p-10 rounded-[50px] text-white shadow-2xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-10 opacity-10 group-hover:scale-110 transition-transform duration-700"><Gem size={100}/></div>
-                <div className="relative z-10 space-y-6">
-                   <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-2">Preço Sugerido Venda</p>
-                      <p className="text-5xl font-black tracking-tighter">R$ {manualResults.salePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                   </div>
-                   <button onClick={generateReportPDF} className="w-full py-5 bg-white text-brand-primary rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-amber-50 transition-all">
-                      <FileText size={18}/> Gerar Relatório PDF
-                   </button>
-                </div>
-             </div>
-
+        <div className="bg-white rounded-[40px] border border-brand-secondary/10 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-brand-secondary/5 border-b border-brand-secondary/10">
+                  <th className="p-6 text-[8px] font-black uppercase text-brand-secondary/40 tracking-[0.2em]">Joia / Identificação</th>
+                  <th className="p-6 text-[8px] font-black uppercase text-brand-secondary/40 tracking-[0.2em]">Tipo / Processo</th>
+                  <th className="p-6 text-[8px] font-black uppercase text-brand-secondary/40 tracking-[0.2em]">Peso/Mils</th>
+                  <th className="p-6 text-[8px] font-black uppercase text-brand-secondary/40 tracking-[0.2em]">Custo Total</th>
+                  <th className="p-6 text-[8px] font-black uppercase text-brand-secondary/40 tracking-[0.2em]">Preço Venda</th>
+                  <th className="p-6 text-[8px] font-black uppercase text-brand-secondary/40 tracking-[0.2em] text-center">Ação</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-brand-secondary/5">
+                {addedItems.map((item) => (
+                  <tr key={item.id} className="hover:bg-brand-secondary/5 transition-all group">
+                    <td className="p-6">
+                      <p className="text-xs font-black text-brand-primary uppercase">{item.name}</p>
+                    </td>
+                    <td className="p-6">
+                      <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase ${item.material === 'OURO' ? 'bg-amber-100 text-amber-700' : item.material === 'FOLHADO' ? 'bg-rose-100 text-rose-700' : 'bg-brand-secondary/10 text-brand-primary'}`}>{item.material}</span>
+                    </td>
+                    <td className="p-6">
+                      <p className="text-[10px] font-bold text-brand-secondary">
+                        {item.material === 'FOLHADO' ? 'PRONTA' : `${item.weightG}g / ${item.mils} mils`}
+                      </p>
+                    </td>
+                    <td className="p-6">
+                      <p className="text-[10px] font-black text-brand-primary">R$ {item.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                    </td>
+                    <td className="p-6">
+                      <p className="text-[10px] font-black text-brand-primary">R$ {item.salePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                    </td>
+                    <td className="p-6 text-center">
+                       <button onClick={() => setAddedItems(addedItems.filter(i => i.id !== item.id))} className="p-3 text-rose-500 hover:bg-rose-50 rounded-full transition-all opacity-0 group-hover:opacity-100">
+                          <Trash2 size={16}/>
+                       </button>
+                    </td>
+                  </tr>
+                ))}
+                {addedItems.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="p-20 text-center">
+                       <Calculator size={40} className="mx-auto mb-4 opacity-10 text-brand-primary"/>
+                       <p className="text-[9px] font-black uppercase text-brand-secondary/30 tracking-widest">Nenhuma peça adicionada ao romaneio ainda.</p>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
     </div>
   )
 }
-

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState, Suspense, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -25,7 +25,7 @@ interface Branding {
 
 function HomeContent() {
   const searchParams = useSearchParams()
-  const [products, setProducts] = useState<CartItem[]>([])
+  const [allProducts, setAllProducts] = useState<CartItem[]>([])
   const [dbCategories, setDbCategories] = useState<Category[]>([])
   const [branding, setBranding] = useState<Branding | null>(null)
   const [loading, setLoading] = useState(true)
@@ -36,13 +36,14 @@ function HomeContent() {
   const supabase = createClient()
   const router = useRouter()
 
+  // 1. CARREGAMENTO INICIAL (Apenas uma vez ou se a loja mudar)
   useEffect(() => {
     if (!isPublicCatalog) {
       router.push('/login')
       return
     }
 
-    async function loadData() {
+    async function loadInitialData() {
       setLoading(true)
       
       let currentBranding = null
@@ -57,29 +58,36 @@ function HomeContent() {
       }
 
       setBranding(currentBranding)
-      
-      // 💎 NEXUS: Prioriza o user_id da marca encontrada para carregar categorias e produtos
       const currentUserId = currentBranding?.user_id || 'fc799d85-0264-4676-a0bb-cc27fca3b517'
 
-      const { data: cats } = await supabase.from('categories').select('id, name').eq('user_id', currentUserId).order('name')
-      setDbCategories(cats || [])
+      // Carrega categorias e TODOS os produtos com estoque de uma vez
+      const [catsRes, prodsRes] = await Promise.all([
+        supabase.from('categories').select('id, name').eq('user_id', currentUserId).order('name'),
+        supabase.from('products')
+          .select('*, categories!inner(name)')
+          .eq('user_id', currentUserId)
+          .gt('stock_quantity', 0)
+          .order('created_at', { ascending: false })
+      ])
 
-      let prodQuery = supabase.from('products')
-        .select('*, categories!inner(name)')
-        .eq('user_id', currentUserId)
-        .gt('stock_quantity', 0)
-      
-      if (activeCategory !== 'Todos') {
-        prodQuery = prodQuery.eq('categories.name', activeCategory)
-      }
-
-      const { data: prods } = await prodQuery.order('created_at', { ascending: false })
-      setProducts(prods || [])
+      setDbCategories(catsRes.data || [])
+      setAllProducts(prodsRes.data || [])
       setLoading(false)
     }
 
-    loadData()
-  }, [isPublicCatalog, storeSlug, activeCategory, router, supabase])
+    loadInitialData()
+  }, [isPublicCatalog, storeSlug, router, supabase])
+
+  // 2. FILTRAGEM ULTRA-RÁPIDA (Em memória, sem loading)
+  const displayedProducts = useMemo(() => {
+    if (activeCategory === 'Todos' || !activeCategory) {
+      return allProducts
+    }
+    return allProducts.filter(p => 
+      // @ts-ignore - categories é injetado pelo join !inner
+      p.categories?.name === activeCategory
+    )
+  }, [allProducts, activeCategory])
 
   if (loading) {
     return (
@@ -102,8 +110,9 @@ function HomeContent() {
               <Link 
                 key={cat}
                 href={`/?catalogo=true&category=${cat === 'Todos' ? '' : cat}${storeParam}`}
+                scroll={false}
                 className={`px-3 py-1.5 transition-all font-bold text-[9px] md:text-[10px] tracking-[0.1em] md:tracking-[0.2em] uppercase rounded-full border ${
-                  activeCategory === cat
+                  activeCategory === cat || (cat === 'Todos' && !activeCategory)
                   ? "bg-brand-primary text-white border-brand-primary shadow-md" 
                   : "text-brand-primary/70 hover:text-brand-primary bg-brand-secondary/5 border-brand-secondary/10"
                 }`}
@@ -137,21 +146,23 @@ function HomeContent() {
           </h2>
           <div className="w-12 h-[1px] bg-brand-secondary/30 mx-auto mb-2" />
           <p className="text-brand-secondary text-[8px] md:text-[9px] font-bold tracking-[0.2em] uppercase opacity-60">
-            {products.length} Itens Selecionados {branding?.store_name && `por ${branding.store_name}`}
+            {displayedProducts.length} Itens Selecionados {branding?.store_name && `por ${branding.store_name}`}
           </p>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 md:gap-x-10 gap-y-10 md:gap-y-20 px-1">
-          {products.length > 0 ? (
-            products.map((product) => (
+          {displayedProducts.length > 0 ? (
+            displayedProducts.map((product) => (
               <div key={product.id} className="group flex flex-col items-center">
                 <Link href={`/product?id=${product.id}&catalogo=true${storeParam}`} className="w-full">
                   <div className="aspect-[4/5] w-full bg-white rounded-[40px] md:rounded-[64px] overflow-hidden mb-6 md:mb-10 shadow-[0_20px_60px_rgba(74,50,46,0.08)] border border-white relative transition-all duration-700">
                     {product.image_url ? (
-                      <img 
+                      <Image 
                         src={product.image_url} 
                         alt={product.name} 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+                        fill
+                        sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                        className="object-cover group-hover:scale-110 transition-transform duration-1000"
                         loading="lazy"
                       />
                     ) : (

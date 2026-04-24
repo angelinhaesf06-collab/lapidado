@@ -46,42 +46,67 @@ export async function POST(req: Request) {
     ];
 
     const modelParams = { 
-      systemInstruction: "Você é um robô de joalheria. Responda APENAS JSON: {\"name\": \"...\", \"category\": \"...\", \"description\": \"...\"}"
+      systemInstruction: `Você é uma especialista em alta joalheria e semijoias de luxo. 
+      Sua tarefa é analisar a imagem e retornar um JSON detalhado.
+      
+      No campo "name": Crie um nome comercial luxuoso e atraente.
+      No campo "category": Identifique se é ANEL, BRINCO, COLAR, PULSEIRA ou CONJUNTO.
+      No campo "description": Escreva uma descrição profissional de 2 a 3 frases destacando:
+      - O banho (ex: banhado a ouro 18k, ródio branco)
+      - Detalhes das pedras (ex: zircônias, cristais, lapidação)
+      - O design (ex: cravejado, polido, design orgânico)
+      - Para qual ocasião a peça é ideal.
+
+      RESPONDA APENAS O JSON: {"name": "...", "category": "...", "description": "..."}`
     };
 
     let result;
+    const generationConfig = {
+      temperature: 0.2,
+      topP: 0.95,
+      maxOutputTokens: 1000,
+      responseMimeType: "application/json", // 🚀 FORÇA O MODO JSON NATIVO
+    };
+
     try {
-      // 🚀 1ª OPÇÃO: Gemini 2.5 Flash (Compatível conforme print)
+      // 🚀 1ª OPÇÃO: Gemini 2.5 Flash
       const model25 = genAI.getGenerativeModel({ ...modelParams, model: "gemini-2.5-flash" });
       result = await tryGenerate(model25, {
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
-        generationConfig: { maxOutputTokens: 500, temperature: 0.1 },
+        generationConfig,
         safetySettings
       });
     } catch (e) {
-      console.error("Gemini 2.5 falhou, tentando Fallback 3...");
-      // 🚀 2ª OPÇÃO: Gemini 3 Flash (Compatível conforme print)
-      const model3 = genAI.getGenerativeModel({ ...modelParams, model: "gemini-3-flash" });
-      result = await tryGenerate(model3, {
+      console.error("Gemini 2.5 Flash falhou, tentando Pro...");
+      // 🚀 2ª OPÇÃO: Gemini 2.5 Pro
+      const model25pro = genAI.getGenerativeModel({ ...modelParams, model: "gemini-2.5-pro" });
+      result = await tryGenerate(model25pro, {
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
-        generationConfig: { maxOutputTokens: 500, temperature: 0.1 },
+        generationConfig,
         safetySettings
       });
     }
 
     const response = await result.response;
-    let aiText = response.text().trim();
-    const jsonMatch = aiText.match(/\{[\s\S]*\}/);
+    const aiText = response.text().trim();
     
-    if (jsonMatch) {
-      return NextResponse.json(JSON.parse(jsonMatch[0]));
+    try {
+      const rawJson = JSON.parse(aiText);
+      // 💎 NEXUS: Normalização Ultra-Resiliente
+      return NextResponse.json({
+        name: (rawJson.name || rawJson.NAME || rawJson.Nome || "JOIA LAPIDADA").toUpperCase(),
+        category: (rawJson.category || rawJson.CATEGORY || rawJson.Categoria || "OUTROS").toUpperCase(),
+        description: (rawJson.description || rawJson.DESCRIPTION || rawJson.Descrição || "").toUpperCase()
+      });
+    } catch (e) {
+      console.error("Erro crítico no JSON:", e, "Texto bruto:", aiText);
+      // Se ainda assim falhar, tenta extrair o que for possível do texto
+      return NextResponse.json({
+        name: "JOIA ANALISADA",
+        category: "OUTROS",
+        description: aiText.substring(0, 500).toUpperCase()
+      });
     }
-
-    return NextResponse.json({
-      name: "JOIA IDENTIFICADA",
-      category: "OUTROS",
-      description: aiText.substring(0, 300)
-    });
 
   } catch (error: any) {
     return NextResponse.json({ error: "FALHA_MOTOR_IA", details: error.message }, { status: 500 });

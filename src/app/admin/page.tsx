@@ -8,12 +8,12 @@ import { createClient } from '@/lib/supabase/client'
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
     totalItems: 0,
-    lowStock: 0,
     stockCost: 0,
     stockSales: 0,
     monthlyRevenue: 0,
     monthlyProfit: 0,
-    totalSalesCount: 0
+    totalSalesCount: 0,
+    pendingReceivables: 0
   })
   
   const supabase = createClient()
@@ -30,9 +30,15 @@ export default function AdminDashboard() {
         // 2. DADOS DE VENDAS
         const { data: sales } = await supabase.from('sales').select('*').eq('user_id', user.id)
 
+        // 3. DADOS DE PARCELAS (A RECEBER)
+        const { data: installments } = await supabase
+          .from('installments')
+          .select('value')
+          .eq('user_id', user.id)
+          .eq('status', 'pendente')
+
         if (products) {
           const totalItems = products.reduce((acc, p) => acc + (Number(p.stock_quantity) || 0), 0)
-          const lowStock = products.filter(p => (Number(p.stock_quantity) || 0) <= 2).length
           const stockCost = products.reduce((acc, p) => acc + ((Number(p.cost_price) || 0) * (Number(p.stock_quantity) || 0)), 0)
           const stockSales = products.reduce((acc, p) => acc + ((Number(p.price) || 0) * (Number(p.stock_quantity) || 0)), 0)
 
@@ -60,12 +66,12 @@ export default function AdminDashboard() {
 
           setStats({
             totalItems,
-            lowStock,
             stockCost,
             stockSales,
             monthlyRevenue,
             monthlyProfit,
-            totalSalesCount
+            totalSalesCount,
+            pendingReceivables: installments?.reduce((acc, curr) => acc + Number(curr.value), 0) || 0
           })
         }
       } catch (err) {
@@ -86,7 +92,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 gap-6">
         
         {/* DASHBOARD DE PERFORMANCE (VENDAS REAIS) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Link href="/admin/sales" className="bg-brand-primary p-8 rounded-[40px] text-white shadow-xl hover:scale-[1.02] transition-all group">
             <div className="flex justify-between items-start mb-4">
                <TrendingUp size={24} className="text-brand-secondary" />
@@ -106,11 +112,23 @@ export default function AdminDashboard() {
             </div>
           </Link>
 
+          <Link href="/admin/sales" className="bg-amber-500 p-8 rounded-[40px] text-white shadow-xl hover:scale-[1.02] transition-all group">
+            <div className="flex justify-between items-start mb-4">
+               <AlertCircle size={24} className="text-amber-200" />
+               <span className="text-[7px] font-black uppercase tracking-widest bg-white/10 px-2 py-1 rounded-full">Promissórias</span>
+            </div>
+            <p className="text-[8px] font-black text-amber-100 uppercase tracking-widest mb-1">Contas a Receber</p>
+            <h4 className="text-3xl font-bold tracking-tighter mb-4">R$ {stats.pendingReceivables.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h4>
+            <div className="pt-4 border-t border-white/10">
+              <p className="text-[6px] font-black uppercase text-amber-100/60">Total Pendente</p>
+              <p className="text-[10px] font-bold">Parcelas e Promissórias</p>
+            </div>
+          </Link>
+
           <div className="bg-white p-8 rounded-[40px] border border-brand-secondary/10 shadow-sm flex flex-col justify-between">
             <div>
               <div className="flex justify-between items-start mb-4">
                 <Package size={24} className="text-brand-primary" />
-                {stats.lowStock > 0 && <span className="text-[7px] font-black uppercase tracking-widest bg-rose-100 text-rose-600 px-2 py-1 rounded-full">Reposição Necessária</span>}
               </div>
               <p className="text-[8px] font-black text-brand-secondary uppercase tracking-widest mb-1">Itens em Estoque</p>
               <h4 className="text-3xl font-bold text-brand-primary tracking-tighter">{stats.totalItems} <span className="text-xs font-light text-brand-secondary uppercase">Peças</span></h4>
@@ -160,20 +178,6 @@ export default function AdminDashboard() {
             </div>
           </Link>
         </div>
-
-        {/* ALERTA DE REPOSIÇÃO (Sutil) */}
-        {stats.lowStock > 0 && (
-          <div className="bg-rose-50/50 p-6 rounded-[35px] border border-rose-100 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <AlertCircle size={20} className="text-rose-500" />
-              <div>
-                <p className="text-[9px] font-bold text-rose-800 uppercase tracking-widest">Atenção ao Estoque</p>
-                <p className="text-[7px] text-rose-600 font-bold uppercase">{stats.lowStock} modelos estão com 2 ou menos unidades.</p>
-              </div>
-            </div>
-            <Link href="/admin" className="text-[8px] font-black uppercase tracking-widest text-rose-600 border-b border-rose-200">Ver Itens</Link>
-          </div>
-        )}
 
       </div>
     </div>

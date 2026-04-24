@@ -7,42 +7,41 @@ export async function POST(req: Request) {
     const file = formData.get('file') as File
     const bucket = formData.get('bucket') as string || 'products'
 
-    if (!file) {
-      return NextResponse.json({ error: 'NENHUM ARQUIVO ENVIADO' }, { status: 400 })
-    }
+    if (!file) return NextResponse.json({ error: 'NENHUM ARQUIVO' }, { status: 400 })
 
-    // Criar cliente com Chave Mestra (Service Role) - APENAS NO SERVIDOR
+    // 🚀 BYPASS SUPREME: Usa Service Role para ignorar QUALQUER trava de segurança (RLS)
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
     )
 
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-
-    // Converter para Buffer para garantir compatibilidade no ambiente Node.js do Next.js
+    const fileName = `admin_${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    // Upload usando a permissão master
-    const { error } = await supabaseAdmin.storage
+    // O segredo está em usar o cliente ADMIN aqui
+    const { data, error } = await supabaseAdmin.storage
       .from(bucket)
       .upload(fileName, buffer, {
-        contentType: file.type,
+        contentType: 'image/jpeg',
+        cacheControl: '3600',
         upsert: true
       })
 
-    if (error) throw error
+    if (error) {
+      console.error('Falha crítica no bucket:', error.message)
+      return NextResponse.json({ error: `SUPABASE_BLOCK: ${error.message}` }, { status: 500 })
+    }
 
     const { data: { publicUrl } } = supabaseAdmin.storage.from(bucket).getPublicUrl(fileName)
+    return NextResponse.json({ url: publicUrl })
 
-    // 💎 NEXUS: Cache-Buster (Timestamp) para forçar atualização visual imediata
-    const urlWithCacheBuster = `${publicUrl}?t=${Date.now()}`
-
-    return NextResponse.json({ url: urlWithCacheBuster })
-
-  } catch (err) {
-    const error = err as Error
-    console.error('ERRO NO UPLOAD SEGURO:', error.message)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
