@@ -58,7 +58,8 @@ function HomeContent() {
       }
 
       setBranding(currentBranding)
-      const currentUserId = currentBranding?.user_id || 'fc799d85-0264-4676-a0bb-cc27fca3b517'
+      // 💎 NEXUS: Prioridade total para o ID da Angela (Dona da marca)
+      const currentUserId = currentBranding?.user_id || '4085e515-86ea-45ee-8fcf-6cbf572bf2e9'
 
       // Carrega categorias e TODOS os produtos com estoque de uma vez
       const [catsRes, prodsRes] = await Promise.all([

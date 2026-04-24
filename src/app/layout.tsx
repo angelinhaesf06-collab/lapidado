@@ -98,6 +98,9 @@ function RootLayoutContent({
         '--background': '#fffcfc'
       }}
     >
+      {/* 📱 SEO & WHATSAPP DYNAMIC IDENTITY */}
+      <title>{branding?.store_name || 'Lapidado Catálogo'}</title>
+      
       <Toaster position="top-center" richColors />
       <CartProvider>
         <AdminBar user={user} />
