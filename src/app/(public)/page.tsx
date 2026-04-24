@@ -46,27 +46,21 @@ function HomeContent() {
     async function loadInitialData() {
       setLoading(true)
       
+      // Limpa estados para garantir que não haja "lixo" de outra vitrine
+      setAllProducts([])
+      setDbCategories([])
+      
       let currentBranding = null
       
-      // 1. Busca a marca estritamente pelo link (?loja=slug)
+      // 🔒 TRAVA DE OURO: A vitrine pública SÓ funciona com o link da loja (?loja=slug)
+      // Se não houver link, o sistema não tenta adivinhar, ele protege os dados.
       if (storeSlug) {
         const { data } = await supabase.from('branding').select('*').eq('slug', storeSlug).maybeSingle()
         currentBranding = data
       }
 
-      // 2. Se não houver link, tenta buscar a marca do usuário logado (se houver um admin acessando)
+      // Se não houver identificação clara pelo link, para o carregamento por segurança
       if (!currentBranding) {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) {
-          const { data } = await supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle()
-          currentBranding = data
-        }
-      }
-
-      // 🛑 SEGURANÇA: Se não identificou NENHUMA marca, não mostra produtos de ninguém
-      if (!currentBranding) {
-         setAllProducts([])
-         setDbCategories([])
          setLoading(false)
          return
       }
@@ -74,7 +68,7 @@ function HomeContent() {
       setBranding(currentBranding)
       const currentUserId = currentBranding.user_id
 
-      // Carrega produtos APENAS do dono desta marca
+      // 🔐 ISOLAMENTO TOTAL: Busca estritamente vinculada ao dono desta marca específica
       const [catsRes, prodsRes] = await Promise.all([
         supabase.from('categories').select('id, name').eq('user_id', currentUserId).order('name'),
         supabase.from('products')
