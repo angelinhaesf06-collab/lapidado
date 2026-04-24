@@ -48,18 +48,22 @@ function HomeContent() {
       
       let currentBranding = null
       
-      // 💎 NEXUS: Lógica de Identidade Inteligente
-      const slugToSearch = storeSlug || 'lapidado'
-      
-      const { data } = await supabase.from('branding').select('*').eq('slug', slugToSearch).maybeSingle()
-      currentBranding = data
-
-      // Se não achar pelo slug padrão, pega o primeiro que existir
-      if (!currentBranding) {
-        const { data: firstBrand } = await supabase.from('branding').select('*').limit(1).maybeSingle()
-        currentBranding = firstBrand
+      // 1. Busca a marca estritamente pelo link (?loja=slug)
+      if (storeSlug) {
+        const { data } = await supabase.from('branding').select('*').eq('slug', storeSlug).maybeSingle()
+        currentBranding = data
       }
 
+      // 2. Se não houver link, tenta buscar a marca do usuário logado (se houver um admin acessando)
+      if (!currentBranding) {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const { data } = await supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle()
+          currentBranding = data
+        }
+      }
+
+      // 🛑 SEGURANÇA: Se não identificou NENHUMA marca, não mostra produtos de ninguém
       if (!currentBranding) {
          setAllProducts([])
          setDbCategories([])
@@ -70,7 +74,7 @@ function HomeContent() {
       setBranding(currentBranding)
       const currentUserId = currentBranding.user_id
 
-      // Carrega APENAS os dados vinculados ao dono desta marca específica
+      // Carrega produtos APENAS do dono desta marca
       const [catsRes, prodsRes] = await Promise.all([
         supabase.from('categories').select('id, name').eq('user_id', currentUserId).order('name'),
         supabase.from('products')
