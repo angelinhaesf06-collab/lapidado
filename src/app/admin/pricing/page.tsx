@@ -103,9 +103,9 @@ export default function PricingPage() {
     const tableBody = addedItems.map(item => [
       item.name.toUpperCase(),
       item.material,
-      item.material === 'FOLHADO' ? '---' : `${item.weightG}g`,
-      `R$ ${item.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-      `R$ ${item.salePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+      item.material === 'FOLHADO' ? '---' : `${item.weightG.toFixed(2)}g`,
+      `R$ ${item.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      `R$ ${item.salePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
     ])
 
     autoTable(doc, {
