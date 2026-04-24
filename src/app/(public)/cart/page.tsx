@@ -59,6 +59,36 @@ export default function CartPage() {
 
   const storeParam = storeSlug ? `&loja=${storeSlug}` : ''
 
+  const sendWhatsApp = () => {
+    if (!customerName) {
+      alert('POR FAVOR, INFORME SEU NOME PARA CONTINUAR. ✨')
+      return
+    }
+
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+    
+    const message = encodeURIComponent(
+      `*🛒 NOVO PEDIDO - ${storeName.toUpperCase()}* ✨\n\n` +
+      `*👤 CLIENTE:* ${customerName.toUpperCase()}\n` +
+      (customerAddress ? `*📍 ENDEREÇO:* ${customerAddress.toUpperCase()}\n` : '') +
+      `\n*💎 JOIAS SELECIONADAS:*\n` +
+      cart.map(item => {
+        let finish = item.material_finish || ''
+        // Link para a peça na vitrine
+        const productLink = `${baseUrl}/product/${item.id}?catalogo=true${storeParam}`
+        return `• *${item.name}*${finish ? ` (${finish})` : ''}\n  💰 R$ ${item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n  🔗 _Ver foto:_ ${productLink}`
+      }).join('\n\n') +
+      `\n\n*💳 RESUMO FINANCEIRO:*\n` +
+      `--------------------------\n` +
+      `*TOTAL:* R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
+      `*NO CARTÃO:* ${installments}X DE R$ ${installmentValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
+      `*NO PIX (5% OFF):* R$ ${pixValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
+      `--------------------------\n\n` +
+      `*Olá, ${storeName}! Acabei de montar minha sacola no seu catálogo. Podemos combinar o envio?*`
+    )
+    window.open(`https://wa.me/${storePhone}?text=${message}`, '_blank')
+  }
+
   if (itemCount === 0) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-32 text-center flex flex-col items-center">
