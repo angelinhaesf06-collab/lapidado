@@ -157,16 +157,20 @@ export default function SalesPage() {
     const { data } = await supabase.from('branding').select('*').eq('user_id', user.id).single()
     if (data) setBranding(data)
   }, [supabase])
+const loadProducts = useCallback(async () => {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
 
-  const loadProducts = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    const { data } = await supabase
-      .from('products')
-      .select('*, categories(name)')
-      .eq('user_id', user.id)
-      .gt('stock_quantity', 0)
-      .order('name')
+  // ⚡ OTIMIZAÇÃO: Busca apenas o essencial para a lista ser instantânea
+  const { data } = await supabase
+    .from('products')
+    .select('id, name, price, image_url, cost_price, stock_quantity, category_id')
+    .eq('user_id', user.id)
+    .gt('stock_quantity', 0)
+    .order('name')
+
+  if (data) setProducts(data)
+}, [supabase])
     if (data) setProducts(data as unknown as Product[])
   }, [supabase])
 

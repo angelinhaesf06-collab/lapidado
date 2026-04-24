@@ -27,10 +27,10 @@ export default function AdminDashboard() {
           return
         }
 
-        // 🔒 SEGURANÇA TOTAL: Todas as consultas travadas no ID do usuário logado
+        // 🔒 SEGURANÇA TOTAL: Busca ultra-otimizada
         const [productsRes, salesRes, installmentsRes] = await Promise.all([
-          supabase.from('products').select('*').eq('user_id', user.id),
-          supabase.from('sales').select('*').eq('user_id', user.id),
+          supabase.from('products').select('id, cost_price, price, stock_quantity, user_id').eq('user_id', user.id),
+          supabase.from('sales').select('id, sale_price, quantity, cost_price, product_id, user_id').eq('user_id', user.id),
           supabase.from('installments').select('value').eq('user_id', user.id).eq('status', 'pendente')
         ])
 
@@ -51,17 +51,16 @@ export default function AdminDashboard() {
             totalSalesCount = sales.length
             monthlyRevenue = sales.reduce((acc, s) => acc + (Number(s.sale_price) * Number(s.quantity)), 0)
             
-            // 💎 NEXUS: Cálculo de Lucro Real Ultra-Preciso
+            // 💎 NEXUS: Cálculo de Lucro Real Instantâneo
             monthlyProfit = sales.reduce((acc, s) => {
               const salePrice = Number(s.sale_price) || 0
               const quantity = Number(s.quantity) || 0
               
-              // Tenta pegar o custo da venda, se não tiver, busca o custo original do produto
-              const productOrigin = products.find(p => p.id === s.product_id)
-              const costPrice = Number(s.cost_price) || Number(productOrigin?.cost_price) || 0
+              // Busca custo: Prioriza o custo na hora da venda, se não tiver, usa o do produto
+              const prod = products.find(p => p.id === s.product_id)
+              const costPrice = Number(s.cost_price) || Number(prod?.cost_price) || 0
               
-              const profitPerUnit = salePrice - costPrice
-              return acc + (profitPerUnit * quantity)
+              return acc + ((salePrice - costPrice) * quantity)
             }, 0)
           }
 
