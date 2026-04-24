@@ -46,20 +46,26 @@ function HomeContent() {
     async function loadInitialData() {
       setLoading(true)
       
-      // Limpa estados para garantir que não haja "lixo" de outra vitrine
-      setAllProducts([])
-      setDbCategories([])
-      
       let currentBranding = null
       
-      // 🔒 TRAVA DE OURO: A vitrine pública SÓ funciona com o link da loja (?loja=slug)
-      // Se não houver link, o sistema não tenta adivinhar, ele protege os dados.
+      // 1. Tenta pelo link (?loja=slug)
       if (storeSlug) {
         const { data } = await supabase.from('branding').select('*').eq('slug', storeSlug).maybeSingle()
         currentBranding = data
       }
 
-      // Se não houver identificação clara pelo link, para o carregamento por segurança
+      // 2. Se não achou, tenta carregar a Angel Semijoias por padrão (Dona do App)
+      if (!currentBranding) {
+        const { data } = await supabase.from('branding').select('*').eq('slug', 'angel-semijoias').maybeSingle()
+        currentBranding = data
+      }
+
+      // 3. Se ainda assim não achou, pega o primeiro registro
+      if (!currentBranding) {
+        const { data } = await supabase.from('branding').select('*').limit(1).maybeSingle()
+        currentBranding = data
+      }
+
       if (!currentBranding) {
          setLoading(false)
          return
@@ -68,7 +74,7 @@ function HomeContent() {
       setBranding(currentBranding)
       const currentUserId = currentBranding.user_id
 
-      // 🔐 ISOLAMENTO TOTAL: Busca estritamente vinculada ao dono desta marca específica
+      // Carrega categorias e produtos vinculados
       const [catsRes, prodsRes] = await Promise.all([
         supabase.from('categories').select('id, name').eq('user_id', currentUserId).order('name'),
         supabase.from('products')
