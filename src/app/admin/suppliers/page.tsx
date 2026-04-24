@@ -56,6 +56,46 @@ export default function SuppliersPage() {
   const supabase = createClient()
   const [isAnalyzing, setIsAnalyzing] = useState(false)
 
+  const handleScanRomaneio = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setIsAnalyzing(true)
+    const toastId = toast.loading('IA Lapidado analisando romaneio... 💎')
+    try {
+      const reader = new FileReader()
+      reader.onload = async () => {
+        const base64 = reader.result as string
+        const res = await fetch('/api/ai/romaneio', {
+          method: 'POST',
+          body: JSON.stringify({ image: base64 }),
+          headers: { 'Content-Type': 'application/json' }
+        })
+        const data = await responseToItems(await res.json())
+        if (data.length > 0) {
+          setPurchaseItems(data)
+          toast.success(`${data.length} itens extraídos! ✨`, { id: toastId })
+        }
+      }
+      reader.readAsDataURL(file)
+    } catch (err: any) {
+      toast.error('Falha na IA: ' + err.message, { id: toastId })
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
+
+  // Helper para processar resposta da IA
+  const responseToItems = (data: any) => {
+    if (Array.isArray(data)) {
+      return data.map(item => ({
+        name: (item.name || 'ITEM').toUpperCase(),
+        quantity: parseInt(item.quantity) || 1,
+        unitCost: parseFloat(item.unitCost) || 0
+      }))
+    }
+    return []
+  }
+
   const loadData = useCallback(async () => {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
