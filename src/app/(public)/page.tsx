@@ -163,7 +163,8 @@ function HomeContent() {
                         fill
                         sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
                         className="object-cover group-hover:scale-110 transition-transform duration-1000"
-                        loading="lazy"
+                        priority={index < 4}
+                        loading={index < 4 ? "eager" : "lazy"}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-brand-secondary/5">
