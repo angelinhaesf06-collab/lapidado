@@ -124,7 +124,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Lapidado" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="theme-color" content="#4A322E" />
-        <link rel="apple-touch-icon" href="/icon-app.svg" />
+        <link rel="apple-touch-icon" href="/logo-app.jpg" />
       </head>
       <Suspense fallback={<body></body>}>
         <RootLayoutContent>{children}</RootLayoutContent>
