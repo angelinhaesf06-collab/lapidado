@@ -139,7 +139,7 @@ export default function SuppliersPage() {
     let costPerMil = 0
 
     if (selectedMaterial === 'OURO') {
-      // Aqui a mão de obra é somada ao valor do ouro e multiplicada pelos milésimos
+      // 💎 INDUSTRIAL: (Cotação + M.O.) * Milésimos * (Peso / 1000)
       costPerMil = (goldQuote || 0) + (platingLabor || 0)
       galvaPricePerKg = costPerMil * (milQuantity || 0)
       galvaTotal = weightInKg * galvaPricePerKg
