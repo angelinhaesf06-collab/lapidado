@@ -76,13 +76,13 @@ export default function CartPage() {
         let finish = item.material_finish || ''
         // Link para a peça na vitrine
         const productLink = `${baseUrl}/product/${item.id}?catalogo=true${storeParam}`
-        return `• *${item.name}*${finish ? ` (${finish})` : ''}\n  💰 R$ ${item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n  🔗 _Ver foto:_ ${productLink}`
+        return `• *${item.name}*${finish ? ` (${finish})` : ''}\n  💰 R$ ${item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n  🔗 _Ver foto:_ ${productLink}`
       }).join('\n\n') +
       `\n\n*💳 RESUMO FINANCEIRO:*\n` +
       `--------------------------\n` +
-      `*TOTAL:* R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
-      `*NO CARTÃO:* ${installments}X DE R$ ${installmentValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
-      `*NO PIX (5% OFF):* R$ ${pixValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
+      `*TOTAL:* R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n` +
+      `*NO CARTÃO:* ${installments}X DE R$ ${installmentValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n` +
+      `*NO PIX (5% OFF):* R$ ${pixValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n` +
       `--------------------------\n\n` +
       `*Olá, ${storeName}! Acabei de montar minha sacola no seu catálogo. Podemos combinar o envio?*`
     )
@@ -127,7 +127,7 @@ export default function CartPage() {
               <div className="flex-1">
                 <h4 className="text-xs font-normal tracking-[0.2em] uppercase text-brand-primary mb-1">{item.name}</h4>
                 {finish && <p className="text-[8px] font-black text-brand-secondary uppercase tracking-widest mb-2">{finish}</p>}
-                <p className="text-lg font-light text-brand-primary">R$ {item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                <p className="text-lg font-light text-brand-primary">R$ {item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
               </div>
               <button onClick={() => removeFromCart(index)} className="text-brand-secondary/40 hover:text-red-400 transition-colors">
                 <Trash2 size={18} />
@@ -167,9 +167,9 @@ export default function CartPage() {
       <div className="bg-brand-secondary/5 p-10 rounded-[40px] text-center border border-brand-secondary/10 shadow-sm">
         <div className="mb-10">
           <p className="text-[10px] font-light tracking-[0.4em] uppercase text-brand-secondary mb-4">Valor Total do Pedido</p>
-          <h3 className="text-4xl font-light text-brand-primary mb-2">R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
+          <h3 className="text-4xl font-light text-brand-primary mb-2">R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
           <p className="text-[11px] font-light tracking-widest uppercase opacity-60 text-brand-primary">
-            ou {installments}x de R$ {installmentValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} sem juros
+            ou {installments}x de R$ {installmentValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} sem juros
           </p>
         </div>
 
@@ -180,7 +180,7 @@ export default function CartPage() {
           </div>
           <div className="text-left">
             <p className="text-[10px] font-semibold tracking-widest uppercase text-brand-secondary">Pague com PIX e ganhe 5% OFF</p>
-            <p className="text-2xl font-normal text-brand-primary">R$ {pixValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+            <p className="text-2xl font-normal text-brand-primary">R$ {pixValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           </div>
         </div>
         
