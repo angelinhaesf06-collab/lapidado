@@ -82,7 +82,7 @@ export default function CartPage() {
       `--------------------------\n` +
       `*TOTAL:* R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n` +
       `*NO CARTÃO:* ${installments}X DE R$ ${installmentValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n` +
-      `*NO PIX (5% OFF):* R$ ${pixValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n` +
+      `*NO PIX (5% OFF):* R$ ${Number(pixValue.toFixed(2)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n` +
       `--------------------------\n\n` +
       `*Olá, ${storeName}! Acabei de montar minha sacola no seu catálogo. Podemos combinar o envio?*`
     )
@@ -180,7 +180,7 @@ export default function CartPage() {
           </div>
           <div className="text-left">
             <p className="text-[10px] font-semibold tracking-widest uppercase text-brand-secondary">Pague com PIX e ganhe 5% OFF</p>
-            <p className="text-2xl font-normal text-brand-primary">R$ {pixValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            <p className="text-2xl font-normal text-brand-primary">R$ {Number(pixValue.toFixed(2)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           </div>
         </div>
         
