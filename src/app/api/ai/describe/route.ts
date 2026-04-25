@@ -62,9 +62,9 @@ export async function POST(req: Request) {
     };
 
     try {
-      // 🚀 1ª OPÇÃO: Gemini 1.5 Flash (Super rápido)
-      const model15 = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      result = await tryGenerate(model15, {
+      // 🚀 1ª OPÇÃO: Gemini 2.5 Flash (O mais moderno e rápido de 2026)
+      const model25 = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+      result = await tryGenerate(model25, {
         contents: [{ role: 'user', parts: [
           { text: promptText },
           { inlineData: { mimeType, data: base64Data } }
@@ -73,10 +73,10 @@ export async function POST(req: Request) {
         safetySettings
       });
     } catch (e) {
-      console.error("Gemini 1.5 Flash falhou, tentando Pro...");
-      // 🚀 2ª OPÇÃO: Gemini 1.5 Pro (Mais inteligente)
-      const model15pro = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
-      result = await tryGenerate(model15pro, {
+      console.error("Gemini 2.5 Flash falhou, tentando Pro...");
+      // 🚀 2ª OPÇÃO: Gemini 2.5 Pro (A inteligência suprema do Google)
+      const model25pro = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+      result = await tryGenerate(model25pro, {
         contents: [{ role: 'user', parts: [
           { text: promptText },
           { inlineData: { mimeType, data: base64Data } }
