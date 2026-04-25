@@ -311,34 +311,63 @@ const loadProducts = useCallback(async () => {
           </div>
         </div>
 
-        <button onClick={() => setShowAddModal(true)} className="w-full bg-brand-primary text-white py-5 rounded-[25px] font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-xl mb-12"><Plus size={18} /> Nova Venda Real</button>
+        <button onClick={() => setShowAddModal(true)} className="w-full bg-brand-primary text-white py-5 rounded-[25px] font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-xl mb-8"><Plus size={18} /> Nova Venda Real</button>
+
+        {/* 🏷️ FILTRO DE CATEGORIAS NA LISTAGEM DE VENDAS */}
+        {!loading && categories.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto pb-6 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+            <button 
+              onClick={() => setActiveCategory('Todas')}
+              className={`px-6 py-2 rounded-full text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all ${activeCategory === 'Todas' ? 'bg-brand-primary text-white shadow-md' : 'bg-brand-secondary/5 text-brand-secondary hover:bg-brand-secondary/10'}`}
+            >
+              Todas
+            </button>
+            {categories.map(cat => (
+              <button 
+                key={cat.id}
+                onClick={() => setActiveCategory(cat.name)}
+                className={`px-6 py-2 rounded-full text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all ${activeCategory === cat.name ? 'bg-brand-primary text-white shadow-md' : 'bg-brand-secondary/5 text-brand-secondary hover:bg-brand-secondary/10'}`}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className="space-y-3">
-          {filteredSales.map((sale) => {
+          {filteredSales
+            .filter(sale => {
+              const productInfo = Array.isArray(sale.products) ? sale.products[0] : sale.products
+              // @ts-ignore - categories.name vem do inner join se disponível, ou usamos o estado global
+              return activeCategory === 'Todas' || productInfo?.name?.toUpperCase().includes(activeCategory.toUpperCase()) || sale.products?.categories?.name === activeCategory
+            })
+            .map((sale) => {
             // 💎 NEXUS: Normalização de dados para Joins resilientes
             const productInfo = Array.isArray(sale.products) ? sale.products[0] : sale.products
             const imageUrl = productInfo?.image_url
             
             return (
-              <div key={sale.id} className={`bg-white p-4 rounded-[25px] border flex items-center gap-4 group ${sale.status === 'pago' ? 'border-green-100 bg-green-50/10' : 'border-brand-secondary/5 shadow-sm'}`}>
-                <div className="w-12 h-12 rounded-xl overflow-hidden relative border border-brand-secondary/10 bg-rose-50/30">
+              <div key={sale.id} className={`bg-white p-4 rounded-[25px] border flex items-center gap-3 md:gap-4 group ${sale.status === 'pago' ? 'border-green-100 bg-green-50/10' : 'border-brand-secondary/5 shadow-sm'}`}>
+                <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl overflow-hidden relative border border-brand-secondary/10 bg-rose-50/30 shrink-0">
                   {imageUrl ? (
                     <Image src={imageUrl} alt="" fill className="object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-brand-secondary/20"><Gem size={20} /></div>
                   )}
                 </div>
-                <div className="flex-1">
-                  <h4 className="text-[10px] font-black text-brand-primary uppercase truncate max-w-[200px]">{productInfo?.name || 'Joia não identificada'}</h4>
-                  <p className="text-[8px] font-bold text-brand-secondary/50 uppercase">{sale.customers?.name} • {new Date(sale.created_at).toLocaleDateString('pt-BR')}</p>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-[10px] font-black text-brand-primary uppercase truncate pr-2">{productInfo?.name || 'Joia não identificada'}</h4>
+                  <p className="text-[8px] font-bold text-brand-secondary/50 uppercase truncate">{sale.customers?.name} • {new Date(sale.created_at).toLocaleDateString('pt-BR')}</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="text-right">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <div className="text-right shrink-0">
                     <p className="text-xs font-black text-brand-primary">R$ {sale.total_value.toLocaleString('pt-BR')}</p>
-                    <button onClick={() => handleToggleStatus(sale)} className={`text-[6px] font-black uppercase px-2 py-0.5 rounded-full border ${sale.status === 'pago' ? 'bg-green-500 text-white' : 'text-brand-secondary/40'}`}>{sale.status === 'pago' ? 'PAGO' : 'PENDENTE'}</button>
+                    <button onClick={() => handleToggleStatus(sale)} className={`text-[6px] font-black uppercase px-2 py-0.5 rounded-full border ${sale.status === 'pago' ? 'bg-green-500 text-white border-green-500' : 'text-brand-secondary/40 border-brand-secondary/10'}`}>{sale.status === 'pago' ? 'PAGO' : 'PENDENTE'}</button>
                   </div>
-                  <button onClick={() => setShowReceipt(sale)} className="p-2.5 bg-brand-secondary/5 text-brand-primary rounded-xl hover:bg-brand-primary hover:text-white transition-all"><Printer size={16} /></button>
-                  <button onClick={() => handleDeleteSale(sale.id)} className="p-2 text-rose-200 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={16} /></button>
+                  <div className="flex gap-1">
+                    <button onClick={() => setShowReceipt(sale)} className="p-2 md:p-2.5 bg-brand-secondary/5 text-brand-primary rounded-xl hover:bg-brand-primary hover:text-white transition-all"><Printer size={14} /></button>
+                    <button onClick={() => handleDeleteSale(sale.id)} className="p-2 text-rose-200 hover:text-rose-500 md:opacity-0 md:group-hover:opacity-100 transition-all"><Trash2 size={14} /></button>
+                  </div>
                 </div>
               </div>
             )
