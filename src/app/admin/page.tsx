@@ -40,27 +40,50 @@ export default function AdminDashboard() {
 
         if (products) {
           const totalItems = products.reduce((acc, p) => acc + (Number(p.stock_quantity) || 0), 0)
-          const stockCost = products.reduce((acc, p) => acc + ((Number(p.cost_price) || 0) * (Number(p.stock_quantity) || 0)), 0)
-          const stockSales = products.reduce((acc, p) => acc + ((Number(p.price) || 0) * (Number(p.stock_quantity) || 0)), 0)
+          
+          // 💎 NEXUS: Cálculo resiliente de custo de estoque
+          const stockCost = products.reduce((acc, p) => {
+            const cost = Number(p.cost_price) || 0
+            const stock = Number(p.stock_quantity) || 0
+            return acc + (cost * stock)
+          }, 0)
+
+          const stockSales = products.reduce((acc, p) => {
+            const price = Number(p.price) || 0
+            const stock = Number(p.stock_quantity) || 0
+            return acc + (price * stock)
+          }, 0)
 
           let monthlyRevenue = 0
           let monthlyProfit = 0
           let totalSalesCount = 0
 
-          if (sales) {
+          if (sales && sales.length > 0) {
             totalSalesCount = sales.length
-            monthlyRevenue = sales.reduce((acc, s) => acc + (Number(s.sale_price) * Number(s.quantity)), 0)
             
-            // 💎 NEXUS: Cálculo de Lucro Real Instantâneo
+            // 💰 Faturamento Total (Realizado)
+            monthlyRevenue = sales.reduce((acc, s) => {
+              const price = Number(s.sale_price) || 0
+              const qty = Number(s.quantity) || 1
+              return acc + (price * qty)
+            }, 0)
+            
+            // 💎 NEXUS: Cálculo de Lucro Real com Fallback de Custo
             monthlyProfit = sales.reduce((acc, s) => {
               const salePrice = Number(s.sale_price) || 0
-              const quantity = Number(s.quantity) || 0
+              const quantity = Number(s.quantity) || 1
               
-              // Busca custo: Prioriza o custo na hora da venda, se não tiver, usa o do produto
+              // 1. Tenta custo gravado na venda
+              // 2. Se for 0, tenta custo atual do produto
+              // 3. Se não achar, usa 0 (Lucro = Venda)
               const prod = products.find(p => p.id === s.product_id)
-              const costPrice = Number(s.cost_price) || Number(prod?.cost_price) || 0
+              const savedCost = Number(s.cost_price)
+              const currentProdCost = Number(prod?.cost_price)
               
-              return acc + ((salePrice - costPrice) * quantity)
+              const costPrice = savedCost > 0 ? savedCost : (currentProdCost || 0)
+              
+              const profitPerUnit = salePrice - costPrice
+              return acc + (profitPerUnit * quantity)
             }, 0)
           }
 
@@ -71,7 +94,7 @@ export default function AdminDashboard() {
             monthlyRevenue,
             monthlyProfit,
             totalSalesCount,
-            pendingReceivables: installments?.reduce((acc, curr) => acc + Number(curr.value), 0) || 0
+            pendingReceivables: installments?.reduce((acc, curr) => acc + (Number(curr.value) || 0), 0) || 0
           })
         }
       } catch (err) {
