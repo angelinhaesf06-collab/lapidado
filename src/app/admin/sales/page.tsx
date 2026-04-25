@@ -314,25 +314,35 @@ const loadProducts = useCallback(async () => {
         <button onClick={() => setShowAddModal(true)} className="w-full bg-brand-primary text-white py-5 rounded-[25px] font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-xl mb-12"><Plus size={18} /> Nova Venda Real</button>
 
         <div className="space-y-3">
-          {filteredSales.map((sale) => (
-            <div key={sale.id} className={`bg-white p-4 rounded-[25px] border flex items-center gap-4 group ${sale.status === 'pago' ? 'border-green-100 bg-green-50/10' : 'border-brand-secondary/5 shadow-sm'}`}>
-              <div className="w-12 h-12 rounded-xl overflow-hidden relative border border-brand-secondary/10 bg-rose-50/30">
-                {sale.products?.image_url && <Image src={sale.products.image_url} alt="" fill className="object-cover" />}
-              </div>
-              <div className="flex-1">
-                <h4 className="text-[10px] font-black text-brand-primary uppercase truncate max-w-[200px]">{sale.products?.name}</h4>
-                <p className="text-[8px] font-bold text-brand-secondary/50 uppercase">{sale.customers?.name} • {new Date(sale.created_at).toLocaleDateString('pt-BR')}</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <p className="text-xs font-black text-brand-primary">R$ {sale.total_value.toLocaleString('pt-BR')}</p>
-                  <button onClick={() => handleToggleStatus(sale)} className={`text-[6px] font-black uppercase px-2 py-0.5 rounded-full border ${sale.status === 'pago' ? 'bg-green-500 text-white' : 'text-brand-secondary/40'}`}>{sale.status === 'pago' ? 'PAGO' : 'PENDENTE'}</button>
+          {filteredSales.map((sale) => {
+            // 💎 NEXUS: Normalização de dados para Joins resilientes
+            const productInfo = Array.isArray(sale.products) ? sale.products[0] : sale.products
+            const imageUrl = productInfo?.image_url
+            
+            return (
+              <div key={sale.id} className={`bg-white p-4 rounded-[25px] border flex items-center gap-4 group ${sale.status === 'pago' ? 'border-green-100 bg-green-50/10' : 'border-brand-secondary/5 shadow-sm'}`}>
+                <div className="w-12 h-12 rounded-xl overflow-hidden relative border border-brand-secondary/10 bg-rose-50/30">
+                  {imageUrl ? (
+                    <Image src={imageUrl} alt="" fill className="object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-brand-secondary/20"><Gem size={20} /></div>
+                  )}
                 </div>
-                <button onClick={() => setShowReceipt(sale)} className="p-2.5 bg-brand-secondary/5 text-brand-primary rounded-xl hover:bg-brand-primary hover:text-white transition-all"><Printer size={16} /></button>
-                <button onClick={() => handleDeleteSale(sale.id)} className="p-2 text-rose-200 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={16} /></button>
+                <div className="flex-1">
+                  <h4 className="text-[10px] font-black text-brand-primary uppercase truncate max-w-[200px]">{productInfo?.name || 'Joia não identificada'}</h4>
+                  <p className="text-[8px] font-bold text-brand-secondary/50 uppercase">{sale.customers?.name} • {new Date(sale.created_at).toLocaleDateString('pt-BR')}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <p className="text-xs font-black text-brand-primary">R$ {sale.total_value.toLocaleString('pt-BR')}</p>
+                    <button onClick={() => handleToggleStatus(sale)} className={`text-[6px] font-black uppercase px-2 py-0.5 rounded-full border ${sale.status === 'pago' ? 'bg-green-500 text-white' : 'text-brand-secondary/40'}`}>{sale.status === 'pago' ? 'PAGO' : 'PENDENTE'}</button>
+                  </div>
+                  <button onClick={() => setShowReceipt(sale)} className="p-2.5 bg-brand-secondary/5 text-brand-primary rounded-xl hover:bg-brand-primary hover:text-white transition-all"><Printer size={16} /></button>
+                  <button onClick={() => handleDeleteSale(sale.id)} className="p-2 text-rose-200 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={16} /></button>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
         {/* 📜 CONTROLE DE PROMISSÓRIAS / PARCELAS */}
@@ -426,8 +436,22 @@ const loadProducts = useCallback(async () => {
                   </div>
                   <div className="flex justify-between items-center">
                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg overflow-hidden relative border border-white shadow-sm"><Image src={showReceipt.products.image_url} alt="" fill className="object-cover" /></div>
-                        <div><p className="text-xs font-black text-brand-primary uppercase">{showReceipt.products.name}</p><p className="text-[9px] font-bold text-brand-secondary/50 uppercase">{showReceipt.quantity} unidade(s)</p></div>
+                        <div className="w-10 h-10 rounded-lg overflow-hidden relative border border-white shadow-sm">
+                           {(() => {
+                              const productInfo = Array.isArray(showReceipt.products) ? showReceipt.products[0] : showReceipt.products
+                              return productInfo?.image_url ? (
+                                <Image src={productInfo.image_url} alt="" fill className="object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-brand-secondary/20"><Gem size={14} /></div>
+                              )
+                           })()}
+                        </div>
+                        <div>
+                          <p className="text-xs font-black text-brand-primary uppercase">
+                            {(Array.isArray(showReceipt.products) ? showReceipt.products[0] : showReceipt.products)?.name || 'JOIA'}
+                          </p>
+                          <p className="text-[9px] font-bold text-brand-secondary/50 uppercase">{showReceipt.quantity} unidade(s)</p>
+                        </div>
                      </div>
                      <div className="text-right"><p className="text-[8px] font-black text-brand-primary/40 uppercase mb-1">Total</p><p className="text-lg font-black text-brand-primary">R$ {showReceipt.total_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p></div>
                   </div>
