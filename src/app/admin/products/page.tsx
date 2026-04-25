@@ -24,6 +24,7 @@ interface Category {
 export default function ProductsListPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [branding, setBranding] = useState<any>(null)
   const [activeCategory, setActiveCategory] = useState('Todas')
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -35,7 +36,7 @@ export default function ProductsListPage() {
     if (!user) return
 
     // 💎 NEXUS: Busca paralela para velocidade máxima
-    const [prodRes, catRes] = await Promise.all([
+    const [prodRes, catRes, brandRes] = await Promise.all([
       supabase
         .from('products')
         .select('*, categories(name)')
@@ -44,17 +45,27 @@ export default function ProductsListPage() {
       supabase
         .from('categories')
         .select('id, name')
-        .order('name')
+        .order('name'),
+      supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle()
     ])
 
     if (prodRes.data) setProducts(prodRes.data as unknown as Product[])
     if (catRes.data) setCategories(catRes.data)
+    if (brandRes.data) setBranding(brandRes.data)
     setLoading(false)
   }, [supabase])
 
   useEffect(() => {
     loadData()
   }, [loadData])
+
+  // ... (keep filter logic)
+
+  const handleShareWhatsApp = (product: Product) => {
+    const storeName = branding?.business_name || branding?.store_name || 'LAPIDADO'
+    const msg = encodeURIComponent(`OLÁ! ✨ OLHA QUE LINDA ESSA JOIA DA *${storeName.toUpperCase()}*:\n\n💍 *${product.name}*\n💎 VALOR: R$ ${Number(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\nCONFIRA MAIS DETALHES AQUI: ${window.location.origin}/product?id=${product.id}`)
+    window.open(`https://wa.me/?text=${msg}`, '_blank')
+  }
 
   // ⚡ FILTRAGEM INSTANTÂNEA EM MEMÓRIA
   const filteredProducts = useMemo(() => {
@@ -164,10 +175,7 @@ export default function ProductsListPage() {
                    </Link>
 
                    <button 
-                    onClick={() => {
-                      const msg = encodeURIComponent(`OLÁ! ✨ OLHA QUE LINDA ESSA JOIA: *${product.name}*\n\n💎 VALOR: R$ ${Number(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\nCONFIRA MAIS DETALHES AQUI: ${window.location.origin}/product?id=${product.id}`)
-                      window.open(`https://wa.me/?text=${msg}`, '_blank')
-                    }}
+                    onClick={() => handleShareWhatsApp(product)}
                     className="p-4 bg-[#25D366] rounded-full text-white hover:scale-110 transition-all shadow-lg"
                     title="WhatsApp"
                    >

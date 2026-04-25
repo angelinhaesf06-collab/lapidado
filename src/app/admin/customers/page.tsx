@@ -55,55 +55,75 @@ export default function CustomersPage() {
     loadCustomers()
   }, [])
 
+  // 🚀 OTIMIZAÇÃO: Busca apenas o essencial primeiro
   async function loadCustomers() {
     try {
       setLoading(true)
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      const { data: customersData, error: customersError } = await supabase
+      const { data: customersData, error } = await supabase
         .from('customers')
-        .select(`
-          *,
-          sales (
-            id,
-            created_at,
-            total_value,
-            payment_method,
-            installments,
-            status,
-            products (
-              name,
-              image_url
-            ),
-            installments (
-              id,
-              installment_number,
-              value,
-              status,
-              due_date
-            )
-          )
-        `)
+        .select('id, name, cpf, address, phone')
         .eq('user_id', user.id)
         .order('name')
 
-      if (customersError) throw customersError
-
-      const formattedCustomers = customersData.map((c: any) => ({
-        ...c,
-        total_purchases: c.sales?.reduce((acc: number, s: any) => acc + (Number(s.total_value) || 0), 0) || 0,
-        sales: (c.sales || []).map((s: any) => ({
-          ...s,
-          installment_list: (s.installments || []).sort((a: any, b: any) => a.installment_number - b.installment_number)
-        }))
-      }))
-
-      setCustomers(formattedCustomers)
+      if (error) throw error
+      setCustomers(customersData || [])
     } catch (error: any) {
       toast.error('Erro ao carregar clientes: ' + error.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // 🚀 OTIMIZAÇÃO: Busca vendas e parcelas apenas quando expandir o cliente
+  async function toggleExpand(customerId: string) {
+    if (expandedCustomer === customerId) {
+      setExpandedCustomer(null)
+      return
+    }
+
+    setExpandedCustomer(customerId)
+    const customer = customers.find(c => c.id === customerId)
+    
+    // Se já carregamos os dados antes, não busca de novo
+    if (customer?.sales) return
+
+    try {
+      const { data: salesData, error } = await supabase
+        .from('sales')
+        .select(`
+          id,
+          created_at,
+          total_value,
+          payment_method,
+          installments,
+          status,
+          products (name, image_url),
+          installments (id, installment_number, value, status, due_date)
+        `)
+        .eq('customer_id', customerId)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+
+      setCustomers(prev => prev.map(c => {
+        if (c.id === customerId) {
+          const formattedSales = (salesData || []).map((s: any) => ({
+            ...s,
+            installment_list: (s.installments || []).sort((a: any, b: any) => a.installment_number - b.installment_number)
+          }))
+          return { 
+            ...c, 
+            sales: formattedSales,
+            total_purchases: formattedSales.reduce((acc, s) => acc + (Number(s.total_value) || 0), 0)
+          }
+        }
+        return c
+      }))
+    } catch (error: any) {
+      toast.error('Erro ao carregar histórico: ' + error.message)
     }
   }
 
@@ -288,7 +308,7 @@ export default function CustomersPage() {
                     <div className="text-right"><p className="text-[8px] font-black text-brand-secondary/40 uppercase mb-1">Total Comprado</p><p className="text-xl font-black text-brand-primary">R$ {(customer.total_purchases || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p></div>
                     <div className="flex gap-2 ml-4">
                       <button onClick={() => setEditingCustomer(customer)} className="p-4 rounded-2xl bg-brand-secondary/5 text-brand-primary hover:bg-brand-primary hover:text-white transition-all" title="Editar Cliente"><Pencil size={18} /></button>
-                      <button onClick={() => setExpandedCustomer(expandedCustomer === customer.id ? null : customer.id)} className={`p-4 rounded-2xl transition-all ${expandedCustomer === customer.id ? 'bg-brand-primary text-white' : 'bg-brand-secondary/5 text-brand-primary hover:bg-brand-secondary/10'}`}>{expandedCustomer === customer.id ? <ChevronUp size={20} /> : <ChevronDown size={20} />}</button>
+                      <button onClick={() => toggleExpand(customer.id)} className={`p-4 rounded-2xl transition-all ${expandedCustomer === customer.id ? 'bg-brand-primary text-white' : 'bg-brand-secondary/5 text-brand-primary hover:bg-brand-secondary/10'}`}>{expandedCustomer === customer.id ? <ChevronUp size={20} /> : <ChevronDown size={20} />}</button>
                       <button onClick={() => handleDeleteCustomer(customer.id)} className="p-4 text-rose-200 hover:text-rose-500 transition-colors"><Trash2 size={20} /></button>
                     </div>
                   </div>
