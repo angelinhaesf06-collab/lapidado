@@ -36,7 +36,7 @@ function HomeContent() {
   const supabase = createClient()
   const router = useRouter()
 
-  // 1. CARREGAMENTO INICIAL
+  // 1. CARREGAMENTO INICIAL (OTIMIZADO)
   useEffect(() => {
     if (!isPublicCatalog) {
       router.push('/login')
@@ -44,52 +44,54 @@ function HomeContent() {
     }
 
     async function loadInitialData() {
-      // Se já temos produtos e a loja não mudou, não precisamos de loading de tela cheia
       if (allProducts.length > 0) return
-
       setLoading(true)
       
-      let currentBranding = null
-      
-      // 1. Tenta pelo link (?loja=slug)
-      if (storeSlug) {
-        const { data } = await supabase.from('branding').select('*').eq('slug', storeSlug).maybeSingle()
-        currentBranding = data
+      try {
+        // 🚀 OTIMIZAÇÃO: Busca branding com lógica de fallback em uma única query ou mínima latência
+        let brandingQuery = supabase.from('branding').select('*')
+        
+        if (storeSlug) {
+          brandingQuery = brandingQuery.eq('slug', storeSlug)
+        } else {
+          brandingQuery = brandingQuery.eq('slug', 'angel-semijoias')
+        }
+        
+        let { data: currentBranding } = await brandingQuery.maybeSingle()
+
+        // Fallback final se não achou nada
+        if (!currentBranding) {
+          const { data: firstBrand } = await supabase.from('branding').select('*').limit(1).maybeSingle()
+          currentBranding = firstBrand
+        }
+
+        if (!currentBranding) {
+          setLoading(false)
+          return
+        }
+
+        setBranding(currentBranding)
+        const currentUserId = currentBranding.user_id
+
+        // 🚀 OTIMIZAÇÃO: Busca categorias e apenas os campos essenciais dos produtos
+        // Carregamos um limite inicial para ser instantâneo
+        const [catsRes, prodsRes] = await Promise.all([
+          supabase.from('categories').select('id, name').eq('user_id', currentUserId).order('name'),
+          supabase.from('products')
+            .select('id, name, price, image_url, category_id, stock_quantity, categories!inner(name)')
+            .eq('user_id', currentUserId)
+            .gt('stock_quantity', 0)
+            .order('created_at', { ascending: false })
+            .limit(40) // Limite de segurança para vitrine rápida
+        ])
+
+        setDbCategories(catsRes.data || [])
+        setAllProducts(prodsRes.data || [])
+      } catch (err) {
+        console.error("Erro ao carregar vitrine:", err)
+      } finally {
+        setLoading(false)
       }
-
-      // 2. Se não achou, tenta carregar a Angel Semijoias por padrão (Dona do App)
-      if (!currentBranding) {
-        const { data } = await supabase.from('branding').select('*').eq('slug', 'angel-semijoias').maybeSingle()
-        currentBranding = data
-      }
-
-      // 3. Se ainda assim não achou, pega o primeiro registro
-      if (!currentBranding) {
-        const { data } = await supabase.from('branding').select('*').limit(1).maybeSingle()
-        currentBranding = data
-      }
-
-      if (!currentBranding) {
-         setLoading(false)
-         return
-      }
-
-      setBranding(currentBranding)
-      const currentUserId = currentBranding.user_id
-
-      // Carrega categorias e produtos vinculados
-      const [catsRes, prodsRes] = await Promise.all([
-        supabase.from('categories').select('id, name').eq('user_id', currentUserId).order('name'),
-        supabase.from('products')
-          .select('*, categories!inner(name)')
-          .eq('user_id', currentUserId)
-          .gt('stock_quantity', 0)
-          .order('created_at', { ascending: false })
-      ])
-
-      setDbCategories(catsRes.data || [])
-      setAllProducts(prodsRes.data || [])
-      setLoading(false)
     }
 
     loadInitialData()
