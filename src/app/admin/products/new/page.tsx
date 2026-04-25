@@ -136,6 +136,7 @@ export default function NewProductPage() {
         stock_quantity: parseInt(stock) || 0,
         category_id: category,
         description: description.toUpperCase(),
+        material_finish: materialFinish,
         image_url: finalImageUrl,
         user_id: user?.id
       }
@@ -207,7 +208,10 @@ export default function NewProductPage() {
           <div className="p-4 rounded-2xl bg-white border border-brand-secondary/10 space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <input type="number" placeholder="CUSTO R$" value={costPrice} onChange={e => setCostPrice(e.target.value)} className="w-full p-2.5 rounded-xl bg-brand-secondary/5 text-[10px] font-bold outline-none" />
-              <div className="w-full p-2.5 rounded-xl bg-amber-50 text-[10px] font-black text-amber-700 text-center">{margin}% LUCRO</div>
+              <div className="relative">
+                <input type="number" placeholder="MARGEM %" value={margin} onChange={e => setMargin(e.target.value)} className="w-full p-2.5 rounded-xl bg-amber-50 text-[10px] font-black text-amber-700 text-center outline-none" />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black text-amber-700/40">%</span>
+              </div>
             </div>
             <input type="number" placeholder="VENDA R$" value={salePrice} onChange={e => setSalePrice(e.target.value)} className="w-full p-4 rounded-xl bg-brand-primary text-white text-2xl font-black text-center outline-none" />
           </div>

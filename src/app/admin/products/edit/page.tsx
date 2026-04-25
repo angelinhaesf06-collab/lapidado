@@ -34,8 +34,19 @@ function EditProductContent() {
   const [materialFinish, setMaterialFinish] = useState('OURO 18K')
   const [categories, setCategories] = useState<{id: string, name: string}[]>([])
   const [costPrice, setCostPrice] = useState<string>('')
+  const [margin, setMargin] = useState<string>('100')
   const [salePrice, setSalePrice] = useState<string>('')
   const [stock, setStock] = useState<string>('1')
+
+  // ... (keep useEffect for data loading)
+
+  useEffect(() => {
+    const cost = parseFloat(costPrice) || 0
+    const m = parseFloat(margin) || 0
+    if (cost > 0 && !fetching) {
+      setSalePrice((cost + (cost * (m / 100))).toFixed(2))
+    }
+  }, [costPrice, margin, fetching])
 
   const FINISH_OPTIONS = [
     'OURO 18K', 'PRATA', 'PRATA 925', 'OURO ROSE', 'RODIO BRANCO', 'RODIO NEGRO'
@@ -66,25 +77,32 @@ function EditProductContent() {
       const prod = data as ProductData
       if (prod) {
         setName(prod.name)
-        setCostPrice(prod.cost_price?.toString() || '')
+        const cost = prod.cost_price || 0
+        setCostPrice(cost.toString())
         
         const descMatch = prod.description?.match(/---[\s\S]*DATA:({.*})/)
+        let extractedDescription = prod.description || ''
+        let extractedFinish = prod.material_finish || 'OURO 18K'
+
         if (descMatch) {
           try {
             const extraData = JSON.parse(descMatch[1])
-            setMaterialFinish(extraData.finish || 'OURO 18K')
-            if (!prod.cost_price) setCostPrice(extraData.cost?.toString() || '')
-            setDescription(prod.description?.split('\n\n---')[0] || '')
-          } catch {
-            setDescription(prod.description || '')
-          }
-        } else {
-          setDescription(prod.description || '')
-          setMaterialFinish(prod.material_finish || 'OURO 18K')
+            extractedFinish = prod.material_finish || extraData.finish || 'OURO 18K'
+            if (!prod.cost_price && extraData.cost) setCostPrice(extraData.cost.toString())
+            extractedDescription = prod.description?.split('\n\n---')[0] || ''
+          } catch {}
         }
         
+        setDescription(extractedDescription)
+        setMaterialFinish(extractedFinish)
         setCategory(prod.category_id)
         setSalePrice(prod.price.toString())
+        
+        const sPrice = prod.price || 0
+        if (cost > 0) {
+          setMargin(((sPrice - cost) / cost * 100).toFixed(0))
+        }
+
         setStock(prod.stock_quantity.toString())
         if (prod.image_url) {
           setImages([{ file: null, preview: prod.image_url }])
@@ -126,9 +144,11 @@ function EditProductContent() {
       const productData = {
         name: name.toUpperCase(),
         price: parseFloat(salePrice) || 0,
+        cost_price: parseFloat(costPrice) || 0,
         stock_quantity: parseInt(stock) || 0,
         category_id: category || categories[0]?.id,
-        description: `${description.toUpperCase()}\n\n---\nDATA:{"finish": "${materialFinish}", "cost": ${parseFloat(costPrice) || 0}}`,
+        description: description.toUpperCase(),
+        material_finish: materialFinish,
         image_url: finalImageUrl,
         user_id: user.id
       }
@@ -229,8 +249,12 @@ function EditProductContent() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.2em] mb-3 ml-2 block">PREÇO DE CUSTO (R$)</label>
+              <label className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.2em] mb-3 ml-2 block">CUSTO (R$)</label>
               <input type="number" step="0.01" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} className="w-full px-8 py-5 rounded-3xl bg-brand-secondary/5 border-2 border-transparent focus:border-brand-secondary outline-none font-bold text-brand-primary" />
+              <div className="mt-2 relative">
+                <input type="number" value={margin} onChange={(e) => setMargin(e.target.value)} className="w-full p-2.5 rounded-xl bg-amber-50 text-[10px] font-black text-amber-700 text-center outline-none" />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black text-amber-700/40">% MARGEM</span>
+              </div>
             </div>
             <div className="p-8 rounded-[40px] bg-brand-secondary/5 border border-brand-secondary/10">
               <label className="text-[10px] font-black text-brand-primary uppercase tracking-widest mb-4 block ml-2">PREÇO DE VENDA (R$)</label>

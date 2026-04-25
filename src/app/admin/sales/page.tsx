@@ -171,8 +171,6 @@ const loadProducts = useCallback(async () => {
 
   if (data) setProducts(data)
 }, [supabase])
-    if (data) setProducts(data as unknown as Product[])
-  }, [supabase])
 
   const loadCustomers = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()

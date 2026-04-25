@@ -69,18 +69,18 @@ export async function POST(req: Request) {
     };
 
     try {
-      // 🚀 1ª OPÇÃO: Gemini 2.5 Flash
-      const model25 = genAI.getGenerativeModel({ ...modelParams, model: "gemini-2.5-flash" });
-      result = await tryGenerate(model25, {
+      // 🚀 1ª OPÇÃO: Gemini 1.5 Flash
+      const model15 = genAI.getGenerativeModel({ ...modelParams, model: "gemini-1.5-flash" });
+      result = await tryGenerate(model15, {
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
         generationConfig,
         safetySettings
       });
     } catch (e) {
-      console.error("Gemini 2.5 Flash falhou, tentando Pro...");
-      // 🚀 2ª OPÇÃO: Gemini 2.5 Pro
-      const model25pro = genAI.getGenerativeModel({ ...modelParams, model: "gemini-2.5-pro" });
-      result = await tryGenerate(model25pro, {
+      console.error("Gemini 1.5 Flash falhou, tentando Pro...");
+      // 🚀 2ª OPÇÃO: Gemini 1.5 Pro
+      const model15pro = genAI.getGenerativeModel({ ...modelParams, model: "gemini-1.5-pro" });
+      result = await tryGenerate(model15pro, {
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
         generationConfig,
         safetySettings

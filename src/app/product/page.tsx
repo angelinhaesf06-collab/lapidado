@@ -2,15 +2,16 @@
 
 import { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
-import { notFound, useSearchParams } from 'next/navigation'
+import { useRouter, notFound, useSearchParams } from 'next/navigation'
 import AddToCartButton from '@/components/cart/add-to-cart-button'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
-import { Loader2 } from 'lucide-react'
+import { Loader2, ArrowLeft } from 'lucide-react'
 
 function ProductContent() {
   const searchParams = useSearchParams()
   const id = searchParams.get('id')
+  const router = useRouter()
   
   const [product, setProduct] = useState<unknown>(null)
   const [branding, setBranding] = useState<unknown>(null)
@@ -98,12 +99,24 @@ function ProductContent() {
     }
   }
 
+  const handleBack = () => {
+    // Tenta voltar pelo histórico se viemos do catálogo, senão vai para a URL
+    if (document.referrer.includes(window.location.origin)) {
+      router.back()
+    } else {
+      router.push(backUrl)
+    }
+  }
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-20 flex flex-col items-center">
-      <div className="w-full mb-20 text-center">
-        <Link href={backUrl} className="text-[10px] font-light tracking-[0.4em] uppercase text-brand-secondary hover:text-brand-primary transition-colors">
-          ← Voltar ao Catálogo
-        </Link>
+    <div className="max-w-7xl mx-auto px-4 py-12 md:py-20 flex flex-col items-center">
+      <div className="w-full mb-12 md:mb-20 text-center">
+        <button 
+          onClick={handleBack}
+          className="text-[10px] font-light tracking-[0.4em] uppercase text-brand-secondary hover:text-brand-primary transition-colors flex items-center gap-2 mx-auto"
+        >
+          <ArrowLeft size={14} /> Voltar ao Catálogo
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center w-full">

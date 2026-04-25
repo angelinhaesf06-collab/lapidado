@@ -36,7 +36,7 @@ function HomeContent() {
   const supabase = createClient()
   const router = useRouter()
 
-  // 1. CARREGAMENTO INICIAL (Apenas uma vez ou se a loja mudar)
+  // 1. CARREGAMENTO INICIAL
   useEffect(() => {
     if (!isPublicCatalog) {
       router.push('/login')
@@ -44,6 +44,9 @@ function HomeContent() {
     }
 
     async function loadInitialData() {
+      // Se já temos produtos e a loja não mudou, não precisamos de loading de tela cheia
+      if (allProducts.length > 0) return
+
       setLoading(true)
       
       let currentBranding = null
@@ -90,9 +93,14 @@ function HomeContent() {
     }
 
     loadInitialData()
-  }, [isPublicCatalog, storeSlug, router, supabase])
+  }, [isPublicCatalog, storeSlug, router, supabase, allProducts.length])
 
-  // 2. FILTRAGEM ULTRA-RÁPIDA (Em memória, sem loading)
+  // 2. SCROLL PARA O TOPO QUANDO MUDAR CATEGORIA
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [activeCategory])
+
+  // 3. FILTRAGEM ULTRA-RÁPIDA (Em memória, sem loading)
   const displayedProducts = useMemo(() => {
     if (activeCategory === 'Todos' || !activeCategory) {
       return allProducts
@@ -103,7 +111,7 @@ function HomeContent() {
     )
   }, [allProducts, activeCategory])
 
-  if (loading) {
+  if (loading && allProducts.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="animate-spin text-brand-secondary" size={40} />
@@ -124,7 +132,6 @@ function HomeContent() {
               <Link 
                 key={cat}
                 href={`/?catalogo=true&category=${cat === 'Todos' ? '' : cat}${storeParam}`}
-                scroll={false}
                 className={`px-3 py-1.5 transition-all font-bold text-[9px] md:text-[10px] tracking-[0.1em] md:tracking-[0.2em] uppercase rounded-full border ${
                   activeCategory === cat || (cat === 'Todos' && !activeCategory)
                   ? "bg-brand-primary text-white border-brand-primary shadow-md" 
