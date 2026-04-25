@@ -313,12 +313,12 @@ const loadProducts = useCallback(async () => {
 
         <button onClick={() => setShowAddModal(true)} className="w-full bg-brand-primary text-white py-5 rounded-[25px] font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-xl mb-8"><Plus size={18} /> Nova Venda Real</button>
 
-        {/* 🏷️ FILTRO DE CATEGORIAS NA LISTAGEM DE VENDAS */}
+        {/* 🏷️ FILTRO DE CATEGORIAS NA LISTAGEM DE VENDAS - SEM ROLAGEM LATERAL */}
         {!loading && categories.length > 0 && (
-          <div className="flex gap-2 overflow-x-auto pb-6 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+          <div className="flex flex-wrap gap-2 mb-6">
             <button 
               onClick={() => setActiveCategory('Todas')}
-              className={`px-6 py-2 rounded-full text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all ${activeCategory === 'Todas' ? 'bg-brand-primary text-white shadow-md' : 'bg-brand-secondary/5 text-brand-secondary hover:bg-brand-secondary/10'}`}
+              className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${activeCategory === 'Todas' ? "bg-brand-primary text-white shadow-md" : "bg-brand-secondary/5 text-brand-secondary hover:bg-brand-secondary/10"}`}
             >
               Todas
             </button>
@@ -326,7 +326,7 @@ const loadProducts = useCallback(async () => {
               <button 
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.name)}
-                className={`px-6 py-2 rounded-full text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all ${activeCategory === cat.name ? 'bg-brand-primary text-white shadow-md' : 'bg-brand-secondary/5 text-brand-secondary hover:bg-brand-secondary/10'}`}
+                className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.name ? "bg-brand-primary text-white shadow-md" : "bg-brand-secondary/5 text-brand-secondary hover:bg-brand-secondary/10"}`}
               >
                 {cat.name}
               </button>
@@ -508,11 +508,11 @@ const loadProducts = useCallback(async () => {
                 <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-rose-50 rounded-full"><X size={20} /></button>
              </div>
 
-             {/* 🏷️ FILTRO DE CATEGORIAS NO MODAL */}
-             <div className="px-6 py-4 bg-white border-b border-brand-secondary/5 flex gap-2 overflow-x-auto scrollbar-hide">
+             {/* 🏷️ FILTRO DE CATEGORIAS NO MODAL - SEM ROLAGEM LATERAL */}
+             <div className="px-6 py-4 bg-white border-b border-brand-secondary/5 flex flex-wrap gap-2">
                 <button 
                   onClick={() => setActiveCategory('Todas')}
-                  className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest whitespace-nowrap transition-all ${activeCategory === 'Todas' ? 'bg-brand-primary text-white' : 'bg-brand-secondary/5 text-brand-secondary'}`}
+                  className={`px-3 py-1 rounded-full text-[7px] font-black uppercase tracking-widest transition-all ${activeCategory === 'Todas' ? 'bg-brand-primary text-white shadow-sm' : 'bg-brand-secondary/5 text-brand-secondary'}`}
                 >
                   Todas
                 </button>
@@ -520,7 +520,7 @@ const loadProducts = useCallback(async () => {
                   <button 
                     key={cat.id}
                     onClick={() => setActiveCategory(cat.name)}
-                    className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest whitespace-nowrap transition-all ${activeCategory === cat.name ? 'bg-brand-primary text-white' : 'bg-brand-secondary/5 text-brand-secondary'}`}
+                    className={`px-3 py-1 rounded-full text-[7px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.name ? 'bg-brand-primary text-white shadow-sm' : 'bg-brand-secondary/5 text-brand-secondary'}`}
                   >
                     {cat.name}
                   </button>
