@@ -90,6 +90,11 @@ export default function SalesPage() {
   const [sales, setSales] = useState<Sale[]>([])
   const [installmentsList, setInstallmentsList] = useState<Installment[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingMoreSales, setLoadingMoreSales] = useState(false)
+  const [salesPage, setSalesPage] = useState(0)
+  const [hasMoreSales, setHasMoreSales] = useState(true)
+  const PAGE_SIZE = 15
+
   const [showAddModal, setShowAddModal] = useState(false)
   const [showReceipt, setShowReceipt] = useState<Sale | null>(null)
   const [branding, setBranding] = useState<Branding | null>(null)
@@ -110,29 +115,51 @@ export default function SalesPage() {
   const [installments, setInstallments] = useState(1)
   const [isSaving, setIsSaving] = useState(false)
   
-  const loadSales = useCallback(async () => {
-    setLoading(true)
+  const loadSales = useCallback(async (isInitial = true) => {
+    if (isInitial) setLoading(true)
+    else setLoadingMoreSales(true)
+    
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     
-    // Carrega Vendas
+    const currentPage = isInitial ? 0 : salesPage + 1
+    const from = currentPage * PAGE_SIZE
+    const to = from + PAGE_SIZE - 1
+
+    // ⚡ OTIMIZAÇÃO: Busca paginada de vendas
     const { data: salesData } = await supabase
       .from('sales')
       .select('*, products(name, image_url), customers(name, cpf, address, phone)')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-    if (salesData) setSales(salesData as unknown as Sale[])
+      .range(from, to)
+      
+    if (salesData) {
+      if (isInitial) {
+        setSales(salesData as unknown as Sale[])
+        setSalesPage(0)
+      } else {
+        setSales(prev => [...prev, ...(salesData as unknown as Sale[])])
+        setSalesPage(currentPage)
+      }
+      setHasMoreSales(salesData.length === PAGE_SIZE)
+    }
 
-    // Carrega Parcelas do Mês
-    const { data: instData } = await supabase
-      .from('installments')
-      .select('*, sales(customers(name), products(name))')
-      .eq('user_id', user.id)
-      .order('due_date', { ascending: true })
-    if (instData) setInstallmentsList(instData as unknown as Installment[])
-
-    setLoading(false)
-  }, [supabase])
+    if (isInitial) {
+      // Carrega Parcelas (Apenas as primeiras 20 para ser rápido)
+      const { data: instData } = await supabase
+        .from('installments')
+        .select('*, sales(customers(name), products(name))')
+        .eq('user_id', user.id)
+        .eq('status', 'pendente')
+        .order('due_date', { ascending: true })
+        .limit(20)
+      if (instData) setInstallmentsList(instData as unknown as Installment[])
+      setLoading(false)
+    } else {
+      setLoadingMoreSales(false)
+    }
+  }, [supabase, salesPage])
 
   // Função para dar baixa em parcela
   async function handlePayInstallment(inst: Installment) {
