@@ -88,15 +88,22 @@ export async function POST(req: Request) {
     }
 
     const response = await result.response;
-    const aiText = response.text().trim();
+    let aiText = response.text().trim();
     
+    // 💎 NEXUS: Limpeza Ultra-Resiliente para evitar a palavra "json"
+    aiText = aiText.replace(/```json/gi, '').replace(/```/g, '').replace(/JSON/gi, '').replace(/Aqui está o/gi, '').trim();
+    
+    // Se a resposta começar com texto antes do { tenta pegar só o que está entre { }
+    const jsonMatch = aiText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) aiText = jsonMatch[0];
+
     try {
       const rawJson = JSON.parse(aiText);
-      // 💎 NEXUS: Normalização Ultra-Resiliente
+      // 💎 NEXUS: Normalização para letras maiúsculas e sem resíduos
       return NextResponse.json({
-        name: (rawJson.name || rawJson.NAME || rawJson.Nome || "JOIA LAPIDADA").toUpperCase(),
-        category: (rawJson.category || rawJson.CATEGORY || rawJson.Categoria || "OUTROS").toUpperCase(),
-        description: (rawJson.description || rawJson.DESCRIPTION || rawJson.Descrição || "").toUpperCase()
+        name: (rawJson.name || rawJson.NAME || rawJson.Nome || "JOIA LAPIDADA").toUpperCase().replace('JSON', '').trim(),
+        category: (rawJson.category || rawJson.CATEGORY || rawJson.Categoria || "OUTROS").toUpperCase().replace('JSON', '').trim(),
+        description: (rawJson.description || rawJson.DESCRIPTION || rawJson.Descrição || "").toUpperCase().replace('JSON', '').trim()
       });
     } catch (e) {
       console.error("Erro crítico no JSON:", e, "Texto bruto:", aiText);
