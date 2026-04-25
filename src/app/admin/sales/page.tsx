@@ -161,15 +161,15 @@ const loadProducts = useCallback(async () => {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
 
-  // ⚡ OTIMIZAÇÃO: Busca apenas o essencial para a lista ser instantânea
+  // ⚡ OTIMIZAÇÃO: Busca essencial + categorias para o filtro funcionar
   const { data } = await supabase
     .from('products')
-    .select('id, name, price, image_url, cost_price, stock_quantity, category_id')
+    .select('id, name, price, image_url, cost_price, stock_quantity, category_id, categories(name)')
     .eq('user_id', user.id)
     .gt('stock_quantity', 0)
     .order('name')
 
-  if (data) setProducts(data)
+  if (data) setProducts(data as unknown as Product[])
 }, [supabase])
 
   const loadCustomers = useCallback(async () => {
@@ -527,25 +527,26 @@ const loadProducts = useCallback(async () => {
                 ))}
              </div>
              
-             <div className="flex-1 overflow-y-auto p-6 grid grid-cols-2 sm:grid-cols-4 gap-4 bg-rose-50/10">
+             <div className="flex-1 overflow-y-auto p-4 md:p-6 grid grid-cols-3 sm:grid-cols-4 gap-2 md:gap-4 bg-rose-50/10 scrollbar-hide">
                 {products
                   .filter(p => {
                     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase())
+                    // @ts-ignore - p.categories?.name vem do join
                     const matchesCategory = activeCategory === 'Todas' || p.categories?.name === activeCategory
                     return matchesSearch && matchesCategory
                   })
                   .map(p => (
-                  <button key={p.id} onClick={() => setSelectedProduct(p)} className={`p-3 rounded-[30px] border transition-all ${selectedProduct?.id === p.id ? 'bg-brand-primary border-brand-primary scale-105 shadow-xl' : 'bg-white border-brand-secondary/5'}`}>
-                    <div className="aspect-square w-full rounded-[20px] overflow-hidden mb-2 relative bg-brand-secondary/5 flex items-center justify-center">
+                  <button key={p.id} onClick={() => setSelectedProduct(p)} className={`p-2 md:p-3 rounded-[20px] md:rounded-[30px] border transition-all ${selectedProduct?.id === p.id ? 'bg-brand-primary border-brand-primary scale-105 shadow-xl' : 'bg-white border-brand-secondary/5'}`}>
+                    <div className="aspect-square w-full rounded-[15px] md:rounded-[20px] overflow-hidden mb-1 md:mb-2 relative bg-brand-secondary/5 flex items-center justify-center">
                       {p.image_url ? (
                         <Image src={p.image_url} alt="" fill className="object-cover" />
                       ) : (
-                        <Gem size={20} className="text-brand-secondary/20" />
+                        <Gem size={16} className="text-brand-secondary/20" />
                       )}
-                      {selectedProduct?.id === p.id && <div className="absolute inset-0 bg-brand-primary/40 flex items-center justify-center text-white"><Check size={28} /></div>}
+                      {selectedProduct?.id === p.id && <div className="absolute inset-0 bg-brand-primary/40 flex items-center justify-center text-white"><Check size={20} /></div>}
                     </div>
-                    <p className={`text-[8px] font-black uppercase truncate ${selectedProduct?.id === p.id ? 'text-white' : 'text-brand-primary'}`}>{p.name}</p>
-                    <p className={`text-[7px] font-bold ${selectedProduct?.id === p.id ? 'text-white/60' : 'text-brand-secondary/40'}`}>R$ {p.price.toLocaleString('pt-BR')}</p>
+                    <p className={`text-[7px] md:text-[8px] font-black uppercase truncate ${selectedProduct?.id === p.id ? 'text-white' : 'text-brand-primary'}`}>{p.name}</p>
+                    <p className={`text-[6px] md:text-[7px] font-bold ${selectedProduct?.id === p.id ? 'text-white/60' : 'text-brand-secondary/40'}`}>R$ {p.price.toLocaleString('pt-BR')}</p>
                   </button>
                 ))}
              </div>
