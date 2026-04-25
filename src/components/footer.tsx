@@ -63,7 +63,7 @@ export default function Footer() {
             <Image src={branding.logo_url} alt="Logo" className="h-16 w-auto object-contain grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all duration-700" width={150} height={64} />
           ) : (
             <h3 className="text-2xl text-brand-primary uppercase tracking-widest opacity-50">
-              {branding.store_name || branding.business_name || branding.instagram || 'LAPIDADO'}
+              {branding.store_name || branding.business_name || 'LAPIDADO'}
             </h3>
           )}
         </div>
@@ -94,11 +94,6 @@ export default function Footer() {
           <h4 className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.3em]">SIGA NOSSO BRILHO</h4>
 
           <div className="flex gap-4">
-            {branding.instagram && (
-              <a href={`https://instagram.com/${branding.instagram.replace('@', '').trim()}`} target="_blank" className="p-4 rounded-full bg-brand-secondary/10 text-brand-primary hover:bg-brand-primary hover:text-white transition-all">
-                <InstagramIcon size={20} />
-              </a>
-            )}
             {branding.tiktok && !branding.tiktok.includes('MESES') && (
               <a href={`https://tiktok.com/@${branding.tiktok.replace('@', '').trim()}`} target="_blank" className="p-4 rounded-full bg-brand-secondary/10 text-brand-primary hover:bg-brand-primary hover:text-white transition-all">
                 <Music2 size={20} />

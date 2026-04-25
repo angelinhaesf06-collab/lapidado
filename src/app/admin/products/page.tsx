@@ -173,24 +173,6 @@ export default function ProductsListPage() {
                    >
                      <Share2 size={20} />
                    </button>
-
-                   <button 
-                    onClick={() => {
-                      if (navigator.share) {
-                        navigator.share({
-                          title: product.name,
-                          text: `💎 ${product.name} - R$ ${Number(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\nConfira no catálogo Lapidado!`,
-                          url: `${window.location.origin}/product?id=${product.id}`,
-                        }).catch(() => {});
-                      } else {
-                        window.open('https://www.instagram.com/', '_blank');
-                      }
-                    }}
-                    className="p-4 bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] rounded-full text-white hover:scale-110 transition-all shadow-lg"
-                    title="Instagram Stories"
-                   >
-                     <Camera size={20} />
-                   </button>
                 </div>
               </div>
 
