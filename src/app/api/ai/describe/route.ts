@@ -45,43 +45,42 @@ export async function POST(req: Request) {
       { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
     ];
 
-    const modelParams = { 
-      systemInstruction: `Você é uma especialista em alta joalheria e semijoias de luxo. 
-      Sua tarefa é analisar a imagem e retornar um JSON detalhado.
+    const promptText = `Você é uma especialista em alta joalheria e semijoias de luxo. 
+      Analise a imagem da joia e retorne um JSON detalhado.
       
       No campo "name": Crie um nome comercial luxuoso e atraente.
       No campo "category": Identifique se é ANEL, BRINCO, COLAR, PULSEIRA ou CONJUNTO.
-      No campo "description": Escreva uma descrição profissional de 2 a 3 frases destacando:
-      - O banho (ex: banhado a ouro 18k, ródio branco)
-      - Detalhes das pedras (ex: zircônias, cristais, lapidação)
-      - O design (ex: cravejado, polido, design orgânico)
-      - Para qual ocasião a peça é ideal.
+      No campo "description": Escreva uma descrição profissional de 2 a 3 frases destacando o banho, as pedras e o design.
 
-      RESPONDA APENAS O JSON: {"name": "...", "category": "...", "description": "..."}`
-    };
+      RESPONDA APENAS O JSON: {"name": "...", "category": "...", "description": "..."}`;
 
     let result;
     const generationConfig = {
-      temperature: 0.2,
-      topP: 0.95,
+      temperature: 0.4,
+      topP: 0.8,
       maxOutputTokens: 1000,
-      responseMimeType: "application/json", // 🚀 FORÇA O MODO JSON NATIVO
     };
 
     try {
-      // 🚀 1ª OPÇÃO: Gemini 1.5 Flash
-      const model15 = genAI.getGenerativeModel({ ...modelParams, model: "gemini-1.5-flash" });
+      // 🚀 1ª OPÇÃO: Gemini 1.5 Flash (Super rápido)
+      const model15 = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       result = await tryGenerate(model15, {
-        contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
+        contents: [{ role: 'user', parts: [
+          { text: promptText },
+          { inlineData: { mimeType, data: base64Data } }
+        ] }],
         generationConfig,
         safetySettings
       });
     } catch (e) {
       console.error("Gemini 1.5 Flash falhou, tentando Pro...");
-      // 🚀 2ª OPÇÃO: Gemini 1.5 Pro
-      const model15pro = genAI.getGenerativeModel({ ...modelParams, model: "gemini-1.5-pro" });
+      // 🚀 2ª OPÇÃO: Gemini 1.5 Pro (Mais inteligente)
+      const model15pro = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
       result = await tryGenerate(model15pro, {
-        contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
+        contents: [{ role: 'user', parts: [
+          { text: promptText },
+          { inlineData: { mimeType, data: base64Data } }
+        ] }],
         generationConfig,
         safetySettings
       });
