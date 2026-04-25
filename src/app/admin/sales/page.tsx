@@ -454,9 +454,34 @@ const loadProducts = useCallback(async () => {
                 <h3 className="text-sm font-black text-brand-primary uppercase tracking-widest flex items-center gap-3"><ShoppingCart size={18} /> Nova Venda Real</h3>
                 <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-rose-50 rounded-full"><X size={20} /></button>
              </div>
+
+             {/* 🏷️ FILTRO DE CATEGORIAS NO MODAL */}
+             <div className="px-6 py-4 bg-white border-b border-brand-secondary/5 flex gap-2 overflow-x-auto scrollbar-hide">
+                <button 
+                  onClick={() => setActiveCategory('Todas')}
+                  className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest whitespace-nowrap transition-all ${activeCategory === 'Todas' ? 'bg-brand-primary text-white' : 'bg-brand-secondary/5 text-brand-secondary'}`}
+                >
+                  Todas
+                </button>
+                {categories.map(cat => (
+                  <button 
+                    key={cat.id}
+                    onClick={() => setActiveCategory(cat.name)}
+                    className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest whitespace-nowrap transition-all ${activeCategory === cat.name ? 'bg-brand-primary text-white' : 'bg-brand-secondary/5 text-brand-secondary'}`}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+             </div>
              
              <div className="flex-1 overflow-y-auto p-6 grid grid-cols-2 sm:grid-cols-4 gap-4 bg-rose-50/10">
-                {products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).map(p => (
+                {products
+                  .filter(p => {
+                    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase())
+                    const matchesCategory = activeCategory === 'Todas' || p.categories?.name === activeCategory
+                    return matchesSearch && matchesCategory
+                  })
+                  .map(p => (
                   <button key={p.id} onClick={() => setSelectedProduct(p)} className={`p-3 rounded-[30px] border transition-all ${selectedProduct?.id === p.id ? 'bg-brand-primary border-brand-primary scale-105 shadow-xl' : 'bg-white border-brand-secondary/5'}`}>
                     <div className="aspect-square w-full rounded-[20px] overflow-hidden mb-2 relative bg-brand-secondary/5 flex items-center justify-center">
                       {p.image_url ? (

@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Trash2, Pencil, Image as ImageIcon, Loader2, ArrowLeft, Gem, Share2, Camera } from 'lucide-react'
+import { Trash2, Pencil, Image as ImageIcon, Loader2, ArrowLeft, Gem, Share2, Camera, Filter } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -12,40 +12,61 @@ interface Product {
   price: number;
   image_url: string | null;
   stock_quantity: number;
+  category_id: string;
   categories: { name: string } | null;
+}
+
+interface Category {
+  id: string;
+  name: string;
 }
 
 export default function ProductsListPage() {
   const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [activeCategory, setActiveCategory] = useState('Todas')
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const supabase = createClient()
 
-  const loadProducts = useCallback(async () => {
+  const loadData = useCallback(async () => {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    // 💎 NEXUS: Consulta estritamente isolada (apenas produtos deste usuário)
-    const { data } = await supabase
-      .from('products')
-      .select('*, categories(name)')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-    if (data) setProducts(data as unknown as Product[])
+    // 💎 NEXUS: Busca paralela para velocidade máxima
+    const [prodRes, catRes] = await Promise.all([
+      supabase
+        .from('products')
+        .select('*, categories(name)')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('categories')
+        .select('id, name')
+        .order('name')
+    ])
+
+    if (prodRes.data) setProducts(prodRes.data as unknown as Product[])
+    if (catRes.data) setCategories(catRes.data)
     setLoading(false)
   }, [supabase])
 
   useEffect(() => {
-    loadProducts()
-  }, [loadProducts])
+    loadData()
+  }, [loadData])
+
+  // ⚡ FILTRAGEM INSTANTÂNEA EM MEMÓRIA
+  const filteredProducts = useMemo(() => {
+    if (activeCategory === 'Todas') return products
+    return products.filter(p => p.categories?.name === activeCategory)
+  }, [products, activeCategory])
 
   const handleDelete = async (id: string, imageUrl: string | null) => {
     if (!confirm('TEM CERTEZA QUE DESEJA REMOVER ESTA JOIA DA VITRINE? 💎')) return
     
     setDeletingId(id)
     try {
-      // 💎 MÁGICA NEXUS: EXCLUSÃO VIA SERVIDOR (Bypass de RLS)
       const res = await fetch('/api/admin/delete', {
         method: 'POST',
         headers: { 
@@ -58,7 +79,7 @@ export default function ProductsListPage() {
       const result = await res.json()
       if (!result.success) throw new Error(result.error)
 
-      setProducts(products.filter(p => p.id !== id))
+      setProducts(prev => prev.filter(p => p.id !== id))
       alert('JOIA REMOVIDA COM SUCESSO! ✨')
     } catch (err: unknown) {
       alert('ERRO AO EXCLUIR: ' + (err as Error).message.toUpperCase())
@@ -69,7 +90,7 @@ export default function ProductsListPage() {
 
   return (
     <div className="max-w-6xl mx-auto py-10 px-4 pb-20">
-      <div className="flex items-center justify-between mb-12">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
         <div>
           <Link href="/admin" className="flex items-center gap-2 text-[10px] font-black text-brand-secondary uppercase tracking-widest mb-4 hover:ml-2 transition-all">
             <ArrowLeft size={14} /> Voltar ao Painel
@@ -78,10 +99,31 @@ export default function ProductsListPage() {
             <Gem className="text-brand-secondary" /> Gestão da Vitrine
           </h1>
         </div>
-        <Link href="/admin/products/new" className="px-8 py-4 bg-brand-primary text-white rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-brand-secondary transition-all shadow-lg">
+        <Link href="/admin/products/new" className="px-8 py-4 bg-brand-primary text-white rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-brand-secondary transition-all shadow-lg text-center">
           Nova Peça
         </Link>
       </div>
+
+      {/* 🏷️ FILTRO POR CATEGORIAS */}
+      {!loading && categories.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-10 pb-4 border-b border-brand-secondary/5">
+          <button 
+            onClick={() => setActiveCategory('Todas')}
+            className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeCategory === 'Todas' ? 'bg-brand-primary text-white shadow-md' : 'bg-brand-secondary/5 text-brand-secondary hover:bg-brand-secondary/10'}`}
+          >
+            Todas
+          </button>
+          {categories.map(cat => (
+            <button 
+              key={cat.id}
+              onClick={() => setActiveCategory(cat.name)}
+              className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.name ? 'bg-brand-primary text-white shadow-md' : 'bg-brand-secondary/5 text-brand-secondary hover:bg-brand-secondary/10'}`}
+            >
+              {cat.name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
@@ -90,7 +132,7 @@ export default function ProductsListPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {products.map((product) => (
+          {filteredProducts.map((product) => (
             <div key={product.id} className="bg-white rounded-[40px] border border-brand-secondary/10 overflow-hidden shadow-sm hover:shadow-xl transition-all group relative">
               {/* Imagem do Produto */}
               <div className="aspect-square relative overflow-hidden bg-brand-secondary/5">
