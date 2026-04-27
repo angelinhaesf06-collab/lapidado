@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { PlusCircle, AlertCircle, TrendingUp, Package, ShoppingCart, Truck } from 'lucide-react'
+import { PlusCircle, AlertCircle, TrendingUp, Package, ShoppingCart } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
@@ -188,16 +188,6 @@ export default function AdminDashboard() {
             <div>
               <h3 className="text-[10px] font-black uppercase tracking-widest text-brand-primary">Registrar Venda</h3>
               <p className="text-[7px] font-bold text-brand-secondary uppercase">Nova conquista realizada</p>
-            </div>
-          </Link>
-
-          <Link href="/admin/suppliers" className="bg-white p-6 rounded-[35px] border border-brand-secondary/10 shadow-sm flex items-center gap-4 hover:border-brand-primary transition-all group">
-            <div className="w-12 h-12 rounded-2xl bg-rose-50 flex items-center justify-center text-brand-primary group-hover:bg-brand-primary group-hover:text-white transition-all">
-              <Truck size={24} />
-            </div>
-            <div>
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-brand-primary">Fornecedores</h3>
-              <p className="text-[7px] font-bold text-brand-secondary uppercase">Gestão de Compras</p>
             </div>
           </Link>
         </div>

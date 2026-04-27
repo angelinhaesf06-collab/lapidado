@@ -138,27 +138,6 @@ export default function ProductsListPage() {
         </Link>
       </div>
 
-      {/* 🏷️ FILTRO POR CATEGORIAS */}
-      {!loading && categories.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-10 pb-4 border-b border-brand-secondary/5">
-          <button 
-            onClick={() => setActiveCategory('Todas')}
-            className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeCategory === 'Todas' ? 'bg-brand-primary text-white shadow-md' : 'bg-brand-secondary/5 text-brand-secondary hover:bg-brand-secondary/10'}`}
-          >
-            Todas
-          </button>
-          {categories.map(cat => (
-            <button 
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.name)}
-              className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.name ? 'bg-brand-primary text-white shadow-md' : 'bg-brand-secondary/5 text-brand-secondary hover:bg-brand-secondary/10'}`}
-            >
-              {cat.name}
-            </button>
-          ))}
-        </div>
-      )}
-
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
           <Loader2 className="animate-spin text-brand-secondary" size={40} />

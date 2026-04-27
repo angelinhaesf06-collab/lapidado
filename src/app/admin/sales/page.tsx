@@ -100,8 +100,6 @@ export default function SalesPage() {
   const [branding, setBranding] = useState<Branding | null>(null)
   const [products, setProducts] = useState<Product[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
-  const [activeCategory, setActiveCategory] = useState('Todas')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().substring(0, 7))
   
@@ -340,34 +338,8 @@ const loadProducts = useCallback(async () => {
 
         <button onClick={() => setShowAddModal(true)} className="w-full bg-brand-primary text-white py-5 rounded-[25px] font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-xl mb-8"><Plus size={18} /> Nova Venda Real</button>
 
-        {/* 🏷️ FILTRO DE CATEGORIAS NA LISTAGEM DE VENDAS - SEM ROLAGEM LATERAL */}
-        {!loading && categories.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-6">
-            <button 
-              onClick={() => setActiveCategory('Todas')}
-              className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${activeCategory === 'Todas' ? "bg-brand-primary text-white shadow-md" : "bg-brand-secondary/5 text-brand-secondary hover:bg-brand-secondary/10"}`}
-            >
-              Todas
-            </button>
-            {categories.map(cat => (
-              <button 
-                key={cat.id}
-                onClick={() => setActiveCategory(cat.name)}
-                className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.name ? "bg-brand-primary text-white shadow-md" : "bg-brand-secondary/5 text-brand-secondary hover:bg-brand-secondary/10"}`}
-              >
-                {cat.name}
-              </button>
-            ))}
-          </div>
-        )}
-
         <div className="space-y-3">
           {filteredSales
-            .filter(sale => {
-              const productInfo = Array.isArray(sale.products) ? sale.products[0] : sale.products
-              // @ts-ignore - categories.name vem do inner join se disponível, ou usamos o estado global
-              return activeCategory === 'Todas' || productInfo?.name?.toUpperCase().includes(activeCategory.toUpperCase()) || sale.products?.categories?.name === activeCategory
-            })
             .map((sale) => {
             // 💎 NEXUS: Normalização de dados para Joins resilientes
             const productInfo = Array.isArray(sale.products) ? sale.products[0] : sale.products
@@ -535,32 +507,11 @@ const loadProducts = useCallback(async () => {
                 <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-rose-50 rounded-full"><X size={20} /></button>
              </div>
 
-             {/* 🏷️ FILTRO DE CATEGORIAS NO MODAL - SEM ROLAGEM LATERAL */}
-             <div className="px-6 py-4 bg-white border-b border-brand-secondary/5 flex flex-wrap gap-2">
-                <button 
-                  onClick={() => setActiveCategory('Todas')}
-                  className={`px-3 py-1 rounded-full text-[7px] font-black uppercase tracking-widest transition-all ${activeCategory === 'Todas' ? 'bg-brand-primary text-white shadow-sm' : 'bg-brand-secondary/5 text-brand-secondary'}`}
-                >
-                  Todas
-                </button>
-                {categories.map(cat => (
-                  <button 
-                    key={cat.id}
-                    onClick={() => setActiveCategory(cat.name)}
-                    className={`px-3 py-1 rounded-full text-[7px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.name ? 'bg-brand-primary text-white shadow-sm' : 'bg-brand-secondary/5 text-brand-secondary'}`}
-                  >
-                    {cat.name}
-                  </button>
-                ))}
-             </div>
-             
              <div className="flex-1 overflow-y-auto p-4 md:p-6 grid grid-cols-3 sm:grid-cols-4 gap-2 md:gap-4 bg-rose-50/10 scrollbar-hide">
                 {products
                   .filter(p => {
                     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase())
-                    // @ts-ignore - p.categories?.name vem do join
-                    const matchesCategory = activeCategory === 'Todas' || p.categories?.name === activeCategory
-                    return matchesSearch && matchesCategory
+                    return matchesSearch
                   })
                   .map(p => (
                   <button key={p.id} onClick={() => setSelectedProduct(p)} className={`p-2 md:p-3 rounded-[20px] md:rounded-[30px] border transition-all ${selectedProduct?.id === p.id ? 'bg-brand-primary border-brand-primary scale-105 shadow-xl' : 'bg-white border-brand-secondary/5'}`}>

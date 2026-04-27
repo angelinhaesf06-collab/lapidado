@@ -14,7 +14,6 @@ export default function PricingPage() {
   // 1. ESTADO DA CALCULADORA (Entrada Única)
   const [currentEntry, setCurrentEntry] = useState({
     name: '',
-    supplier: '',
     material: 'OURO',
     rawVal: 0,
     weightG: 0,
@@ -87,7 +86,7 @@ export default function PricingPage() {
     const res = calculateData(currentEntry)
     setAddedItems([...addedItems, { ...currentEntry, ...res, id: Date.now() }])
     
-    // Limpa mantendo fornecedor e markup para agilizar
+    // Limpa mantendo markup para agilizar
     setCurrentEntry(prev => ({
       ...prev,
       name: '',
@@ -106,7 +105,6 @@ export default function PricingPage() {
     
     const tableBody = addedItems.map(item => [
       item.name.toUpperCase(),
-      item.supplier?.toUpperCase() || '---',
       item.material,
       item.material === 'FOLHADO' ? '---' : `${item.weightG.toFixed(2)}g`,
       `R$ ${item.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
@@ -115,7 +113,7 @@ export default function PricingPage() {
 
     autoTable(doc, {
       startY: 40,
-      head: [['PEÇA', 'FORNECEDOR', 'TIPO', 'PESO', 'CUSTO TOTAL', 'PREÇO VENDA']],
+      head: [['PEÇA', 'TIPO', 'PESO', 'CUSTO TOTAL', 'PREÇO VENDA']],
       body: tableBody,
       theme: 'grid',
       headStyles: { fillColor: [74, 50, 46] }
@@ -160,12 +158,6 @@ export default function PricingPage() {
               onChange={e => setCurrentEntry({...currentEntry, name: e.target.value.toUpperCase()})}
               className="flex-1 w-full bg-white border border-brand-primary/20 px-8 py-4 rounded-2xl font-black text-xs uppercase outline-none focus:ring-4 focus:ring-brand-primary/10 transition-all" 
               placeholder="NOME DA PEÇA / REF..."/>
-            <input 
-              type="text" 
-              value={currentEntry.supplier} 
-              onChange={e => setCurrentEntry({...currentEntry, supplier: e.target.value.toUpperCase()})}
-              className="w-full md:w-64 bg-white border border-brand-primary/20 px-8 py-4 rounded-2xl font-black text-xs uppercase outline-none focus:ring-4 focus:ring-brand-primary/10 transition-all" 
-              placeholder="FORNECEDOR..."/>
         </div>
 
         <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-start">
@@ -262,7 +254,7 @@ export default function PricingPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-brand-secondary/5 border-b border-brand-secondary/10">
-                  <th className="p-6 text-[8px] font-black uppercase text-brand-secondary/40 tracking-[0.2em]">Joia / Fornecedor</th>
+                  <th className="p-6 text-[8px] font-black uppercase text-brand-secondary/40 tracking-[0.2em]">Joia</th>
                   <th className="p-6 text-[8px] font-black uppercase text-brand-secondary/40 tracking-[0.2em]">Tipo / Processo</th>
                   <th className="p-6 text-[8px] font-black uppercase text-brand-secondary/40 tracking-[0.2em]">Peso/Mils</th>
                   <th className="p-6 text-[8px] font-black uppercase text-brand-secondary/40 tracking-[0.2em]">Custo Total</th>
@@ -275,7 +267,6 @@ export default function PricingPage() {
                   <tr key={item.id} className="hover:bg-brand-secondary/5 transition-all group">
                     <td className="p-6">
                       <p className="text-xs font-black text-brand-primary uppercase">{item.name}</p>
-                      <p className="text-[8px] font-bold text-brand-secondary/60 uppercase">{item.supplier || 'SEM FORNECEDOR'}</p>
                     </td>
                     <td className="p-6">
                       <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase ${item.material === 'OURO' ? 'bg-amber-100 text-amber-700' : item.material === 'FOLHADO' ? 'bg-rose-100 text-rose-700' : 'bg-brand-secondary/10 text-brand-primary'}`}>{item.material}</span>
