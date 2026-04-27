@@ -99,6 +99,8 @@ export default function SalesPage() {
   const [showReceipt, setShowReceipt] = useState<Sale | null>(null)
   const [branding, setBranding] = useState<Branding | null>(null)
   const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [activeCategory, setActiveCategory] = useState('Todas')
   const [customers, setCustomers] = useState<Customer[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().substring(0, 7))
@@ -204,12 +206,18 @@ const loadProducts = useCallback(async () => {
     if (data) setCustomers(data)
   }, [supabase])
 
+  const loadCategories = useCallback(async () => {
+    const { data } = await supabase.from('categories').select('id, name').order('name')
+    if (data) setCategories(data)
+  }, [supabase])
+
   useEffect(() => {
     loadSales()
     loadBranding()
     loadProducts()
     loadCustomers()
-  }, [loadSales, loadBranding, loadProducts, loadCustomers, supabase])
+    loadCategories()
+  }, [loadSales, loadBranding, loadProducts, loadCustomers, loadCategories, supabase])
 
   async function handleToggleStatus(sale: Sale) {
     const newStatus = sale.status === 'pago' ? 'pendente' : 'pago'
@@ -502,11 +510,33 @@ const loadProducts = useCallback(async () => {
                 <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-rose-50 rounded-full"><X size={20} /></button>
              </div>
 
+             {/* 💎 FILTRO DE CATEGORIAS NO MODAL */}
+             <div className="px-6 py-4 bg-rose-50/30 border-b border-brand-secondary/5">
+                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                  <button 
+                    onClick={() => setActiveCategory('Todas')}
+                    className={`px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest transition-all shrink-0 border ${activeCategory === 'Todas' ? 'bg-brand-primary border-brand-primary text-white shadow-md' : 'bg-white border-brand-secondary/10 text-brand-secondary/40'}`}
+                  >
+                    Todas
+                  </button>
+                  {categories.map(cat => (
+                    <button 
+                      key={cat.id}
+                      onClick={() => setActiveCategory(cat.name)}
+                      className={`px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest transition-all shrink-0 border ${activeCategory === cat.name ? 'bg-brand-primary border-brand-primary text-white shadow-md' : 'bg-white border-brand-secondary/10 text-brand-secondary/40'}`}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+             </div>
+
              <div className="flex-1 overflow-y-auto p-4 md:p-6 grid grid-cols-3 sm:grid-cols-4 gap-2 md:gap-4 bg-rose-50/10 scrollbar-hide">
                 {products
                   .filter(p => {
                     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase())
-                    return matchesSearch
+                    const matchesCategory = activeCategory === 'Todas' || p.categories?.name === activeCategory
+                    return matchesSearch && matchesCategory
                   })
                   .map(p => (
                   <button key={p.id} onClick={() => setSelectedProduct(p)} className={`p-2 md:p-3 rounded-[20px] md:rounded-[30px] border transition-all ${selectedProduct?.id === p.id ? 'bg-brand-primary border-brand-primary scale-105 shadow-xl' : 'bg-white border-brand-secondary/5'}`}>

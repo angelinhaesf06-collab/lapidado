@@ -138,6 +138,25 @@ export default function ProductsListPage() {
         </Link>
       </div>
 
+      {/* 💎 BARRA DE CATEGORIAS */}
+      <div className="flex gap-2 overflow-x-auto pb-6 scrollbar-hide mb-4">
+        <button 
+          onClick={() => setActiveCategory('Todas')}
+          className={`px-6 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all shrink-0 border ${activeCategory === 'Todas' ? 'bg-brand-primary border-brand-primary text-white shadow-md' : 'bg-white border-brand-secondary/10 text-brand-secondary/40'}`}
+        >
+          Todas
+        </button>
+        {categories.map(cat => (
+          <button 
+            key={cat.id}
+            onClick={() => setActiveCategory(cat.name)}
+            className={`px-6 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all shrink-0 border ${activeCategory === cat.name ? 'bg-brand-primary border-brand-primary text-white shadow-md' : 'bg-white border-brand-secondary/10 text-brand-secondary/40'}`}
+          >
+            {cat.name}
+          </button>
+        ))}
+      </div>
+
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
           <Loader2 className="animate-spin text-brand-secondary" size={40} />
