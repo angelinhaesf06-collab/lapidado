@@ -69,19 +69,19 @@ export async function POST(req: Request) {
     };
 
     try {
-      // 🚀 MOTOR ESTÁVEL: gemini-1.5-flash-latest (Compatibilidade Total)
-      const modelStable = genAI.getGenerativeModel({ ...modelParams, model: "gemini-1.5-flash-latest" });
-      result = await tryGenerate(modelStable, {
+      // 🚀 MOTOR 2.0 EXPERIMENTAL (Mais estável para chaves novas)
+      const modelExp = genAI.getGenerativeModel({ ...modelParams, model: "gemini-2.0-flash-exp" });
+      result = await tryGenerate(modelExp, {
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
         generationConfig: {
           ...generationConfig,
-          temperature: 0.1, // Menor temperatura = menos conversa
+          temperature: 0.1,
         },
         safetySettings
       });
     } catch (e) {
-      console.error("Falha no Flash, tentando Pro...");
-      const modelPro = genAI.getGenerativeModel({ ...modelParams, model: "gemini-1.5-pro-latest" });
+      console.error("Falha no 2.0 Exp, tentando Pro...");
+      const modelPro = genAI.getGenerativeModel({ ...modelParams, model: "gemini-2.0-pro-exp-02-05" });
       result = await tryGenerate(modelPro, {
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
         generationConfig,
