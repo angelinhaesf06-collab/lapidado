@@ -30,8 +30,8 @@ function HomeContent() {
   const [branding, setBranding] = useState<Branding | null>(null)
   const [loading, setLoading] = useState(true)
   
-  const isPublicCatalog = searchParams.get('catalogo') === 'true'
   const storeSlug = searchParams.get('loja')
+  const isPublicCatalog = searchParams.get('catalogo') === 'true' || !!storeSlug
   const activeCategory = searchParams.get('category') || 'Todos'
   const supabase = createClient()
   const router = useRouter()
@@ -39,7 +39,17 @@ function HomeContent() {
   // 1. CARREGAMENTO INICIAL (OTIMIZADO)
   useEffect(() => {
     if (!isPublicCatalog) {
-      router.push('/login')
+      // 💎 NEXUS: Verifica se há sessão antes de mandar pro login
+      const checkAuth = async () => {
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) {
+          router.push('/login');
+        } else {
+          // Se está logado, considera como catálogo autorizado
+          loadInitialData();
+        }
+      }
+      checkAuth();
       return
     }
 
