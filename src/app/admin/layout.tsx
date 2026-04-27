@@ -117,19 +117,24 @@ export default function AdminLayout({
       {/* 💎 SIDEBAR LAPIDADO (ESQUERDA) */}
       <aside className="hidden md:flex w-72 flex-col bg-white border-r border-brand-secondary/10 p-8 sticky top-0 h-screen z-50 shadow-[20px_0_40px_rgba(74,50,46,0.02)]">
         
-        {/* LOGO NO TOPO DA SIDEBAR */}
+        {/* LOGO DINÂMICA DO LOJISTA (MULTI-MARCAS) */}
         <div className="flex flex-col items-center gap-4 mb-16 px-2 text-center">
-          <div className="relative w-40 h-20 mb-2">
-            <Image 
-              src={branding.logo || '/logo.png'} 
-              alt="Logo Lapidado" 
-              fill
-              className="object-contain drop-shadow-sm" 
-              priority
-            />
-          </div>
+          {branding.logo ? (
+            <div className="relative w-full h-16 mb-2">
+              <Image 
+                src={branding.logo} 
+                alt={branding.name} 
+                fill
+                className="object-contain" 
+              />
+            </div>
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-brand-primary flex items-center justify-center text-white shadow-lg shadow-brand-primary/20 mb-2">
+              <Gem size={22} />
+            </div>
+          )}
           <div>
-            <h1 className="text-[12px] font-black uppercase tracking-[0.4em] text-brand-primary leading-none hidden">{branding.name}</h1>
+            <h1 className="text-[12px] font-black uppercase tracking-[0.4em] text-brand-primary leading-none">{branding.name}</h1>
             <p className="text-[7px] font-bold uppercase tracking-[0.3em] text-brand-secondary mt-1">Gestão Empresarial</p>
           </div>
         </div>
