@@ -25,16 +25,16 @@ export async function POST(req: Request) {
 
     let result;
     try {
-      // 🚀 MOTOR 2.0 FLASH
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash", systemInstruction });
+      // 🚀 MOTOR ESTÁVEL: gemini-1.5-flash-latest
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest", systemInstruction });
       result = await model.generateContent({
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
         generationConfig: { maxOutputTokens: 1000, temperature: 0.1 }
       });
     } catch (e) {
-      console.error("Gemini 2.0 Flash falhou, tentando Pro...");
-      // 🚀 BACKUP 2.0 PRO
-      const modelPro = genAI.getGenerativeModel({ model: "gemini-2.0-pro", systemInstruction });
+      console.error("Gemini 1.5 Flash falhou, tentando Pro...");
+      // 🚀 BACKUP ESTÁVEL PRO
+      const modelPro = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest", systemInstruction });
       result = await modelPro.generateContent({
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
         generationConfig: { maxOutputTokens: 1000, temperature: 0.1 }
