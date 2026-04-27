@@ -2,7 +2,7 @@ require("dotenv").config();
 
 async function debugRawFetch() {
   const apiKey = process.env.GEMINI_API_KEY;
-  const modelName = "gemini-flash-latest";
+  const modelName = "gemini-3.0-flash";
   const baseUrl = "https://generativelanguage.googleapis.com/v1beta";
   const url = `${baseUrl}/models/${modelName}:generateContent?key=${apiKey}`;
 

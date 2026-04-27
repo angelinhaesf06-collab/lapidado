@@ -7,7 +7,7 @@ const genAI = new GoogleGenerativeAI(key);
 async function testFoundKey() {
   try {
     console.log("🔍 TESTANDO CHAVE ENCONTRADA NOS BACKUPS...");
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.0-flash" });
     const result = await model.generateContent("Oi, você está ativa?");
     const response = await result.response;
     console.log("✅ SUCESSO ABSOLUTO! A IA RESPONDEU:", response.text());

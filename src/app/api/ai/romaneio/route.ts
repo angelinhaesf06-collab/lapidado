@@ -25,17 +25,17 @@ export async function POST(req: Request) {
 
     let result;
     try {
-      // 🚀 ÚLTIMA GERAÇÃO: gemini-2.0-flash
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash", systemInstruction });
+      // 🚀 MOTOR DE ELITE: gemini-pro-latest
+      const model = genAI.getGenerativeModel({ model: "gemini-pro-latest", systemInstruction });
       result = await model.generateContent({
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
         generationConfig: { maxOutputTokens: 1000, temperature: 0.1 }
       });
     } catch (e) {
-      console.error("Gemini 2.0 Flash falhou, tentando fallback 1.5 Flash...");
-      // 🚀 BACKUP 1.5 FLASH
-      const modelFallback = genAI.getGenerativeModel({ model: "gemini-1.5-flash", systemInstruction });
-      result = await modelFallback.generateContent({
+      console.error("Gemini Pro falhou, tentando fallback Flash...");
+      // 🚀 BACKUP FLASH
+      const modelFlash = genAI.getGenerativeModel({ model: "gemini-flash-latest", systemInstruction });
+      result = await modelFlash.generateContent({
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
         generationConfig: { maxOutputTokens: 1000, temperature: 0.1 }
       });
