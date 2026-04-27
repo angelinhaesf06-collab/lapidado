@@ -1,4 +1,4 @@
-package br.com.lapidado;
+package com.lapidado.vendas;
 
 import com.getcapacitor.BridgeActivity;
 
