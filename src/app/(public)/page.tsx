@@ -38,27 +38,11 @@ function HomeContent() {
 
   // 1. CARREGAMENTO INICIAL (OTIMIZADO)
   useEffect(() => {
-    if (!isPublicCatalog) {
-      // 💎 NEXUS: Verifica se há sessão antes de mandar pro login
-      const checkAuth = async () => {
-        const { data } = await supabase.auth.getSession();
-        if (!data.session) {
-          router.push('/login');
-        } else {
-          // Se está logado, considera como catálogo autorizado
-          loadInitialData();
-        }
-      }
-      checkAuth();
-      return
-    }
-
     async function loadInitialData() {
       if (allProducts.length > 0) return
       setLoading(true)
       
       try {
-        // 🚀 OTIMIZAÇÃO: Busca branding com lógica de fallback em uma única query ou mínima latência
         let brandingQuery = supabase.from('branding').select('*')
         
         if (storeSlug) {
@@ -69,7 +53,6 @@ function HomeContent() {
         
         let { data: currentBranding } = await brandingQuery.maybeSingle()
 
-        // Fallback final se não achou nada
         if (!currentBranding) {
           const { data: firstBrand } = await supabase.from('branding').select('*').limit(1).maybeSingle()
           currentBranding = firstBrand
@@ -83,8 +66,6 @@ function HomeContent() {
         setBranding(currentBranding)
         const currentUserId = currentBranding.user_id
 
-        // 🚀 OTIMIZAÇÃO: Busca categorias e apenas os campos essenciais dos produtos
-        // Carregamos um limite inicial para ser instantâneo
         const [catsRes, prodsRes] = await Promise.all([
           supabase.from('categories').select('id, name').eq('user_id', currentUserId).order('name'),
           supabase.from('products')
@@ -92,7 +73,7 @@ function HomeContent() {
             .eq('user_id', currentUserId)
             .gt('stock_quantity', 0)
             .order('created_at', { ascending: false })
-            .limit(40) // Limite de segurança para vitrine rápida
+            .limit(40)
         ])
 
         setDbCategories(catsRes.data || [])
@@ -104,7 +85,20 @@ function HomeContent() {
       }
     }
 
-    loadInitialData()
+    const checkAccess = async () => {
+      if (isPublicCatalog) {
+        await loadInitialData()
+      } else {
+        const { data } = await supabase.auth.getSession()
+        if (!data.session) {
+          router.push('/login')
+        } else {
+          await loadInitialData()
+        }
+      }
+    }
+
+    checkAccess()
   }, [isPublicCatalog, storeSlug, router, supabase, allProducts.length])
 
   // 2. SCROLL PARA O TOPO QUANDO MUDAR CATEGORIA
