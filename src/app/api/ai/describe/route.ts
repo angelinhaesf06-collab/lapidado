@@ -5,17 +5,16 @@ export const runtime = 'nodejs';
 export const maxDuration = 30;
 
 async function tryGenerate(model: any, content: any) {
-  let retries = 3;
-  let delay = 2000;
+  let retries = 1; // 🚀 Reduzido para 1 tentativa para não travar a tela
+  let delay = 1000;
   
-  while (retries > 0) {
+  while (retries >= 0) {
     try {
       return await model.generateContent(content);
     } catch (err: any) {
-      if (err.message.includes("503") || err.message.includes("Service Unavailable")) {
+      if ((err.message.includes("503") || err.message.includes("Service Unavailable")) && retries > 0) {
         await new Promise(res => setTimeout(res, delay));
         retries--;
-        delay *= 2;
       } else {
         throw err;
       }
