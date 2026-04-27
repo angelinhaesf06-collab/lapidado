@@ -46,26 +46,26 @@ export async function POST(req: Request) {
     ];
 
     const modelParams = {
-      systemInstruction: `Você é uma especialista em alta joalheria e semijoias de luxo. 
-      Sua tarefa é analisar a imagem e retornar um JSON detalhado.
+      systemInstruction: `Você é uma mestre joalheira e copywriter de alta luxo da marca Lapidado. 
+      Sua tarefa é transformar imagens de semijoias em objetos de desejo absoluto através de nomes evocativos e descrições magnéticas.
       
-      No campo "name": Crie um nome comercial luxuoso e atraente.
-      No campo "category": Identifique se é ANEL, BRINCO, COLAR, PULSEIRA ou CONJUNTO.
-      No campo "description": Escreva uma descrição profissional de 2 a 3 frases destacando:
-      - O banho (ex: banhado a ouro 18k, ródio branco)
-      - Detalhes das pedras (ex: zircônias, cristais, lapidação)
-      - O design (ex: cravejado, polido, design orgânico)
-      - Para qual ocasião a peça é ideal.
+      No campo "name": Crie um nome exclusivo, sofisticado e curto. Evite nomes genéricos. Use termos que remetam a coleções de alta joalheria (ex: "Colar Éclat Radiante", "Brinco Solitaire Infini", "Anel Lumière d'Or").
+      No campo "category": Classifique estritamente como ANEL, BRINCO, COLAR, PULSEIRA ou CONJUNTO.
+      No campo "description": Escreva uma descrição persuasiva de 3 frases:
+      1. Comece com o impacto visual ou a sensação de exclusividade da peça.
+      2. Detalhe a nobreza do banho (ex: Ouro 18k, Ródio Branco) e o brilho das pedras/acabamento.
+      3. Sugira uma ocasião de uso que eleve o status de quem a veste.
 
+      O tom deve ser elegante, feminino e premium.
       RESPONDA APENAS O JSON: {"name": "...", "category": "...", "description": "..."}`
     };
 
     let result;
     const generationConfig = {
-      temperature: 0.2,
+      temperature: 0.5, // 🚀 Aumentado para mais criatividade e variedade
       topP: 0.95,
       maxOutputTokens: 1000,
-      responseMimeType: "application/json", // 🚀 FORÇA O MODO JSON NATIVO
+      responseMimeType: "application/json",
     };
 
     try {
@@ -73,10 +73,7 @@ export async function POST(req: Request) {
       const modelPro = genAI.getGenerativeModel({ ...modelParams, model: "gemini-pro-latest" });
       result = await tryGenerate(modelPro, {
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
-        generationConfig: {
-          ...generationConfig,
-          temperature: 0.2,
-        },
+        generationConfig,
         safetySettings
       });
     } catch (e) {
@@ -92,7 +89,6 @@ export async function POST(req: Request) {
     const response = await result.response;
     let aiText = response.text().trim();
     
-    // 💎 LIMPEZA RADICAL NEXUS: Remove qualquer menção a markdown ou palavras técnicas
     const jsonMatch = aiText.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       aiText = jsonMatch[0];
@@ -101,7 +97,6 @@ export async function POST(req: Request) {
     try {
       const rawJson = JSON.parse(aiText);
       
-      // 💎 FILTRO DE PUREZA: Garante que NENHUMA palavra técnica vaze para o nome ou descrição
       const clean = (txt: string) => {
         if (!txt) return "";
         return txt.toString()
@@ -110,13 +105,12 @@ export async function POST(req: Request) {
           .replace(/Aqui está/gi, "")
           .replace(/Joia Identificada/gi, "")
           .replace(/\[|\]/g, "")
-          .trim()
-          .toUpperCase();
+          .trim();
       };
 
       return NextResponse.json({
-        name: clean(rawJson.name || rawJson.NAME || "JOIA EXCLUSIVA"),
-        category: clean(rawJson.category || rawJson.CATEGORY || "OUTROS"),
+        name: clean(rawJson.name || rawJson.NAME || "Joia Exclusiva Lapidado"),
+        category: clean(rawJson.category || rawJson.CATEGORY || "OUTROS").toUpperCase(),
         description: clean(rawJson.description || rawJson.DESCRIPTION || "")
       });
     } catch (e) {
