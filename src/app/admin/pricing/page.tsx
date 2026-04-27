@@ -269,6 +269,7 @@ export default function PricingPage() {
                   <tr key={item.id} className="hover:bg-brand-secondary/5 transition-all group">
                     <td className="p-6">
                       <p className="text-xs font-black text-brand-primary uppercase">{item.name}</p>
+                      <p className="text-[8px] font-bold text-brand-secondary/60 uppercase">{item.supplier || 'SEM FORNECEDOR'}</p>
                     </td>
                     <td className="p-6">
                       <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase ${item.material === 'OURO' ? 'bg-amber-100 text-amber-700' : item.material === 'FOLHADO' ? 'bg-rose-100 text-rose-700' : 'bg-brand-secondary/10 text-brand-primary'}`}>{item.material}</span>
