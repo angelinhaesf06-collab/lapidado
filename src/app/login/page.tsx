@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -52,11 +53,17 @@ export default function LoginPage() {
       <div className="bg-white/90 backdrop-blur-sm p-8 md:p-12 rounded-[48px] md:rounded-[56px] shadow-[0_32px_80px_rgba(74,50,46,0.06)] w-full max-w-lg border border-white/50 relative z-10 transition-all">
         
         {/* Branding Elegante */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-[#fffaf9] rounded-full mb-8 shadow-sm border border-rose-50/50">
-            <Gem className="text-[#c99090]" size={32} strokeWidth={1.5} />
+        <div className="text-center mb-12 flex flex-col items-center">
+          <div className="relative w-48 h-24 mb-6">
+            <Image 
+              src="/logo.png" 
+              alt="Logo Lapidado" 
+              fill
+              className="object-contain drop-shadow-lg"
+              priority 
+            />
           </div>
-          <h1 className="text-[9px] font-black text-[#c99090] uppercase tracking-[0.6em] mb-4">Lapidado App</h1>
+          <h1 className="text-[9px] font-black text-[#c99090] uppercase tracking-[0.6em] mb-4 hidden">Lapidado App</h1>
           <h2 className="text-4xl font-bold text-[#4a322e] tracking-tight mb-3">Seu Espaço</h2>
           <p className="text-[#8b6e6a] text-[13px] font-medium tracking-wide">
             &quot;Sua visão lapidada com perfeição.&quot;

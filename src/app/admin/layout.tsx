@@ -1,11 +1,13 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ShoppingCart, Package, Gem, PlusCircle, LayoutDashboard, LogOut, ExternalLink, Share2, Coins } from 'lucide-react'
+import { ShoppingCart, Package, Gem, PlusCircle, LayoutDashboard, LogOut, ExternalLink, Share2, Coins, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
+import Paywall from '@/components/Paywall'
+import { purchasePlan, GOOGLE_PLAY_PLANS, syncSubscriptionWithSupabase } from '@/lib/billing/googlePlay'
 
 export default function AdminLayout({
   children,
@@ -14,14 +16,17 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname()
   const [branding, setBranding] = useState<{name: string, logo: string | null, slug: string | null}>({name: 'LAPIDADO', logo: null, slug: null})
+  const [subscription, setSubscription] = useState<{status: string, trial_ends_at: string | null} | null>(null)
+  const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
   useEffect(() => {
-    async function loadBranding() {
+    async function loadData() {
+      setLoading(true)
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         const { data } = await supabase.from('branding')
-          .select('store_name, business_name, logo_url, facebook, slug')
+          .select('store_name, business_name, logo_url, facebook, slug, subscription_status, trial_ends_at')
           .eq('user_id', user.id)
           .single()
         
@@ -32,11 +37,46 @@ export default function AdminLayout({
             logo: data.logo_url || null,
             slug: data.slug || null
           })
+          setSubscription({
+            status: data.subscription_status || 'trial',
+            trial_ends_at: data.trial_ends_at || null
+          })
         }
       }
+      setLoading(false)
     }
-    loadBranding()
+    loadData()
   }, [supabase])
+
+  const isBlocked = useMemo(() => {
+    // 🔓 DESATIVADO TEMPORARIAMENTE PARA DESENVOLVIMENTO
+    return false;
+    
+    if (!subscription) return false;
+    if (subscription.status === 'active') return false;
+
+  const handleSubscribe = async (plan: 'monthly' | 'yearly') => {
+    setLoading(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      // 🛒 Chama o serviço de compra do Google Play
+      const purchase = await purchasePlan(plan === 'monthly' ? GOOGLE_PLAY_PLANS.MONTHLY : GOOGLE_PLAY_PLANS.YEARLY)
+      
+      if (purchase.success) {
+        // 📡 Sincroniza com o Supabase imediatamente
+        const synced = await syncSubscriptionWithSupabase(supabase, user.id, purchase)
+        if (synced) {
+          window.location.reload() // Recarrega para liberar o acesso
+        }
+      }
+    } catch (err) {
+      alert('Erro ao processar assinatura.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const navItems = [
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
@@ -59,31 +99,38 @@ export default function AdminLayout({
     window.location.href = '/login'
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-rose-50/10 flex flex-col items-center justify-center gap-4">
+        <Loader2 className="animate-spin text-brand-secondary" size={40} />
+        <p className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.3em]">Validando Acesso...</p>
+      </div>
+    )
+  }
+
   return (
     <div className="flex min-h-screen bg-[#fffcfc]">
       
+      {/* 🛑 PAYWALL DE BLOQUEIO */}
+      {isBlocked && <Paywall onSubscribe={handleSubscribe} trialDaysLeft={0} />}
+
       {/* 💎 SIDEBAR LAPIDADO (ESQUERDA) */}
       <aside className="hidden md:flex w-72 flex-col bg-white border-r border-brand-secondary/10 p-8 sticky top-0 h-screen z-50 shadow-[20px_0_40px_rgba(74,50,46,0.02)]">
         
         {/* LOGO NO TOPO DA SIDEBAR */}
         <div className="flex flex-col items-center gap-4 mb-16 px-2 text-center">
-          {branding.logo ? (
-            <div className="relative w-full h-16 mb-2">
-              <Image 
-                src={branding.logo} 
-                alt="Logo" 
-                fill
-                className="object-contain" 
-              />
-            </div>
-          ) : (
-            <div className="w-10 h-10 rounded-full bg-brand-primary flex items-center justify-center text-white shadow-lg shadow-brand-primary/20 mb-2">
-              <Gem size={22} />
-            </div>
-          )}
+          <div className="relative w-40 h-20 mb-2">
+            <Image 
+              src={branding.logo || '/logo.png'} 
+              alt="Logo Lapidado" 
+              fill
+              className="object-contain drop-shadow-sm" 
+              priority
+            />
+          </div>
           <div>
-            <h1 className="text-[12px] font-black uppercase tracking-[0.4em] text-brand-primary leading-none">{branding.name}</h1>
-            <p className="text-[7px] font-bold uppercase tracking-[0.2em] text-brand-secondary mt-1">Gestão Empresarial</p>
+            <h1 className="text-[12px] font-black uppercase tracking-[0.4em] text-brand-primary leading-none hidden">{branding.name}</h1>
+            <p className="text-[7px] font-bold uppercase tracking-[0.3em] text-brand-secondary mt-1">Gestão Empresarial</p>
           </div>
         </div>
         
