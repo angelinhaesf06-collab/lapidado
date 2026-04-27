@@ -24,34 +24,46 @@ export default function CartPage() {
       const urlParams = new URLSearchParams(window.location.search)
       const slugFromUrl = urlParams.get('loja')
 
-      let query = supabase.from('branding').select('*')
+      let currentBranding = null
+
+      // 1. Tentar por SLUG da URL
       if (slugFromUrl) {
-        query = query.eq('slug', slugFromUrl)
-      } else {
-        query = query.order('created_at', { ascending: false }).limit(1)
+        const { data } = await supabase.from('branding').select('*').eq('slug', slugFromUrl).maybeSingle()
+        currentBranding = data
       }
 
-      const { data } = await query.maybeSingle()
-      
-      if (data) {
-        setStoreSlug(data.slug)
-        if (data.business_name) {
-          setStoreName(data.business_name)
-        } else if (data.store_name) {
-          setStoreName(data.store_name)
+      // 2. Tentar por Usuário Logado (Se não achou por slug)
+      if (!currentBranding) {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const { data } = await supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle()
+          currentBranding = data
         }
+      }
 
-        if (data.phone) {
-          let cleanPhone = data.phone.replace(/\D/g, '')
+      // 3. Fallback final (Última marca ou padrão)
+      if (!currentBranding) {
+        const { data } = await supabase.from('branding').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle()
+        currentBranding = data
+      }
+      
+      if (currentBranding) {
+        setStoreSlug(currentBranding.slug)
+        setStoreName(currentBranding.business_name || currentBranding.store_name || 'LAPIDADO')
+
+        if (currentBranding.phone) {
+          let cleanPhone = currentBranding.phone.replace(/\D/g, '')
           if (cleanPhone && cleanPhone.length <= 11) cleanPhone = '55' + cleanPhone
           setStorePhone(cleanPhone)
         }
 
         // 💎 NEXUS: Lógica de Parcelas Inteligente
-        if (data.installments) {
-          setInstallments(parseInt(data.installments.toString()))
+        // @ts-ignore
+        if (currentBranding.installments) {
+          // @ts-ignore
+          setInstallments(parseInt(currentBranding.installments.toString()))
         } else {
-          const parts = data.facebook?.split('|')
+          const parts = currentBranding.facebook?.split('|')
           if (parts && parts[1]) {
             const val = parseInt(parts[1])
             if (!isNaN(val)) setInstallments(val)
