@@ -46,40 +46,39 @@ export async function POST(req: Request) {
     ];
 
     const modelParams = {
-      systemInstruction: `Você é uma mestre joalheira e copywriter de alta luxo da marca Lapidado. 
-      Sua tarefa é transformar imagens de semijoias em objetos de desejo absoluto através de nomes evocativos e descrições magnéticas.
+      systemInstruction: `Você é uma mestre joalheira e copywriter de luxo da Lapidado. 
+      Sua missão é criar nomes e descrições únicas e irresistíveis. 
       
-      No campo "name": Crie um nome exclusivo, sofisticado e curto. Evite nomes genéricos. Use termos que remetam a coleções de alta joalheria (ex: "Colar Éclat Radiante", "Brinco Solitaire Infini", "Anel Lumière d'Or").
-      No campo "category": Classifique estritamente como ANEL, BRINCO, COLAR, PULSEIRA ou CONJUNTO.
-      No campo "description": Escreva uma descrição persuasiva de 3 frases:
-      1. Comece com o impacto visual ou a sensação de exclusividade da peça.
-      2. Detalhe a nobreza do banho (ex: Ouro 18k, Ródio Branco) e o brilho das pedras/acabamento.
-      3. Sugira uma ocasião de uso que eleve o status de quem a veste.
+      REGRAS DE OURO:
+      - NUNCA repita a mesma descrição para peças diferentes.
+      - Use adjetivos variados e luxuosos (ex: magnético, sublime, ancestral, contemporâneo, celestial).
+      - Se a peça for dourada, varie entre "Ouro 18k", "Banho Nobre", "Brilho Solar".
+      - Se tiver pedras, varie entre "Zircônias Premium", "Cristais de Alta Lapidação", "Pontos de Luz".
 
-      O tom deve ser elegante, feminino e premium.
-      RESPONDA APENAS O JSON: {"name": "...", "category": "...", "description": "..."}`
+      JSON OUTPUT:
+      {"name": "Nome Curto e Impactante", "category": "CATEGORIA", "description": "3 frases magnéticas e diferentes de tudo."}`
     };
 
     let result;
     const generationConfig = {
-      temperature: 0.5, // 🚀 Aumentado para mais criatividade e variedade
-      topP: 0.95,
+      temperature: 0.9, // 🚀 Máxima criatividade para evitar repetições
+      topP: 1,
       maxOutputTokens: 1000,
       responseMimeType: "application/json",
     };
 
     try {
-      // 🚀 MOTOR DE ELITE: gemini-pro-latest
-      const modelPro = genAI.getGenerativeModel({ ...modelParams, model: "gemini-pro-latest" });
-      result = await tryGenerate(modelPro, {
+      // 🚀 AGORA O FLASH É O PRINCIPAL (Velocidade Máxima)
+      const modelFlash = genAI.getGenerativeModel({ ...modelParams, model: "gemini-flash-latest" });
+      result = await tryGenerate(modelFlash, {
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
         generationConfig,
         safetySettings
       });
     } catch (e) {
-      console.error("Falha no Pro, tentando Flash...");
-      const modelFlash = genAI.getGenerativeModel({ ...modelParams, model: "gemini-flash-latest" });
-      result = await tryGenerate(modelFlash, {
+      console.error("Flash falhou, tentando Pro como backup...");
+      const modelPro = genAI.getGenerativeModel({ ...modelParams, model: "gemini-pro-latest" });
+      result = await tryGenerate(modelPro, {
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
         generationConfig,
         safetySettings
