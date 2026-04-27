@@ -69,9 +69,9 @@ export async function POST(req: Request) {
     };
 
     try {
-      // 🚀 MOTOR 2.0 EXPERIMENTAL (Mais estável para chaves novas)
-      const modelExp = genAI.getGenerativeModel({ ...modelParams, model: "gemini-2.0-flash-exp" });
-      result = await tryGenerate(modelExp, {
+      // 🚀 MOTOR EXCLUSIVO: gemini-2.5-flash (Disponível na sua chave paga!)
+      const model25 = genAI.getGenerativeModel({ ...modelParams, model: "gemini-2.5-flash" });
+      result = await tryGenerate(model25, {
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
         generationConfig: {
           ...generationConfig,
@@ -80,9 +80,9 @@ export async function POST(req: Request) {
         safetySettings
       });
     } catch (e) {
-      console.error("Falha no 2.0 Exp, tentando Pro...");
-      const modelPro = genAI.getGenerativeModel({ ...modelParams, model: "gemini-2.0-pro-exp-02-05" });
-      result = await tryGenerate(modelPro, {
+      console.error("Falha no 2.5 Flash, tentando 2.5 Pro...");
+      const model25pro = genAI.getGenerativeModel({ ...modelParams, model: "gemini-2.5-pro" });
+      result = await tryGenerate(model25pro, {
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
         generationConfig,
         safetySettings
