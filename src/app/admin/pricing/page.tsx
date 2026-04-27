@@ -62,8 +62,13 @@ export default function PricingPage() {
     let vernizCost = 0
 
     if (item.material === 'OURO') {
-      const costPerMil = (Number(item.goldPrice) || 0) + (Number(item.labor) || 0)
-      platingCost = (Number(item.mils) || 0) * costPerMil * weightInKg
+      // 💎 NEXUS: Cálculo Industrial Preciso
+      // Custo do Ouro = (milésimos * cotação do ouro * peso em KG)
+      // Custo da Mão de Obra = (mão de obra por grama * peso em gramas)
+      const weightInG = Number(item.weightG) || 0
+      const goldCost = (Number(item.mils) || 0) * (Number(item.goldPrice) || 0) * weightInKg
+      const laborCost = (Number(item.labor) || 0) * weightInG
+      platingCost = goldCost + laborCost
     } else {
       platingCost = (Number(item.goldPrice) || 0) * weightInKg
     }
