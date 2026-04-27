@@ -25,7 +25,7 @@ interface Branding {
 
 function HomeContent() {
   const searchParams = useSearchParams()
-  const [allProducts, setAllProducts] = useState<CartItem[]>([])
+  const [allProducts, setAllProducts] = useState<any[]>([])
   const [dbCategories, setDbCategories] = useState<Category[]>([])
   const [branding, setBranding] = useState<Branding | null>(null)
   const [loading, setLoading] = useState(true)
@@ -36,10 +36,8 @@ function HomeContent() {
   const supabase = createClient()
   const router = useRouter()
 
-  // 1. CARREGAMENTO INICIAL (OTIMIZADO)
   useEffect(() => {
     async function loadInitialData() {
-      if (allProducts.length > 0) return
       setLoading(true)
       
       try {
@@ -69,11 +67,11 @@ function HomeContent() {
         const [catsRes, prodsRes] = await Promise.all([
           supabase.from('categories').select('id, name').eq('user_id', currentUserId).order('name'),
           supabase.from('products')
-            .select('id, name, price, image_url, category_id, stock_quantity, categories!inner(name)')
+            .select('id, name, price, image_url, category_id, stock_quantity')
             .eq('user_id', currentUserId)
             .gt('stock_quantity', 0)
             .order('created_at', { ascending: false })
-            .limit(40)
+            .limit(100)
         ])
 
         setDbCategories(catsRes.data || [])
@@ -99,23 +97,35 @@ function HomeContent() {
     }
 
     checkAccess()
-  }, [isPublicCatalog, storeSlug, router, supabase, allProducts.length])
+  }, [isPublicCatalog, storeSlug, router, supabase])
 
-  // 2. SCROLL PARA O TOPO QUANDO MUDAR CATEGORIA
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [activeCategory])
 
-  // 3. FILTRAGEM ULTRA-RÁPIDA (Em memória, sem loading)
   const displayedProducts = useMemo(() => {
+    if (!allProducts) return []
     if (activeCategory === 'Todos' || !activeCategory) {
       return allProducts
     }
-    return allProducts.filter(p => 
-      // @ts-ignore - categories é injetado pelo join !inner
-      p.categories?.name === activeCategory
-    )
-  }, [allProducts, activeCategory])
+    return allProducts.filter(p => {
+      const cat = dbCategories.find(c => c.id === p.category_id)
+      return cat?.name === activeCategory
+    })
+  }, [allProducts, activeCategory, dbCategories])
+
+  const installments = useMemo(() => {
+    try {
+      // @ts-ignore
+      if (branding?.installments) return parseInt(branding.installments.toString())
+      const parts = branding?.facebook?.split('|')
+      if (parts && parts[1]) {
+        const val = parseInt(parts[1])
+        return isNaN(val) ? 10 : val
+      }
+    } catch (e) {}
+    return 10
+  }, [branding])
 
   if (loading && allProducts.length === 0) {
     return (
@@ -126,49 +136,28 @@ function HomeContent() {
   }
 
   const categoryNames = ['Todos', ...dbCategories.map(c => c.name)]
-  
-  // 💎 NEXUS: Lógica de Parcelas Inteligente (Sincronizada com Carrinho)
-  const installments = useMemo(() => {
-    if (branding?.installments) return parseInt(branding.installments.toString())
-    const parts = branding?.facebook?.split('|')
-    if (parts && parts[1]) {
-      const val = parseInt(parts[1])
-      return isNaN(val) ? 10 : val
-    }
-    return 10
-  }, [branding])
-
   const storeParam = storeSlug ? `&loja=${storeSlug}` : ''
 
   return (
     <div className="flex flex-col w-full min-h-screen">
       <nav className="bg-white/80 backdrop-blur-md border-b border-brand-secondary/10 sticky top-[56px] md:top-[72px] z-40 shadow-sm">
         <div className="max-w-7xl mx-auto px-2 py-2 md:py-3 flex flex-wrap justify-center gap-2 md:gap-6 min-h-[40px] items-center">
-          {dbCategories.length > 0 ? (
-            categoryNames.map((cat) => (
-              <Link 
-                key={cat}
-                href={`/?catalogo=true&category=${cat === 'Todos' ? '' : cat}${storeParam}`}
-                className={`px-3 py-1.5 transition-all font-bold text-[9px] md:text-[10px] tracking-[0.1em] md:tracking-[0.2em] uppercase rounded-full border ${
-                  activeCategory === cat || (cat === 'Todos' && !activeCategory)
-                  ? "bg-brand-primary text-white border-brand-primary shadow-md" 
-                  : "text-brand-primary/70 hover:text-brand-primary bg-brand-secondary/5 border-brand-secondary/10"
-                }`}
-              >
-                {cat}
-              </Link>
-            ))
-          ) : (
-            <div className="flex items-center gap-3 px-4 py-1">
-              <span className="text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase text-brand-primary/40">
-                Coleções Exclusivas
-              </span>
-            </div>
-          )}
+          {categoryNames.map((cat) => (
+            <Link 
+              key={cat}
+              href={`/?catalogo=true&category=${cat === 'Todos' ? '' : cat}${storeParam}`}
+              className={`px-3 py-1.5 transition-all font-bold text-[9px] md:text-[10px] tracking-[0.1em] md:tracking-[0.2em] uppercase rounded-full border ${
+                activeCategory === cat || (cat === 'Todos' && !activeCategory)
+                ? "bg-brand-primary text-white border-brand-primary shadow-md" 
+                : "text-brand-primary/70 hover:text-brand-primary bg-brand-secondary/5 border-brand-secondary/10"
+              }`}
+            >
+              {cat}
+            </Link>
+          ))}
         </div>
       </nav>
 
-      {/* 🎀 BANNER DE TOPO DINÂMICO */}
       {branding?.facebook?.split('|')[2] && (
         <div className="w-full bg-brand-primary py-3 px-4 text-center">
           <p className="text-white text-[9px] md:text-[11px] font-black uppercase tracking-[0.3em]">
@@ -183,56 +172,39 @@ function HomeContent() {
             {activeCategory === 'Todos' ? (branding?.store_name || 'Coleção Completa') : activeCategory}
           </h2>
           <div className="w-12 h-[1px] bg-brand-secondary/30 mx-auto mb-2" />
-          <p className="text-brand-secondary text-[8px] md:text-[9px] font-bold tracking-[0.2em] uppercase opacity-60">
-            {displayedProducts.length} Itens Selecionados {branding?.store_name && `por ${branding.store_name}`}
-          </p>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 md:gap-x-10 gap-y-10 md:gap-y-20 px-1">
-          {displayedProducts.length > 0 ? (
-            displayedProducts.map((product, index) => (
-              <div key={product.id} className="group flex flex-col items-center">
-                <Link href={`/product?id=${product.id}&catalogo=true${storeParam}`} className="w-full">
-                  <div className="aspect-[4/5] w-full bg-white rounded-[40px] md:rounded-[64px] overflow-hidden mb-6 md:mb-10 shadow-[0_20px_60px_rgba(74,50,46,0.08)] border border-white relative transition-all duration-700">
-                    {product.image_url ? (
-                      <Image 
-                        src={product.image_url} 
-                        alt={product.name} 
-                        fill
-                        sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-                        className="object-cover group-hover:scale-110 transition-transform duration-1000"
-                        priority={index < 4}
-                        loading={index < 4 ? "eager" : "lazy"}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-brand-secondary/5">
-                        <Gem size={32} className="text-brand-secondary/20" />
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="px-4 text-center w-full mb-8">
-                    <h4 className="text-[10px] md:text-[13px] font-black tracking-[0.2em] md:tracking-[0.4em] uppercase text-brand-primary mb-2 w-full leading-relaxed">{product.name}</h4>
-                    <div className="flex flex-col gap-1 md:gap-3">
-                      <span className="text-[14px] md:text-[22px] font-bold text-brand-primary">
-                        R$ {product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </span>
-                      <p className="text-brand-secondary text-[8px] md:text-[10px] font-black tracking-widest uppercase opacity-60">
-                        {installments}x de R$ {(product.price / installments).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} sem juros
-                      </p>
+          {displayedProducts.map((product) => (
+            <div key={product.id} className="group flex flex-col items-center">
+              <Link href={`/product?id=${product.id}&catalogo=true${storeParam}`} className="w-full">
+                <div className="aspect-[4/5] w-full bg-white rounded-[40px] md:rounded-[64px] overflow-hidden mb-6 shadow-[0_20px_60px_rgba(74,50,46,0.08)] border border-white relative">
+                  {product.image_url ? (
+                    <Image src={product.image_url} alt={product.name} fill className="object-cover group-hover:scale-110 transition-transform duration-1000" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-brand-secondary/5">
+                      <Gem size={32} className="text-brand-secondary/20" />
                     </div>
-                  </div>
-                </Link>
-                <div className="w-full max-w-[140px] md:max-w-none px-2 md:px-6 flex flex-col items-center gap-4">
-                  <AddToCartButton product={product} />
+                  )}
                 </div>
+                
+                <div className="px-4 text-center w-full mb-8">
+                  <h4 className="text-[10px] md:text-[13px] font-black tracking-[0.2em] md:tracking-[0.4em] uppercase text-brand-primary mb-2 leading-relaxed">{product.name}</h4>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[14px] md:text-[22px] font-bold text-brand-primary">
+                      R$ {Number(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </span>
+                    <p className="text-brand-secondary text-[8px] md:text-[10px] font-black tracking-widest uppercase opacity-60">
+                      {installments}x de R$ {(Number(product.price) / installments).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                </div>
+              </Link>
+              <div className="w-full px-2 md:px-6">
+                <AddToCartButton product={product} />
               </div>
-            ))
-          ) : (
-            <div className="col-span-full py-20 text-center">
-              <p className="text-brand-primary/60 font-light tracking-widest uppercase">Nenhuma joia encontrada. 💎</p>
             </div>
-          )}
+          ))}
         </div>
       </div>
     </div>
