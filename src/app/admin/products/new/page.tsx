@@ -84,8 +84,8 @@ export default function NewProductPage() {
         body: JSON.stringify({ image: compressed })
       })
       const data = await response.json()
-      if (data.name) setName(String(data.name).toUpperCase())
-      if (data.description) setDescription(String(data.description).toUpperCase())
+      if (data.name) setName(String(data.name))
+      if (data.description) setDescription(String(data.description))
       if (data.category) {
         const aiCat = String(data.category).toUpperCase()
         const found = categories.find(c => c.name.toUpperCase().includes(aiCat) || aiCat.includes(c.name.toUpperCase()))
