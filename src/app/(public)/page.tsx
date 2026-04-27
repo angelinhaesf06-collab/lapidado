@@ -122,7 +122,18 @@ function HomeContent() {
   }
 
   const categoryNames = ['Todos', ...dbCategories.map(c => c.name)]
-  const installments = parseInt(branding?.facebook?.split('|')[1] || '10')
+  
+  // 💎 NEXUS: Lógica de Parcelas Inteligente (Sincronizada com Carrinho)
+  const installments = useMemo(() => {
+    if (branding?.installments) return parseInt(branding.installments.toString())
+    const parts = branding?.facebook?.split('|')
+    if (parts && parts[1]) {
+      const val = parseInt(parts[1])
+      return isNaN(val) ? 10 : val
+    }
+    return 10
+  }, [branding])
+
   const storeParam = storeSlug ? `&loja=${storeSlug}` : ''
 
   return (

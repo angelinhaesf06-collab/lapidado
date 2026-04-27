@@ -46,8 +46,17 @@ export default function CartPage() {
           if (cleanPhone && cleanPhone.length <= 11) cleanPhone = '55' + cleanPhone
           setStorePhone(cleanPhone)
         }
-        const parts = data.facebook?.split('|')
-        if (parts && parts[1]) setInstallments(parseInt(parts[1]))
+
+        // 💎 NEXUS: Lógica de Parcelas Inteligente
+        if (data.installments) {
+          setInstallments(parseInt(data.installments.toString()))
+        } else {
+          const parts = data.facebook?.split('|')
+          if (parts && parts[1]) {
+            const val = parseInt(parts[1])
+            if (!isNaN(val)) setInstallments(val)
+          }
+        }
       }
     }
     loadStoreData()
