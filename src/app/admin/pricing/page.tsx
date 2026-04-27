@@ -14,6 +14,7 @@ export default function PricingPage() {
   // 1. ESTADO DA CALCULADORA (Entrada Única)
   const [currentEntry, setCurrentEntry] = useState({
     name: '',
+    supplier: '',
     material: 'OURO',
     rawVal: 0,
     weightG: 0,
@@ -63,8 +64,6 @@ export default function PricingPage() {
 
     if (item.material === 'OURO') {
       // 💎 NEXUS: Cálculo Industrial Preciso
-      // Custo do Ouro = (milésimos * cotação do ouro * peso em KG)
-      // Custo da Mão de Obra = (mão de obra por grama * peso em gramas)
       const weightInG = Number(item.weightG) || 0
       const goldCost = (Number(item.mils) || 0) * (Number(item.goldPrice) || 0) * weightInKg
       const laborCost = (Number(item.labor) || 0) * weightInG
@@ -88,7 +87,7 @@ export default function PricingPage() {
     const res = calculateData(currentEntry)
     setAddedItems([...addedItems, { ...currentEntry, ...res, id: Date.now() }])
     
-    // Limpa apenas o necessário para a próxima entrada
+    // Limpa mantendo fornecedor e markup para agilizar
     setCurrentEntry(prev => ({
       ...prev,
       name: '',
@@ -107,6 +106,7 @@ export default function PricingPage() {
     
     const tableBody = addedItems.map(item => [
       item.name.toUpperCase(),
+      item.supplier?.toUpperCase() || '---',
       item.material,
       item.material === 'FOLHADO' ? '---' : `${item.weightG.toFixed(2)}g`,
       `R$ ${item.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
@@ -115,7 +115,7 @@ export default function PricingPage() {
 
     autoTable(doc, {
       startY: 40,
-      head: [['PEÇA', 'TIPO', 'PESO', 'CUSTO TOTAL', 'PREÇO VENDA']],
+      head: [['PEÇA', 'FORNECEDOR', 'TIPO', 'PESO', 'CUSTO TOTAL', 'PREÇO VENDA']],
       body: tableBody,
       theme: 'grid',
       headStyles: { fillColor: [74, 50, 46] }
@@ -159,7 +159,13 @@ export default function PricingPage() {
               value={currentEntry.name} 
               onChange={e => setCurrentEntry({...currentEntry, name: e.target.value.toUpperCase()})}
               className="flex-1 w-full bg-white border border-brand-primary/20 px-8 py-4 rounded-2xl font-black text-xs uppercase outline-none focus:ring-4 focus:ring-brand-primary/10 transition-all" 
-              placeholder="DIGITE O NOME OU REFERÊNCIA DA PEÇA..."/>
+              placeholder="NOME DA PEÇA / REF..."/>
+            <input 
+              type="text" 
+              value={currentEntry.supplier} 
+              onChange={e => setCurrentEntry({...currentEntry, supplier: e.target.value.toUpperCase()})}
+              className="w-full md:w-64 bg-white border border-brand-primary/20 px-8 py-4 rounded-2xl font-black text-xs uppercase outline-none focus:ring-4 focus:ring-brand-primary/10 transition-all" 
+              placeholder="FORNECEDOR..."/>
         </div>
 
         <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-start">
@@ -186,7 +192,7 @@ export default function PricingPage() {
                </div>
                {currentEntry.material === 'OURO' && (
                  <div className="space-y-1">
-                    <label className="text-[7px] font-black text-amber-800/40 uppercase ml-1">M.O. p/ Milésimo</label>
+                    <label className="text-[7px] font-black text-amber-800/40 uppercase ml-1">M.O. p/ Grama</label>
                     <input type="number" value={currentEntry.labor || ''} onChange={e => setCurrentEntry({...currentEntry, labor: parseFloat(e.target.value) || 0})} className="w-full p-3 rounded-xl bg-white border border-amber-200 font-black text-xs outline-none" placeholder="10.00"/>
                  </div>
                )}
@@ -256,7 +262,7 @@ export default function PricingPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-brand-secondary/5 border-b border-brand-secondary/10">
-                  <th className="p-6 text-[8px] font-black uppercase text-brand-secondary/40 tracking-[0.2em]">Joia / Identificação</th>
+                  <th className="p-6 text-[8px] font-black uppercase text-brand-secondary/40 tracking-[0.2em]">Joia / Fornecedor</th>
                   <th className="p-6 text-[8px] font-black uppercase text-brand-secondary/40 tracking-[0.2em]">Tipo / Processo</th>
                   <th className="p-6 text-[8px] font-black uppercase text-brand-secondary/40 tracking-[0.2em]">Peso/Mils</th>
                   <th className="p-6 text-[8px] font-black uppercase text-brand-secondary/40 tracking-[0.2em]">Custo Total</th>
