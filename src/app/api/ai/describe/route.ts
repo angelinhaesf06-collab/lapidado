@@ -69,9 +69,9 @@ export async function POST(req: Request) {
     };
 
     try {
-      // 🚀 MOTOR EXCLUSIVO: gemini-2.5-flash (Disponível na sua chave paga!)
-      const model25 = genAI.getGenerativeModel({ ...modelParams, model: "gemini-2.5-flash" });
-      result = await tryGenerate(model25, {
+      // 🚀 MOTOR ESTÁVEL: gemini-1.5-flash (Alta velocidade e precisão)
+      const model15 = genAI.getGenerativeModel({ ...modelParams, model: "gemini-1.5-flash" });
+      result = await tryGenerate(model15, {
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
         generationConfig: {
           ...generationConfig,
@@ -80,9 +80,9 @@ export async function POST(req: Request) {
         safetySettings
       });
     } catch (e) {
-      console.error("Falha no 2.5 Flash, tentando 2.5 Pro...");
-      const model25pro = genAI.getGenerativeModel({ ...modelParams, model: "gemini-2.5-pro" });
-      result = await tryGenerate(model25pro, {
+      console.error("Falha no 1.5 Flash, tentando 1.5 Pro...");
+      const model15pro = genAI.getGenerativeModel({ ...modelParams, model: "gemini-1.5-pro" });
+      result = await tryGenerate(model15pro, {
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
         generationConfig,
         safetySettings
