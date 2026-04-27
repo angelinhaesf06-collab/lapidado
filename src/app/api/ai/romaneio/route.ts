@@ -21,23 +21,23 @@ export async function POST(req: Request) {
     const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
 
     const genAI = new GoogleGenerativeAI(geminiKey);
-    const systemInstruction = "Você é um robô extrator. Retorne APENAS um array JSON: [{\"name\": \"...\", \"quantity\": 0, \"unitCost\": 0.0}]";
+    const systemInstruction = "Você é um robô extrator de dados de joias. Retorne APENAS o array JSON: [{\"name\": \"...\", \"quantity\": 0, \"unitCost\": 0.0}]. Não escreva textos explicativos.";
 
     let result;
     try {
-      // 🚀 1ª OPÇÃO: Gemini 2.5 Flash
-      const model25 = genAI.getGenerativeModel({ model: "gemini-2.5-flash", systemInstruction });
-      result = await model25.generateContent({
+      // 🚀 MOTOR 2.0 FLASH
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash", systemInstruction });
+      result = await model.generateContent({
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
-        generationConfig: { maxOutputTokens: 800, temperature: 0.1 }
+        generationConfig: { maxOutputTokens: 1000, temperature: 0.1 }
       });
     } catch (e) {
-      console.error("Gemini 2.5 Flash falhou no romaneio, tentando Pro...");
-      // 🚀 2ª OPÇÃO: Gemini 2.5 Pro
-      const model25pro = genAI.getGenerativeModel({ model: "gemini-2.5-pro", systemInstruction });
-      result = await model25pro.generateContent({
+      console.error("Gemini 2.0 Flash falhou, tentando Pro...");
+      // 🚀 BACKUP 2.0 PRO
+      const modelPro = genAI.getGenerativeModel({ model: "gemini-2.0-pro", systemInstruction });
+      result = await modelPro.generateContent({
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
-        generationConfig: { maxOutputTokens: 800, temperature: 0.1 }
+        generationConfig: { maxOutputTokens: 1000, temperature: 0.1 }
       });
     }
 
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
        return NextResponse.json(JSON.parse(jsonMatch[0]));
     }
     
-    throw new Error("A IA não gerou a lista.");
+    throw new Error("A IA não conseguiu ler o romaneio.");
 
   } catch (error: any) {
     return NextResponse.json({ error: "ERRO_IA_ROMANEIO", details: error.message }, { status: 500 });

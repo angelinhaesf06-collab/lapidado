@@ -69,18 +69,17 @@ export async function POST(req: Request) {
     };
 
     try {
-      // 🚀 1ª OPÇÃO: Gemini 2.5 Flash
-      const model25 = genAI.getGenerativeModel({ ...modelParams, model: "gemini-2.5-flash" });
-      result = await tryGenerate(model25, {
+      // 🚀 MOTOR 2.0: Versão de Alta Performance
+      const model20 = genAI.getGenerativeModel({ ...modelParams, model: "gemini-2.0-flash" });
+      result = await tryGenerate(model20, {
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
         generationConfig,
         safetySettings
       });
     } catch (e) {
-      console.error("Gemini 2.5 Flash falhou, tentando Pro...");
-      // 🚀 2ª OPÇÃO: Gemini 2.5 Pro
-      const model25pro = genAI.getGenerativeModel({ ...modelParams, model: "gemini-2.5-pro" });
-      result = await tryGenerate(model25pro, {
+      console.error("Falha no Gemini 2.0, tentando Pro...");
+      const model20pro = genAI.getGenerativeModel({ ...modelParams, model: "gemini-2.0-pro" });
+      result = await tryGenerate(model20pro, {
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
         generationConfig,
         safetySettings
@@ -90,28 +89,39 @@ export async function POST(req: Request) {
     const response = await result.response;
     let aiText = response.text().trim();
     
-    // 💎 NEXUS: Limpeza Ultra-Resiliente para evitar a palavra "json"
-    aiText = aiText.replace(/```json/gi, '').replace(/```/g, '').replace(/JSON/gi, '').replace(/Aqui está o/gi, '').trim();
-    
-    // Se a resposta começar com texto antes do { tenta pegar só o que está entre { }
+    // 💎 LIMPEZA RADICAL NEXUS: Remove qualquer menção a markdown ou palavras técnicas
     const jsonMatch = aiText.match(/\{[\s\S]*\}/);
-    if (jsonMatch) aiText = jsonMatch[0];
+    if (jsonMatch) {
+      aiText = jsonMatch[0];
+    }
 
     try {
       const rawJson = JSON.parse(aiText);
-      // 💎 NEXUS: Normalização para letras maiúsculas e sem resíduos
+      
+      // 💎 FILTRO DE PUREZA: Garante que NENHUMA palavra técnica vaze para o nome ou descrição
+      const clean = (txt: string) => {
+        if (!txt) return "";
+        return txt.toString()
+          .replace(/json/gi, "")
+          .replace(/```/gi, "")
+          .replace(/Aqui está/gi, "")
+          .replace(/Joia Identificada/gi, "")
+          .replace(/\[|\]/g, "")
+          .trim()
+          .toUpperCase();
+      };
+
       return NextResponse.json({
-        name: (rawJson.name || rawJson.NAME || rawJson.Nome || "JOIA LAPIDADA").toUpperCase().replace('JSON', '').trim(),
-        category: (rawJson.category || rawJson.CATEGORY || rawJson.Categoria || "OUTROS").toUpperCase().replace('JSON', '').trim(),
-        description: (rawJson.description || rawJson.DESCRIPTION || rawJson.Descrição || "").toUpperCase().replace('JSON', '').trim()
+        name: clean(rawJson.name || rawJson.NAME || "JOIA EXCLUSIVA"),
+        category: clean(rawJson.category || rawJson.CATEGORY || "OUTROS"),
+        description: clean(rawJson.description || rawJson.DESCRIPTION || "")
       });
     } catch (e) {
-      console.error("Erro crítico no JSON:", e, "Texto bruto:", aiText);
-      // Se ainda assim falhar, tenta extrair o que for possível do texto
+      console.error("Erro no processamento da joia:", e);
       return NextResponse.json({
-        name: "JOIA ANALISADA",
+        name: "JOIA LAPIDADA",
         category: "OUTROS",
-        description: aiText.substring(0, 500).toUpperCase()
+        description: "PEÇA EXCLUSIVA COM BANHO DE ALTA QUALIDADE E DESIGN REFINADO."
       });
     }
 
