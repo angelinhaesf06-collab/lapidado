@@ -311,9 +311,14 @@ const loadProducts = useCallback(async () => {
           <p className="text-[10px] font-black tracking-[0.3em] text-brand-secondary/60 uppercase">Controle Financeiro 💎</p>
         </div>
 
-        <div className="flex justify-center mb-10 gap-4">
-          <div className="bg-white px-6 py-3 rounded-full border border-brand-secondary/10 shadow-sm flex items-center gap-4">
-            <input type="month" value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="bg-transparent border-none text-xs font-black text-brand-primary uppercase outline-none" />
+        <div className="flex justify-center mb-10 px-4">
+          <div className="bg-white w-full max-w-[280px] px-4 py-3 rounded-full border border-brand-secondary/10 shadow-sm flex items-center justify-center gap-2">
+            <input 
+              type="month" 
+              value={selectedMonth} 
+              onChange={(e) => setSelectedMonth(e.target.value)} 
+              className="bg-transparent border-none text-[10px] md:text-xs font-black text-brand-primary uppercase outline-none w-full text-center" 
+            />
           </div>
         </div>
 
