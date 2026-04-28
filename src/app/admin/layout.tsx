@@ -51,9 +51,7 @@ export default function AdminLayout({
   const isBlocked = useMemo(() => {
     // 🔓 DESATIVADO TEMPORARIAMENTE PARA DESENVOLVIMENTO
     return false;
-    
-    if (!subscription) return false;
-    if (subscription.status === 'active') return false;
+  }, [subscription]);
 
   const handleSubscribe = async (plan: 'monthly' | 'yearly') => {
     setLoading(true)
