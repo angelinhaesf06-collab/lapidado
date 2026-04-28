@@ -48,8 +48,8 @@ export default function BrandingPage() {
           setInstallments(inst || '10')
           setTopBanner(banner || '')
           setBusinessName(data.store_name || bName || '')
-          setTiktok(data.website || '') 
-          setWarrantyTime(data.tiktok || '') 
+          setTiktok(data.tiktok || '') 
+          setWarrantyTime(data.warranty_time || '') 
           setPrimaryColor(data.primary_color || '#4a322e')
           setSecondaryColor(data.secondary_color || '#c99090')
           setLogo(data.logo_url)
@@ -116,8 +116,8 @@ export default function BrandingPage() {
             store_name: businessName.toUpperCase(),
             slug: newSlug,
             facebook: `${tagline.toUpperCase()}|${installments}|${topBanner.toUpperCase()}|${businessName}`,
-            tiktok: warrantyTime.toUpperCase(), 
-            website: tagline.toUpperCase(), // Restaura para a vitrine ler aqui também
+            tiktok: tiktok, 
+            website: tagline.toUpperCase(), 
             instagram: instagram,
             primary_color: primaryColor,
             secondary_color: secondaryColor,
@@ -125,7 +125,8 @@ export default function BrandingPage() {
             phone: phone,
             address: address,
             tax_id: taxId,
-            state_registration: stateRegistration
+            state_registration: stateRegistration,
+            warranty_time: warrantyTime.toUpperCase()
           }
         })
       })
