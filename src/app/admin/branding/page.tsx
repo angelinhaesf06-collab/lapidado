@@ -142,98 +142,98 @@ export default function BrandingPage() {
   if (loading) return <div className="flex justify-center p-20"><Loader2 className="animate-spin text-brand-secondary" size={32} /></div>
 
   return (
-    <div className="max-w-4xl mx-auto py-8 px-6 pb-24">
-      <div className="text-center mb-10">
-        <h1 className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.4em] mb-2">ESPAÇO DA EMPRESÁRIA</h1>
-        <h2 className="text-2xl md:text-3xl font-bold text-brand-primary uppercase tracking-tight">DNA da Marca</h2>
+    <div className="max-w-4xl mx-auto py-4 md:py-8 px-4 md:px-6 pb-24">
+      <div className="text-center mb-8 md:mb-10">
+        <h1 className="text-[8px] md:text-[10px] font-black text-brand-secondary uppercase tracking-[0.4em] mb-2">ESPAÇO DA EMPRESÁRIA</h1>
+        <h2 className="text-xl md:text-3xl font-bold text-brand-primary uppercase tracking-tight">DNA da Marca</h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="bg-white p-8 rounded-[40px] border border-brand-secondary/10 shadow-sm space-y-6">
-          <div className="flex items-center gap-3 mb-2"><Palette className="text-brand-secondary" size={18} /><h3 className="text-xs font-bold text-brand-primary uppercase tracking-wider">Identidade Visual</h3></div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+        <div className="bg-white p-6 md:p-8 rounded-[30px] md:rounded-[40px] border border-brand-secondary/10 shadow-sm space-y-5 md:space-y-6">
+          <div className="flex items-center gap-3 mb-2"><Palette className="text-brand-secondary" size={16} /><h3 className="text-[10px] md:text-xs font-bold text-brand-primary uppercase tracking-wider">Identidade Visual</h3></div>
           
           <div className="flex flex-col items-center gap-4">
-            <div className="relative w-28 h-28 rounded-full overflow-hidden border-2 border-dashed border-brand-secondary/20 flex items-center justify-center bg-brand-secondary/5 group">
+            <div className="relative w-24 h-28 md:w-28 md:h-28 rounded-full overflow-hidden border-2 border-dashed border-brand-secondary/20 flex items-center justify-center bg-brand-secondary/5 group">
               {logo ? <Image src={logo} alt="LOGO" fill className="object-contain p-3" /> : <Camera size={24} className="text-brand-secondary/30" />}
               <label className="absolute inset-0 cursor-pointer flex items-center justify-center bg-black/0 hover:bg-black/5 transition-all">
                 <input type="file" className="hidden" onChange={handleLogoUpload} accept="image/*" />
               </label>
             </div>
-            <p className="text-[9px] font-bold text-brand-secondary/40 uppercase tracking-widest">Clique para alterar logo</p>
+            <p className="text-[8px] font-bold text-brand-secondary/40 uppercase tracking-widest text-center">Clique para alterar logo</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-brand-secondary uppercase block ml-1">Cor Primária</label>
-              <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="w-full h-12 rounded-2xl cursor-pointer border-0 shadow-sm" />
+          <div className="grid grid-cols-2 gap-3 md:gap-4">
+            <div className="space-y-1.5">
+              <label className="text-[9px] font-black text-brand-secondary uppercase block ml-1">Cor Primária</label>
+              <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="w-full h-10 md:h-12 rounded-xl md:rounded-2xl cursor-pointer border-0 shadow-sm" />
             </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-brand-secondary uppercase block ml-1">Cor Secundária</label>
-              <input type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} className="w-full h-12 rounded-2xl cursor-pointer border-0 shadow-sm" />
+            <div className="space-y-1.5">
+              <label className="text-[9px] font-black text-brand-secondary uppercase block ml-1">Cor Secundária</label>
+              <input type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} className="w-full h-10 md:h-12 rounded-xl md:rounded-2xl cursor-pointer border-0 shadow-sm" />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-black text-brand-secondary uppercase block ml-1">Nome da Loja</label>
-            <input type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-brand-secondary/5 text-sm font-bold text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all" />
+          <div className="space-y-1.5">
+            <label className="text-[9px] font-black text-brand-secondary uppercase block ml-1">Nome da Loja</label>
+            <input type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} className="w-full px-4 py-3 md:py-4 rounded-xl md:rounded-2xl bg-brand-secondary/5 text-sm font-bold text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all" />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-black text-brand-secondary uppercase block ml-1">Frase de Impacto (Slogan)</label>
-            <input type="text" value={tagline} onChange={(e) => setTagline(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-brand-secondary/5 text-sm font-medium text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all" />
+          <div className="space-y-1.5">
+            <label className="text-[9px] font-black text-brand-secondary uppercase block ml-1">Frase de Impacto (Slogan)</label>
+            <input type="text" value={tagline} onChange={(e) => setTagline(e.target.value)} className="w-full px-4 py-3 md:py-4 rounded-xl md:rounded-2xl bg-brand-secondary/5 text-sm font-medium text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all" />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-black text-brand-secondary uppercase block ml-1">Frase de Topo da Vitrine (Banner)</label>
-            <input type="text" value={topBanner} onChange={(e) => setTopBanner(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-brand-secondary/5 text-sm font-medium text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all" />
+          <div className="space-y-1.5">
+            <label className="text-[9px] font-black text-brand-secondary uppercase block ml-1">Frase de Topo da Vitrine</label>
+            <input type="text" value={topBanner} onChange={(e) => setTopBanner(e.target.value)} className="w-full px-4 py-3 md:py-4 rounded-xl md:rounded-2xl bg-brand-secondary/5 text-sm font-medium text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all" />
           </div>
         </div>
 
-        <div className="bg-white p-8 rounded-[40px] border border-brand-secondary/10 shadow-sm space-y-6">
-          <div className="flex items-center gap-3 mb-2"><Phone className="text-brand-secondary" size={18} /><h3 className="text-xs font-bold text-brand-primary uppercase tracking-wider">Dados e Contatos</h3></div>
+        <div className="bg-white p-6 md:p-8 rounded-[30px] md:rounded-[40px] border border-brand-secondary/10 shadow-sm space-y-5 md:space-y-6">
+          <div className="flex items-center gap-3 mb-2"><Phone className="text-brand-secondary" size={16} /><h3 className="text-[10px] md:text-xs font-bold text-brand-primary uppercase tracking-wider">Dados e Contatos</h3></div>
 
           <div className="space-y-4">
             <div className="space-y-1">
-               <label className="text-[10px] font-black text-brand-secondary uppercase ml-1">WhatsApp da Loja</label>
-               <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(00) 00000-0000" className="w-full px-5 py-4 rounded-2xl bg-brand-secondary/5 text-sm outline-none" />
+               <label className="text-[9px] font-black text-brand-secondary uppercase ml-1">WhatsApp da Loja</label>
+               <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(00) 00000-0000" className="w-full px-4 py-3 md:py-4 rounded-xl md:rounded-2xl bg-brand-secondary/5 text-sm outline-none" />
             </div>
             
             <div className="space-y-1">
-               <label className="text-[10px] font-black text-brand-secondary uppercase ml-1">Endereço Físico</label>
-               <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-brand-secondary/5 text-sm outline-none" />
+               <label className="text-[9px] font-black text-brand-secondary uppercase ml-1">Endereço Físico</label>
+               <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} className="w-full px-4 py-3 md:py-4 rounded-xl md:rounded-2xl bg-brand-secondary/5 text-sm outline-none" />
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 xs:grid-cols-2 gap-3 md:gap-4">
               <div className="space-y-1">
-                <label className="text-[10px] font-black text-brand-secondary uppercase ml-1">CNPJ ou CPF</label>
-                <input type="text" value={taxId} onChange={(e) => setTaxId(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-brand-primary/5 text-sm outline-none font-bold" />
+                <label className="text-[9px] font-black text-brand-secondary uppercase ml-1">CNPJ ou CPF</label>
+                <input type="text" value={taxId} onChange={(e) => setTaxId(e.target.value)} className="w-full px-4 py-3 md:py-4 rounded-xl md:rounded-2xl bg-brand-primary/5 text-sm outline-none font-bold" />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-black text-brand-secondary uppercase ml-1">I.E. (Opcional)</label>
-                <input type="text" value={stateRegistration} onChange={(e) => setStateRegistration(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-brand-primary/5 text-sm outline-none font-bold" />
+                <label className="text-[9px] font-black text-brand-secondary uppercase ml-1">I.E. (Opcional)</label>
+                <input type="text" value={stateRegistration} onChange={(e) => setStateRegistration(e.target.value)} className="w-full px-4 py-3 md:py-4 rounded-xl md:rounded-2xl bg-brand-primary/5 text-sm outline-none font-bold" />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 pt-2">
+            <div className="grid grid-cols-2 gap-3 md:gap-4 pt-1 md:pt-2">
                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-brand-secondary uppercase ml-1">Instagram</label>
-                  <input type="text" value={instagram} onChange={(e) => setInstagram(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-brand-secondary/5 text-sm outline-none" />
+                  <label className="text-[9px] font-black text-brand-secondary uppercase ml-1">Instagram</label>
+                  <input type="text" value={instagram} onChange={(e) => setInstagram(e.target.value)} className="w-full px-4 py-3 md:py-4 rounded-xl md:rounded-2xl bg-brand-secondary/5 text-sm outline-none" />
                </div>
                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-brand-secondary uppercase ml-1">TikTok</label>
-                  <input type="text" value={tiktok} onChange={(e) => setTiktok(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-brand-secondary/5 text-sm outline-none" />
+                  <label className="text-[9px] font-black text-brand-secondary uppercase ml-1">TikTok</label>
+                  <input type="text" value={tiktok} onChange={(e) => setTiktok(e.target.value)} className="w-full px-4 py-3 md:py-4 rounded-xl md:rounded-2xl bg-brand-secondary/5 text-sm outline-none" />
                </div>
             </div>
           </div>
 
-          <div className="pt-4 border-t border-brand-secondary/10 flex items-center justify-between gap-4">
-            <div className="flex-1 space-y-2">
-               <label className="text-[10px] font-black text-brand-secondary uppercase block ml-1 text-center">Garantia das Joias</label>
-               <input type="text" value={warrantyTime} onChange={(e) => setWarrantyTime(e.target.value.toUpperCase())} className="w-full px-4 py-4 rounded-2xl bg-brand-secondary text-white text-xs font-black text-center outline-none shadow-md" />
+          <div className="pt-4 border-t border-brand-secondary/10 flex flex-col xs:flex-row items-center justify-between gap-4">
+            <div className="w-full xs:flex-1 space-y-2">
+               <label className="text-[9px] font-black text-brand-secondary uppercase block ml-1 text-center">Garantia das Joias</label>
+               <input type="text" value={warrantyTime} onChange={(e) => setWarrantyTime(e.target.value.toUpperCase())} className="w-full px-4 py-3 md:py-4 rounded-xl md:rounded-2xl bg-brand-secondary text-white text-[10px] md:text-xs font-black text-center outline-none shadow-md" />
             </div>
-            <div className="flex-1 space-y-2">
-               <label className="text-[10px] font-black text-brand-secondary uppercase block ml-1 text-center">Parcelamento Máx</label>
-               <select value={installments} onChange={(e) => setInstallments(e.target.value)} className="w-full px-4 py-4 rounded-2xl bg-brand-primary text-white text-xs font-black text-center outline-none shadow-md appearance-none">
+            <div className="w-full xs:flex-1 space-y-2">
+               <label className="text-[9px] font-black text-brand-secondary uppercase block ml-1 text-center">Parcelamento Máx</label>
+               <select value={installments} onChange={(e) => setInstallments(e.target.value)} className="w-full px-4 py-3 md:py-4 rounded-xl md:rounded-2xl bg-brand-primary text-white text-[10px] md:text-xs font-black text-center outline-none shadow-md appearance-none">
                  {[1,2,3,4,5,6,8,10,12].map(n => <option key={n} value={n} className="text-brand-primary bg-white">{n}X SEM JUROS</option>)}
                </select>
             </div>
@@ -241,9 +241,9 @@ export default function BrandingPage() {
         </div>
       </div>
 
-      <div className="flex justify-center mt-12">
-        <button onClick={handleSave} disabled={saving} className="w-full max-w-sm py-5 rounded-[25px] bg-brand-primary text-white text-xs font-black uppercase tracking-[0.2em] shadow-2xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50">
-          {saving ? <Loader2 className="animate-spin" size={20} /> : <><Gem size={20} /> SALVAR IDENTIDADE DA MARCA</>}
+      <div className="flex justify-center mt-10 md:mt-12">
+        <button onClick={handleSave} disabled={saving} className="w-full max-w-sm py-4 md:py-5 rounded-2xl md:rounded-[25px] bg-brand-primary text-white text-[10px] md:text-xs font-black uppercase tracking-[0.2em] shadow-xl md:shadow-2xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50">
+          {saving ? <Loader2 className="animate-spin" size={18} /> : <><Gem size={18} /> SALVAR IDENTIDADE DA MARCA</>}
         </button>
       </div>
     </div>
