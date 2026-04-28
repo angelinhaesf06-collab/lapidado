@@ -135,11 +135,7 @@ function HomeContent() {
   }, [branding])
 
   if (loading && allProducts.length === 0) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="animate-spin text-brand-secondary" size={40} />
-      </div>
-    )
+    return null; // Remove a tela de carregamento para ir direto para a vitrine
   }
 
   const categoryNames = ['Todos', ...dbCategories.map(c => c.name)]
@@ -175,16 +171,16 @@ function HomeContent() {
         </p>
       </header>
 
-      {/* 🏷️ BARRA DE CATEGORIAS STICKY */}
-      <nav className="bg-white/90 backdrop-blur-xl border-b border-brand-secondary/10 sticky top-0 z-40 shadow-sm overflow-x-auto scrollbar-hide">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex justify-start md:justify-center gap-2 md:gap-4 min-w-max items-center">
+      {/* 🏷️ BARRA DE CATEGORIAS EM GRADE (WRAP) */}
+      <nav className="bg-white/90 backdrop-blur-xl border-b border-brand-secondary/10 sticky top-0 z-40 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-wrap justify-center gap-2 md:gap-4 items-center">
           {categoryNames.map((cat) => (
             <Link 
               key={cat}
               href={`/?catalogo=true&category=${cat === 'Todos' ? '' : cat}${storeParam}`}
-              className={`px-5 py-2 transition-all duration-500 font-black text-[9px] md:text-[10px] tracking-[0.2em] uppercase rounded-full border ${
+              className={`px-4 py-2 transition-all duration-500 font-black text-[9px] md:text-[10px] tracking-[0.2em] uppercase rounded-full border ${
                 activeCategory === cat || (cat === 'Todos' && !activeCategory)
-                ? "bg-brand-primary text-white border-brand-primary shadow-xl scale-105" 
+                ? "bg-brand-primary text-white border-brand-primary shadow-lg" 
                 : "text-brand-primary/60 hover:text-brand-primary bg-white border-brand-secondary/10"
               }`}
             >
