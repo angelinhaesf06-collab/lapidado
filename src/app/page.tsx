@@ -142,11 +142,11 @@ function HomeContent() {
     <div className="flex flex-col w-full min-h-screen bg-[#fffcfc]">
       {/* 💎 HEADER LUXUOSO DA VITRINE */}
       <header className="w-full bg-white pt-12 pb-8 flex flex-col items-center gap-6 border-b border-brand-secondary/5">
-        {branding?.logo_url ? (
+        {branding?.logo_url && typeof branding.logo_url === 'string' ? (
           <div className="relative w-48 h-16 md:w-64 md:h-20 animate-fade-in">
             <Image 
               src={branding.logo_url} 
-              alt={branding.store_name} 
+              alt={branding.store_name || 'Logo'} 
               fill 
               className="object-contain"
               priority
