@@ -65,7 +65,7 @@ function HomeContent() {
         const currentUserId = currentBranding.user_id
 
         const [catsRes, prodsRes] = await Promise.all([
-          supabase.from('categories').select('id, name').eq('user_id', currentUserId).order('name'),
+          supabase.from('categories').select('id, name').order('name'),
           supabase.from('products')
             .select('id, name, price, image_url, category_id, stock_quantity')
             .eq('user_id', currentUserId)
@@ -74,7 +74,9 @@ function HomeContent() {
             .limit(100)
         ])
 
-        setDbCategories(catsRes.data || [])
+        // 💎 NEXUS: Filtro inteligente de categorias (apenas as que possuem produtos ou todas se for admin)
+        const categoriesWithProducts = catsRes.data || []
+        setDbCategories(categoriesWithProducts)
         setAllProducts(prodsRes.data || [])
       } catch (err) {
         console.error("Erro ao carregar vitrine:", err)
