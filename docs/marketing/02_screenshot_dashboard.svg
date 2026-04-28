@@ -1,0 +1,29 @@
+<svg width="1080" height="1920" viewBox="0 0 1080 1920" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1080" height="1920" fill="#FDF5F2"/>
+  <rect width="1080" height="600" fill="#E5B8AC" opacity="0.3"/>
+  
+  <text x="540" y="200" text-anchor="middle" fill="#4A322E" style="font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 60px; text-transform: uppercase;">CONTROLE DE LUXO</text>
+  <text x="540" y="280" text-anchor="middle" fill="#4A322E" opacity="0.7" style="font-family: 'Montserrat', sans-serif; font-weight: 300; font-size: 45px;">GESTÃO INTELIGENTE</text>
+
+  <!-- Mockup do Celular em Rose Gold -->
+  <g transform="translate(140, 450)">
+    <rect width="800" height="1400" rx="60" fill="white" stroke="#D49E8F" stroke-width="15"/>
+    
+    <!-- UI do App (Clara) -->
+    <rect x="40" y="100" width="720" height="200" rx="20" fill="#E5B8AC" opacity="0.1"/>
+    <text x="80" y="160" fill="#4A322E" style="font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 30px;">VALOR EM ESTOQUE</text>
+    <text x="80" y="230" fill="#4A322E" style="font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 60px;">R$ 45.800,00</text>
+    
+    <rect x="40" y="350" width="340" height="250" rx="20" fill="#F5D5CB"/>
+    <text x="70" y="410" fill="#4A322E" style="font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 25px;">LUCRO</text>
+    <text x="70" y="520" fill="#4A322E" style="font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 45px;">65%</text>
+
+    <rect x="420" y="350" width="340" height="250" rx="20" fill="#E5B8AC" opacity="0.2"/>
+    <text x="450" y="410" fill="#4A322E" style="font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 25px;">PEÇAS</text>
+    <text x="450" y="520" fill="#4A322E" style="font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 45px;">1.240</text>
+    
+    <!-- Botão de Cadastro Estilo Ícone -->
+    <rect x="40" y="1100" width="720" height="120" rx="60" fill="#4A322E"/>
+    <text x="400" y="1175" text-anchor="middle" fill="white" style="font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 35px; text-transform: uppercase;">CADASTRAR NOVA JOIA</text>
+  </g>
+</svg>

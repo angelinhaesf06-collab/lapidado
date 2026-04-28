@@ -1,0 +1,16 @@
+<svg width="1080" height="1920" viewBox="0 0 1080 1920" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1080" height="1920" fill="#FDF5F2"/>
+  <rect width="1080" height="600" fill="#25D366" opacity="0.1"/>
+  
+  <text x="540" y="200" text-anchor="middle" fill="#4A322E" style="font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 60px; text-transform: uppercase;">VENDA DIRETA</text>
+  <text x="540" y="280" text-anchor="middle" fill="#4A322E" opacity="0.7" style="font-family: 'Montserrat', sans-serif; font-weight: 300; font-size: 45px;">PEDIDOS PELO WHATSAPP</text>
+
+  <g transform="translate(140, 450)">
+    <rect width="800" height="1400" rx="60" fill="white" stroke="#25D366" stroke-width="15" stroke-opacity="0.3"/>
+    <rect x="60" y="1100" width="680" height="100" rx="50" fill="#25D366"/>
+    <text x="400" y="1165" text-anchor="middle" fill="white" style="font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 30px;">FECHAR PEDIDO AGORA</text>
+    
+    <rect x="60" y="200" width="680" height="300" rx="20" fill="#F9F9F9"/>
+    <text x="100" y="280" fill="#4A322E" style="font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 30px;">RESUMO DO PEDIDO</text>
+  </g>
+</svg>
