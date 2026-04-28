@@ -65,7 +65,7 @@ function HomeContent() {
         const currentUserId = currentBranding.user_id
 
         const [catsRes, prodsRes] = await Promise.all([
-          supabase.from('categories').select('id, name').order('name'),
+          supabase.from('categories').select('id, name').eq('user_id', currentUserId).order('name'),
           supabase.from('products')
             .select('id, name, price, image_url, category_id, stock_quantity')
             .eq('user_id', currentUserId)
@@ -74,9 +74,14 @@ function HomeContent() {
             .limit(100)
         ])
 
-        // 💎 NEXUS: Filtro inteligente de categorias (apenas as que possuem produtos ou todas se for admin)
-        const categoriesWithProducts = catsRes.data || []
-        setDbCategories(categoriesWithProducts)
+        // 💎 NEXUS: Fallback resiliente apenas se não encontrar nada para o lojista
+        let finalCategories = catsRes.data || []
+        if (finalCategories.length === 0) {
+          const { data: fallbackCats } = await supabase.from('categories').select('id, name').limit(20)
+          finalCategories = fallbackCats || []
+        }
+
+        setDbCategories(finalCategories)
         setAllProducts(prodsRes.data || [])
       } catch (err) {
         console.error("Erro ao carregar vitrine:", err)
