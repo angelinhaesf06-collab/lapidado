@@ -55,6 +55,39 @@ function EditProductContent() {
   const router = useRouter()
   const supabase = createClient()
 
+  // 💎 LÓGICA DE PRECIFICAÇÃO BIDIRECIONAL
+  const updateSalePrice = (cost: string, m: string) => {
+    const c = parseFloat(cost) || 0
+    const marginPercent = parseFloat(m) || 0
+    if (c > 0) {
+      setSalePrice((c + (c * (marginPercent / 100))).toFixed(2))
+    }
+  }
+
+  const updateMargin = (cost: string, sale: string) => {
+    const c = parseFloat(cost) || 0
+    const s = parseFloat(sale) || 0
+    if (c > 0 && s > 0) {
+      const m = ((s - c) / c) * 100
+      setMargin(m.toFixed(0))
+    }
+  }
+
+  const handleCostChange = (val: string) => {
+    setCostPrice(val)
+    updateSalePrice(val, margin)
+  }
+
+  const handleMarginChange = (val: string) => {
+    setMargin(val)
+    updateSalePrice(costPrice, val)
+  }
+
+  const handleSalePriceChange = (val: string) => {
+    setSalePrice(val)
+    updateMargin(costPrice, val)
+  }
+
   // Carregar dados iniciais
   useEffect(() => {
     if (!id) {
@@ -250,15 +283,15 @@ function EditProductContent() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.2em] mb-3 ml-2 block">CUSTO (R$)</label>
-              <input type="number" step="0.01" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} className="w-full px-8 py-5 rounded-3xl bg-brand-secondary/5 border-2 border-transparent focus:border-brand-secondary outline-none font-bold text-brand-primary" />
+              <input type="number" step="0.01" value={costPrice} onChange={(e) => handleCostChange(e.target.value)} className="w-full px-8 py-5 rounded-3xl bg-brand-secondary/5 border-2 border-transparent focus:border-brand-secondary outline-none font-bold text-brand-primary" />
               <div className="mt-2 relative">
-                <input type="number" value={margin} onChange={(e) => setMargin(e.target.value)} className="w-full p-2.5 rounded-xl bg-amber-50 text-[10px] font-black text-amber-700 text-center outline-none" />
+                <input type="number" value={margin} onChange={(e) => handleMarginChange(e.target.value)} className="w-full p-2.5 rounded-xl bg-amber-50 text-[10px] font-black text-amber-700 text-center outline-none" />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black text-amber-700/40">% MARGEM</span>
               </div>
             </div>
             <div className="p-8 rounded-[40px] bg-brand-secondary/5 border border-brand-secondary/10">
               <label className="text-[10px] font-black text-brand-primary uppercase tracking-widest mb-4 block ml-2">PREÇO DE VENDA (R$)</label>
-              <input type="number" step="0.01" value={salePrice} onChange={(e) => setSalePrice(e.target.value)} className="w-full px-8 py-6 rounded-[28px] bg-brand-primary text-white text-2xl font-black outline-none shadow-lg text-center" />
+              <input type="number" step="0.01" value={salePrice} onChange={(e) => handleSalePriceChange(e.target.value)} className="w-full px-8 py-6 rounded-[28px] bg-brand-primary text-white text-2xl font-black outline-none shadow-lg text-center" />
             </div>
           </div>
 

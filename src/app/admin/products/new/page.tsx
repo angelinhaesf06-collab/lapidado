@@ -41,11 +41,38 @@ export default function NewProductPage() {
 
   useEffect(() => { loadData() }, [loadData])
 
-  useEffect(() => {
-    const cost = parseFloat(costPrice) || 0
-    const m = parseFloat(margin) || 0
-    if (cost > 0) setSalePrice((cost + (cost * (m / 100))).toFixed(2))
-  }, [costPrice, margin])
+  // 💎 LÓGICA DE PRECIFICAÇÃO BIDIRECIONAL
+  const updateSalePrice = (cost: string, m: string) => {
+    const c = parseFloat(cost) || 0
+    const marginPercent = parseFloat(m) || 0
+    if (c > 0) {
+      setSalePrice((c + (c * (marginPercent / 100))).toFixed(2))
+    }
+  }
+
+  const updateMargin = (cost: string, sale: string) => {
+    const c = parseFloat(cost) || 0
+    const s = parseFloat(sale) || 0
+    if (c > 0 && s > 0) {
+      const m = ((s - c) / c) * 100
+      setMargin(m.toFixed(0))
+    }
+  }
+
+  const handleCostChange = (val: string) => {
+    setCostPrice(val)
+    updateSalePrice(val, margin)
+  }
+
+  const handleMarginChange = (val: string) => {
+    setMargin(val)
+    updateSalePrice(costPrice, val)
+  }
+
+  const handleSalePriceChange = (val: string) => {
+    setSalePrice(val)
+    updateMargin(costPrice, val)
+  }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -222,12 +249,12 @@ export default function NewProductPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-[8px] font-black text-brand-primary uppercase ml-1 tracking-widest">Custo R$</label>
-                <input type="number" placeholder="0,00" value={costPrice} onChange={e => setCostPrice(e.target.value)} className="w-full px-4 py-3.5 rounded-2xl bg-white border border-brand-primary/10 text-[11px] font-bold text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all" />
+                <input type="number" step="0.01" placeholder="0,00" value={costPrice} onChange={e => handleCostChange(e.target.value)} className="w-full px-4 py-3.5 rounded-2xl bg-white border border-brand-primary/10 text-[11px] font-bold text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all" />
               </div>
               <div className="space-y-1.5">
                 <label className="text-[8px] font-black text-amber-700 uppercase ml-1 tracking-widest">Margem %</label>
                 <div className="relative">
-                  <input type="number" placeholder="100" value={margin} onChange={e => setMargin(e.target.value)} className="w-full px-4 py-3.5 rounded-2xl bg-amber-50 border border-amber-200/50 text-[11px] font-black text-amber-700 text-center outline-none focus:ring-2 focus:ring-amber-200 transition-all" />
+                  <input type="number" placeholder="100" value={margin} onChange={e => handleMarginChange(e.target.value)} className="w-full px-4 py-3.5 rounded-2xl bg-amber-50 border border-amber-200/50 text-[11px] font-black text-amber-700 text-center outline-none focus:ring-2 focus:ring-amber-200 transition-all" />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-black text-amber-700/30">%</span>
                 </div>
               </div>
@@ -236,7 +263,7 @@ export default function NewProductPage() {
               <label className="text-[8px] font-black text-brand-primary uppercase ml-1 tracking-widest text-center block">Preço Final de Venda</label>
               <div className="relative">
                 <span className="absolute left-5 top-1/2 -translate-y-1/2 text-sm font-black text-white/40 italic">R$</span>
-                <input type="number" placeholder="0,00" value={salePrice} onChange={e => setSalePrice(e.target.value)} className="w-full p-5 md:p-6 rounded-2xl bg-brand-primary text-white text-3xl font-black text-center outline-none shadow-xl transition-all focus:scale-[1.02]" />
+                <input type="number" step="0.01" placeholder="0,00" value={salePrice} onChange={e => handleSalePriceChange(e.target.value)} className="w-full p-5 md:p-6 rounded-2xl bg-brand-primary text-white text-3xl font-black text-center outline-none shadow-xl transition-all focus:scale-[1.02]" />
               </div>
             </div>
           </div>
