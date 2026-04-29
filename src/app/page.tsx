@@ -6,7 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import AddToCartButton from '@/components/cart/add-to-cart-button'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Loader2, Gem, Instagram, MessageCircle, Music2 } from 'lucide-react'
+import { Loader2, Gem, Camera, MessageCircle, Music2 } from 'lucide-react'
 import { CartItem } from '@/lib/cart-context'
 
 interface Category {
@@ -20,6 +20,9 @@ interface Branding {
   slug: string
   store_name: string
   facebook?: string
+  instagram?: string
+  tiktok?: string
+  phone?: string
   [key: string]: unknown
 }
 
@@ -297,7 +300,7 @@ function HomeContent() {
                 rel="noopener noreferrer"
                 className="w-12 h-12 rounded-full bg-brand-primary/5 flex items-center justify-center text-brand-primary hover:bg-brand-primary hover:text-white transition-all duration-500 shadow-sm"
               >
-                <Instagram size={20} />
+                <Camera size={20} />
               </a>
             )}
             

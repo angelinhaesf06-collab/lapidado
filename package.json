@@ -20,7 +20,7 @@
     "dotenv": "^17.4.1",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.7",
-    "lucide-react": "^1.7.0",
+    "lucide-react": "^1.14.0",
     "next": "^16.2.3",
     "node-fetch": "^2.7.0",
     "node-vibrant": "^3.1.6",
