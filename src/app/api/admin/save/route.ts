@@ -54,39 +54,23 @@ export async function POST(req: Request) {
 
     let result;
     
-    // 🚀 LÓGICA INTELIGENTE PARA BRANDING: Sempre opera no registro do usuário
+    // 🚀 LÓGICA DEFINITIVA PARA BRANDING: 1 Registro por Usuário
     if (table === 'branding') {
       const userId = data.user_id;
       
-      // Busca se já existe um branding para este usuário específico
+      // Upsert baseado no user_id (Garante que cada marca tenha apenas uma config)
       const { data: existing } = await supabaseAdmin
         .from('branding')
         .select('id')
         .eq('user_id', userId)
         .maybeSingle();
-      
-      console.log('💎 NEXUS: VERIFICANDO BRANDING PARA USER:', userId, 'EXISTENTE:', existing?.id);
 
       if (existing?.id) {
-        // UPDATE no registro do usuário
+        console.log('💎 NEXUS: ATUALIZANDO BRANDING EXISTENTE:', existing.id);
         result = await supabaseAdmin.from(table).update(data).eq('id', existing.id).select();
       } else {
-        // Tenta buscar um registro órfão (sem user_id) para assumir o controle, se houver
-        const { data: orphaned } = await supabaseAdmin
-          .from('branding')
-          .select('id')
-          .is('user_id', null)
-          .limit(1)
-          .maybeSingle();
-
-        if (orphaned?.id) {
-          console.log('💎 NEXUS: ASSUMINDO REGISTRO ÓRFÃO:', orphaned.id);
-          result = await supabaseAdmin.from(table).update(data).eq('id', orphaned.id).select();
-        } else {
-          // Se não há nada, cria um novo
-          console.log('💎 NEXUS: CRIANDO NOVO REGISTRO DE BRANDING');
-          result = await supabaseAdmin.from(table).insert([data]).select();
-        }
+        console.log('💎 NEXUS: CRIANDO NOVO BRANDING PARA USER:', userId);
+        result = await supabaseAdmin.from(table).insert([data]).select();
       }
     } else if (id) {
       // UPDATE para tabelas com ID específico (Produtos, Categorias)

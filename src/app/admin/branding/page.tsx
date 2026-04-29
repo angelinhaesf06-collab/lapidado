@@ -102,6 +102,12 @@ export default function BrandingPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Sessão expirada.')
 
+      if (!businessName.trim()) {
+        alert('POR FAVOR, INFORME O NOME DA SUA LOJA. 💎')
+        setSaving(false)
+        return
+      }
+
       const newSlug = businessName.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
 
       const response = await fetch('/api/admin/save', {
