@@ -156,6 +156,8 @@ export default function NewProductPage() {
       }
 
       const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('SESSÃO EXPIRADA. FAÇA LOGIN NOVAMENTE.')
+
       const productData = {
         name: name.toUpperCase(),
         price: parseFloat(salePrice),
@@ -165,7 +167,7 @@ export default function NewProductPage() {
         description: description.toUpperCase(),
         material_finish: materialFinish,
         image_url: finalImageUrl,
-        user_id: user?.id
+        user_id: user.id
       }
       
       const saveRes = await fetch('/api/admin/save', {
