@@ -70,7 +70,8 @@ export async function POST(req: Request) {
         result = await supabaseAdmin.from(table).update(data).eq('id', existing.id).select();
       } else {
         console.log('💎 NEXUS: CRIANDO NOVO BRANDING PARA USER:', userId);
-        result = await supabaseAdmin.from(table).insert([data]).select();
+        // 💎 NEXUS: Geração explícita de UUID para evitar erro de default value
+        result = await supabaseAdmin.from(table).insert([{ ...data, id: crypto.randomUUID() }]).select();
       }
     } else if (id) {
       // UPDATE para tabelas com ID específico (Produtos, Categorias)

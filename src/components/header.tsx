@@ -109,10 +109,14 @@ export default function Header() {
           )}
 
           {/* SACOLA (DIREITA) */}
-          <div className="flex items-center z-10">
-            <Link href="/cart?catalogo=true" className="group flex items-center gap-2 p-1.5 md:p-3 rounded-xl bg-brand-primary/10 hover:bg-brand-primary transition-all text-brand-primary hover:text-white">
+          <div className="flex items-center justify-self-end">
+            <Link 
+              href="/cart?catalogo=true" 
+              className="group flex items-center gap-2 p-1.5 md:p-3 rounded-xl bg-brand-primary/10 hover:bg-brand-primary transition-all text-brand-primary hover:text-white"
+              aria-label={`Ver sacola de compras com ${itemCount} itens`}
+            >
                <div className="relative">
-                 <ShoppingBag className="w-5 h-5 md:w-6 md:h-6" strokeWidth={1.5} />
+                 <ShoppingBag className="w-5 h-5 md:w-6 md:h-6" strokeWidth={1.5} aria-hidden="true" />
                  {itemCount > 0 && (
                    <span className="absolute -top-2 -right-2 w-4 h-4 bg-brand-primary text-white text-[8px] flex items-center justify-center rounded-full border-2 border-white shadow-md font-black animate-bounce">
                      {itemCount}
@@ -121,6 +125,7 @@ export default function Header() {
                </div>
             </Link>
           </div>
+
         </div>
       </div>
     </header>
