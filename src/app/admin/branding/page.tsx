@@ -109,7 +109,6 @@ export default function BrandingPage() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer LAPIDADO_ADMIN_2026` },
         body: JSON.stringify({
           table: 'branding',
-          id: brandingId,
           data: {
             user_id: user.id, 
             business_name: businessName,
