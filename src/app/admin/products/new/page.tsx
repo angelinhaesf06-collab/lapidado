@@ -160,67 +160,98 @@ export default function NewProductPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto pb-20">
-      <div className="mb-12">
-        <h2 className="text-3xl font-bold tracking-tight uppercase text-brand-primary">Nova Joia</h2>
+    <div className="max-w-5xl mx-auto px-4 py-6 md:py-10 pb-20">
+      <div className="mb-8 md:mb-12">
+        <h2 className="text-2xl md:text-3xl font-bold tracking-tight uppercase text-brand-primary">Nova Joia</h2>
         <p className="text-brand-secondary text-[10px] font-black tracking-[0.4em] uppercase mt-2">Adicione brilho ao seu acervo 💎</p>
       </div>
 
-      <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-2">
+      <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+        <div className="space-y-6">
+          <div className="grid grid-cols-3 gap-3">
             {images.map((img, index) => (
-              <div key={index} className="relative aspect-square rounded-[16px] overflow-hidden border border-rose-100">
+              <div key={index} className="relative aspect-square rounded-[20px] overflow-hidden border border-rose-100 shadow-sm">
                 <Image src={img.preview} alt="" className="object-cover" fill />
-                <button type="button" onClick={() => setImages(prev => prev.filter((_, i) => i !== index))} className="absolute top-1 right-1 p-1 bg-white/90 rounded-full text-rose-500 shadow-sm"><X size={10} /></button>
+                <button type="button" onClick={() => setImages(prev => prev.filter((_, i) => i !== index))} className="absolute top-1.5 right-1.5 p-1.5 bg-white/90 rounded-full text-rose-500 shadow-md backdrop-blur-sm"><X size={12} /></button>
               </div>
             ))}
             {images.length < 6 && (
-              <label className="cursor-pointer aspect-square rounded-[16px] border border-dashed border-rose-200 flex flex-col items-center justify-center bg-white hover:bg-rose-50/50">
-                <Plus size={14} className="text-brand-secondary" />
+              <label className="cursor-pointer aspect-square rounded-[20px] border-2 border-dashed border-rose-200 flex flex-col items-center justify-center bg-white hover:bg-rose-50/50 transition-colors group">
+                <Plus size={20} className="text-brand-secondary group-hover:scale-125 transition-transform" />
+                <span className="text-[7px] font-black text-brand-secondary mt-1 uppercase">Adicionar</span>
                 <input type="file" className="hidden" onChange={handleImageUpload} accept="image/*" multiple />
               </label>
             )}
           </div>
-          <button type="button" disabled={images.length === 0 || aiLoading} onClick={generateAIDescription} className="w-full py-4 rounded-xl bg-brand-primary text-white text-[8px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-sm disabled:opacity-50">
-            {aiLoading ? <Loader2 className="animate-spin" size={16} /> : <Gem size={16} />} <span>MÁGICA LAPIDADO</span>
+          <button type="button" disabled={images.length === 0 || aiLoading} onClick={generateAIDescription} className="w-full py-4.5 rounded-2xl bg-brand-primary text-white text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl hover:brightness-110 active:scale-95 transition-all disabled:opacity-50">
+            {aiLoading ? <Loader2 className="animate-spin" size={18} /> : <Gem size={18} />} <span>MÁGICA LAPIDADO</span>
           </button>
-          {aiError && <p className="text-[8px] text-rose-500 font-bold text-center uppercase">{aiError}</p>}
+          {aiError && <p className="text-[9px] text-rose-500 font-bold text-center uppercase tracking-widest">{aiError}</p>}
         </div>
 
-        <div className="space-y-3 bg-white/60 p-5 rounded-[30px] border border-rose-50 shadow-sm">
+        <div className="space-y-4 bg-white p-6 md:p-8 rounded-[40px] border border-brand-secondary/5 shadow-sm">
           <div>
-            <label className="text-[7px] font-black text-brand-secondary uppercase mb-1 block">Acabamento</label>
-            <div className="flex flex-wrap gap-1.5 mb-3">
+            <label className="text-[8px] font-black text-brand-secondary uppercase mb-2 block ml-1 tracking-widest">Acabamento</label>
+            <div className="flex flex-wrap gap-2 mb-4">
               {FINISH_OPTIONS.map(opt => (
-                <button key={opt} type="button" onClick={() => setMaterialFinish(opt)} className={`px-3 py-1.5 rounded-full text-[7px] font-black ${materialFinish === opt ? 'bg-brand-primary text-white' : 'bg-white text-brand-secondary border border-rose-100'}`}>{opt}</button>
+                <button key={opt} type="button" onClick={() => setMaterialFinish(opt)} className={`px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${materialFinish === opt ? 'bg-brand-primary text-white shadow-md' : 'bg-rose-50/30 text-brand-secondary/60 border border-rose-100/50 hover:bg-rose-50'}`}>{opt}</button>
               ))}
             </div>
           </div>
-          <input type="text" placeholder="NOME DA PEÇA" value={name} onChange={e => setName(e.target.value.toUpperCase())} className="w-full px-4 py-2.5 rounded-xl border border-rose-100 font-bold text-[10px] text-brand-primary outline-none" />
-          <div className="grid grid-cols-2 gap-3">
-            <select value={category} onChange={e => setCategory(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-rose-100 text-[9px] font-bold text-brand-primary outline-none">
-              <option value="">CATEGORIA...</option>
-              {categories.map(c => <option key={c.id} value={c.id}>{c.name.toUpperCase()}</option>)}
-            </select>
-            <input type="number" placeholder="ESTOQUE" value={stock} onChange={e => setStock(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-rose-100 font-bold text-brand-primary text-[9px]" />
+          
+          <div className="space-y-1.5">
+            <label className="text-[8px] font-black text-brand-secondary uppercase ml-1 tracking-widest">Nome da Peça</label>
+            <input type="text" placeholder="EX: ANEL SOLITÁRIO LUXO" value={name} onChange={e => setName(e.target.value.toUpperCase())} className="w-full px-5 py-3.5 rounded-2xl border border-rose-100 bg-rose-50/10 font-bold text-[11px] text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all placeholder:text-brand-secondary/20" />
           </div>
-          <div className="p-4 rounded-2xl bg-white border border-brand-secondary/10 space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <input type="number" placeholder="CUSTO R$" value={costPrice} onChange={e => setCostPrice(e.target.value)} className="w-full p-2.5 rounded-xl bg-brand-secondary/5 text-[10px] font-bold outline-none" />
-              <div className="relative">
-                <input type="number" placeholder="MARGEM %" value={margin} onChange={e => setMargin(e.target.value)} className="w-full p-2.5 rounded-xl bg-amber-50 text-[10px] font-black text-amber-700 text-center outline-none" />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black text-amber-700/40">%</span>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-[8px] font-black text-brand-secondary uppercase ml-1 tracking-widest">Categoria</label>
+              <select value={category} onChange={e => setCategory(e.target.value)} className="w-full px-4 py-3.5 rounded-2xl border border-rose-100 bg-rose-50/10 text-[10px] font-bold text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all appearance-none">
+                <option value="">CATEGORIA...</option>
+                {categories.map(c => <option key={c.id} value={c.id}>{c.name.toUpperCase()}</option>)}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[8px] font-black text-brand-secondary uppercase ml-1 tracking-widest">Estoque</label>
+              <input type="number" placeholder="0" value={stock} onChange={e => setStock(e.target.value)} className="w-full px-4 py-3.5 rounded-2xl border border-rose-100 bg-rose-50/10 font-bold text-brand-primary text-[10px] outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all" />
+            </div>
+          </div>
+
+          <div className="p-5 rounded-3xl bg-brand-primary/5 border border-brand-primary/10 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-[8px] font-black text-brand-primary uppercase ml-1 tracking-widest">Custo R$</label>
+                <input type="number" placeholder="0,00" value={costPrice} onChange={e => setCostPrice(e.target.value)} className="w-full px-4 py-3.5 rounded-2xl bg-white border border-brand-primary/10 text-[11px] font-bold text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[8px] font-black text-amber-700 uppercase ml-1 tracking-widest">Margem %</label>
+                <div className="relative">
+                  <input type="number" placeholder="100" value={margin} onChange={e => setMargin(e.target.value)} className="w-full px-4 py-3.5 rounded-2xl bg-amber-50 border border-amber-200/50 text-[11px] font-black text-amber-700 text-center outline-none focus:ring-2 focus:ring-amber-200 transition-all" />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-black text-amber-700/30">%</span>
+                </div>
               </div>
             </div>
-            <input type="number" placeholder="VENDA R$" value={salePrice} onChange={e => setSalePrice(e.target.value)} className="w-full p-4 rounded-xl bg-brand-primary text-white text-2xl font-black text-center outline-none" />
+            <div className="space-y-1.5">
+              <label className="text-[8px] font-black text-brand-primary uppercase ml-1 tracking-widest text-center block">Preço Final de Venda</label>
+              <div className="relative">
+                <span className="absolute left-5 top-1/2 -translate-y-1/2 text-sm font-black text-white/40 italic">R$</span>
+                <input type="number" placeholder="0,00" value={salePrice} onChange={e => setSalePrice(e.target.value)} className="w-full p-5 md:p-6 rounded-2xl bg-brand-primary text-white text-3xl font-black text-center outline-none shadow-xl transition-all focus:scale-[1.02]" />
+              </div>
+            </div>
           </div>
-          <textarea placeholder="DESCRIÇÃO" value={description} onChange={e => setDescription(e.target.value.toUpperCase())} rows={2} className="w-full px-4 py-2.5 rounded-xl border border-rose-100 text-[8px] font-bold text-brand-primary outline-none" />
-          <button type="submit" disabled={isSaving} className="w-full py-4 rounded-xl bg-brand-primary text-white text-[10px] font-black uppercase tracking-widest shadow-lg flex items-center justify-center gap-2">
-            {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Check size={18} />} SALVAR JOIA
+
+          <div className="space-y-1.5">
+            <label className="text-[8px] font-black text-brand-secondary uppercase ml-1 tracking-widest">Descrição</label>
+            <textarea placeholder="DESCREVA OS DETALHES DA JOIA..." value={description} onChange={e => setDescription(e.target.value.toUpperCase())} rows={3} className="w-full px-5 py-4 rounded-2xl border border-rose-100 bg-rose-50/10 text-[10px] font-bold text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all resize-none placeholder:text-brand-secondary/20" />
+          </div>
+
+          <button type="submit" disabled={isSaving} className="w-full py-5 rounded-2xl bg-brand-primary text-white text-[11px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-brand-primary/30 hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50">
+            {isSaving ? <Loader2 className="animate-spin" size={20} /> : <CheckCircle2 size={20} />} SALVAR JOIA NO ACERVO
           </button>
         </div>
       </form>
     </div>
   )
+
 }
