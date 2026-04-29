@@ -23,12 +23,25 @@ interface Branding {
   [key: string]: unknown
 }
 
+// 💎 NEXUS: Cache Global para navegação instantânea entre páginas
+let globalCache: {
+  products: any[],
+  categories: any[],
+  branding: any | null,
+  storeSlug: string | null
+} = {
+  products: [],
+  categories: [],
+  branding: null,
+  storeSlug: null
+};
+
 function HomeContent() {
   const searchParams = useSearchParams()
-  const [allProducts, setAllProducts] = useState<any[]>([])
-  const [dbCategories, setDbCategories] = useState<Category[]>([])
-  const [branding, setBranding] = useState<Branding | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [allProducts, setAllProducts] = useState<any[]>(globalCache.products)
+  const [dbCategories, setDbCategories] = useState<Category[]>(globalCache.categories)
+  const [branding, setBranding] = useState<Branding | null>(globalCache.branding)
+  const [loading, setLoading] = useState(globalCache.products.length === 0)
   
   const storeSlug = searchParams.get('loja')
   const isPublicCatalog = searchParams.get('catalogo') === 'true' || !!storeSlug
@@ -38,6 +51,14 @@ function HomeContent() {
 
   useEffect(() => {
     async function loadInitialData() {
+      // Se o slug mudou ou não temos nada em cache, buscamos do zero
+      const shouldFetch = globalCache.products.length === 0 || globalCache.storeSlug !== storeSlug;
+      
+      if (!shouldFetch) {
+        setLoading(false);
+        return;
+      }
+
       setLoading(true)
       
       try {
@@ -74,15 +95,21 @@ function HomeContent() {
             .limit(100)
         ])
 
-        // 💎 NEXUS: Fallback resiliente apenas se não encontrar nada para o lojista
-        let finalCategories = catsRes.data || []
-        if (finalCategories.length === 0) {
-          const { data: fallbackCats } = await supabase.from('categories').select('id, name').limit(20)
-          finalCategories = fallbackCats || []
-        }
+        const finalCategories = catsRes.data || []
+        const finalProducts = prodsRes.data || []
 
+        // Atualizar estados
         setDbCategories(finalCategories)
-        setAllProducts(prodsRes.data || [])
+        setAllProducts(finalProducts)
+        
+        // 💎 NEXUS: Salvar no Cache Global para retorno instantâneo
+        globalCache = {
+          products: finalProducts,
+          categories: finalCategories,
+          branding: currentBranding,
+          storeSlug: storeSlug
+        };
+
       } catch (err) {
         console.error("Erro ao carregar vitrine:", err)
       } finally {
@@ -107,8 +134,11 @@ function HomeContent() {
   }, [isPublicCatalog, storeSlug, router, supabase])
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }, [activeCategory])
+    // Só rola se não estiver no carregamento inicial para não dar 'pulo'
+    if (!loading) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }, [activeCategory, loading])
 
   const displayedProducts = useMemo(() => {
     if (!allProducts) return []
@@ -134,110 +164,118 @@ function HomeContent() {
     return 10
   }, [branding])
 
-  if (loading && allProducts.length === 0) {
-    return null; // Remove a tela de carregamento para ir direto para a vitrine
-  }
-
   const categoryNames = ['Todos', ...dbCategories.map(c => c.name)]
   const storeParam = storeSlug ? `&loja=${storeSlug}` : ''
 
   return (
-    <div className="flex flex-col w-full min-h-screen bg-[#fffcfc]">
-      {/* 💎 HEADER LUXUOSO DA VITRINE */}
-      <header className="w-full bg-white pt-12 pb-8 flex flex-col items-center gap-6 border-b border-brand-secondary/5">
-        {branding?.logo_url && typeof branding.logo_url === 'string' ? (
-          <div className="relative w-48 h-16 md:w-64 md:h-20 animate-fade-in">
-            <Image 
-              src={branding.logo_url} 
-              alt={branding.store_name || 'Logo'} 
-              fill 
-              className="object-contain"
-              priority
-            />
-          </div>
-        ) : (
-          <div className="flex flex-col items-center gap-2">
-             <div className="w-12 h-12 rounded-full bg-brand-primary flex items-center justify-center text-white shadow-lg">
-                <Gem size={24} />
-             </div>
-             <h1 className="text-[14px] font-black uppercase tracking-[0.4em] text-brand-primary">
-                {branding?.store_name || 'LAPIDADO'}
-             </h1>
-          </div>
-        )}
-        
-        <p className="text-[9px] md:text-[11px] font-medium uppercase tracking-[0.3em] text-brand-secondary/60">
-           {branding?.facebook?.split('|')[3] || 'Joalheria Contemporânea'}
-        </p>
-      </header>
+    <div className="flex flex-col w-full min-h-screen bg-[#fffcfc] animate-in fade-in duration-700">
+      
+      {/* 💎 HEADER FIXO OTIMIZADO (LOGO + NAVEGAÇÃO UNIFICADOS) */}
+      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-brand-secondary/10 shadow-sm">
+        <header className="w-full pt-6 pb-2 flex flex-col items-center gap-4">
+          {branding?.logo_url && typeof branding.logo_url === 'string' ? (
+            <Link href={`/?catalogo=true${storeParam}`} className="relative w-32 h-10 md:w-48 md:h-14 transition-transform hover:scale-105 active:scale-95">
+              <Image 
+                src={branding.logo_url} 
+                alt={branding.store_name || 'Logo'} 
+                fill 
+                className="object-contain"
+                priority
+              />
+            </Link>
+          ) : (
+            <div className="flex items-center gap-2">
+               <div className="w-8 h-8 rounded-full bg-brand-primary flex items-center justify-center text-white shadow-md">
+                  <Gem size={16} />
+               </div>
+               <h1 className="text-[10px] md:text-[12px] font-black uppercase tracking-[0.4em] text-brand-primary">
+                  {branding?.store_name || 'LAPIDADO'}
+               </h1>
+            </div>
+          )}
+        </header>
 
-      {/* 🏷️ BARRA DE CATEGORIAS EM GRADE (WRAP) */}
-      <nav className="bg-white/90 backdrop-blur-xl border-b border-brand-secondary/10 sticky top-0 z-40 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-wrap justify-center gap-2 md:gap-4 items-center">
+        {/* 🏷️ BARRA DE CATEGORIAS (Fica dentro do sticky) */}
+        <nav className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-center gap-2 md:gap-4 items-center">
           {categoryNames.map((cat) => (
             <Link 
               key={cat}
               href={`/?catalogo=true&category=${cat === 'Todos' ? '' : cat}${storeParam}`}
-              className={`px-4 py-2 transition-all duration-500 font-black text-[9px] md:text-[10px] tracking-[0.2em] uppercase rounded-full border ${
+              className={`px-3 py-1.5 md:px-4 md:py-2 transition-all duration-300 font-black text-[8px] md:text-[10px] tracking-[0.1em] md:tracking-[0.2em] uppercase rounded-full border ${
                 activeCategory === cat || (cat === 'Todos' && !activeCategory)
-                ? "bg-brand-primary text-white border-brand-primary shadow-lg" 
-                : "text-brand-primary/60 hover:text-brand-primary bg-white border-brand-secondary/10"
+                ? "bg-brand-primary text-white border-brand-primary shadow-lg scale-105" 
+                : "text-brand-primary/60 hover:text-brand-primary bg-white border-brand-secondary/10 hover:border-brand-primary/30"
               }`}
             >
               {cat}
             </Link>
           ))}
-        </div>
-      </nav>
+        </nav>
+      </div>
 
       {branding?.facebook?.split('|')[2] && (
-        <div className="w-full bg-brand-primary py-2.5 px-4 text-center">
-          <p className="text-white text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em]">
+        <div className="w-full bg-brand-primary py-2 px-4 text-center">
+          <p className="text-white text-[7px] md:text-[9px] font-black uppercase tracking-[0.3em] animate-pulse">
             ✨ {branding.facebook.split('|')[2]} ✨
           </p>
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 py-12 md:py-20 w-full text-center">
-        <div className="mb-12 md:mb-24">
-          <h2 className="text-xl md:text-3xl font-light tracking-[0.4em] uppercase text-brand-primary mb-4">
-            {activeCategory === 'Todos' || !activeCategory ? 'Nova Coleção' : activeCategory}
-          </h2>
-          <div className="w-16 h-[1px] bg-brand-secondary/40 mx-auto" />
-        </div>
+      <div className="max-w-7xl mx-auto px-4 py-8 md:py-16 w-full text-center">
+        {loading && allProducts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <Loader2 className="animate-spin text-brand-secondary" size={32} />
+            <p className="text-[10px] font-black uppercase tracking-widest text-brand-secondary/40">Carregando Coleção...</p>
+          </div>
+        ) : (
+          <>
+            <div className="mb-8 md:mb-16">
+              <h2 className="text-lg md:text-2xl font-light tracking-[0.4em] uppercase text-brand-primary mb-4 animate-in slide-in-from-bottom-2 duration-700">
+                {activeCategory === 'Todos' || !activeCategory ? 'Nova Coleção' : activeCategory}
+              </h2>
+              <div className="w-12 h-[1px] bg-brand-secondary/40 mx-auto" />
+            </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 md:gap-x-12 gap-y-12 md:gap-y-32 px-1">
-          {displayedProducts.map((product) => (
-            <div key={product.id} className="group flex flex-col items-center w-full">
-              <Link href={`/product?id=${product.id}&catalogo=true${storeParam}`} className="w-full focus:outline-none">
-                <div className="aspect-[4/5] w-full bg-white rounded-[32px] md:rounded-[60px] overflow-hidden mb-6 shadow-[0_30px_80px_rgba(74,50,46,0.06)] border border-white relative transition-all duration-700 group-hover:shadow-[0_40px_100px_rgba(74,50,46,0.12)] group-hover:-translate-y-2">
-                  {product.image_url ? (
-                    <Image src={product.image_url} alt={product.name} fill className="object-cover transition-transform duration-[2s] group-hover:scale-110" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-brand-secondary/5">
-                      <Gem size={40} className="text-brand-secondary/20" />
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 md:gap-x-12 gap-y-10 md:gap-y-24 px-1 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+              {displayedProducts.map((product) => (
+                <div key={product.id} className="group flex flex-col items-center w-full">
+                  <Link href={`/product?id=${product.id}&catalogo=true${storeParam}`} className="w-full focus:outline-none">
+                    <div className="aspect-[4/5] w-full bg-white rounded-[32px] md:rounded-[50px] overflow-hidden mb-5 shadow-[0_20px_50px_rgba(74,50,46,0.04)] border border-white relative transition-all duration-500 group-hover:shadow-[0_30px_70px_rgba(74,50,46,0.1)] group-hover:-translate-y-2">
+                      {product.image_url ? (
+                        <Image src={product.image_url} alt={product.name} fill className="object-cover transition-transform duration-[1.5s] group-hover:scale-110" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-brand-secondary/5">
+                          <Gem size={32} className="text-brand-secondary/20" />
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                
-                <div className="px-2 text-center w-full mb-6">
-                  <h4 className="text-[10px] md:text-[14px] font-black tracking-[0.3em] uppercase text-brand-primary mb-3 leading-relaxed transition-colors group-hover:text-brand-secondary">{product.name}</h4>
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-[15px] md:text-[24px] font-bold text-brand-primary">
-                      R$ {Number(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </span>
-                    <p className="text-brand-secondary text-[8px] md:text-[10px] font-black tracking-widest uppercase opacity-40">
-                      {installments}x de R$ {(Number(product.price) / installments).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </p>
+                    
+                    <div className="px-1 text-center w-full mb-5">
+                      <h4 className="text-[9px] md:text-[12px] font-black tracking-[0.2em] uppercase text-brand-primary mb-2 leading-relaxed transition-colors group-hover:text-brand-secondary truncate px-2">{product.name}</h4>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[14px] md:text-[20px] font-bold text-brand-primary">
+                          R$ {Number(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
+                        <p className="text-brand-secondary text-[7px] md:text-[9px] font-black tracking-widest uppercase opacity-40">
+                          {installments}x de R$ {(Number(product.price) / installments).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                  <div className="w-full px-1 md:px-6">
+                    <AddToCartButton product={product} />
                   </div>
                 </div>
-              </Link>
-              <div className="w-full px-1 md:px-8">
-                <AddToCartButton product={product} />
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
+            
+            {displayedProducts.length === 0 && !loading && (
+              <div className="py-20">
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-secondary/30">Nenhum item nesta categoria 💎</p>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   )

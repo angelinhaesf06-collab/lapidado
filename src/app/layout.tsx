@@ -102,7 +102,7 @@ function RootLayoutContent({
       <Toaster position="top-center" richColors />
       <CartProvider>
         <AdminBar user={user} />
-        {!isAdminPage && <CartIcon />}
+        {!isAdminPage && !isAuthPage && <CartIcon />}
         <main className="flex-1">
           {children}
         </main>

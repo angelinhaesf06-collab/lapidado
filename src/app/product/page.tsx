@@ -133,7 +133,7 @@ function ProductContent() {
               R$ {prod.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </span>
             <p className="text-brand-secondary text-sm font-light tracking-widest uppercase">
-              {installments}x de R$ {(prod.price / installments).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} sem juros
+              {installments}x de R$ {(prod.price / installments).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} sem juros
             </p>
           </div>
 
