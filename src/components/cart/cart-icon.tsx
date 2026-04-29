@@ -3,13 +3,19 @@
 import { ShoppingBag } from 'lucide-react'
 import { useCart } from '@/lib/cart-context'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 
 export default function CartIcon() {
   const { itemCount } = useCart()
+  const searchParams = useSearchParams()
+  const storeSlug = searchParams.get('loja')
+  const isCatalogo = searchParams.get('catalogo') === 'true'
+
+  const cartUrl = `/cart?${isCatalogo ? 'catalogo=true' : ''}${storeSlug ? `&loja=${storeSlug}` : ''}`
 
   return (
     <Link 
-      href="/cart"
+      href={cartUrl}
       className="fixed bottom-8 right-8 p-4 bg-brand-primary text-white rounded-full shadow-2xl hover:scale-110 transition-transform flex items-center gap-2 group z-[100]"
     >
       <ShoppingBag size={24} />

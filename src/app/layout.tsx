@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import Footer from '@/components/footer';
 import { CartProvider } from '@/lib/cart-context';
 import AdminBar from '@/components/admin-bar';
+import CartIcon from '@/components/cart/cart-icon';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { Toaster } from 'sonner';
@@ -101,6 +102,7 @@ function RootLayoutContent({
       <Toaster position="top-center" richColors />
       <CartProvider>
         <AdminBar user={user} />
+        <CartIcon />
         <main className="flex-1">
           {children}
         </main>
