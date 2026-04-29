@@ -24,34 +24,43 @@ export default function CartPage() {
       const urlParams = new URLSearchParams(window.location.search)
       const slugFromUrl = urlParams.get('loja')
 
-      let query = supabase.from('branding').select('*')
+      let brandingData = null
+
+      // 1. Prioridade: Slug na URL
       if (slugFromUrl) {
-        query = query.eq('slug', slugFromUrl)
-      } else {
-        query = query.order('created_at', { ascending: false }).limit(1)
+        const { data } = await supabase.from('branding').select('*').eq('slug', slugFromUrl).maybeSingle()
+        brandingData = data
       }
 
-      const { data } = await query.maybeSingle()
-      
-      if (data) {
-        setStoreSlug(data.slug || '')
-        if (data.business_name) {
-          setStoreName(data.business_name)
-        } else if (data.store_name) {
-          setStoreName(data.store_name)
+      // 2. Fallback: Usuário Logado (Lojista testando)
+      if (!brandingData) {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const { data } = await supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle()
+          brandingData = data
         }
+      }
 
-        if (data.phone) {
-          let cleanPhone = data.phone.replace(/\D/g, '')
-          // Se o número for 10 ou 11 dígitos, é o padrão BR sem DDI (ex: 11999999999)
+      // 3. Fallback Final: Primeiro registro (Apenas se nada mais funcionar)
+      if (!brandingData) {
+        const { data } = await supabase.from('branding').select('*').limit(1).maybeSingle()
+        brandingData = data
+      }
+      
+      if (brandingData) {
+        setStoreSlug(brandingData.slug || '')
+        setStoreName(brandingData.business_name || brandingData.store_name || 'LAPIDADO')
+
+        if (brandingData.phone) {
+          let cleanPhone = brandingData.phone.replace(/\D/g, '')
           if (cleanPhone.length === 10 || cleanPhone.length === 11) {
             cleanPhone = '55' + cleanPhone
           }
           setStorePhone(cleanPhone)
         }
-        // Extrair parcelas do facebook (Tagline|Parcelas|Banner)
-        const parts = data.facebook?.split('|')
-        if (parts && parts[1]) setInstallments(parseInt(parts[1]))
+        
+        // Extrair parcelas usando coluna dedicada ou facebook como fallback
+        setInstallments(brandingData.installments || parseInt(brandingData.facebook?.split('|')[1] || '10'))
       }
     }
     loadStoreData()

@@ -51,6 +51,15 @@ export default function Footer() {
     loadBranding()
   }, [supabase])
 
+  const getCleanPhone = (phone: string | null) => {
+    if (!phone) return ''
+    let clean = phone.replace(/\D/g, '')
+    if (clean.length === 10 || clean.length === 11) {
+      clean = '55' + clean
+    }
+    return clean
+  }
+
   if (!branding) return null
 
   return (
@@ -74,7 +83,7 @@ export default function Footer() {
           
           <div className="space-y-4">
             {branding.phone && (
-              <a href={`https://wa.me/${branding.phone.replace(/\D/g, '')}`} target="_blank" className="flex items-center gap-3 text-brand-primary hover:text-brand-secondary transition-colors group">
+              <a href={`https://wa.me/${getCleanPhone(branding.phone)}`} target="_blank" className="flex items-center gap-3 text-brand-primary hover:text-brand-secondary transition-colors group">
                 <div className="p-2 rounded-full bg-brand-secondary/10 group-hover:bg-brand-secondary/20"><Phone size={14} /></div>
                 <span className="text-[11px] font-bold tracking-widest">{branding.phone}</span>
               </a>
