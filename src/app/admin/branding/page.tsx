@@ -42,12 +42,10 @@ export default function BrandingPage() {
 
         if (data) {
           setBrandingId(data.id)
-          const rawTagline = data.facebook || ''
-          const [text, inst, banner, bName] = rawTagline.split('|')
-          setTagline(text || '') 
-          setInstallments(inst || '10')
-          setTopBanner(banner || '')
-          setBusinessName(data.store_name || bName || '')
+          setTagline(data.tagline || data.facebook?.split('|')[0] || '') 
+          setInstallments(data.installments?.toString() || data.facebook?.split('|')[1] || '10')
+          setTopBanner(data.top_banner || data.facebook?.split('|')[2] || '')
+          setBusinessName(data.business_name || data.store_name || '')
           setTiktok(data.tiktok || '') 
           setWarrantyTime(data.warranty_time || '') 
           setPrimaryColor(data.primary_color || '#4a322e')
