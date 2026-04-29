@@ -6,7 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import AddToCartButton from '@/components/cart/add-to-cart-button'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Loader2, Gem } from 'lucide-react'
+import { Loader2, Gem, Instagram, MessageCircle, Music2 } from 'lucide-react'
 import { CartItem } from '@/lib/cart-context'
 
 interface Category {
@@ -91,6 +91,7 @@ function HomeContent() {
             .select('id, name, price, image_url, category_id, stock_quantity')
             .eq('user_id', currentUserId)
             .gt('stock_quantity', 0)
+            .order('display_order', { ascending: true, nullsFirst: true })
             .order('created_at', { ascending: false })
             .limit(100)
         ])
@@ -277,6 +278,62 @@ function HomeContent() {
           </>
         )}
       </div>
+
+      {/* 💎 RODAPÉ LUXO COM REDES SOCIAIS */}
+      <footer className="w-full bg-white border-t border-brand-secondary/5 pt-12 pb-20 mt-auto">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col items-center gap-8">
+          <div className="flex flex-col items-center gap-2">
+            <Gem size={24} className="text-brand-primary/20" />
+            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-brand-primary">
+              {branding?.store_name || 'LAPIDADO'}
+            </h3>
+          </div>
+
+          <div className="flex items-center gap-6">
+            {branding?.instagram && (
+              <a 
+                href={`https://instagram.com/${String(branding.instagram).replace('@', '')}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="w-12 h-12 rounded-full bg-brand-primary/5 flex items-center justify-center text-brand-primary hover:bg-brand-primary hover:text-white transition-all duration-500 shadow-sm"
+              >
+                <Instagram size={20} />
+              </a>
+            )}
+            
+            {branding?.tiktok && (
+              <a 
+                href={`https://tiktok.com/@${String(branding.tiktok).replace('@', '')}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="w-12 h-12 rounded-full bg-brand-primary/5 flex items-center justify-center text-brand-primary hover:bg-brand-primary hover:text-white transition-all duration-500 shadow-sm"
+              >
+                <Music2 size={20} />
+              </a>
+            )}
+
+            {branding?.phone && (
+              <a 
+                href={`https://wa.me/55${String(branding.phone).replace(/\D/g, '')}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="w-12 h-12 rounded-full bg-brand-primary/5 flex items-center justify-center text-brand-primary hover:bg-brand-primary hover:text-white transition-all duration-500 shadow-sm"
+              >
+                <MessageCircle size={20} />
+              </a>
+            )}
+          </div>
+
+          <div className="text-center space-y-2">
+            <p className="text-[8px] font-black uppercase tracking-[0.2em] text-brand-secondary/40">
+              © 2026 {branding?.store_name || 'LAPIDADO'} • Todos os direitos reservados
+            </p>
+            <p className="text-[7px] font-bold uppercase tracking-widest text-brand-secondary/20">
+              Mais que acessórios, a sua assinatura de estilo.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }
