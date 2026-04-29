@@ -71,7 +71,7 @@ function ProductContent() {
     categories?: { name: string };
     user_id: string;
   };
-  const brand = branding as { slug?: string; facebook?: string; tiktok?: string } | null;
+  const brand = branding as { slug?: string; facebook?: string; tiktok?: string; warranty_time?: string } | null;
 
   if (!id || !prod) {
     notFound()
@@ -164,9 +164,9 @@ function ProductContent() {
             }} />
           </div>
           
-          {brand?.tiktok && (
+          {brand?.warranty_time && (
             <p className="mt-20 text-[9px] text-brand-primary/60 font-light opacity-50 tracking-[0.3em] uppercase text-center max-w-xs">
-              💎 {brand.tiktok.toUpperCase().includes('GARANTIA') ? brand.tiktok : `${brand.tiktok} DE GARANTIA`}
+              💎 {brand.warranty_time.toUpperCase().includes('GARANTIA') ? brand.warranty_time : `${brand.warranty_time} DE GARANTIA`}
             </p>
           )}
         </div>

@@ -67,6 +67,7 @@ interface Branding {
   address: string
   logo_url: string
   tiktok: string 
+  warranty_time: string
 }
 
 interface Installment {
@@ -272,7 +273,7 @@ const loadProducts = useCallback(async () => {
   const handleWhatsApp = (sale: Sale) => {
     if (!sale.customers?.phone) return toast.error('Cadastre o WhatsApp da cliente!')
     const cleanPhone = sale.customers.phone.replace(/\D/g, '')
-    const msg = encodeURIComponent(`Olá ${sale.customers.name}! 💎\n\nAqui está o comprovante da sua compra na *${branding?.business_name}*:\n\n💍 *Peça:* ${sale.products.name}\n💰 *Valor:* R$ ${sale.total_value.toLocaleString('pt-BR')}\n💳 *Pagamento:* ${sale.payment_method}\n📜 *Garantia:* ${branding?.tiktok || '1 ano'}\n\nObrigado! ✨`)
+    const msg = encodeURIComponent(`Olá ${sale.customers.name}! 💎\n\nAqui está o comprovante da sua compra na *${branding?.business_name}*:\n\n💍 *Peça:* ${sale.products.name}\n💰 *Valor:* R$ ${sale.total_value.toLocaleString('pt-BR')}\n💳 *Pagamento:* ${sale.payment_method}\n📜 *Garantia:* ${branding?.warranty_time || '1 ano'}\n\nObrigado! ✨`)
     window.open(`https://api.whatsapp.com/send?phone=55${cleanPhone}&text=${msg}`, '_blank')
   }
 
@@ -496,7 +497,7 @@ const loadProducts = useCallback(async () => {
                <div className="border-t border-dashed border-brand-secondary/20 pt-6">
                   <p className="text-[9px] font-black text-brand-primary uppercase tracking-widest mb-3 flex items-center gap-2"><ShieldCheck size={14} /> Certificado de Garantia</p>
                   <p className="text-[9px] text-brand-secondary/60 font-medium uppercase leading-relaxed text-justify">
-                    A marca *{branding?.business_name}* garante esta joia contra defeitos de fabricação e no banho pelo período de **{branding?.tiktok || '1 ano'}**. Esta garantia não cobre danos por mau uso, quebras ou contato com agentes químicos.
+                    A marca *{branding?.business_name}* garante esta joia contra defeitos de fabricação e no banho pelo período de **{branding?.warranty_time || '1 ano'}**. Esta garantia não cobre danos por mau uso, quebras ou contato com agentes químicos.
                   </p>
                </div>
 

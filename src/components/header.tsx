@@ -56,7 +56,7 @@ export default function Header() {
             logo_url: brandingData.logo_url,
             tagline: tagline || null,
             topBanner: banner || null,
-            warranty: brandingData.tiktok || null,
+            warranty: brandingData.warranty_time || null,
             store_name: brandingData.store_name || 'LAPIDADO'
           })
         }
