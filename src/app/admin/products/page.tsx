@@ -123,23 +123,26 @@ export default function ProductsListPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto py-6 md:py-10 px-4 pb-20">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 mb-8 md:mb-12">
-        <div className="flex flex-col items-center md:items-start text-center md:text-left">
-          <Link href="/admin" className="flex items-center gap-2 text-[9px] md:text-[10px] font-black text-brand-secondary uppercase tracking-widest mb-3 md:mb-4 hover:ml-2 transition-all">
-            <ArrowLeft size={14} /> Voltar ao Painel
+    <div className="w-full max-w-7xl mx-auto py-6 md:py-10 px-4 pb-20">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8 md:mb-12">
+        <div className="flex flex-col gap-4">
+          <Link href="/admin" className="w-fit flex items-center gap-2 text-[10px] font-black text-brand-secondary uppercase tracking-[0.2em] hover:text-brand-primary transition-all">
+            <ArrowLeft size={14} /> Painel de Controle
           </Link>
-          <h1 className="text-2xl md:text-3xl font-bold text-brand-primary uppercase tracking-tight flex items-center gap-2 md:gap-3">
-            <Gem className="text-brand-secondary hidden xs:block" /> Gestão da Vitrine
+          <h1 className="text-3xl md:text-4xl font-bold text-brand-primary uppercase tracking-tight flex items-center gap-3">
+            <Gem className="text-brand-secondary shrink-0" size={32} /> 
+            <span>Gestão da Vitrine</span>
           </h1>
         </div>
-        <Link href="/admin/products/new" className="w-full md:w-auto px-8 py-3.5 md:py-4 bg-brand-primary text-white rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-brand-secondary transition-all shadow-lg text-center">
-          Nova Peça
+        
+        <Link href="/admin/products/new" className="inline-flex items-center justify-center px-10 py-4 bg-brand-primary text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] hover:bg-brand-secondary transition-all shadow-xl shadow-brand-primary/20">
+          + Cadastrar Joia
         </Link>
       </div>
 
-      {/* 💎 BARRA DE CATEGORIAS */}
-      <div className="flex gap-2 overflow-x-auto pb-6 scrollbar-hide mb-4 -mx-4 px-4 md:mx-0 md:px-0">
+      {/* 💎 BARRA DE CATEGORIAS - MELHORADA PARA MOBILE */}
+      <div className="relative mb-8">
+        <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
         <button 
           onClick={() => setActiveCategory('Todas')}
           className={`px-6 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all shrink-0 border ${activeCategory === 'Todas' ? 'bg-brand-primary border-brand-primary text-white shadow-md' : 'bg-white border-brand-secondary/10 text-brand-secondary/40'}`}
@@ -156,6 +159,7 @@ export default function ProductsListPage() {
           </button>
         ))}
       </div>
+    </div>
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
