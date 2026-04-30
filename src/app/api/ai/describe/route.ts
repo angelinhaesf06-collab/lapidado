@@ -29,8 +29,23 @@ export async function POST(req: Request) {
     if (!apiKey) return NextResponse.json({ error: "ERRO_CONFIG" }, { status: 401 });
 
     const payload = await req.json();
-    const { image } = payload;
+    const { image, style } = payload;
     if (!image) return NextResponse.json({ error: "DADOS_AUSENTES" }, { status: 400 });
+
+    const selectedStyle = style || 'luxo';
+    
+    // 💎 PROMPTS ESPECIALIZADOS POR ESTILO
+    const stylePrompts = {
+      luxo: `Use um tom poético, sofisticado e exclusivo. 
+             Foque na elegância, na lapidação e no brilho celestial. 
+             Palavras-chave: Ancestral, sublime, magnético, atemporal, curadoria de luxo.`,
+      venda: `Use um tom persuasivo, comercial e cheio de desejo. 
+              Foque em gatilhos de escassez e como a peça transforma o look. 
+              Palavras-chave: Indispensável, realce sua beleza, tendência, peça-chave, garanta a sua.`,
+      simples: `Use um tom direto, claro e objetivo. 
+                Foque nas características físicas de forma clean. 
+                Palavras-chave: Design clássico, acabamento impecável, versátil, dia a dia, alta qualidade.`
+    };
 
     const base64Data = image.includes(",") ? image.split(",")[1] : image;
     const mimeMatch = image.match(/data:(.*?);base64/);
@@ -48,14 +63,16 @@ export async function POST(req: Request) {
       systemInstruction: `Você é uma mestre joalheira e copywriter de luxo da Lapidado. 
       Sua missão é criar nomes e descrições únicas e irresistíveis. 
       
+      ESTILO SELECIONADO: ${selectedStyle.toUpperCase()}
+      DIRETRIZES DO ESTILO: ${stylePrompts[selectedStyle as keyof typeof stylePrompts]}
+
       REGRAS DE OURO:
       - NUNCA repita a mesma descrição para peças diferentes.
-      - Use adjetivos variados e luxuosos (ex: magnético, sublime, ancestral, contemporâneo, celestial).
       - Se a peça for dourada, varie entre "Ouro 18k", "Banho Nobre", "Brilho Solar".
       - Se tiver pedras, varie entre "Zircônias Premium", "Cristais de Alta Lapidação", "Pontos de Luz".
 
       JSON OUTPUT:
-      {"name": "Nome Curto e Impactante", "category": "CATEGORIA", "description": "3 frases magnéticas e diferentes de tudo."}`
+      {"name": "Nome Curto e Impactante", "category": "CATEGORIA", "description": "3 frases magnéticas no tom ${selectedStyle.toUpperCase()}."}`
     };
 
     let result;

@@ -25,11 +25,17 @@ export default function NewProductPage() {
   const [salePrice, setSalePrice] = useState<string>('')
   const [stock, setStock] = useState<string>('1')
   const [aiUsed, setAiUsed] = useState(false)
+  const [aiStyle, setAiStyle] = useState<'luxo' | 'venda' | 'simples'>('luxo')
 
   const router = useRouter()
   const supabase = createClient()
 
   const FINISH_OPTIONS = ['OURO 18K', 'PRATA', 'PRATA 925', 'OURO ROSE', 'RODIO BRANCO', 'RODIO NEGRO']
+  const AI_STYLES = [
+    { id: 'luxo', label: 'MODO LUXO', desc: 'Sofisticado e poético' },
+    { id: 'venda', label: 'MODO VENDA', desc: 'Gatilhos e desejo' },
+    { id: 'simples', label: 'MODO SIMPLES', desc: 'Direto e objetivo' }
+  ]
 
   const loadData = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -108,7 +114,7 @@ export default function NewProductPage() {
       const response = await fetch('/api/ai/describe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: compressed })
+        body: JSON.stringify({ image: compressed, style: aiStyle })
       })
       const data = await response.json()
       if (data.name) setName(String(data.name))
@@ -212,7 +218,33 @@ export default function NewProductPage() {
               </label>
             )}
           </div>
-          <button type="button" disabled={images.length === 0 || aiLoading} onClick={generateAIDescription} className="w-full py-4.5 rounded-2xl bg-brand-primary text-white text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl hover:brightness-110 active:scale-95 transition-all disabled:opacity-50">
+          <div className="space-y-3">
+            <label className="text-[8px] font-black text-brand-secondary uppercase ml-1 tracking-[0.2em]">Estilo da Descrição Mágica</label>
+            <div className="grid grid-cols-3 gap-2">
+              {AI_STYLES.map(style => (
+                <button
+                  key={style.id}
+                  type="button"
+                  onClick={() => setAiStyle(style.id as any)}
+                  className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border transition-all ${
+                    aiStyle === style.id 
+                    ? 'bg-brand-primary/5 border-brand-primary text-brand-primary shadow-sm' 
+                    : 'bg-white border-brand-secondary/10 text-brand-secondary/40 hover:border-brand-secondary/20'
+                  }`}
+                >
+                  <span className="text-[8px] font-black uppercase tracking-widest">{style.label}</span>
+                  <span className="text-[6px] font-bold opacity-60 uppercase">{style.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button 
+            type="button" 
+            disabled={images.length === 0 || aiLoading} 
+            onClick={generateAIDescription} 
+            className="w-full py-4.5 rounded-2xl bg-brand-primary text-white text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl hover:brightness-110 active:scale-95 transition-all disabled:opacity-50"
+          >
             {aiLoading ? <Loader2 className="animate-spin" size={18} /> : <Gem size={18} />} <span>MÁGICA LAPIDADO</span>
           </button>
           {aiError && <p className="text-[9px] text-rose-500 font-bold text-center uppercase tracking-widest">{aiError}</p>}
