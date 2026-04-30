@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, Fragment } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Trash2, Pencil, Image as ImageIcon, Loader2, ArrowLeft, Gem, Share2, Plus, Search, GripVertical, Check, X, Move } from 'lucide-react'
 import Link from 'next/link'
@@ -232,10 +232,34 @@ export default function ProductsListPage() {
   const saveNewOrder = async () => {
     setIsSavingOrder(true)
     try {
-      const itemsToUpdate = products.map((p, index) => ({
-        id: p.id,
-        display_order: index + 1
-      }))
+      // 💎 LÓGICA DE SALVAMENTO INTELIGENTE
+      // Se estivermos em uma categoria específica, mantemos a ordem dos outros produtos
+      // e apenas encaixamos a nova ordem da categoria atual.
+      
+      let finalOrder: { id: string, display_order: number }[] = []
+      
+      if (activeCategory === 'Todas') {
+        finalOrder = products.map((p, index) => ({
+          id: p.id,
+          display_order: index + 1
+        }))
+      } else {
+        // 1. Pegamos todos os produtos que NÃO pertencem à categoria atual
+        const otherProducts = products.filter(p => p.categories?.name !== activeCategory)
+        
+        // 2. Pegamos os produtos da categoria atual na nova ordem definida pelo drag-and-drop
+        const currentCategoryProducts = filteredProducts
+        
+        // 3. Reconstruímos a lista total mantendo a ordem relativa
+        // Nota: Para simplificar e garantir consistência, vamos remapear todos
+        const combined = [...products] 
+        // Como o 'setProducts' já foi atualizado pelo 'handleDragEnd', 
+        // basta mapear a lista completa atual do estado.
+        finalOrder = products.map((p, index) => ({
+          id: p.id,
+          display_order: index + 1
+        }))
+      }
 
       const res = await fetch('/api/admin/reorder', {
         method: 'POST',
@@ -243,13 +267,13 @@ export default function ProductsListPage() {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer LAPIDADO_ADMIN_2026'
         },
-        body: JSON.stringify({ table: 'products', items: itemsToUpdate })
+        body: JSON.stringify({ table: 'products', items: finalOrder })
       })
 
       const result = await res.json()
       if (!result.success) throw new Error(result.error)
 
-      alert('ORDEM SALVA COM SUCESSO! 💎')
+      alert(`ORDEM DE ${activeCategory.toUpperCase()} SALVA COM SUCESSO! 💎`)
       setIsSorting(false)
     } catch (err: any) {
       alert('ERRO AO SALVAR ORDEM: ' + err.message.toUpperCase())
@@ -265,13 +289,12 @@ export default function ProductsListPage() {
   }
 
   const filteredProducts = useMemo(() => {
-    if (isSorting) return products // No modo ordenação mostramos tudo da lista atual
     return products.filter(p => {
       const matchesCategory = activeCategory === 'Todas' || p.categories?.name === activeCategory
       const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase())
       return matchesCategory && matchesSearch
     })
-  }, [products, activeCategory, searchQuery, isSorting])
+  }, [products, activeCategory, searchQuery])
 
   const handleDelete = async (id: string, imageUrl: string | null) => {
     if (!confirm('TEM CERTEZA QUE DESEJA REMOVER ESTA JOIA DA VITRINE? 💎')) return
@@ -347,8 +370,8 @@ export default function ProductsListPage() {
       </div>
 
       {/* BARRA DE PESQUISA E FILTROS */}
-      {!isSorting && (
-        <div className="mb-8 space-y-4">
+      <div className="mb-8 space-y-4">
+        {!isSorting && (
           <div className="relative">
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-brand-secondary/40" size={18} />
             <input 
@@ -359,31 +382,36 @@ export default function ProductsListPage() {
               className="w-full pl-14 pr-6 py-4 rounded-2xl border border-rose-100 bg-white text-[10px] font-bold tracking-widest text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary/10 transition-all placeholder:text-brand-secondary/20"
             />
           </div>
+        )}
 
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+          <button 
+            onClick={() => setActiveCategory('Todas')}
+            className={`px-6 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all shrink-0 border ${activeCategory === 'Todas' ? 'bg-brand-primary border-brand-primary text-white shadow-md' : 'bg-white border-brand-secondary/10 text-brand-secondary/40'}`}
+          >
+            Todas
+          </button>
+          {categories.map(cat => (
             <button 
-              onClick={() => setActiveCategory('Todas')}
-              className={`px-6 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all shrink-0 border ${activeCategory === 'Todas' ? 'bg-brand-primary border-brand-primary text-white shadow-md' : 'bg-white border-brand-secondary/10 text-brand-secondary/40'}`}
+              key={cat.id}
+              onClick={() => setActiveCategory(cat.name)}
+              className={`px-6 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all shrink-0 border ${activeCategory === cat.name ? 'bg-brand-primary border-brand-primary text-white shadow-md' : 'bg-white border-brand-secondary/10 text-brand-secondary/40'}`}
             >
-              Todas
+              {cat.name}
             </button>
-            {categories.map(cat => (
-              <button 
-                key={cat.id}
-                onClick={() => setActiveCategory(cat.name)}
-                className={`px-6 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all shrink-0 border ${activeCategory === cat.name ? 'bg-brand-primary border-brand-primary text-white shadow-md' : 'bg-white border-brand-secondary/10 text-brand-secondary/40'}`}
-              >
-                {cat.name}
-              </button>
-            ))}
-          </div>
+          ))}
         </div>
-      )}
+      </div>
 
       {isSorting && (
-        <div className="mb-8 p-4 bg-brand-primary/5 rounded-2xl border border-brand-primary/10 text-center">
+        <div className="mb-8 p-6 bg-brand-primary/5 rounded-[30px] border border-brand-primary/10 text-center space-y-2">
           <p className="text-[10px] font-black text-brand-primary uppercase tracking-[0.2em]">
-            💎 MODO ORGANIZAÇÃO ATIVO: Arraste as joias para a posição desejada.
+            💎 MODO ORGANIZAÇÃO ATIVO
+          </p>
+          <p className="text-[8px] font-bold text-brand-secondary/60 uppercase tracking-widest">
+            {activeCategory === 'Todas' 
+              ? 'Dica: Filtre por categoria para organizar grupos específicos mais rápido.' 
+              : `Organizando apenas: ${activeCategory.toUpperCase()}`}
           </p>
         </div>
       )}
@@ -405,23 +433,40 @@ export default function ProductsListPage() {
             strategy={rectSortingStrategy}
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredProducts.map((product) => {
-                const marginValue = product.cost_price > 0 
-                  ? ((product.price - product.cost_price) / product.cost_price * 100).toFixed(0) 
-                  : '0'
+              {(() => {
+                let lastCategory = '';
+                return filteredProducts.map((product) => {
+                  const currentCategory = product.categories?.name || 'Geral';
+                  const showHeader = activeCategory === 'Todas' && currentCategory !== lastCategory;
+                  lastCategory = currentCategory;
 
-                return (
-                  <SortableProduct 
-                    key={product.id} 
-                    product={product} 
-                    margin={marginValue}
-                    deletingId={deletingId}
-                    handleDelete={handleDelete}
-                    handleShareWhatsApp={handleShareWhatsApp}
-                    isSorting={isSorting}
-                  />
-                )
-              })}
+                  const marginValue = product.cost_price > 0 
+                    ? ((product.price - product.cost_price) / product.cost_price * 100).toFixed(0) 
+                    : '0'
+
+                  return (
+                    <Fragment key={product.id}>
+                      {showHeader && (
+                        <div className="col-span-full mt-8 mb-2 flex items-center gap-4">
+                          <div className="h-[1px] flex-1 bg-brand-primary/10"></div>
+                          <h3 className="text-[10px] font-black text-brand-primary uppercase tracking-[0.4em] bg-brand-primary/5 px-4 py-2 rounded-full">
+                            {currentCategory}
+                          </h3>
+                          <div className="h-[1px] flex-1 bg-brand-primary/10"></div>
+                        </div>
+                      )}
+                      <SortableProduct 
+                        product={product} 
+                        margin={marginValue}
+                        deletingId={deletingId}
+                        handleDelete={handleDelete}
+                        handleShareWhatsApp={handleShareWhatsApp}
+                        isSorting={isSorting}
+                      />
+                    </Fragment>
+                  )
+                })
+              })()}
             </div>
           </SortableContext>
         </DndContext>

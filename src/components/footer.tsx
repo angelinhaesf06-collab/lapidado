@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Phone, MapPin, Music2, Camera as InstagramIcon, Gem } from 'lucide-react'
+import { Phone, MapPin, Music2, Camera as InstagramIcon, Gem, User } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
+import Link from 'next/link'
 
 interface Branding {
   logo_url: string | null;
@@ -14,6 +15,7 @@ interface Branding {
   website: string | null;
   tiktok: string | null;
   store_name: string | null;
+  warranty_time?: string | null;
 }
 
 export default function Footer() {
@@ -63,71 +65,111 @@ export default function Footer() {
   if (!branding) return null
 
   return (
-    <footer className="bg-white border-t border-brand-secondary/10 pt-20 pb-10">
-      <div className="max-w-7xl mx-auto px-8 grid grid-cols-1 md:grid-cols-3 gap-16 items-center">
+    <footer className="bg-white border-t border-brand-secondary/10 pt-20 pb-12">
+      <div className="max-w-7xl mx-auto px-8 grid grid-cols-1 md:grid-cols-3 gap-16">
         
-        {/* Lado 1: Assinatura Visual */}
-        <div className="flex flex-col items-center md:items-start space-y-4">
+        {/* Lado 1: Identidade e Endereço */}
+        <div className="flex flex-col items-center md:items-start space-y-8">
           {branding.logo_url ? (
-            <Image src={branding.logo_url} alt="Logo" className="h-16 w-auto object-contain grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all duration-700" width={150} height={64} />
+            <Image 
+              src={branding.logo_url} 
+              alt="Logo" 
+              className="h-16 w-auto object-contain grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-700" 
+              width={150} 
+              height={64} 
+            />
           ) : (
-            <h3 className="text-2xl text-brand-primary uppercase tracking-widest opacity-50">
+            <h3 className="text-2xl font-bold text-brand-primary uppercase tracking-widest opacity-60">
               {branding.store_name || branding.business_name || 'LAPIDADO'}
             </h3>
           )}
-        </div>
 
-        {/* Lado 2: Contato e Endereço */}
-        <div className="space-y-6 flex flex-col items-center md:items-start">
-          <h4 className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.3em]">ATENDIMENTO</h4>
-          
-          <div className="space-y-4">
-            {branding.phone && (
-              <a href={`https://wa.me/${getCleanPhone(branding.phone)}`} target="_blank" className="flex items-center gap-3 text-brand-primary hover:text-brand-secondary transition-colors group">
-                <div className="p-2 rounded-full bg-brand-secondary/10 group-hover:bg-brand-secondary/20"><Phone size={14} /></div>
-                <span className="text-[11px] font-bold tracking-widest">{branding.phone}</span>
-              </a>
-            )}
-            
-            {branding.address && (
-              <div className="flex items-center gap-3 text-brand-primary">
-                <div className="p-2 rounded-full bg-brand-secondary/10"><MapPin size={14} /></div>
-                <span className="text-[11px] font-bold tracking-widest uppercase">{branding.address}</span>
+          {branding.address && (
+            <div className="space-y-3 text-center md:text-left">
+              <h4 className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.3em]">Nossa Localização</h4>
+              <div className="flex items-start justify-center md:justify-start gap-3 text-brand-primary/70">
+                <MapPin size={16} className="shrink-0 mt-0.5" />
+                <span className="text-[11px] font-bold tracking-widest uppercase leading-relaxed max-w-[200px]">
+                  {branding.address}
+                </span>
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Lado 3: Redes Sociais */}
-        <div className="space-y-6 flex flex-col items-center md:items-end text-center md:text-right">
-          <h4 className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.3em]">SIGA NOSSO BRILHO</h4>
-
-          <div className="flex gap-4">
-            {branding.tiktok && !branding.tiktok.includes('MESES') && (
-              <a href={`https://tiktok.com/@${branding.tiktok.replace('@', '').trim()}`} target="_blank" className="p-4 rounded-full bg-brand-secondary/10 text-brand-primary hover:bg-brand-primary hover:text-white transition-all">
-                <Music2 size={20} />
-              </a>
-            )}
-          </div>
-        </div>
-
-
-      </div>
-
-      <div className="max-w-7xl mx-auto px-8 mt-20 pt-10 border-t border-brand-secondary/5 flex flex-col md:flex-row justify-between items-center gap-6">
-        <div className="flex flex-col items-center md:items-start gap-2">
-          <p className="text-[8px] text-brand-secondary font-bold uppercase tracking-[0.4em]">
-            © {new Date().getFullYear()} — TODOS OS DIREITOS RESERVADOS.
-          </p>
-          {branding.tiktok && (branding.tiktok.includes('MESES') || branding.tiktok.includes('ANO') || branding.tiktok.includes('ETERNA')) && (
-            <p className="text-[7px] text-brand-primary/60 font-black uppercase tracking-widest flex items-center gap-2">
-              <Gem size={8} /> 💎 {branding.tiktok.toUpperCase().includes('GARANTIA') ? branding.tiktok : `${branding.tiktok} DE GARANTIA`}
-            </p>
+            </div>
           )}
         </div>
-        <div className="flex items-center gap-2 opacity-40 hover:opacity-100 transition-opacity">
-          <span className="text-[8px] font-bold text-brand-primary tracking-widest">DESENVOLVIDO COM</span>
-          <div className="w-4 h-4 bg-brand-primary rounded-full flex items-center justify-center text-white text-[8px]">✨</div>
+
+        {/* Lado 2: Atendimento e Acesso */}
+        <div className="flex flex-col items-center space-y-8">
+          <div className="space-y-6 flex flex-col items-center">
+            <h4 className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.3em]">Atendimento</h4>
+            
+            <div className="space-y-4">
+              {branding.phone && (
+                <a href={`https://wa.me/${getCleanPhone(branding.phone)}`} target="_blank" className="flex items-center gap-3 text-brand-primary hover:text-brand-secondary transition-colors group bg-brand-secondary/5 px-6 py-3 rounded-full border border-brand-secondary/5">
+                  <Phone size={14} className="text-brand-primary" />
+                  <span className="text-[11px] font-black tracking-widest">{branding.phone}</span>
+                </a>
+              )}
+            </div>
+          </div>
+
+          <div className="pt-4">
+            <Link href="/login" className="flex items-center gap-2 text-[9px] font-black text-brand-secondary/40 hover:text-brand-primary uppercase tracking-[0.4em] transition-all group">
+              <User size={12} className="group-hover:scale-110 transition-transform" />
+              Área Administrativa
+            </Link>
+          </div>
+        </div>
+
+        {/* Lado 3: Conecte-se (Redes Sociais) */}
+        <div className="flex flex-col items-center md:items-end space-y-8">
+          <div className="space-y-6 flex flex-col items-center md:items-end">
+            <h4 className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.3em]">Siga Nosso Brilho</h4>
+
+            <div className="flex gap-4">
+              {branding.instagram && (
+                <a 
+                  href={`https://instagram.com/${branding.instagram.replace('@', '').trim()}`} 
+                  target="_blank" 
+                  className="p-5 rounded-full bg-brand-secondary/5 text-brand-primary hover:bg-brand-primary hover:text-white hover:scale-110 transition-all border border-brand-secondary/5 shadow-sm"
+                  title="Instagram"
+                >
+                  <InstagramIcon size={20} />
+                </a>
+              )}
+              
+              {branding.tiktok && (
+                <a 
+                  href={`https://tiktok.com/@${branding.tiktok.replace('@', '').trim()}`} 
+                  target="_blank" 
+                  className="p-5 rounded-full bg-brand-secondary/5 text-brand-primary hover:bg-brand-primary hover:text-white hover:scale-110 transition-all border border-brand-secondary/5 shadow-sm"
+                  title="TikTok"
+                >
+                  <Music2 size={20} />
+                </a>
+              )}
+            </div>
+          </div>
+
+          {(branding.warranty_time || (branding.tiktok && (branding.tiktok.includes('MESES') || branding.tiktok.includes('ANO') || branding.tiktok.includes('ETERNA')))) && (
+            <div className="bg-brand-primary/5 px-4 py-2 rounded-full border border-brand-primary/10">
+              <p className="text-[8px] text-brand-primary font-black uppercase tracking-widest flex items-center gap-2">
+                <Gem size={10} /> 
+                {branding.warranty_time 
+                  ? (branding.warranty_time.toUpperCase().includes('GARANTIA') ? branding.warranty_time : `${branding.warranty_time} DE GARANTIA`)
+                  : (branding.tiktok?.toUpperCase().includes('GARANTIA') ? branding.tiktok : `${branding.tiktok} DE GARANTIA`)
+                }
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-8 mt-20 pt-8 border-t border-brand-secondary/5 flex flex-col items-center gap-4">
+        <p className="text-[8px] text-brand-secondary/40 font-bold uppercase tracking-[0.5em]">
+          © {new Date().getFullYear()} — {branding.store_name || branding.business_name || 'LAPIDADO'} — TODOS OS DIREITOS RESERVADOS.
+        </p>
+        <div className="flex items-center gap-2 opacity-20 hover:opacity-50 transition-opacity">
+          <span className="text-[7px] font-bold text-brand-primary tracking-widest uppercase">Mais que acessórios, a sua assinatura de estilo.</span>
         </div>
       </div>
     </footer>
