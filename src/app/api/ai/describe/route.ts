@@ -105,21 +105,58 @@ export async function POST(req: Request) {
     };
 
     try {
-      // 🚀 AGORA O FLASH 1.5 É O PRINCIPAL
-      const modelFlash = genAI.getGenerativeModel({ ...modelParams, model: "gemini-1.5-flash" });
+      // 🚀 AGORA O GEMINI 2.5 FLASH É O PRINCIPAL (Estado da arte)
+      console.log("Tentando Gemini 2.5 Flash...");
+      const modelFlash = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
       result = await tryGenerate(modelFlash, {
-        contents: [{ role: 'user', parts: [{ inlineData: { mimeType: finalMime, data: dataOnly } }] }],
+        contents: [
+          { 
+            role: 'user', 
+            parts: [
+              { text: modelParams.systemInstruction },
+              { inlineData: { mimeType: finalMime, data: dataOnly } }
+            ] 
+          }
+        ],
         generationConfig,
         safetySettings
       });
-    } catch (e) {
-      console.error("Flash falhou, tentando Pro como backup...");
-      const modelPro = genAI.getGenerativeModel({ ...modelParams, model: "gemini-1.5-pro" });
-      result = await tryGenerate(modelPro, {
-        contents: [{ role: 'user', parts: [{ inlineData: { mimeType: finalMime, data: dataOnly } }] }],
-        generationConfig,
-        safetySettings
-      });
+    } catch (e: any) {
+      console.error("Gemini 2.5 Flash falhou:", e.message);
+      console.log("Tentando Gemini 2.0 Flash como backup...");
+      try {
+        const model20 = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        result = await tryGenerate(model20, {
+          contents: [
+            { 
+              role: 'user', 
+              parts: [
+                { text: modelParams.systemInstruction },
+                { inlineData: { mimeType: finalMime, data: dataOnly } }
+              ] 
+            }
+          ],
+          generationConfig,
+          safetySettings
+        });
+      } catch (e2: any) {
+        console.error("Gemini 2.0 Flash falhou:", e2.message);
+        console.log("Tentando Gemini Flash Latest como última instância...");
+        const modelLatest = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+        result = await tryGenerate(modelLatest, {
+          contents: [
+            { 
+              role: 'user', 
+              parts: [
+                { text: modelParams.systemInstruction },
+                { inlineData: { mimeType: finalMime, data: dataOnly } }
+              ] 
+            }
+          ],
+          generationConfig,
+          safetySettings
+        });
+      }
     }
 
     const response = await result.response;
@@ -149,7 +186,7 @@ export async function POST(req: Request) {
         category: clean(rawJson.category || rawJson.CATEGORY || "OUTROS").toUpperCase(),
         description: clean(rawJson.description || rawJson.DESCRIPTION || "")
       });
-    } catch (e) {
+    } catch (e: any) {
       console.error("Erro no processamento da joia:", e);
       return NextResponse.json({
         name: "JOIA LAPIDADA",
@@ -159,6 +196,7 @@ export async function POST(req: Request) {
     }
 
   } catch (error: any) {
+    console.error("ERRO CRÍTICO IA:", error.message);
     return NextResponse.json({ error: "FALHA_MOTOR_IA", details: error.message }, { status: 500 });
   }
 }
