@@ -55,6 +55,19 @@ export async function POST(req: Request) {
 
     const config = styleConfigs[selectedStyle as keyof typeof styleConfigs];
 
+    // 💎 INSTANCIAR IA
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const [mimeType, base64Data] = image.split(";base64,");
+    const dataOnly = base64Data || mimeType; // Fallback para casos sem prefixo
+    const finalMime = image.includes("base64") ? mimeType.replace("data:", "") : "image/jpeg";
+
+    const safetySettings = [
+      { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+      { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+      { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+      { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+    ];
+
     const modelParams = {
       systemInstruction: `Você é um(a) ${config.role}
       Sua missão é criar nomes e descrições para joias.
@@ -74,25 +87,25 @@ export async function POST(req: Request) {
 
     let result;
     const generationConfig = {
-      temperature: 0.9, // 🚀 Máxima criatividade para evitar repetições
+      temperature: 0.9, 
       topP: 1,
       maxOutputTokens: 1000,
       responseMimeType: "application/json",
     };
 
     try {
-      // 🚀 AGORA O FLASH É O PRINCIPAL (Velocidade Máxima)
-      const modelFlash = genAI.getGenerativeModel({ ...modelParams, model: "gemini-flash-latest" });
+      // 🚀 AGORA O FLASH 1.5 É O PRINCIPAL
+      const modelFlash = genAI.getGenerativeModel({ ...modelParams, model: "gemini-1.5-flash" });
       result = await tryGenerate(modelFlash, {
-        contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
+        contents: [{ role: 'user', parts: [{ inlineData: { mimeType: finalMime, data: dataOnly } }] }],
         generationConfig,
         safetySettings
       });
     } catch (e) {
       console.error("Flash falhou, tentando Pro como backup...");
-      const modelPro = genAI.getGenerativeModel({ ...modelParams, model: "gemini-pro-latest" });
+      const modelPro = genAI.getGenerativeModel({ ...modelParams, model: "gemini-1.5-pro" });
       result = await tryGenerate(modelPro, {
-        contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
+        contents: [{ role: 'user', parts: [{ inlineData: { mimeType: finalMime, data: dataOnly } }] }],
         generationConfig,
         safetySettings
       });

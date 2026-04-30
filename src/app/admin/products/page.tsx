@@ -60,6 +60,7 @@ function SortableProduct({ product, margin, deletingId, handleDelete, handleShar
     transition,
     zIndex: isDragging ? 50 : 'auto',
     opacity: isDragging ? 0.6 : 1,
+    touchAction: isSorting ? 'none' : 'auto', // 💎 Importante para mobile
   }
 
   return (
@@ -167,7 +168,7 @@ export default function ProductsListPage() {
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }), // Evita drag acidental no clique
-    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }), // Suporte a toque (segurar 250ms)
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 15 } }), // Suporte a toque (segurar 250ms, mais tolerância)
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
 
@@ -264,8 +265,7 @@ export default function ProductsListPage() {
       const res = await fetch('/api/admin/reorder', {
         method: 'POST',
         headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer LAPIDADO_ADMIN_2026'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ table: 'products', items: finalOrder })
       })

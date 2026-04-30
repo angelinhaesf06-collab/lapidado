@@ -41,10 +41,10 @@ let globalCache: {
 
 function HomeContent() {
   const searchParams = useSearchParams()
-  const [allProducts, setAllProducts] = useState<any[]>(globalCache.products)
-  const [dbCategories, setDbCategories] = useState<Category[]>(globalCache.categories)
-  const [branding, setBranding] = useState<Branding | null>(globalCache.branding)
-  const [loading, setLoading] = useState(globalCache.products.length === 0)
+  const [allProducts, setAllProducts] = useState<any[]>([])
+  const [dbCategories, setDbCategories] = useState<Category[]>([])
+  const [branding, setBranding] = useState<Branding | null>(null)
+  const [loading, setLoading] = useState(true)
   
   const storeSlug = searchParams.get('loja')
   const isPublicCatalog = searchParams.get('catalogo') === 'true' || !!storeSlug
@@ -54,33 +54,28 @@ function HomeContent() {
 
   useEffect(() => {
     async function loadInitialData() {
-      // Se o slug mudou ou não temos nada em cache, buscamos do zero
-      const shouldFetch = globalCache.products.length === 0 || globalCache.storeSlug !== storeSlug;
-      
-      if (!shouldFetch) {
-        setLoading(false);
-        return;
-      }
-
       setLoading(true)
       
       try {
-        let brandingQuery = supabase.from('branding').select('*')
+        let currentBranding = null
         
+        // 1. Identificar qual marca estamos acessando
         if (storeSlug) {
-          brandingQuery = brandingQuery.eq('slug', storeSlug)
-        } else {
-          brandingQuery = brandingQuery.eq('slug', 'angel-semijoias')
+          // Acesso via link de catálogo (Público)
+          const { data } = await supabase.from('branding').select('*').eq('slug', storeSlug).maybeSingle()
+          currentBranding = data
+        } else if (!isPublicCatalog) {
+          // Acesso via Painel Admin (Logado)
+          const { data: { user } } = await supabase.auth.getUser()
+          if (user) {
+            const { data } = await supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle()
+            currentBranding = data
+          }
         }
-        
-        let { data: currentBranding } = await brandingQuery.maybeSingle()
 
+        // 💎 ISOLAMENTO CRÍTICO: Se não encontrou a marca específica, bloqueia o acesso
         if (!currentBranding) {
-          const { data: firstBrand } = await supabase.from('branding').select('*').limit(1).maybeSingle()
-          currentBranding = firstBrand
-        }
-
-        if (!currentBranding) {
+          console.error("MARCA NÃO ENCONTRADA OU ACESSO NÃO AUTORIZADO")
           setLoading(false)
           return
         }
@@ -88,6 +83,7 @@ function HomeContent() {
         setBranding(currentBranding)
         const currentUserId = currentBranding.user_id
 
+        // 2. Carregar dados filtrados estritamente pelo user_id da marca identificada
         const [catsRes, prodsRes] = await Promise.all([
           supabase.from('categories').select('id, name').eq('user_id', currentUserId).order('name'),
           supabase.from('products')
@@ -99,20 +95,8 @@ function HomeContent() {
             .limit(100)
         ])
 
-        const finalCategories = catsRes.data || []
-        const finalProducts = prodsRes.data || []
-
-        // Atualizar estados
-        setDbCategories(finalCategories)
-        setAllProducts(finalProducts)
-        
-        // 💎 NEXUS: Salvar no Cache Global para retorno instantâneo
-        globalCache = {
-          products: finalProducts,
-          categories: finalCategories,
-          branding: currentBranding,
-          storeSlug: storeSlug
-        };
+        setDbCategories(catsRes.data || [])
+        setAllProducts(prodsRes.data || [])
 
       } catch (err) {
         console.error("Erro ao carregar vitrine:", err)
@@ -125,8 +109,8 @@ function HomeContent() {
       if (isPublicCatalog) {
         await loadInitialData()
       } else {
-        const { data } = await supabase.auth.getSession()
-        if (!data.session) {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) {
           router.push('/login')
         } else {
           await loadInitialData()
