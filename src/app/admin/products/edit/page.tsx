@@ -139,7 +139,11 @@ function EditProductContent() {
       if (images[0]?.file) {
         const formData = new FormData()
         formData.append('file', images[0].file)
-        const uploadRes = await fetch('/api/admin/upload', { method: 'POST', body: formData })
+        const uploadRes = await fetch('/api/admin/upload', { 
+          method: 'POST', 
+          headers: { 'Authorization': 'Bearer LAPIDADO_ADMIN_2026' },
+          body: formData 
+        })
         const uploadData = await uploadRes.json()
         if (uploadData.url) finalImageUrl = uploadData.url
       }

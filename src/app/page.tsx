@@ -246,7 +246,13 @@ function HomeContent() {
                     <Link href={`/product?id=${product.id}&catalogo=true${storeParam}`} className="w-full focus:outline-none">
                       <div className="aspect-[4/5] w-full bg-white rounded-[32px] md:rounded-[50px] overflow-hidden mb-5 shadow-[0_20px_50px_rgba(74,50,46,0.04)] border border-white relative transition-all duration-500 group-hover:shadow-[0_30px_70px_rgba(74,50,46,0.1)] group-hover:-translate-y-2">
                         {product.image_url ? (
-                          <Image src={product.image_url} alt={product.name} fill className="object-cover transition-transform duration-[1.5s] group-hover:scale-110" />
+                          <Image 
+                            src={product.image_url} 
+                            alt={product.name} 
+                            fill 
+                            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                            className="object-cover transition-transform duration-[1.5s] group-hover:scale-110" 
+                          />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-brand-secondary/5">
                             <Gem size={32} className="text-brand-secondary/20" />

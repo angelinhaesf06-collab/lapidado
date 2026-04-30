@@ -92,7 +92,11 @@ export default function BrandingPage() {
         const formData = new FormData()
         formData.append('file', logoFile)
         formData.append('bucket', 'branding')
-        const uploadRes = await fetch('/api/admin/upload', { method: 'POST', body: formData })
+        const uploadRes = await fetch('/api/admin/upload', { 
+          method: 'POST', 
+          headers: { 'Authorization': 'Bearer LAPIDADO_ADMIN_2026' },
+          body: formData 
+        })
         const uploadData = await uploadRes.json()
         if (uploadData.url) currentLogoUrl = uploadData.url
       }

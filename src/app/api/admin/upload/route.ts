@@ -3,6 +3,14 @@ import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
   try {
+    const authHeader = req.headers.get('authorization')
+    const VALID_TOKEN = 'Bearer LAPIDADO_ADMIN_2026'
+
+    if (authHeader !== VALID_TOKEN) {
+      console.error('ERRO: TOKEN DE UPLOAD INVÁLIDO:', authHeader)
+      return NextResponse.json({ error: 'ACESSO NEGADO PARA UPLOAD' }, { status: 401 })
+    }
+
     const formData = await req.formData()
     const file = formData.get('file') as File
     const bucket = formData.get('bucket') as string || 'products'
