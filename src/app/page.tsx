@@ -226,60 +226,61 @@ function HomeContent() {
       )}
 
       <div className="max-w-7xl mx-auto px-4 py-8 md:py-16 w-full text-center">
-        {loading && allProducts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <Loader2 className="animate-spin text-brand-secondary" size={32} />
-            <p className="text-[10px] font-black uppercase tracking-widest text-brand-secondary/40">Carregando Coleção...</p>
-          </div>
-        ) : (
-          <>
-            <div className="mb-8 md:mb-16">
-              <h2 className="text-lg md:text-2xl font-light tracking-[0.4em] uppercase text-brand-primary mb-4 animate-in slide-in-from-bottom-2 duration-700">
-                {activeCategory === 'Todos' || !activeCategory ? 'Nova Coleção' : activeCategory}
-              </h2>
-              <div className="w-12 h-[1px] bg-brand-secondary/40 mx-auto" />
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 md:gap-x-12 gap-y-10 md:gap-y-24 px-1 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-              {displayedProducts.map((product) => (
-                <div key={product.id} className="group flex flex-col items-center w-full">
-                  <Link href={`/product?id=${product.id}&catalogo=true${storeParam}`} className="w-full focus:outline-none">
-                    <div className="aspect-[4/5] w-full bg-white rounded-[32px] md:rounded-[50px] overflow-hidden mb-5 shadow-[0_20px_50px_rgba(74,50,46,0.04)] border border-white relative transition-all duration-500 group-hover:shadow-[0_30px_70px_rgba(74,50,46,0.1)] group-hover:-translate-y-2">
-                      {product.image_url ? (
-                        <Image src={product.image_url} alt={product.name} fill className="object-cover transition-transform duration-[1.5s] group-hover:scale-110" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-brand-secondary/5">
-                          <Gem size={32} className="text-brand-secondary/20" />
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="px-1 text-center w-full mb-5">
-                      <h4 className="text-[9px] md:text-[12px] font-black tracking-[0.2em] uppercase text-brand-primary mb-2 leading-relaxed transition-colors group-hover:text-brand-secondary truncate px-2">{product.name}</h4>
-                      <div className="flex flex-col gap-1">
-                        <span className="text-[14px] md:text-[20px] font-bold text-brand-primary">
-                          R$ {Number(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </span>
-                        <p className="text-brand-secondary text-[7px] md:text-[9px] font-black tracking-widest uppercase opacity-40">
-                          {installments}x de R$ {(Number(product.price) / installments).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </p>
-                      </div>
-                    </div>
-                  </Link>
-                  <div className="w-full px-1 md:px-6">
-                    <AddToCartButton product={product} />
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            {displayedProducts.length === 0 && !loading && (
-              <div className="py-20">
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-secondary/30">Nenhum item nesta categoria 💎</p>
+        {(() => {
+          if (loading && allProducts.length === 0) {
+            return null; // 💎 NEXUS: Removemos a splash screen de carregamento
+          }
+          
+          return (
+            <>
+              <div className="mb-8 md:mb-16">
+                <h2 className="text-lg md:text-2xl font-light tracking-[0.4em] uppercase text-brand-primary mb-4 animate-in slide-in-from-bottom-2 duration-700">
+                  {activeCategory === 'Todos' || !activeCategory ? 'Nova Coleção' : activeCategory}
+                </h2>
+                <div className="w-12 h-[1px] bg-brand-secondary/40 mx-auto" />
               </div>
-            )}
-          </>
-        )}
+
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 md:gap-x-12 gap-y-10 md:gap-y-24 px-1 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                {displayedProducts.map((product) => (
+                  <div key={product.id} className="group flex flex-col items-center w-full">
+                    <Link href={`/product?id=${product.id}&catalogo=true${storeParam}`} className="w-full focus:outline-none">
+                      <div className="aspect-[4/5] w-full bg-white rounded-[32px] md:rounded-[50px] overflow-hidden mb-5 shadow-[0_20px_50px_rgba(74,50,46,0.04)] border border-white relative transition-all duration-500 group-hover:shadow-[0_30px_70px_rgba(74,50,46,0.1)] group-hover:-translate-y-2">
+                        {product.image_url ? (
+                          <Image src={product.image_url} alt={product.name} fill className="object-cover transition-transform duration-[1.5s] group-hover:scale-110" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-brand-secondary/5">
+                            <Gem size={32} className="text-brand-secondary/20" />
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="px-1 text-center w-full mb-5">
+                        <h4 className="text-[9px] md:text-[12px] font-black tracking-[0.2em] uppercase text-brand-primary mb-2 leading-relaxed transition-colors group-hover:text-brand-secondary truncate px-2">{product.name}</h4>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[14px] md:text-[20px] font-bold text-brand-primary">
+                            R$ {Number(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </span>
+                          <p className="text-brand-secondary text-[7px] md:text-[9px] font-black tracking-widest uppercase opacity-40">
+                            {installments}x de R$ {(Number(product.price) / installments).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </p>
+                        </div>
+                      </div>
+                    </Link>
+                    <div className="w-full px-1 md:px-6">
+                      <AddToCartButton product={product} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {displayedProducts.length === 0 && !loading && (
+                <div className="py-20">
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-secondary/30">Nenhum item nesta categoria 💎</p>
+                </div>
+              )}
+            </>
+          )
+        })()}
       </div>
     </div>
   )

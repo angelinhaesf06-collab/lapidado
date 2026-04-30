@@ -150,14 +150,11 @@ export default function Footer() {
             </div>
           </div>
 
-          {(branding.warranty_time || (branding.tiktok && (branding.tiktok.includes('MESES') || branding.tiktok.includes('ANO') || branding.tiktok.includes('ETERNA')))) && (
+          {branding.warranty_time && (
             <div className="bg-brand-primary/5 px-4 py-2 rounded-full border border-brand-primary/10">
               <p className="text-[8px] text-brand-primary font-black uppercase tracking-widest flex items-center gap-2">
                 <Gem size={10} /> 
-                {branding.warranty_time 
-                  ? (branding.warranty_time.toUpperCase().includes('GARANTIA') ? branding.warranty_time : `${branding.warranty_time} DE GARANTIA`)
-                  : (branding.tiktok?.toUpperCase().includes('GARANTIA') ? branding.tiktok : `${branding.tiktok} DE GARANTIA`)
-                }
+                {branding.warranty_time.toUpperCase().includes('GARANTIA') ? branding.warranty_time : `${branding.warranty_time} DE GARANTIA`}
               </p>
             </div>
           )}
