@@ -34,45 +34,42 @@ export async function POST(req: Request) {
 
     const selectedStyle = style || 'luxo';
     
-    // 💎 PROMPTS ESPECIALIZADOS POR ESTILO
-    const stylePrompts = {
-      luxo: `Use um tom poético, sofisticado e exclusivo. 
-             Foque na elegância, na lapidação e no brilho celestial. 
-             Palavras-chave: Ancestral, sublime, magnético, atemporal, curadoria de luxo.`,
-      venda: `Use um tom persuasivo, comercial e cheio de desejo. 
-              Foque em gatilhos de escassez e como a peça transforma o look. 
-              Palavras-chave: Indispensável, realce sua beleza, tendência, peça-chave, garanta a sua.`,
-      simples: `Use um tom direto, claro e objetivo. 
-                Foque nas características físicas de forma clean. 
-                Palavras-chave: Design clássico, acabamento impecável, versátil, dia a dia, alta qualidade.`
+    // 💎 PROMPTS ESPECIALIZADOS E IDENTIDADES DISTINTAS
+    const styleConfigs = {
+      luxo: {
+        role: "Mestre joalheira e copywriter de alto luxo.",
+        tone: "Poético, sofisticado, magnético e exclusivo. Use adjetivos como 'sublime', 'celestial' e 'atemporal'.",
+        keywords: "Curadoria, sofisticação, DNA da marca, brilho eterno."
+      },
+      venda: {
+        role: "Especialista em marketing de joias e gatilhos de vendas.",
+        tone: "Persuasivo, energético e focado em desejo imediato. Use termos que estimulem a compra agora.",
+        keywords: "Tendência, look impecável, garanta a sua, peça-chave, transforme seu visual."
+      },
+      simples: {
+        role: "Assistente técnico de catálogo de semijoias.",
+        tone: "Direto, técnico, limpo e objetivo. Sem floreios ou adjetivos exagerados.",
+        keywords: "Versátil, dia a dia, alta durabilidade, acabamento polido, design clean."
+      }
     };
 
-    const base64Data = image.includes(",") ? image.split(",")[1] : image;
-    const mimeMatch = image.match(/data:(.*?);base64/);
-    const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
-    
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const safetySettings = [
-      { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-      { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-      { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-      { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-    ];
+    const config = styleConfigs[selectedStyle as keyof typeof styleConfigs];
 
     const modelParams = {
-      systemInstruction: `Você é uma mestre joalheira e copywriter de luxo da Lapidado. 
-      Sua missão é criar nomes e descrições únicas e irresistíveis. 
+      systemInstruction: `Você é um(a) ${config.role}
+      Sua missão é criar nomes e descrições para joias.
       
-      ESTILO SELECIONADO: ${selectedStyle.toUpperCase()}
-      DIRETRIZES DO ESTILO: ${stylePrompts[selectedStyle as keyof typeof stylePrompts]}
+      TOM DE VOZ: ${config.tone}
+      PALAVRAS-CHAVE: ${config.keywords}
 
-      REGRAS DE OURO:
-      - NUNCA repita a mesma descrição para peças diferentes.
-      - Se a peça for dourada, varie entre "Ouro 18k", "Banho Nobre", "Brilho Solar".
-      - Se tiver pedras, varie entre "Zircônias Premium", "Cristais de Alta Lapidação", "Pontos de Luz".
+      REGRAS:
+      - NUNCA repita descrições.
+      - Nomes curtos e impactantes.
+      - Para peças douradas: ${selectedStyle === 'luxo' ? '"Banho Nobre", "Brilho Solar"' : '"Folheado a Ouro", "Acabamento Dourado"'}
+      - Descrição: Máximo 3 frases curtas.
 
       JSON OUTPUT:
-      {"name": "Nome Curto e Impactante", "category": "CATEGORIA", "description": "3 frases magnéticas no tom ${selectedStyle.toUpperCase()}."}`
+      {"name": "NOME", "category": "CATEGORIA", "description": "CONTEÚDO NO ESTILO ${selectedStyle.toUpperCase()}"}`
     };
 
     let result;
