@@ -1,10 +1,10 @@
 {
-  "appId": "br.com.lapidado.app",
+  "appId": "com.lapidado.vendas",
   "appName": "LAPIDADO",
   "webDir": "out",
   "bundledWebRuntime": false,
   "server": {
-    "url": "https://lapidado-app.vercel.app",
+    "url": "https://lapidado.vercel.app",
     "cleartext": true
   }
 }
