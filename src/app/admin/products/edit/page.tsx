@@ -165,9 +165,10 @@ function EditProductContent() {
 
       const response = await fetch('/api/admin/save', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer LAPIDADO_ADMIN_2026` },
-        body: JSON.stringify({ table: 'products', data: productData, id })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ table: 'products', id, data: productData })
       })
+
 
       const result = await response.json()
       if (!result.success) throw new Error(result.error)

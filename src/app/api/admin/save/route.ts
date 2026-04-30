@@ -1,4 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 
@@ -7,14 +9,25 @@ export const runtime = 'nodejs'; // 💎 NEXUS: Garantindo compatibilidade total
 export async function POST(req: Request) {
   try {
     const { table, data, id } = await req.json()
-    const authHeader = req.headers.get('authorization')
+    
+    // 🔒 SEGURANÇA DINÂMICA: Validação Real de Sessão
+    const cookieStore = await cookies()
+    const supabaseAuth = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() { return cookieStore.getAll() },
+          setAll(cookiesToSet) { cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options)) },
+        },
+      }
+    )
 
-    // CHAVE ÚNICA E INFALÍVEL
-    const VALID_TOKEN = 'Bearer LAPIDADO_ADMIN_2026'
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser()
 
-    if (authHeader !== VALID_TOKEN) {
-      console.error('ERRO: TOKEN RECEBIDO INVÁLIDO:', authHeader)
-      return NextResponse.json({ error: 'ACESSO NEGADO' }, { status: 401 })
+    if (authError || !user) {
+      console.error('ERRO: SESSÃO INVÁLIDA OU EXPIRADA');
+      return NextResponse.json({ error: 'ACESSO NEGADO: SESSÃO INVÁLIDA' }, { status: 401 })
     }
 
     if (!table || !data) {

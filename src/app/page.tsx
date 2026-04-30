@@ -64,8 +64,10 @@ function HomeContent() {
           // Acesso via link de catálogo (Público)
           const { data } = await supabase.from('branding').select('*').eq('slug', storeSlug).maybeSingle()
           currentBranding = data
-        } else if (!isPublicCatalog) {
-          // Acesso via Painel Admin (Logado)
+        } 
+        
+        // 💎 FALLBACK: Se não tem slug ou não achou por slug, tenta o usuário logado (Dono testando)
+        if (!currentBranding) {
           const { data: { user } } = await supabase.auth.getUser()
           if (user) {
             const { data } = await supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle()

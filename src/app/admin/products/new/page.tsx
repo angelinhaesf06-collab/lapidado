@@ -178,7 +178,7 @@ export default function NewProductPage() {
       
       const saveRes = await fetch('/api/admin/save', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer LAPIDADO_ADMIN_2026` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ table: 'products', data: productData })
       })
       const result = await saveRes.json()

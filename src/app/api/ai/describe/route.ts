@@ -57,9 +57,20 @@ export async function POST(req: Request) {
 
     // 💎 INSTANCIAR IA
     const genAI = new GoogleGenerativeAI(apiKey);
-    const [mimeType, base64Data] = image.split(";base64,");
-    const dataOnly = base64Data || mimeType; // Fallback para casos sem prefixo
-    const finalMime = image.includes("base64") ? mimeType.replace("data:", "") : "image/jpeg";
+    
+    // Extração robusta de MimeType e Base64
+    let finalMime = "image/jpeg";
+    let dataOnly = image;
+
+    if (image.includes(";base64,")) {
+      const parts = image.split(";base64,");
+      finalMime = parts[0].replace("data:", "");
+      dataOnly = parts[1];
+    } else if (image.startsWith("data:")) {
+      const parts = image.split(",");
+      finalMime = parts[0].split(":")[1].split(";")[0];
+      dataOnly = parts[1];
+    }
 
     const safetySettings = [
       { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
