@@ -48,14 +48,18 @@ export async function POST(req: Request) {
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseKey)
 
-    // 💎 NEXUS: VALIDAÇÃO DE SEGURANÇA MULTI-TENANT
-    // Para operações via Client SDK, o RLS cuida disso. 
-    // Como estamos usando Service Role (Admin), precisamos garantir o isolamento manualmente.
-    if (data.user_id && id) {
-       // Se estamos editando, o registro DEVE pertencer ao user_id enviado OU ser um registro órfão de branding
+    // 💎 NEXUS: SEGURANÇA MÁXIMA MULTI-TENANT
+    // Forçamos o user_id da sessão para garantir que um usuário não salve dados em nome de outro.
+    if (data.user_id && data.user_id !== user.id) {
+       return NextResponse.json({ error: 'VIOLAÇÃO DE IDENTIDADE: user_id diverge da sessão.' }, { status: 403 });
+    }
+    data.user_id = user.id;
+
+    if (id) {
+       // Se estamos editando, o registro DEVE pertencer ao user_id da sessão
        const { data: check } = await supabaseAdmin.from(table).select('user_id').eq('id', id).single();
        
-       if (check && check.user_id && check.user_id !== data.user_id) {
+       if (check && check.user_id && check.user_id !== user.id) {
          return NextResponse.json({ error: 'VIOLAÇÃO DE ISOLAMENTO: Registro pertence a outra marca.' }, { status: 403 });
        }
     }

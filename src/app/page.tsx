@@ -13,6 +13,7 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const resolvedSearchParams = await searchParams
   const loja = resolvedSearchParams.loja as string
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lapidado.vercel.app'
   
   const supabase = await createClient()
   
@@ -24,20 +25,31 @@ export async function generateMetadata(
 
   const storeName = branding?.business_name || branding?.store_name || 'LAPIDADO'
   const tagline = branding?.tagline || 'Mais que acessórios, a sua assinatura de estilo.'
-  const logoUrl = branding?.logo_url || '/logo-app.png'
+  let logoUrl = branding?.logo_url || '/logo-app.png'
+  
+  // Garantir que a URL da imagem seja absoluta para o WhatsApp
+  if (logoUrl.startsWith('/')) {
+    logoUrl = `${baseUrl}${logoUrl}`
+  }
 
   return {
-    title: `${storeName} | Catálogo Digital ✨`,
+    metadataBase: new URL(baseUrl),
+    title: `${storeName} | Vitrine Oficial 💎`,
     description: tagline,
     openGraph: {
-      title: `${storeName} | Catálogo Digital ✨`,
+      title: `${storeName} | Vitrine Oficial 💎`,
       description: tagline,
-      images: [logoUrl],
+      images: [{
+        url: logoUrl,
+        width: 1200,
+        height: 630,
+        alt: storeName,
+      }],
       type: 'website',
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${storeName} | Catálogo Digital ✨`,
+      title: `${storeName} | Vitrine Oficial 💎`,
       description: tagline,
       images: [logoUrl],
     },

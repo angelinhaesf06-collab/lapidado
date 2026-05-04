@@ -23,7 +23,9 @@ interface Branding {
   tiktok?: string
   phone?: string
   logo_url?: string
-  [key: string]: unknown
+  top_banner?: string
+  installments?: number | string
+  [key: string]: any
 }
 
 export default function CatalogClient() {
@@ -44,12 +46,12 @@ export default function CatalogClient() {
       setLoading(true)
       
       try {
-        let currentBranding = null
+        let currentBranding: Branding | null = null
         
         // 1. Identificar qual marca estamos acessando
         if (storeSlug) {
           const { data } = await supabase.from('branding').select('*').eq('slug', storeSlug).maybeSingle()
-          currentBranding = data
+          currentBranding = data as Branding | null
         } 
         
         // 2. Se não houver slug, tenta identificar pelo usuário logado (Dona da Loja)
@@ -57,7 +59,7 @@ export default function CatalogClient() {
           const { data: { user } } = await supabase.auth.getUser()
           if (user) {
             const { data } = await supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle()
-            currentBranding = data
+            currentBranding = data as Branding | null
           }
         }
         
@@ -167,26 +169,32 @@ export default function CatalogClient() {
     <div className="flex flex-col w-full min-h-screen bg-[#fffcfc] animate-in fade-in duration-700">
       
       <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-brand-secondary/10 shadow-sm">
-        <header className="w-full pt-6 pb-2 flex flex-col items-center gap-4">
+        <header className="w-full pt-8 pb-4 flex flex-col items-center gap-6">
           {branding?.logo_url && typeof branding.logo_url === 'string' ? (
-            <Link href={`/?catalogo=true${storeParam}`} className="relative w-32 h-10 md:w-48 md:h-14 transition-transform hover:scale-105 active:scale-95">
+            <Link href={`/?catalogo=true${storeParam}`} className="relative w-40 h-14 md:w-64 md:h-20 transition-all duration-500 hover:scale-110 active:scale-95">
               <Image 
                 src={branding.logo_url} 
                 alt={branding.store_name || 'Logo'} 
                 fill 
-                className="object-contain"
+                className="object-contain filter drop-shadow-sm"
                 priority
               />
             </Link>
           ) : (
-            <div className="flex items-center gap-2">
-               <div className="w-8 h-8 rounded-full bg-brand-primary flex items-center justify-center text-white shadow-md">
-                  <Gem size={16} />
+            <div className="flex flex-col items-center gap-3">
+               <div className="w-12 h-12 rounded-full bg-brand-primary flex items-center justify-center text-white shadow-xl shadow-brand-primary/20">
+                  <Gem size={24} />
                </div>
-               <h1 className="text-[10px] md:text-[12px] font-black uppercase tracking-[0.4em] text-brand-primary">
+               <h1 className="text-[12px] md:text-[16px] font-black uppercase tracking-[0.6em] text-brand-primary">
                   {branding?.store_name || 'LAPIDADO'}
                </h1>
             </div>
+          )}
+          
+          {branding?.tagline && (
+            <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em] text-brand-secondary/60 max-w-[80%] text-center leading-relaxed">
+              {branding.tagline}
+            </p>
           )}
         </header>
 
@@ -207,10 +215,10 @@ export default function CatalogClient() {
         </nav>
       </div>
 
-      {branding?.facebook?.split('|')[2] && (
+      {(branding?.top_banner || branding?.facebook?.split('|')[2]) && (
         <div className="w-full bg-brand-primary py-2 px-4 text-center">
           <p className="text-white text-[7px] md:text-[9px] font-black uppercase tracking-[0.3em] animate-pulse">
-            ✨ {branding.facebook.split('|')[2]} ✨
+            ✨ {(branding?.top_banner || branding?.facebook?.split('|')[2]) as string} ✨
           </p>
         </div>
       )}
@@ -218,7 +226,7 @@ export default function CatalogClient() {
       <div className="max-w-7xl mx-auto px-4 py-8 md:py-16 w-full text-center">
         <div className="mb-8 md:mb-16">
           <h2 className="text-lg md:text-2xl font-light tracking-[0.4em] uppercase text-brand-primary mb-4 animate-in slide-in-from-bottom-2 duration-700">
-            {activeCategory === 'Todos' || !activeCategory ? 'Nova Coleção' : activeCategory}
+            {activeCategory === 'Todos' || !activeCategory ? `${branding?.store_name || 'Coleção'} Exclusiva` : activeCategory}
           </h2>
           <div className="w-12 h-[1px] bg-brand-secondary/40 mx-auto" />
         </div>

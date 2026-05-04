@@ -42,22 +42,15 @@ export default function Header() {
           }
         }
         
-        // 3. Fallback: Busca o branding mais recente (provavelmente o da empresária atual)
-        if (!brandingData) {
-          const { data } = await supabase.from('branding').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle()
-          brandingData = data
-        }
-
+        // 3. REMOVIDO FALLBACK INSEGURO QUE CAUSAVA MISTURA DE LOGINS
+        
         if (brandingData) {
-          const rawTagline = brandingData.facebook || ''
-          const [tagline, , banner] = rawTagline.split('|')
-          
           setBranding({ 
             logo_url: brandingData.logo_url,
-            tagline: tagline || null,
-            topBanner: banner || null,
+            tagline: brandingData.tagline || brandingData.facebook?.split('|')[0] || null,
+            topBanner: brandingData.top_banner || brandingData.facebook?.split('|')[2] || null,
             warranty: brandingData.warranty_time || null,
-            store_name: brandingData.store_name || 'LAPIDADO'
+            store_name: brandingData.business_name || brandingData.store_name || 'LAPIDADO'
           })
         }
       } catch {

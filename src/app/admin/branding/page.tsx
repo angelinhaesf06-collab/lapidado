@@ -35,10 +35,7 @@ export default function BrandingPage() {
 
         let { data } = await supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle()
 
-        if (!data) {
-          const { data: orphanedData } = await supabase.from('branding').select('*').is('user_id', null).limit(1).maybeSingle()
-          data = orphanedData
-        }
+        // 💎 REMOVIDO FALLBACK PARA REGISTROS ÓRFÃOS (CAUSAVA MISTURA DE LOGINS)
 
         if (data) {
           setBrandingId(data.id)
