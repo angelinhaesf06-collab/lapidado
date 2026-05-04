@@ -6,7 +6,7 @@ export const maxDuration = 30;
 
 async function tryGenerate(model: any, content: any) {
   let retries = 1; // 🚀 Reduzido para 1 tentativa para não travar a tela
-  let delay = 1000;
+  const delay = 1000;
   
   while (retries >= 0) {
     try {

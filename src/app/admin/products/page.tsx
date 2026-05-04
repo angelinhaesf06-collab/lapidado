@@ -239,28 +239,12 @@ export default function ProductsListPage() {
       
       let finalOrder: { id: string, display_order: number }[] = []
       
-      if (activeCategory === 'Todas') {
-        finalOrder = products.map((p, index) => ({
-          id: p.id,
-          display_order: index + 1
-        }))
-      } else {
-        // 1. Pegamos todos os produtos que NÃO pertencem à categoria atual
-        const otherProducts = products.filter(p => p.categories?.name !== activeCategory)
-        
-        // 2. Pegamos os produtos da categoria atual na nova ordem definida pelo drag-and-drop
-        const currentCategoryProducts = filteredProducts
-        
-        // 3. Reconstruímos a lista total mantendo a ordem relativa
-        // Nota: Para simplificar e garantir consistência, vamos remapear todos
-        const combined = [...products] 
-        // Como o 'setProducts' já foi atualizado pelo 'handleDragEnd', 
-        // basta mapear a lista completa atual do estado.
-        finalOrder = products.map((p, index) => ({
-          id: p.id,
-          display_order: index + 1
-        }))
-      }
+      // Como o 'setProducts' já foi atualizado pelo 'handleDragEnd', 
+      // basta mapear a lista completa atual do estado para salvar a nova ordem global.
+      finalOrder = products.map((p, index) => ({
+        id: p.id,
+        display_order: index + 1
+      }))
 
       const res = await fetch('/api/admin/reorder', {
         method: 'POST',

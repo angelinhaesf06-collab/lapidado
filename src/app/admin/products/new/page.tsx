@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Gem, Loader2, Check, X, Plus, AlertCircle, CheckCircle2, TrendingUp } from 'lucide-react'
+import { Gem, Loader2, Plus, CheckCircle2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -10,21 +10,16 @@ export default function NewProductPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
-  const [dbStatus, setDbStatus] = useState<'checking' | 'ok' | 'error'>('checking')
   const [images, setImages] = useState<{file: File | null, preview: string}[]>([])
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('')
   const [materialFinish, setMaterialFinish] = useState('OURO 18K')
   const [categories, setCategories] = useState<{id: string, name: string}[]>([])
-  const [pricingRules, setPricingRules] = useState<{globalMarkup: number, categoryMarkups: Record<string, number>}>({
-    globalMarkup: 100, categoryMarkups: {}
-  })
   const [costPrice, setCostPrice] = useState<string>('')
   const [margin, setMargin] = useState<string>('100')
   const [salePrice, setSalePrice] = useState<string>('')
   const [stock, setStock] = useState<string>('1')
-  const [aiUsed, setAiUsed] = useState(false)
   const [aiStyle, setAiStyle] = useState<'luxo' | 'venda' | 'simples'>('luxo')
 
   const router = useRouter()
@@ -42,7 +37,6 @@ export default function NewProductPage() {
     if (!user) return
     const { data: catData } = await supabase.from('categories').select('*').order('name')
     if (catData) setCategories(catData)
-    setDbStatus('ok')
   }, [supabase])
 
   useEffect(() => { loadData() }, [loadData])
@@ -124,7 +118,7 @@ export default function NewProductPage() {
         const found = categories.find(c => c.name.toUpperCase().includes(aiCat) || aiCat.includes(c.name.toUpperCase()))
         if (found) setCategory(found.id)
       }
-    } catch (err) {
+    } catch {
       setAiError("IA INDISPONÍVEL. CONTINUE MANUALMENTE. ✨")
     } finally {
       setAiLoading(false)
@@ -156,7 +150,7 @@ export default function NewProductPage() {
           // 🚀 PLANO B: Se o servidor de arquivos falhar, usamos a imagem comprimida direta
           finalImageUrl = compressedBase64
         }
-      } catch (e) {
+      } catch {
         // Se der erro no upload, tenta usar a imagem direta
         finalImageUrl = images[0].preview
       }

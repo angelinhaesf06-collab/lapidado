@@ -27,7 +27,7 @@ interface Branding {
 }
 
 // 💎 NEXUS: Cache Global para navegação instantânea entre páginas
-let globalCache: {
+const globalCache: {
   products: any[],
   categories: any[],
   branding: any | null,
