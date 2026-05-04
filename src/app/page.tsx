@@ -27,17 +27,17 @@ export async function generateMetadata(
   const logoUrl = branding?.logo_url || '/logo-app.png'
 
   return {
-    title: `${storeName} | Catálogo Digital ✨`,
+    title: `${storeName} | Vitrine Oficial 💎`,
     description: tagline,
     openGraph: {
-      title: `${storeName} | Catálogo Digital ✨`,
+      title: `${storeName} | Vitrine Oficial 💎`,
       description: tagline,
       images: [logoUrl],
       type: 'website',
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${storeName} | Catálogo Digital ✨`,
+      title: `${storeName} | Vitrine Oficial 💎`,
       description: tagline,
       images: [logoUrl],
     },
