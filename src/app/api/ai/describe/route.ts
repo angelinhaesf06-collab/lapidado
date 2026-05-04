@@ -26,7 +26,12 @@ async function tryGenerate(model: any, content: any) {
 export async function POST(req: Request) {
   try {
     const apiKey = (process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "").trim();
-    if (!apiKey) return NextResponse.json({ error: "ERRO_CONFIG" }, { status: 401 });
+    if (!apiKey) {
+      console.error("❌ ERRO: GEMINI_API_KEY NÃO ENCONTRADA NO AMBIENTE.");
+      return NextResponse.json({ error: "ERRO_CONFIG", details: "API Key ausente" }, { status: 401 });
+    }
+
+    console.log("🔍 Iniciando requisição de IA (Model: Gemini 3.1 Flash Lite)");
 
     const payload = await req.json();
     const { image, style } = payload;
