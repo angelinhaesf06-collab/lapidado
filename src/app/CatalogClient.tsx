@@ -124,14 +124,17 @@ export default function CatalogClient() {
 
   const installments = useMemo(() => {
     try {
-      // @ts-ignore
+      // @ts-expect-error - Ignorando erro de tipagem dinâmica do branding
       if (branding?.installments) return parseInt(branding.installments.toString())
+      // @ts-expect-error - Ignorando erro de tipagem dinâmica do branding
       const parts = branding?.facebook?.split('|')
       if (parts && parts[1]) {
         const val = parseInt(parts[1])
         return isNaN(val) ? 10 : val
       }
-    } catch (e) {}
+    } catch {
+      // Erro ignorado propositalmente
+    }
     return 10
   }, [branding])
 
