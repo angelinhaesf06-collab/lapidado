@@ -101,7 +101,9 @@ export default function PricingPage() {
   const generateReportPDF = () => {
     if (addedItems.length === 0) return toast.error('Adicione itens primeiro! 📸')
     const doc = new jsPDF()
-    doc.setFontSize(22); doc.setTextColor(74, 50, 46); doc.text('LAPIDADO ERP', 105, 20, { align: 'center' })
+    const storeName = branding?.business_name || branding?.store_name || 'LAPIDADO ERP'
+    
+    doc.setFontSize(22); doc.setTextColor(74, 50, 46); doc.text(storeName.toUpperCase(), 105, 20, { align: 'center' })
     doc.setFontSize(10); doc.setTextColor(201, 144, 144); doc.text('ROMANEIO INDUSTRIAL DE CARGA', 105, 28, { align: 'center' })
     
     const tableBody = addedItems.map(item => [
@@ -134,7 +136,9 @@ export default function PricingPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
         <div className="text-center md:text-left">
           <h2 className="text-3xl md:text-4xl font-black uppercase text-brand-primary tracking-tighter">Estação de Precificação</h2>
-          <p className="text-brand-secondary text-[10px] md:text-[12px] font-black tracking-[0.4em] uppercase mt-2">Engenharia de Custo Industrial 💎</p>
+          <p className="text-brand-secondary text-[10px] md:text-[12px] font-black tracking-[0.4em] uppercase mt-2">
+            {branding?.business_name ? `${branding.business_name.toUpperCase()} — ` : ''}Engenharia de Custo Industrial 💎
+          </p>
         </div>
         <button onClick={generateReportPDF} className="bg-brand-primary text-white px-8 py-5 rounded-[25px] font-black text-[10px] uppercase flex items-center justify-center gap-3 shadow-2xl hover:scale-[1.02] transition-all">
            <FileText size={18}/> Exportar Romaneio PDF ({addedItems.length})
