@@ -23,7 +23,9 @@ interface Branding {
   tiktok?: string
   phone?: string
   logo_url?: string
-  [key: string]: unknown
+  top_banner?: string
+  installments?: number | string
+  [key: string]: any
 }
 
 export default function CatalogClient() {
@@ -44,12 +46,12 @@ export default function CatalogClient() {
       setLoading(true)
       
       try {
-        let currentBranding = null
+        let currentBranding: Branding | null = null
         
         // 1. Identificar qual marca estamos acessando
         if (storeSlug) {
           const { data } = await supabase.from('branding').select('*').eq('slug', storeSlug).maybeSingle()
-          currentBranding = data
+          currentBranding = data as Branding | null
         } 
         
         // 2. Se não houver slug, tenta identificar pelo usuário logado (Dona da Loja)
@@ -57,7 +59,7 @@ export default function CatalogClient() {
           const { data: { user } } = await supabase.auth.getUser()
           if (user) {
             const { data } = await supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle()
-            currentBranding = data
+            currentBranding = data as Branding | null
           }
         }
         
