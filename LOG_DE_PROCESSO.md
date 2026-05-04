@@ -102,6 +102,18 @@ Data: 08 de Abril de 2026
     4. **Gemini Flash Latest** (Resiliência final).
 - Aplicação estendida tanto para a **Descrição de Joias (Mágica Lapidado)** quanto para a **Extração de Romaneios**.
 
+### 2. Personalização de Compartilhamento (SEO & Meta-tags)
+- Implementação de **Metadados Dinâmicos** para o Catálogo e Páginas de Produto.
+- Agora, ao compartilhar o link da loja ou de uma joia no WhatsApp/Instagram, o preview exibe:
+    - O **Nome da Loja** personalizado.
+    - A **Descrição/Slogan** da marca ou detalhes da joia.
+    - A **Logo da Loja** ou a foto da joia como imagem de destaque.
+- Refatoração da arquitetura das páginas para Server Components, garantindo indexação e preview perfeitos.
+
+### 3. Engenharia de Custo Industrial (Multi-marcas)
+- Correção na geração de **PDF de Precificação**: O cabeçalho agora exibe dinamicamente o nome da marca da empresária.
+- Adição de carimbo de data/hora nos romaneios exportados para controle de estoque e auditoria.
+
 ## 🔜 Próximos Passos (Amanhã)
 - Preparação para lançamento Mobile.
 - Geração do arquivo **.aab (Android App Bundle)** para publicação na Google Play Store.

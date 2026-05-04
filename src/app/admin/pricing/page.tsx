@@ -105,8 +105,10 @@ export default function PricingPage() {
     const doc = new jsPDF()
     const storeName = branding?.business_name || branding?.store_name || 'LAPIDADO ERP'
     
+    // 💎 NEXUS: Cabeçalho Customizado com Nome da Loja
     doc.setFontSize(22); doc.setTextColor(74, 50, 46); doc.text(storeName.toUpperCase(), 105, 20, { align: 'center' })
     doc.setFontSize(10); doc.setTextColor(201, 144, 144); doc.text('ROMANEIO INDUSTRIAL DE CARGA', 105, 28, { align: 'center' })
+    doc.setFontSize(8); doc.setTextColor(74, 50, 46); doc.text(`EMITIDO EM: ${new Date().toLocaleString('pt-BR')}`, 105, 34, { align: 'center' })
     
     const tableBody = addedItems.map(item => [
       item.name.toUpperCase(),
