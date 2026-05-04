@@ -191,7 +191,7 @@ export default function ProductsListPage() {
         .order('display_order', { ascending: true, nullsFirst: true }) // 💎 Agora ordenamos pela ordem definida, nulos no topo
         .order('created_at', { ascending: false })
         .range(from, to),
-      isInitial ? supabase.from('categories').select('id, name').order('name') : Promise.resolve({ data: null }),
+      isInitial ? supabase.from('categories').select('id, name').eq('user_id', user.id).order('name') : Promise.resolve({ data: null }),
       isInitial ? supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle() : Promise.resolve({ data: null })
     ])
 

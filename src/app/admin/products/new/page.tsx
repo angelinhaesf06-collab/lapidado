@@ -35,7 +35,7 @@ export default function NewProductPage() {
   const loadData = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    const { data: catData } = await supabase.from('categories').select('*').order('name')
+    const { data: catData } = await supabase.from('categories').select('*').eq('user_id', user.id).order('name')
     if (catData) setCategories(catData)
   }, [supabase])
 

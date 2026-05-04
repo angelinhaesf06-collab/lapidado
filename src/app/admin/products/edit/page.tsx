@@ -85,7 +85,10 @@ function EditProductContent() {
 
     async function loadData() {
       setFetching(true)
-      const { data: cats } = await supabase.from('categories').select('*').order('name')
+      const { data: { user: currentUser } } = await supabase.auth.getUser()
+      if (!currentUser) return
+      
+      const { data: cats } = await supabase.from('categories').select('*').eq('user_id', currentUser.id).order('name')
       if (cats) setCategories(cats)
 
       const { data, error } = await supabase.from('products').select('*').eq('id', id).single()
