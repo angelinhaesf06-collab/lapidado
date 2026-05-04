@@ -91,6 +91,17 @@ Data: 08 de Abril de 2026
 - Integração de links dinâmicos para **Instagram** e **TikTok**.
 - Botão de contato rápido via **WhatsApp** integrado ao branding da loja.
 
+## ✅ Funcionalidades Implementadas Hoje (04 de Maio de 2026)
+
+### 1. Upgrade Tecnológico: Gemini 3.1 Flash Lite
+- Atualização do motor de IA principal para o modelo **Gemini 3.1 Flash Lite Preview**.
+- Implementação de hierarquia de fallback:
+    1. **Gemini 3.1 Flash Lite** (Principal - Alta velocidade e baixo custo).
+    2. **Gemini 2.5 Flash** (Backup de alta performance).
+    3. **Gemini 2.0 Flash** (Segunda camada de segurança).
+    4. **Gemini Flash Latest** (Resiliência final).
+- Aplicação estendida tanto para a **Descrição de Joias (Mágica Lapidado)** quanto para a **Extração de Romaneios**.
+
 ## 🔜 Próximos Passos (Amanhã)
 - Preparação para lançamento Mobile.
 - Geração do arquivo **.aab (Android App Bundle)** para publicação na Google Play Store.

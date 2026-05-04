@@ -25,20 +25,29 @@ export async function POST(req: Request) {
 
     let result;
     try {
-      // 🚀 MOTOR DE ELITE: gemini-pro-latest
-      const model = genAI.getGenerativeModel({ model: "gemini-pro-latest", systemInstruction });
+      // 🚀 MOTOR DE ELITE: Gemini 3.1 Flash Lite (Velocidade e Precisão para Romaneios)
+      console.log("Tentando Gemini 3.1 Flash Lite para Romaneio...");
+      const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite-preview", systemInstruction });
       result = await model.generateContent({
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
         generationConfig: { maxOutputTokens: 1000, temperature: 0.1 }
       });
     } catch (e) {
-      console.error("Gemini Pro falhou, tentando fallback Flash...");
-      // 🚀 BACKUP FLASH
-      const modelFlash = genAI.getGenerativeModel({ model: "gemini-flash-latest", systemInstruction });
-      result = await modelFlash.generateContent({
-        contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
-        generationConfig: { maxOutputTokens: 1000, temperature: 0.1 }
-      });
+      console.error("Gemini 3.1 Flash Lite falhou, tentando fallback Pro...");
+      try {
+        const modelPro = genAI.getGenerativeModel({ model: "gemini-pro-latest", systemInstruction });
+        result = await modelPro.generateContent({
+          contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
+          generationConfig: { maxOutputTokens: 1000, temperature: 0.1 }
+        });
+      } catch (e2) {
+        console.error("Gemini Pro falhou, tentando fallback Flash Latest...");
+        const modelFlash = genAI.getGenerativeModel({ model: "gemini-flash-latest", systemInstruction });
+        result = await modelFlash.generateContent({
+          contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
+          generationConfig: { maxOutputTokens: 1000, temperature: 0.1 }
+        });
+      }
     }
 
     const response = await result.response;

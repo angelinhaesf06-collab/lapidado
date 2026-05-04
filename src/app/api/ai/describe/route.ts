@@ -34,22 +34,22 @@ export async function POST(req: Request) {
 
     const selectedStyle = style || 'luxo';
     
-    // 💎 PROMPTS ESPECIALIZADOS E IDENTIDADES DISTINTAS
+    // 💎 PROMPTS ESPECIALIZADOS E IDENTIDADES DISTINTAS (Foco em Quiet Luxury)
     const styleConfigs = {
       luxo: {
-        role: "Mestre joalheira e copywriter de alto luxo.",
-        tone: "Poético, sofisticado, magnético e exclusivo. Use adjetivos como 'sublime', 'celestial' e 'atemporal'.",
-        keywords: "Curadoria, sofisticação, DNA da marca, brilho eterno."
+        role: "Mestre joalheira e copywriter de alto luxo (estilo Quiet Luxury).",
+        tone: "Sofisticado, minimalista e magnético. Enfatize a qualidade do banho (ouro/ródio) e o detalhamento das pedras sem usar clichês.",
+        keywords: "Curadoria, design atemporal, banho nobre, acabamento impecável, elegância silenciosa."
       },
       venda: {
-        role: "Especialista em marketing de joias e gatilhos de vendas.",
-        tone: "Persuasivo, energético e focado em desejo imediato. Use termos que estimulem a compra agora.",
-        keywords: "Tendência, look impecável, garanta a sua, peça-chave, transforme seu visual."
+        role: "Especialista em marketing de semijoias premium.",
+        tone: "Persuasivo e desejável. Foque no brilho, na versatilidade para looks e no valor agregado da peça.",
+        keywords: "Tendência premium, brilho intenso, peça-chave, folheado de alta qualidade."
       },
       simples: {
         role: "Assistente técnico de catálogo de semijoias.",
-        tone: "Direto, técnico, limpo e objetivo. Sem floreios ou adjetivos exagerados.",
-        keywords: "Versátil, dia a dia, alta durabilidade, acabamento polido, design clean."
+        tone: "Direto e objetivo. Descrição técnica clara do banho e formato.",
+        keywords: "Versátil, dia a dia, durabilidade, design clean."
       }
     };
 
@@ -81,16 +81,16 @@ export async function POST(req: Request) {
 
     const modelParams = {
       systemInstruction: `Você é um(a) ${config.role}
-      Sua missão é criar nomes e descrições para joias.
+      Sua missão é criar nomes e descrições para joias com foco em QUIET LUXURY.
       
       TOM DE VOZ: ${config.tone}
       PALAVRAS-CHAVE: ${config.keywords}
 
       REGRAS:
-      - NUNCA repita descrições.
-      - Nomes curtos e impactantes.
-      - Para peças douradas: ${selectedStyle === 'luxo' ? '"Banho Nobre", "Brilho Solar"' : '"Folheado a Ouro", "Acabamento Dourado"'}
-      - Descrição: Máximo 3 frases curtas.
+      - Nomes: Curtos e impactantes (ex: 'Brinco Aura', 'Colar Infinito').
+      - Detalhes Técnicos: Observe se a peça é dourada (Ouro) ou prateada (Ródio) e cite o brilho das pedras/zircônias.
+      - Texto: Máximo 3 frases curtas e envolventes.
+      - Não use placeholders como [Nome da Joia].
 
       JSON OUTPUT:
       {"name": "NOME", "category": "CATEGORIA", "description": "CONTEÚDO NO ESTILO ${selectedStyle.toUpperCase()}"}`
@@ -98,23 +98,31 @@ export async function POST(req: Request) {
 
     let result;
     const generationConfig = {
-      temperature: 0.9, 
-      topP: 1,
-      maxOutputTokens: 1000,
+      temperature: 0.7, // 🚀 Reduzido para maior precisão e menos alucinação
+      topP: 0.9,
+      maxOutputTokens: 500, // 🚀 Reduzido para economia de tokens e rapidez
       responseMimeType: "application/json",
     };
 
+    // Objeto de imagem com resolução otimizada
+    const imagePart = {
+      inlineData: { 
+        mimeType: finalMime, 
+        data: dataOnly,
+      }
+    };
+
     try {
-      // 🚀 AGORA O GEMINI 2.5 FLASH É O PRINCIPAL (Estado da arte)
-      console.log("Tentando Gemini 2.5 Flash...");
-      const modelFlash = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+      // 🚀 AGORA O GEMINI 3.1 FLASH LITE É O PRINCIPAL (Ultra eficiência e velocidade)
+      console.log("Tentando Gemini 3.1 Flash Lite...");
+      const modelFlash = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite-preview" });
       result = await tryGenerate(modelFlash, {
         contents: [
           { 
             role: 'user', 
             parts: [
               { text: modelParams.systemInstruction },
-              { inlineData: { mimeType: finalMime, data: dataOnly } }
+              imagePart
             ] 
           }
         ],
@@ -122,17 +130,17 @@ export async function POST(req: Request) {
         safetySettings
       });
     } catch (e: any) {
-      console.error("Gemini 2.5 Flash falhou:", e.message);
-      console.log("Tentando Gemini 2.0 Flash como backup...");
+      console.error("Gemini 3.1 Flash Lite falhou:", e.message);
+      console.log("Tentando Gemini 2.5 Flash como backup...");
       try {
-        const model20 = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-        result = await tryGenerate(model20, {
+        const model25 = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        result = await tryGenerate(model25, {
           contents: [
             { 
               role: 'user', 
               parts: [
                 { text: modelParams.systemInstruction },
-                { inlineData: { mimeType: finalMime, data: dataOnly } }
+                imagePart
               ] 
             }
           ],
@@ -140,27 +148,49 @@ export async function POST(req: Request) {
           safetySettings
         });
       } catch (e2: any) {
-        console.error("Gemini 2.0 Flash falhou:", e2.message);
-        console.log("Tentando Gemini Flash Latest como última instância...");
-        const modelLatest = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
-        result = await tryGenerate(modelLatest, {
-          contents: [
-            { 
-              role: 'user', 
-              parts: [
-                { text: modelParams.systemInstruction },
-                { inlineData: { mimeType: finalMime, data: dataOnly } }
-              ] 
-            }
-          ],
-          generationConfig,
-          safetySettings
-        });
+        console.error("Gemini 2.5 Flash falhou:", e2.message);
+        console.log("Tentando Gemini 2.0 Flash como backup...");
+        try {
+          const model20 = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+          result = await tryGenerate(model20, {
+            contents: [
+              { 
+                role: 'user', 
+                parts: [
+                  { text: modelParams.systemInstruction },
+                  { inlineData: { mimeType: finalMime, data: dataOnly } }
+                ] 
+              }
+            ],
+            generationConfig,
+            safetySettings
+          });
+        } catch (e3: any) {
+          console.error("Gemini 2.0 Flash falhou:", e3.message);
+          console.log("Tentando Gemini Flash Latest como última instância...");
+          const modelLatest = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+          result = await tryGenerate(modelLatest, {
+            contents: [
+              { 
+                role: 'user', 
+                parts: [
+                  { text: modelParams.systemInstruction },
+                  { inlineData: { mimeType: finalMime, data: dataOnly } }
+                ] 
+              }
+            ],
+            generationConfig,
+            safetySettings
+          });
+        }
       }
     }
 
     const response = await result.response;
     let aiText = response.text().trim();
+    
+    // Limpeza agressiva de Markdown
+    aiText = aiText.replace(/```json/g, "").replace(/```/g, "").trim();
     
     const jsonMatch = aiText.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
