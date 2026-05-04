@@ -124,10 +124,9 @@ export default function CatalogClient() {
 
   const installments = useMemo(() => {
     try {
-      // @ts-expect-error - Ignorando erro de tipagem dinâmica do branding
-      if (branding?.installments) return parseInt(branding.installments.toString())
-      // @ts-expect-error - Ignorando erro de tipagem dinâmica do branding
-      const parts = branding?.facebook?.split('|')
+      const b = branding as any
+      if (b?.installments) return parseInt(b.installments.toString())
+      const parts = b?.facebook?.split('|')
       if (parts && parts[1]) {
         const val = parseInt(parts[1])
         return isNaN(val) ? 10 : val
