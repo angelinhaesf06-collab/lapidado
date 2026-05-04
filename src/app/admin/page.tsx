@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { PlusCircle, AlertCircle, TrendingUp, Package, ShoppingCart } from 'lucide-react'
+import { PlusCircle, AlertCircle, TrendingUp, Package, ShoppingBag } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { useSearchParams } from 'next/navigation'
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -15,8 +16,31 @@ export default function AdminDashboard() {
     totalSalesCount: 0,
     pendingReceivables: 0
   })
-  
+
   const supabase = createClient()
+  const searchParams = useSearchParams()
+  const sessionId = searchParams.get('session_id')
+
+  useEffect(() => {
+    // 🎯 Rastreamento de Conversão (Stripe Success)
+    if (sessionId) {
+      console.log('💰 Pagamento confirmado via Stripe. Disparando evento de Purchase.')
+
+      // Meta Pixel
+      if (typeof window !== 'undefined' && (window as any).fbq) {
+        (window as any).fbq('track', 'Purchase', { currency: 'BRL', value: 49.90 })
+      }
+
+      // Google Ads
+      if (typeof window !== 'undefined' && (window as any).gtag) {
+        (window as any).gtag('event', 'purchase', {
+          transaction_id: sessionId,
+          value: 49.90,
+          currency: 'BRL'
+        })
+      }
+    }
+  }, [sessionId])
 
   useEffect(() => {
     async function loadDashboardData() {

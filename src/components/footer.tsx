@@ -169,10 +169,22 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-8 mt-20 pt-8 border-t border-brand-secondary/5 flex flex-col items-center gap-4">
-        <p className="text-[8px] text-brand-secondary/40 font-bold uppercase tracking-[0.5em]">
-          © {new Date().getFullYear()} — {branding.store_name || branding.business_name || 'LAPIDADO'} — TODOS OS DIREITOS RESERVADOS.
-        </p>
+      <div className="max-w-7xl mx-auto px-8 mt-20 pt-8 border-t border-brand-secondary/5 flex flex-col items-center gap-6">
+        <div className="flex flex-wrap justify-center gap-x-8 gap-y-4">
+          <Link href="/privacidade" className="text-[9px] font-black text-brand-secondary/40 hover:text-brand-primary uppercase tracking-[0.2em] transition-colors">Política de Privacidade</Link>
+          <Link href="/termos" className="text-[9px] font-black text-brand-secondary/40 hover:text-brand-primary uppercase tracking-[0.2em] transition-colors">Termos de Uso</Link>
+          <Link href="/excluir-conta" className="text-[9px] font-black text-brand-secondary/40 hover:text-brand-primary uppercase tracking-[0.2em] transition-colors">Exclusão de Dados</Link>
+        </div>
+        
+        <div className="text-center space-y-2">
+          <p className="text-[8px] text-brand-secondary/40 font-bold uppercase tracking-[0.5em]">
+            © {new Date().getFullYear()} — {branding.store_name || branding.business_name || 'LAPIDADO'} — TODOS OS DIREITOS RESERVADOS.
+          </p>
+          <p className="text-[7px] text-brand-secondary/30 font-black uppercase tracking-[0.3em]">
+            ANGEL SEMIJOIAS — CNPJ: 56.706.942/0001-44 — SUPORTE@LAPIDADO.COM.BR
+          </p>
+        </div>
+
         <div className="flex items-center gap-2 opacity-20 hover:opacity-50 transition-opacity">
           <span className="text-[7px] font-bold text-brand-primary tracking-widest uppercase">Mais que acessórios, a sua assinatura de estilo.</span>
         </div>

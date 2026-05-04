@@ -48,9 +48,9 @@ export default function AdminLayout({
   }, [supabase])
 
   const isBlocked = useMemo(() => {
-    // 🔓 DESATIVADO TEMPORARIAMENTE PARA DESENVOLVIMENTO
-    return false;
-  }, [subscription]);
+    if (loading) return false;
+    return subscription?.status !== 'active';
+  }, [subscription, loading]);
 
   const handleSubscribe = async (plan: 'monthly' | 'yearly') => {
     setLoading(true)
@@ -58,18 +58,24 @@ export default function AdminLayout({
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      // 🛒 Chama o serviço de compra do Google Play
-      const purchase = await purchasePlan(plan === 'monthly' ? GOOGLE_PLAY_PLANS.MONTHLY : GOOGLE_PLAY_PLANS.YEARLY)
-      
-      if (purchase.success) {
-        // 📡 Sincroniza com o Supabase imediatamente
-        const synced = await syncSubscriptionWithSupabase(supabase, user.id, purchase)
-        if (synced) {
-          window.location.reload() // Recarrega para liberar o acesso
-        }
+      const priceId = plan === 'monthly' ? 'price_1TTR2PHuJRH31kq3i8luiZOE' : 'price_1TTR2PHuJRH31kq3i8luiZOE' // Usando o mesmo por enquanto se não houver anual
+
+      const response = await fetch('/api/billing/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          priceId,
+          userId: user.id,
+          userEmail: user.email
+        })
+      })
+
+      const { url } = await response.json()
+      if (url) {
+        window.location.href = url
       }
     } catch (err) {
-      alert('Erro ao processar assinatura.')
+      alert('Erro ao processar assinatura via Stripe.')
     } finally {
       setLoading(false)
     }

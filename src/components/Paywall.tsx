@@ -69,7 +69,7 @@ export default function Paywall({ onSubscribe, trialDaysLeft }: PaywallProps) {
           </div>
 
           <p className="text-[9px] text-center text-brand-secondary/40 font-bold uppercase tracking-widest">
-            Assinatura processada de forma segura pelo Google Play
+            Assinatura processada de forma segura pelo Stripe
           </p>
         </div>
       </div>
