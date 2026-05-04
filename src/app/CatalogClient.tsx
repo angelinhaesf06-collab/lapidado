@@ -52,7 +52,16 @@ export default function CatalogClient() {
           currentBranding = data
         } 
         
-        // 💎 ISOLAMENTO CRÍTICO: Se não encontrou a marca específica, bloqueia o acesso
+        // 2. Se não houver slug, tenta identificar pelo usuário logado (Dona da Loja)
+        if (!currentBranding) {
+          const { data: { user } } = await supabase.auth.getUser()
+          if (user) {
+            const { data } = await supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle()
+            currentBranding = data
+          }
+        }
+        
+        // 💎 ISOLAMENTO CRÍTICO: Se ainda assim não encontrou, bloqueia o acesso
         if (!currentBranding) {
           console.error("MARCA NÃO ENCONTRADA OU ACESSO NÃO AUTORIZADO")
           setLoading(false)
