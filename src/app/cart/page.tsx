@@ -67,7 +67,7 @@ export default function CartPage() {
   
   // Cálculo de Desconto PIX (5%)
   const pixDiscount = 0.05
-  const pixValue = total * (1 - pixDiscount)
+  const pixValue = Math.round((total * (1 - pixDiscount)) * 100) / 100
 
   const storeParam = storeSlug ? `&loja=${storeSlug}` : ''
 
