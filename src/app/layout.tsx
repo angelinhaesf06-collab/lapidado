@@ -49,17 +49,10 @@ function RootLayoutContent({
           currentBranding = data;
         }
 
-        // 3. Prioridade 2: Buscar pelo Usuário Logado
+        // 3. Prioridade 2: Buscar pelo Usuário Logado (Admin)
         if (!currentBranding && currentUser) {
           console.log('💎 NEXUS: BUSCANDO POR USER_ID:', currentUser.id);
           const { data } = await supabase.from('branding').select('*').eq('user_id', currentUser.id).maybeSingle();
-          currentBranding = data;
-        }
-        
-        // 4. Fallback: Buscar a primeira configuração existente (Geralmente a principal)
-        if (!currentBranding) {
-          console.log('💎 NEXUS: FALLBACK BRANDING');
-          const { data } = await supabase.from('branding').select('*').limit(1).maybeSingle();
           currentBranding = data;
         }
 

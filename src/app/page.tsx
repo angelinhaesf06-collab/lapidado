@@ -22,12 +22,6 @@ export async function generateMetadata(
     branding = data
   }
 
-  // Fallback se não encontrar por slug, tenta pegar o mais recente ou padrão
-  if (!branding) {
-    const { data } = await supabase.from('branding').select('*').limit(1).maybeSingle()
-    branding = data
-  }
-
   const storeName = branding?.business_name || branding?.store_name || 'LAPIDADO'
   const tagline = branding?.tagline || 'Mais que acessórios, a sua assinatura de estilo.'
   const logoUrl = branding?.logo_url || '/logo-app.png'
