@@ -267,11 +267,16 @@ export default function ProductsListPage() {
   }
 
   const handleShareWhatsApp = (product: Product) => {
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lapidado.vercel.app'
     const storeName = branding?.business_name || branding?.store_name || 'LAPIDADO'
     const storeSlug = branding?.slug || ''
-    const storeParam = storeSlug ? `&loja=${storeSlug}` : ''
     
-    const msg = encodeURIComponent(`OLÁ! ✨ OLHA QUE LINDA ESSA JOIA DA *${storeName.toUpperCase()}*:\n\n💍 *${product.name}*\n💎 VALOR: R$ ${Number(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\nCONFIRA MAIS DETALHES AQUI: ${window.location.origin}/product?id=${product.id}&catalogo=true${storeParam}`)
+    if (!storeSlug) {
+      return alert('⚠️ POR FAVOR, DEFINA O NOME DA SUA LOJA EM "MINHA MARCA" ANTES DE COMPARTILHAR! 💎')
+    }
+
+    const storeParam = `&loja=${storeSlug}`
+    const msg = encodeURIComponent(`OLÁ! ✨ OLHA QUE LINDA ESSA JOIA DA *${storeName.toUpperCase()}*:\n\n💍 *${product.name}*\n💎 VALOR: R$ ${Number(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\nCONFIRA MAIS DETALHES AQUI: ${baseUrl}/product?id=${product.id}&catalogo=true${storeParam}`)
     window.open(`https://wa.me/?text=${msg}`, '_blank')
   }
 

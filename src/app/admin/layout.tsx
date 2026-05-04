@@ -88,7 +88,11 @@ export default function AdminLayout({
   ]
 
   const shareToWhatsApp = () => {
-    const url = `${window.location.origin}/?catalogo=true${branding.slug ? `&loja=${branding.slug}` : ''}`
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lapidado.vercel.app'
+    if (!branding.slug) {
+      return alert('⚠️ POR FAVOR, DEFINA O NOME DA SUA LOJA EM "MINHA MARCA" ANTES DE COMPARTILHAR! 💎')
+    }
+    const url = `${baseUrl}/?catalogo=true&loja=${branding.slug}`
     const text = `Olá! Conheça o novo catálogo digital da *${branding.name.toUpperCase()}*. Peças exclusivas e brilho em cada detalhe: ${url}`
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
   }

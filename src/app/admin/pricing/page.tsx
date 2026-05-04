@@ -127,7 +127,29 @@ export default function PricingPage() {
       headStyles: { fillColor: [74, 50, 46] }
     })
 
-    doc.save(`romaneio-${new Date().toLocaleDateString()}.pdf`)
+    const fileName = `romaneio-${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`
+    
+    // 📱 NEXUS: Compatibilidade Mobile Reforçada
+    try {
+      if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        const blob = doc.output('blob')
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = fileName
+        link.target = '_blank'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        setTimeout(() => URL.revokeObjectURL(url), 100)
+      } else {
+        doc.save(fileName)
+      }
+      toast.success('Romaneio gerado com sucesso! 📄')
+    } catch (err) {
+      console.error('Erro no PDF:', err)
+      toast.error('Erro ao baixar PDF no celular. Verifique as permissões.')
+    }
   }
 
   if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="animate-spin text-brand-primary" size={40} /></div>

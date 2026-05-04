@@ -64,6 +64,7 @@ export default function CatalogClient() {
         // 💎 ISOLAMENTO CRÍTICO: Se ainda assim não encontrou, bloqueia o acesso
         if (!currentBranding) {
           console.error("MARCA NÃO ENCONTRADA OU ACESSO NÃO AUTORIZADO")
+          setBranding(null)
           setLoading(false)
           return
         }
@@ -145,6 +146,21 @@ export default function CatalogClient() {
 
   if (loading && allProducts.length === 0) {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-brand-secondary" size={40} /></div>
+  }
+
+  if (!loading && !branding && isPublicCatalog) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-10 text-center bg-[#fffcfc]">
+        <Gem size={48} className="text-brand-secondary/20 mb-6" />
+        <h2 className="text-2xl font-light tracking-[0.2em] uppercase text-brand-primary mb-4">Catálogo Indisponível</h2>
+        <p className="text-brand-secondary text-[10px] tracking-widest uppercase mb-12 font-light max-w-xs">
+          Não conseguimos encontrar esta vitrine. Verifique se o link está correto ou tente novamente mais tarde.
+        </p>
+        <Link href="/" className="bg-brand-primary text-white px-12 py-4 rounded-full font-black text-[10px] tracking-[0.3em] uppercase shadow-lg shadow-brand-primary/20">
+          Ir para a Home
+        </Link>
+      </div>
+    )
   }
 
   return (

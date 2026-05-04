@@ -80,7 +80,7 @@ export default function CartPage() {
       return
     }
 
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lapidado.vercel.app'
     
     const message = encodeURIComponent(
       `*🛒 NOVO PEDIDO - ${storeName.toUpperCase()}* ✨\n\n` +
