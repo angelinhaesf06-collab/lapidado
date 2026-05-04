@@ -7,6 +7,9 @@ import Image from 'next/image'
 import Link from 'next/link'
 
 interface Branding {
+  id: string;
+  user_id: string;
+  slug: string;
   logo_url: string | null;
   business_name: string | null;
   instagram: string | null;
@@ -62,6 +65,17 @@ export default function Footer() {
     return clean
   }
 
+  const getWhatsAppLink = () => {
+    if (!branding || !branding.phone) return '#'
+    const phone = getCleanPhone(branding.phone)
+    const storeName = branding.business_name || branding.store_name || 'LAPIDADO'
+    const storeSlug = branding.slug || ''
+    const catalogUrl = storeSlug ? `${window.location.origin}/?catalogo=true&loja=${storeSlug}` : window.location.origin
+    
+    const msg = encodeURIComponent(`Olá! ✨ Vi o catálogo da *${storeName.toUpperCase()}* e gostaria de mais informações.\n\nLink do Catálogo: ${catalogUrl}`)
+    return `https://wa.me/${phone}?text=${msg}`
+  }
+
   if (!branding) return null
 
   return (
@@ -104,7 +118,7 @@ export default function Footer() {
             
             <div className="space-y-4">
               {branding.phone && (
-                <a href={`https://wa.me/${getCleanPhone(branding.phone)}`} target="_blank" className="flex items-center gap-3 text-brand-primary hover:text-brand-secondary transition-colors group bg-brand-secondary/5 px-6 py-3 rounded-full border border-brand-secondary/5">
+                <a href={getWhatsAppLink()} target="_blank" className="flex items-center gap-3 text-brand-primary hover:text-brand-secondary transition-colors group bg-brand-secondary/5 px-6 py-3 rounded-full border border-brand-secondary/5">
                   <Phone size={14} className="text-brand-primary" />
                   <span className="text-[11px] font-black tracking-widest">{branding.phone}</span>
                 </a>
