@@ -11,7 +11,7 @@ type Props = {
 export async function generateMetadata(
   { searchParams }: Props
 ): Promise<Metadata> {
-  const resolvedSearchParams = await searchParams
+  const resolvedSearchParams = (await searchParams) || {}
   const loja = resolvedSearchParams.loja as string
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lapidado.vercel.app'
   
