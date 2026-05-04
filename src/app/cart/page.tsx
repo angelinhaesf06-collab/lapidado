@@ -41,13 +41,10 @@ export default function CartPage() {
         }
       }
 
-      // 3. Fallback Final: Primeiro registro (Apenas se nada mais funcionar)
-      if (!brandingData) {
-        const { data } = await supabase.from('branding').select('*').limit(1).maybeSingle()
-        brandingData = data
-      }
-      
+      // 3. REMOVIDO FALLBACK INSEGURO QUE CAUSAVA MISTURA DE LOGINS
+
       if (brandingData) {
+
         setStoreSlug(brandingData.slug || '')
         setStoreName(brandingData.business_name || brandingData.store_name || 'LAPIDADO')
 

@@ -39,15 +39,8 @@ export default function Footer() {
           brandingData = data
         }
 
-        // 2. Senão, busca por usuário logado (Admin)
-        if (!brandingData) {
-          const { data: { user } } = await supabase.auth.getUser()
-          if (user) {
-            const { data } = await supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle()
-            brandingData = data
-          }
-        }
-
+        // 3. REMOVIDO FALLBACK INSEGURO
+        
         if (brandingData) setBranding(brandingData as unknown as Branding)
       } catch (e) {
         console.error('Erro no Footer Branding', e)

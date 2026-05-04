@@ -31,9 +31,8 @@ export default function AdminLayout({
           .single()
         
         if (data) {
-          const [,,, bName] = (data.facebook || '').split('|')
           setBranding({
-            name: data.business_name || data.store_name || bName || 'LAPIDADO',
+            name: data.business_name || data.store_name || (data.facebook || '').split('|')[3] || 'LAPIDADO',
             logo: data.logo_url || null,
             slug: data.slug || null
           })

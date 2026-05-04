@@ -66,7 +66,7 @@ export default function ProductClient() {
 
   const brand = branding
   const storeSlug = brand?.slug || ''
-  const installments = parseInt(brand?.facebook?.split('|')[1] || '10')
+  const installments = brand?.installments || parseInt(brand?.facebook?.split('|')[1] || '10')
   const backUrl = `/?catalogo=true${storeSlug ? `&loja=${storeSlug}` : ''}`
 
   let displayDescription = product.description || ''
