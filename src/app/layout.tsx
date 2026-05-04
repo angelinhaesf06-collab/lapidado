@@ -5,8 +5,8 @@ import { createClient } from '@/lib/supabase/server'
 import "./globals.css"
 
 export async function generateMetadata({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }): Promise<Metadata> {
-  const resolvedSearchParams = await searchParams
-  const loja = resolvedSearchParams.loja as string
+  const resolvedSearchParams = await searchParams || {}
+  const loja = (resolvedSearchParams.loja as string) || null
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lapidado.vercel.app'
   
   const supabase = await createClient()
