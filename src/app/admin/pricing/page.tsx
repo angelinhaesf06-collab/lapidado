@@ -129,26 +129,33 @@ export default function PricingPage() {
 
     const fileName = `romaneio-${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`
     
-    // 📱 NEXUS: Compatibilidade Mobile Reforçada
+    // 📱 NEXUS: Compatibilidade Mobile Reforçada (Universal Blob Method)
     try {
-      if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-        const blob = doc.output('blob')
-        const url = URL.createObjectURL(blob)
-        const link = document.createElement('a')
-        link.href = url
-        link.download = fileName
-        link.target = '_blank'
-        document.body.appendChild(link)
-        link.click()
+      const pdfBlob = doc.output('blob')
+      const url = URL.createObjectURL(pdfBlob)
+      
+      const link = document.createElement('a')
+      link.href = url
+      link.download = fileName
+      
+      // Adição de atributos cruciais para Safari e navegadores mobile
+      link.setAttribute('download', fileName)
+      link.setAttribute('target', '_blank')
+      link.style.display = 'none'
+      
+      document.body.appendChild(link)
+      link.click()
+      
+      // Pequeno delay antes de limpar para garantir o disparo no mobile
+      setTimeout(() => {
         document.body.removeChild(link)
-        setTimeout(() => URL.revokeObjectURL(url), 100)
-      } else {
-        doc.save(fileName)
-      }
+        URL.revokeObjectURL(url)
+      }, 500)
+
       toast.success('Romaneio gerado com sucesso! 📄')
     } catch (err) {
       console.error('Erro no PDF:', err)
-      toast.error('Erro ao baixar PDF no celular. Verifique as permissões.')
+      toast.error('Erro ao gerar PDF. Tente abrir em outro navegador.')
     }
   }
 
