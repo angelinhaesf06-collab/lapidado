@@ -10,6 +10,7 @@ import autoTable from 'jspdf-autotable'
 export default function PricingPage() {
   const [loading, setLoading] = useState(true)
   const [rules, setPricingRules] = useState({ globalMarkup: 100 })
+  const [branding, setBranding] = useState<any>(null)
   
   // 1. ESTADO DA CALCULADORA (Entrada Única)
   const [currentEntry, setCurrentEntry] = useState({
@@ -36,7 +37,8 @@ export default function PricingPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-      const { data: brandingData } = await supabase.from('branding').select('notes').eq('user_id', user.id).maybeSingle()
+      const { data: brandingData } = await supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle()
+      setBranding(brandingData)
       if (brandingData?.notes && brandingData.notes.includes('PRICING_RULES:')) {
         const jsonStr = brandingData.notes.split('PRICING_RULES:')[1]
         try {
