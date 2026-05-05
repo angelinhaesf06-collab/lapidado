@@ -10,6 +10,7 @@ import autoTable from 'jspdf-autotable'
 export default function PricingPage() {
   const [loading, setLoading] = useState(true)
   const [rules, setPricingRules] = useState({ globalMarkup: 100 })
+  const [branding, setBranding] = useState<any>(null)
   
   // 1. ESTADO DA CALCULADORA (Entrada Única)
   const [currentEntry, setCurrentEntry] = useState({
@@ -36,7 +37,8 @@ export default function PricingPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-      const { data: brandingData } = await supabase.from('branding').select('notes').eq('user_id', user.id).maybeSingle()
+      const { data: brandingData } = await supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle()
+      setBranding(brandingData)
       if (brandingData?.notes && brandingData.notes.includes('PRICING_RULES:')) {
         const jsonStr = brandingData.notes.split('PRICING_RULES:')[1]
         try {
@@ -101,8 +103,12 @@ export default function PricingPage() {
   const generateReportPDF = () => {
     if (addedItems.length === 0) return toast.error('Adicione itens primeiro! 📸')
     const doc = new jsPDF()
-    doc.setFontSize(22); doc.setTextColor(74, 50, 46); doc.text('LAPIDADO ERP', 105, 20, { align: 'center' })
+    const storeName = branding?.business_name || branding?.store_name || 'LAPIDADO ERP'
+    
+    // 💎 NEXUS: Cabeçalho Customizado com Nome da Loja
+    doc.setFontSize(22); doc.setTextColor(74, 50, 46); doc.text(storeName.toUpperCase(), 105, 20, { align: 'center' })
     doc.setFontSize(10); doc.setTextColor(201, 144, 144); doc.text('ROMANEIO INDUSTRIAL DE CARGA', 105, 28, { align: 'center' })
+    doc.setFontSize(8); doc.setTextColor(74, 50, 46); doc.text(`EMITIDO EM: ${new Date().toLocaleString('pt-BR')}`, 105, 34, { align: 'center' })
     
     const tableBody = addedItems.map(item => [
       item.name.toUpperCase(),
@@ -121,7 +127,36 @@ export default function PricingPage() {
       headStyles: { fillColor: [74, 50, 46] }
     })
 
-    doc.save(`romaneio-${new Date().toLocaleDateString()}.pdf`)
+    const fileName = `romaneio-${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`
+    
+    // 📱 NEXUS: Compatibilidade Mobile Reforçada (Universal Blob Method)
+    try {
+      const pdfBlob = doc.output('blob')
+      const url = URL.createObjectURL(pdfBlob)
+      
+      const link = document.createElement('a')
+      link.href = url
+      link.download = fileName
+      
+      // Adição de atributos cruciais para Safari e navegadores mobile
+      link.setAttribute('download', fileName)
+      link.setAttribute('target', '_blank')
+      link.style.display = 'none'
+      
+      document.body.appendChild(link)
+      link.click()
+      
+      // Pequeno delay antes de limpar para garantir o disparo no mobile
+      setTimeout(() => {
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+      }, 500)
+
+      toast.success('Romaneio gerado com sucesso! 📄')
+    } catch (err) {
+      console.error('Erro no PDF:', err)
+      toast.error('Erro ao gerar PDF. Tente abrir em outro navegador.')
+    }
   }
 
   if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="animate-spin text-brand-primary" size={40} /></div>
@@ -134,7 +169,9 @@ export default function PricingPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
         <div className="text-center md:text-left">
           <h2 className="text-3xl md:text-4xl font-black uppercase text-brand-primary tracking-tighter">Estação de Precificação</h2>
-          <p className="text-brand-secondary text-[10px] md:text-[12px] font-black tracking-[0.4em] uppercase mt-2">Engenharia de Custo Industrial 💎</p>
+          <p className="text-brand-secondary text-[10px] md:text-[12px] font-black tracking-[0.4em] uppercase mt-2">
+            {branding?.business_name ? `${branding.business_name.toUpperCase()} — ` : ''}Engenharia de Custo Industrial 💎
+          </p>
         </div>
         <button onClick={generateReportPDF} className="bg-brand-primary text-white px-8 py-5 rounded-[25px] font-black text-[10px] uppercase flex items-center justify-center gap-3 shadow-2xl hover:scale-[1.02] transition-all">
            <FileText size={18}/> Exportar Romaneio PDF ({addedItems.length})

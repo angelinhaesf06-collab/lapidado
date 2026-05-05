@@ -1,120 +1,31 @@
-'use client'
+import { Metadata } from 'next'
+import { Suspense } from 'react'
+import RootLayoutContent from './RootLayoutContent'
+import Script from 'next/script'
+import "./globals.css"
 
-import { Montserrat } from "next/font/google";
-import "./globals.css";
-import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import Footer from '@/components/footer';
-import { CartProvider } from '@/lib/cart-context';
-import AdminBar from '@/components/admin-bar';
-import CartIcon from '@/components/cart/cart-icon';
-import { usePathname, useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
-import { Toaster } from 'sonner';
+export const metadata: Metadata = {
+  title: 'Lapidado | Catálogo Digital',
+  description: 'Seu catálogo de semijoias personalizado.',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Lapidado',
+  },
+  icons: {
+    apple: '/logo-app.png',
+    icon: '/logo-app.png',
+  },
+}
 
-const montserrat = Montserrat({ 
-  subsets: ["latin"], 
-  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'], 
-  variable: '--font-montserrat' 
-});
-
-function RootLayoutContent({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  const [user, setUser] = useState<any>(null);
-  const [branding, setBranding] = useState<any>(null);
-  const supabase = createClient();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const storeSlug = searchParams.get('loja');
-
-  useEffect(() => {
-    async function loadIdentity() {
-      try {
-        // 1. Verificar usuário logado
-        const { data: { user: currentUser } } = await supabase.auth.getUser();
-        setUser(currentUser);
-
-        let currentBranding = null;
-
-        // 2. Prioridade 1: Buscar pela Loja (Slug) na URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const slugFromUrl = urlParams.get('loja') || storeSlug;
-
-        if (slugFromUrl) {
-          console.log('💎 NEXUS: BUSCANDO POR SLUG:', slugFromUrl);
-          const { data } = await supabase.from('branding').select('*').eq('slug', slugFromUrl).maybeSingle();
-          currentBranding = data;
-        }
-
-        // 3. Prioridade 2: Buscar pelo Usuário Logado
-        if (!currentBranding && currentUser) {
-          console.log('💎 NEXUS: BUSCANDO POR USER_ID:', currentUser.id);
-          const { data } = await supabase.from('branding')
-            .select('*')
-            .eq('user_id', currentUser.id)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-          currentBranding = data;
-        }
-        
-        // 4. Fallback: Buscar a primeira configuração existente (Geralmente a principal)
-        if (!currentBranding) {
-          console.log('💎 NEXUS: FALLBACK BRANDING');
-          const { data } = await supabase.from('branding').select('*').limit(1).maybeSingle();
-          currentBranding = data;
-        }
-
-        if (currentBranding) {
-          setBranding(currentBranding);
-        }
-      } catch (error) {
-        console.error('Erro ao carregar branding:', error);
-      }
-    }
-    loadIdentity();
-  }, [supabase, storeSlug, pathname]);
-
-  // 💎 NEXUS: Validação de cores
-  const isValidHex = (color: string | null | undefined): boolean => {
-    if (!color) return false;
-    const hexRegex = /^#([A-Fa-f0-9]{3,4}){1,2}$/;
-    return hexRegex.test(color);
-  };
-
-  const brand = branding as { primary_color?: string; secondary_color?: string } | null;
-  const primary = (brand?.primary_color && isValidHex(brand.primary_color)) ? brand.primary_color : '#4a322e';
-  const secondary = (brand?.secondary_color && isValidHex(brand.secondary_color)) ? brand.secondary_color : '#c99090';
-  
-  const isAuthPage = pathname.includes('/login') || pathname.includes('/register');
-  const isAdminPage = pathname.includes('/admin');
-  const showFooter = !isAuthPage && !isAdminPage;
-
-  return (
-    <body 
-      className={`${montserrat.variable} font-montserrat bg-[#fffcfc] text-[#4a322e] min-h-screen flex flex-col antialiased`}
-      style={{ 
-        // @ts-ignore
-        '--brand-primary': primary, 
-        // @ts-ignore
-        '--brand-secondary': secondary,
-        '--background': '#fffcfc'
-      }}
-    >
-      <Toaster position="top-center" richColors />
-      <CartProvider>
-        <AdminBar user={user} />
-        {!isAdminPage && !isAuthPage && <CartIcon />}
-        <main className="flex-1">
-          {children}
-        </main>
-      </CartProvider>
-      {showFooter && <Footer />}
-    </body>
-  );
+export const viewport = {
+  themeColor: '#4A322E',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({
@@ -122,22 +33,51 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const metaPixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID
+  const googleAdsId = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID
+
   return (
     <html lang="pt-BR" className="scroll-smooth">
       <head>
-        <link rel="manifest" href="/manifest.json" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="Lapidado" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="theme-color" content="#4A322E" />
-        <link rel="apple-touch-icon" href="/logo-app.png" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover" />
+        {/* Meta Pixel Code */}
+        {metaPixelId && (
+          <Script id="meta-pixel" strategy="afterInteractive">
+            {`
+              !function(f,b,e,v,n,t,s)
+              {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+              n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+              if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+              n.queue=[];t=b.createElement(e);t.async=!0;
+              t.src=v;s=b.getElementsByTagName(e)[0];
+              s.parentNode.insertBefore(t,s)}(window, document,'script',
+              'https://connect.facebook.net/en_US/fbevents.js');
+              fbq('init', '${metaPixelId}');
+              fbq('track', 'PageView');
+            `}
+          </Script>
+        )}
+        
+        {/* Google Ads Tag */}
+        {googleAdsId && (
+          <>
+            <Script
+              strategy="afterInteractive"
+              src={`https://www.googletagmanager.com/gtag/js?id=${googleAdsId}`}
+            />
+            <Script id="google-ads" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${googleAdsId}');
+              `}
+            </Script>
+          </>
+        )}
       </head>
       <Suspense fallback={<body></body>}>
         <RootLayoutContent>{children}</RootLayoutContent>
       </Suspense>
     </html>
-  );
+  )
 }

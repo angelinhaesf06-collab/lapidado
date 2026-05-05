@@ -34,12 +34,12 @@ export default function BrandingPage() {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
 
-        let { data } = await supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle()
-
-        if (!data) {
-          const { data: orphanedData } = await supabase.from('branding').select('*').is('user_id', null).limit(1).maybeSingle()
-          data = orphanedData
-        }
+        let { data } = await supabase.from('branding')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
 
         if (data) {
           setBrandingId(data.id)
@@ -148,7 +148,6 @@ export default function BrandingPage() {
       if (!response.ok) throw new Error(result.error || 'Falha ao salvar dados.')
       
       alert('IDENTIDADE ATUALIZADA COM SUCESSO! 💎')
-      // 🚀 Recarrega após o OK do usuário para garantir que o cache seja limpo
       window.location.reload()
     } catch (err: unknown) {
       const error = err as Error

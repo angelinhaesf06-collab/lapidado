@@ -191,7 +191,9 @@ export default function SalesPage() {
   }, [supabase])
 
   const loadCategories = useCallback(async () => {
-    const { data } = await supabase.from('categories').select('id, name').order('name')
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const { data } = await supabase.from('categories').select('id, name').eq('user_id', user.id).order('name')
     if (data) setCategories(data)
   }, [supabase])
 

@@ -25,6 +25,7 @@ export default function AdminLayout({
       setLoading(true)
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
+        // 💎 NEXUS: Busca resiliente (evita erro se houver registros duplicados órfãos)
         const { data } = await supabase.from('branding')
           .select('store_name, business_name, logo_url, facebook, slug, website, subscription_status, trial_ends_at')
           .eq('user_id', user.id)
@@ -33,9 +34,8 @@ export default function AdminLayout({
           .maybeSingle()
         
         if (data) {
-          const [,,, bName] = (data.facebook || '').split('|')
           setBranding({
-            name: data.business_name || data.store_name || bName || 'LAPIDADO',
+            name: data.business_name || data.store_name || (data.facebook || '').split('|')[3] || 'LAPIDADO',
             logo: data.logo_url || null,
             slug: data.slug || null,
             website: data.website || null
@@ -52,9 +52,10 @@ export default function AdminLayout({
   }, [supabase])
 
   const isBlocked = useMemo(() => {
-    // 🔓 DESATIVADO TEMPORARIAMENTE PARA DESENVOLVIMENTO
+    if (loading) return false;
+    // 🔓 DESATIVADO TEMPORARIAMENTE PARA DESENVOLVIMENTO (Ou use a lógica do subscription se desejar)
     return false;
-  }, [subscription]);
+  }, [subscription, loading]);
 
   const handleSubscribe = async (plan: 'monthly' | 'yearly') => {
     setLoading(true)
@@ -91,15 +92,19 @@ export default function AdminLayout({
   ]
 
   const shareToWhatsApp = () => {
-    // 🔗 Prioriza o link oficial cadastrado, senão usa a origem atual
-    const baseUrl = branding.website || window.location.origin
+    // 🔗 Prioriza o link oficial cadastrado, depois a URL de ambiente, por fim a origem atual
+    const baseUrl = branding.website || process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
     
-    // ⚠️ Alerta se estiver tentando compartilhar localhost sem ter link oficial
-    if (!branding.website && window.location.hostname === 'localhost') {
+    if (!branding.slug) {
+      return alert('⚠️ POR FAVOR, DEFINA O NOME DA SUA LOJA EM "MINHA MARCA" ANTES DE COMPARTILHAR! 💎')
+    }
+
+    // ⚠️ Alerta se estiver tentando compartilhar localhost sem ter link oficial ou variável de ambiente
+    if (!branding.website && !process.env.NEXT_PUBLIC_SITE_URL && window.location.hostname === 'localhost') {
       alert('ATENÇÃO: Você está compartilhando um link de "localhost" (teste local). Configure o "Link Oficial da Vitrine" em "Minha Marca" para que seus clientes consigam acessar! 💎')
     }
 
-    const url = `${baseUrl}/?catalogo=true${branding.slug ? `&loja=${branding.slug}` : ''}`
+    const url = `${baseUrl}/?catalogo=true&loja=${branding.slug}`
     const text = `Olá! Conheça o novo catálogo digital da *${branding.name.toUpperCase()}*. Peças exclusivas e brilho em cada detalhe: ${url}`
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
   }

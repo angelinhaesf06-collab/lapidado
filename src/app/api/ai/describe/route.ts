@@ -5,7 +5,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 30;
 
 async function tryGenerate(model: GenerativeModel, content: { contents: Content[], generationConfig: GenerationConfig, safetySettings: SafetySetting[] }) {
-  let retries = 1; // 🚀 Reduzido para 1 tentativa para não travar a tela
+  let retries = 1; 
   const delay = 1000;
   
   while (retries >= 0) {
@@ -27,68 +27,97 @@ async function tryGenerate(model: GenerativeModel, content: { contents: Content[
 export async function POST(req: Request) {
   try {
     const apiKey = (process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "").trim();
-    if (!apiKey) return NextResponse.json({ error: "ERRO_CONFIG" }, { status: 401 });
+    if (!apiKey) {
+      console.error("❌ ERRO: GEMINI_API_KEY NÃO ENCONTRADA NO AMBIENTE.");
+      return NextResponse.json({ error: "ERRO_CONFIG", details: "API Key ausente" }, { status: 401 });
+    }
 
     const payload = await req.json();
-    const { image, mode = 'LUXO' } = payload;
+    const { image, style, mode } = payload;
     if (!image) return NextResponse.json({ error: "DADOS_AUSENTES" }, { status: 400 });
 
-    const base64Data = image.includes(",") ? image.split(",")[1] : image;
-    const mimeMatch = image.match(/data:(.*?);base64/);
-    const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
+    const selectedStyle = style || mode?.toLowerCase() || 'luxo';
     
+    // 💎 PROMPTS ESPECIALIZADOS (Quiet Luxury)
+    const styleConfigs = {
+      luxo: {
+        role: "Mestre joalheira e copywriter de alto luxo.",
+        tone: "Sofisticado e poético. Enfatize o brilho e a exclusividade.",
+        keywords: "Design atemporal, banho nobre, acabamento impecável, elegância silenciosa."
+      },
+      venda: {
+        role: "Especialista em marketing de semijoias.",
+        tone: "Persuasivo e desejável. Use gatilhos mentais de desejo.",
+        keywords: "Tendência premium, brilho intenso, peça-chave, folheado de alta qualidade."
+      },
+      simples: {
+        role: "Assistente técnico de catálogo.",
+        tone: "Direto e objetivo.",
+        keywords: "Versátil, dia a dia, durabilidade, design clean."
+      }
+    };
+
+    const config = styleConfigs[selectedStyle as keyof typeof styleConfigs] || styleConfigs.luxo;
+
     const genAI = new GoogleGenerativeAI(apiKey);
-    const safetySettings: SafetySetting[] = [
+    
+    let finalMime = "image/jpeg";
+    let dataOnly = image;
+
+    if (image.includes(";base64,")) {
+      const parts = image.split(";base64,");
+      finalMime = parts[0].replace("data:", "");
+      dataOnly = parts[1];
+    } else if (image.startsWith("data:")) {
+      const parts = image.split(",");
+      finalMime = parts[0].split(":")[1].split(";")[0];
+      dataOnly = parts[1];
+    }
+
+    const safetySettings = [
       { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
       { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
       { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
       { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
     ];
 
-    const modelParams = {
-      systemInstruction: `Você é uma mestre joalheira e copywriter de luxo da Lapidado. 
-      Sua missão é criar nomes e descrições para semijoias baseadas no estilo solicitado.
-      
-      ESTILO SELECIONADO: ${mode}
+    const systemInstruction = `Você é um(a) ${config.role} da Lapidado.
+    Sua missão é criar nomes e descrições para joias com foco em QUIET LUXURY.
+    
+    TOM DE VOZ: ${config.tone}
+    PALAVRAS-CHAVE: ${config.keywords}
 
-      DIRETRIZES POR ESTILO:
-      - SIMPLES: Texto direto, focado na peça, sem muitos adjetivos.
-      - LUXO: Texto poético, focado em exclusividade, brilho e status.
-      - VENDA: Texto focado em benefícios, desejo de compra e gatilhos mentais.
+    REGRAS:
+    - Nomes: Curtos e impactantes (ex: 'Brinco Aura', 'Colar Infinito').
+    - Detalhes Técnicos: Observe se a peça é dourada (Ouro) ou prateada (Ródio) e cite o brilho das pedras/zircônias.
+    - Texto: Máximo 3 frases curtas e envolventes.
+    - JSON OUTPUT: {"name": "NOME", "category": "CATEGORIA", "description": "CONTEÚDO NO ESTILO ${selectedStyle.toUpperCase()}"}`;
 
-      REGRAS CRÍTICAS:
-      - NUNCA use a frase "Joia lapidada".
-      - Nomes: Curtos e elegantes.
-      - JSON OUTPUT: {"name": "Nome", "category": "CATEGORIA", "description": "Descrição baseada no estilo ${mode}"}`
-    };
-
-    let result;
-    const generationConfig: GenerationConfig = {
-      temperature: 0.9,
-      topP: 1,
-      maxOutputTokens: 1000,
+    const generationConfig = {
+      temperature: 0.7, 
+      topP: 0.9,
+      maxOutputTokens: 500,
       responseMimeType: "application/json",
     };
 
+    const imagePart = {
+      inlineData: { mimeType: finalMime, data: dataOnly }
+    };
+
+    let result;
     try {
-      // 🚀 MOTOR FLASH LITE LATEST: Velocidade extrema e inteligência moderna
-      const modelFlash = genAI.getGenerativeModel({ ...modelParams, model: "gemini-flash-lite-latest" });
-      result = await tryGenerate(modelFlash, {
-        contents: [{ role: 'user', parts: [
-          { text: "Analise esta joia e descreva em JSON conforme as instruções." },
-          { inlineData: { mimeType, data: base64Data } }
-        ] }],
+      // 🚀 MOTOR 1.5 FLASH: O melhor equilíbrio entre velocidade e qualidade
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      result = await tryGenerate(model, {
+        contents: [{ role: 'user', parts: [{ text: systemInstruction }, imagePart] }],
         generationConfig,
         safetySettings
       });
-    } catch (err: any) {
-      console.error("Erro no Flash Lite, tentando Flash 1.5 como backup:", err.message);
-      const modelVision = genAI.getGenerativeModel({ ...modelParams, model: "gemini-1.5-flash" });
-      result = await tryGenerate(modelVision, {
-        contents: [{ role: 'user', parts: [
-          { text: "Analise esta joia e descreva em JSON." },
-          { inlineData: { mimeType, data: base64Data } }
-        ] }],
+    } catch (e: any) {
+      console.error("Gemini 1.5 Flash falhou, tentando backup:", e.message);
+      const modelBackup = genAI.getGenerativeModel({ model: "gemini-pro-vision" });
+      result = await tryGenerate(modelBackup, {
+        contents: [{ role: 'user', parts: [{ text: systemInstruction }, imagePart] }],
         generationConfig,
         safetySettings
       });
@@ -96,43 +125,29 @@ export async function POST(req: Request) {
 
     const response = await result.response;
     let aiText = response.text().trim();
+    aiText = aiText.replace(/```json/g, "").replace(/```/g, "").trim();
     
     const jsonMatch = aiText.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      aiText = jsonMatch[0];
-    }
+    if (jsonMatch) aiText = jsonMatch[0];
 
     try {
-      const rawJson = JSON.parse(aiText) as { name?: string, NAME?: string, category?: string, CATEGORY?: string, description?: string, DESCRIPTION?: string };
-      
-      const clean = (txt: string | undefined) => {
-        if (!txt) return "";
-        return txt.toString()
-          .replace(/json/gi, "")
-          .replace(/```/gi, "")
-          .replace(/Aqui está/gi, "")
-          .replace(/\[|\]/g, "")
-          .trim();
-      };
+      const rawJson = JSON.parse(aiText);
+      const clean = (txt: string | undefined) => txt?.toString().replace(/json|```| Aqui está|\[|\]/gi, "").trim() || "";
 
       return NextResponse.json({
         name: clean(rawJson.name || rawJson.NAME || "Peça Nobre Lapidado"),
         category: clean(rawJson.category || rawJson.CATEGORY || "OUTROS").toUpperCase(),
-        description: clean(rawJson.description || rawJson.DESCRIPTION || "Uma peça que redefine o conceito de elegância com acabamento artesanal de alto luxo.")
+        description: clean(rawJson.description || rawJson.DESCRIPTION || "Uma peça que redefine o conceito de elegância.")
       });
-    } catch (err) {
-      console.error("Erro no processamento da joia:", err);
+    } catch (e: any) {
       return NextResponse.json({
         name: "Peça Magnética de Luxo",
         category: "ACESSÓRIOS",
-        description: "Design contemporâneo com banho nobre, ideal para momentos que exigem brilho e sofisticação incomparável."
+        description: "Design contemporâneo com banho nobre e brilho incomparável."
       });
     }
 
   } catch (error: any) {
-    const message = error instanceof Error ? error.message : "Erro desconhecido";
-    return NextResponse.json({ error: "FALHA_MOTOR_IA", details: message }, { status: 500 });
+    return NextResponse.json({ error: "FALHA_MOTOR_IA", details: error.message }, { status: 500 });
   }
 }
-
-

@@ -1,7 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+<<<<<<< HEAD
 import { Gem, Loader2, X, Plus, CheckCircle2 } from 'lucide-react'
+=======
+import { Gem, Loader2, Plus, CheckCircle2, X } from 'lucide-react'
+>>>>>>> 2fd71dc5050b2e5cc10ac99c48939af8d7ddbca3
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -10,7 +14,10 @@ export default function NewProductPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
+<<<<<<< HEAD
   const [aiMode, setAiMode] = useState<'SIMPLES' | 'LUXO' | 'VENDA'>('LUXO')
+=======
+>>>>>>> 2fd71dc5050b2e5cc10ac99c48939af8d7ddbca3
   const [images, setImages] = useState<{file: File | null, preview: string}[]>([])
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -21,16 +28,25 @@ export default function NewProductPage() {
   const [margin, setMargin] = useState<string>('100')
   const [salePrice, setSalePrice] = useState<string>('')
   const [stock, setStock] = useState<string>('1')
+<<<<<<< HEAD
+=======
+  const [aiStyle, setAiStyle] = useState<'luxo' | 'venda' | 'simples'>('luxo')
+>>>>>>> 2fd71dc5050b2e5cc10ac99c48939af8d7ddbca3
 
   const router = useRouter()
   const supabase = createClient()
 
   const FINISH_OPTIONS = ['OURO 18K', 'PRATA', 'PRATA 925', 'OURO ROSE', 'RODIO BRANCO', 'RODIO NEGRO']
+  const AI_STYLES = [
+    { id: 'luxo', label: 'MODO LUXO', desc: 'Sofisticado e poético' },
+    { id: 'venda', label: 'MODO VENDA', desc: 'Gatilhos e desejo' },
+    { id: 'simples', label: 'MODO SIMPLES', desc: 'Direto e objetivo' }
+  ]
 
   const loadData = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    const { data: catData } = await supabase.from('categories').select('*').order('name')
+    const { data: catData } = await supabase.from('categories').select('*').eq('user_id', user.id).order('name')
     if (catData) setCategories(catData)
   }, [supabase])
 
@@ -103,7 +119,11 @@ export default function NewProductPage() {
       const response = await fetch('/api/ai/describe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+<<<<<<< HEAD
         body: JSON.stringify({ image: compressed, mode: aiMode })
+=======
+        body: JSON.stringify({ image: compressed, style: aiStyle })
+>>>>>>> 2fd71dc5050b2e5cc10ac99c48939af8d7ddbca3
       })
       const data = await response.json()
       if (data.name) setName(String(data.name))
@@ -145,6 +165,10 @@ export default function NewProductPage() {
           finalImageUrl = compressedBase64
         }
       } catch {
+<<<<<<< HEAD
+=======
+        // Se der erro no upload, tenta usar a imagem direta
+>>>>>>> 2fd71dc5050b2e5cc10ac99c48939af8d7ddbca3
         finalImageUrl = images[0].preview
       }
 
@@ -165,7 +189,7 @@ export default function NewProductPage() {
       
       const saveRes = await fetch('/api/admin/save', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer LAPIDADO_ADMIN_2026` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ table: 'products', data: productData })
       })
       const result = await saveRes.json()
@@ -206,6 +230,7 @@ export default function NewProductPage() {
               </label>
             )}
           </div>
+<<<<<<< HEAD
           <div className="flex justify-center gap-2 mb-4">
             {['SIMPLES', 'LUXO', 'VENDA'].map((m) => (
               <button
@@ -223,6 +248,35 @@ export default function NewProductPage() {
             ))}
           </div>
           <button type="button" disabled={images.length === 0 || aiLoading} onClick={generateAIDescription} className="w-full py-4.5 rounded-2xl bg-brand-primary text-white text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl hover:brightness-110 active:scale-95 transition-all disabled:opacity-50">
+=======
+          <div className="space-y-3">
+            <label className="text-[8px] font-black text-brand-secondary uppercase ml-1 tracking-[0.2em]">Estilo da Descrição Mágica</label>
+            <div className="grid grid-cols-3 gap-2">
+              {AI_STYLES.map(style => (
+                <button
+                  key={style.id}
+                  type="button"
+                  onClick={() => setAiStyle(style.id as any)}
+                  className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border transition-all ${
+                    aiStyle === style.id 
+                    ? 'bg-brand-primary/5 border-brand-primary text-brand-primary shadow-sm' 
+                    : 'bg-white border-brand-secondary/10 text-brand-secondary/40 hover:border-brand-secondary/20'
+                  }`}
+                >
+                  <span className="text-[8px] font-black uppercase tracking-widest">{style.label}</span>
+                  <span className="text-[6px] font-bold opacity-60 uppercase">{style.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button 
+            type="button" 
+            disabled={images.length === 0 || aiLoading} 
+            onClick={generateAIDescription} 
+            className="w-full py-4.5 rounded-2xl bg-brand-primary text-white text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl hover:brightness-110 active:scale-95 transition-all disabled:opacity-50"
+          >
+>>>>>>> 2fd71dc5050b2e5cc10ac99c48939af8d7ddbca3
             {aiLoading ? <Loader2 className="animate-spin" size={18} /> : <Gem size={18} />} <span>MÁGICA LAPIDADO</span>
           </button>
           {aiError && <p className="text-[9px] text-rose-500 font-bold text-center uppercase tracking-widest">{aiError}</p>}

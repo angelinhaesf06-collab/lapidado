@@ -85,7 +85,10 @@ function EditProductContent() {
 
     async function loadData() {
       setFetching(true)
-      const { data: cats } = await supabase.from('categories').select('*').order('name')
+      const { data: { user: currentUser } } = await supabase.auth.getUser()
+      if (!currentUser) return
+      
+      const { data: cats } = await supabase.from('categories').select('*').eq('user_id', currentUser.id).order('name')
       if (cats) setCategories(cats)
 
       const { data, error } = await supabase.from('products').select('*').eq('id', id).single()
@@ -139,7 +142,11 @@ function EditProductContent() {
       if (images[0]?.file) {
         const formData = new FormData()
         formData.append('file', images[0].file)
-        const uploadRes = await fetch('/api/admin/upload', { method: 'POST', body: formData })
+        const uploadRes = await fetch('/api/admin/upload', { 
+          method: 'POST', 
+          headers: { 'Authorization': 'Bearer LAPIDADO_ADMIN_2026' },
+          body: formData 
+        })
         const uploadData = await uploadRes.json()
         if (uploadData.url) finalImageUrl = uploadData.url
       }
@@ -161,9 +168,10 @@ function EditProductContent() {
 
       const response = await fetch('/api/admin/save', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer LAPIDADO_ADMIN_2026` },
-        body: JSON.stringify({ table: 'products', data: productData, id })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ table: 'products', id, data: productData })
       })
+
 
       const result = await response.json()
       if (!result.success) throw new Error(result.error)

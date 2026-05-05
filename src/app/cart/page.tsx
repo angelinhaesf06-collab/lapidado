@@ -41,13 +41,10 @@ export default function CartPage() {
         }
       }
 
-      // 3. Fallback Final: Primeiro registro (Apenas se nada mais funcionar)
-      if (!brandingData) {
-        const { data } = await supabase.from('branding').select('*').limit(1).maybeSingle()
-        brandingData = data
-      }
-      
+      // 3. REMOVIDO FALLBACK INSEGURO QUE CAUSAVA MISTURA DE LOGINS
+
       if (brandingData) {
+
         setStoreSlug(brandingData.slug || '')
         setStoreName(brandingData.business_name || brandingData.store_name || 'LAPIDADO')
 
@@ -70,7 +67,7 @@ export default function CartPage() {
   
   // Cálculo de Desconto PIX (5%)
   const pixDiscount = 0.05
-  const pixValue = total * (1 - pixDiscount)
+  const pixValue = Math.round((total * (1 - pixDiscount)) * 100) / 100
 
   const storeParam = storeSlug ? `&loja=${storeSlug}` : ''
 
@@ -80,7 +77,7 @@ export default function CartPage() {
       return
     }
 
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lapidado.vercel.app'
     
     const message = encodeURIComponent(
       `*🛒 NOVO PEDIDO - ${storeName.toUpperCase()}* ✨\n\n` +

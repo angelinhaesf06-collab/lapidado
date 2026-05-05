@@ -72,7 +72,7 @@ export default function RegisterPage() {
         email: cleanEmail,
         password: pass,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://lapidado.vercel.app'}/auth/callback`,
         },
       })
 
@@ -87,27 +87,23 @@ export default function RegisterPage() {
         return
       }
 
-      // 💎 WHITE-LABEL: Atualizar entrada inicial de branding (criada pelo trigger) com o nome da loja
+      // 💎 WHITE-LABEL: Criar entrada inicial de branding com o nome da loja e slug
       if (data.user) {
-        const { error: brandingError } = await supabase
-          .from('branding')
-          .update({
-            store_name: storeName.trim().toUpperCase(),
-            business_name: storeName.trim().toUpperCase(),
-            primary_color: '#4a322e',
-            secondary_color: '#c99090'
-          })
-          .eq('user_id', data.user.id)
+        const store = storeName.trim()
+        const initialSlug = store.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
+        
+        // Tentamos atualizar (caso o trigger já tenha criado) ou inserir (caso contrário)
+        const { error: brandingError } = await supabase.from('branding').upsert({
+          user_id: data.user.id,
+          store_name: store.toUpperCase(),
+          business_name: store,
+          slug: initialSlug,
+          primary_color: '#4a322e', // Padrão luxo
+          secondary_color: '#c99090'
+        }, { onConflict: 'user_id' })
 
         if (brandingError) {
-          console.error('Erro ao atualizar branding inicial:', brandingError)
-          // Se falhar o update (ex: trigger demorou), tentamos um insert como fallback
-          await supabase.from('branding').insert({
-            user_id: data.user.id,
-            store_name: storeName.trim().toUpperCase(),
-            primary_color: '#4a322e',
-            secondary_color: '#c99090'
-          })
+          console.error('Erro ao configurar branding inicial:', brandingError)
         }
       }
 

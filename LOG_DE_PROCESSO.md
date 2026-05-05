@@ -73,3 +73,48 @@ Data: 08 de Abril de 2026
 
 ---
 **Status do Banco de Dados:** Tabela de `sales` (Vendas) criada e integrada com sucesso. 💎💰🚀
+
+## ✅ Funcionalidades Implementadas Hoje (29 de Abril de 2026)
+
+### 1. Correção Crítica de Infraestrutura (RLS & Segurança)
+- Diagnóstico e correção do erro de violação de política RLS em `products`.
+- Ajuste da `SUPABASE_SERVICE_ROLE_KEY` no ambiente local, restaurando permissões administrativas para salvamento de dados.
+- Verificação e validação do fluxo de salvamento de marca (Garantia e TikTok agora funcionais).
+
+### 2. Gestão de Vitrine Inteligente (Drag-and-Drop)
+- Implementação da reordenação manual de produtos com tecnologia de toque (Dnd-kit).
+- Nova coluna `display_order` adicionada ao banco de dados via migração SQL.
+- Botão **"Organizar Vitrine"** adicionado ao painel administrativo para controle total da sequência de exposição.
+
+### 3. Engajamento & Redes Sociais
+- Criação do **Rodapé Luxo** na vitrine pública.
+- Integração de links dinâmicos para **Instagram** e **TikTok**.
+- Botão de contato rápido via **WhatsApp** integrado ao branding da loja.
+
+## ✅ Funcionalidades Implementadas Hoje (04 de Maio de 2026)
+
+### 1. Upgrade Tecnológico: Gemini 3.1 Flash Lite
+- Atualização do motor de IA principal para o modelo **Gemini 3.1 Flash Lite Preview**.
+- Implementação de hierarquia de fallback:
+    1. **Gemini 3.1 Flash Lite** (Principal - Alta velocidade e baixo custo).
+    2. **Gemini 2.5 Flash** (Backup de alta performance).
+    3. **Gemini 2.0 Flash** (Segunda camada de segurança).
+    4. **Gemini Flash Latest** (Resiliência final).
+- Aplicação estendida tanto para a **Descrição de Joias (Mágica Lapidado)** quanto para a **Extração de Romaneios**.
+
+### 2. Personalização de Compartilhamento (SEO & Meta-tags)
+- Implementação de **Metadados Dinâmicos** para o Catálogo e Páginas de Produto.
+- Agora, ao compartilhar o link da loja ou de uma joia no WhatsApp/Instagram, o preview exibe:
+    - O **Nome da Loja** personalizado.
+    - A **Descrição/Slogan** da marca ou detalhes da joia.
+    - A **Logo da Loja** ou a foto da joia como imagem de destaque.
+- Refatoração da arquitetura das páginas para Server Components, garantindo indexação e preview perfeitos.
+
+### 3. Engenharia de Custo Industrial (Multi-marcas)
+- Correção na geração de **PDF de Precificação**: O cabeçalho agora exibe dinamicamente o nome da marca da empresária.
+- Adição de carimbo de data/hora nos romaneios exportados para controle de estoque e auditoria.
+
+## 🔜 Próximos Passos (Amanhã)
+- Preparação para lançamento Mobile.
+- Geração do arquivo **.aab (Android App Bundle)** para publicação na Google Play Store.
+- Revisão final de UX para dispositivos móveis.

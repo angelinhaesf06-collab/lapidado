@@ -1,4 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 
@@ -7,14 +9,25 @@ export const runtime = 'nodejs'; // 💎 NEXUS: Garantindo compatibilidade total
 export async function POST(req: Request) {
   try {
     const { table, data, id } = await req.json()
-    const authHeader = req.headers.get('authorization')
+    
+    // 🔒 SEGURANÇA DINÂMICA: Validação Real de Sessão
+    const cookieStore = await cookies()
+    const supabaseAuth = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() { return cookieStore.getAll() },
+          setAll(cookiesToSet) { cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options)) },
+        },
+      }
+    )
 
-    // CHAVE ÚNICA E INFALÍVEL
-    const VALID_TOKEN = 'Bearer LAPIDADO_ADMIN_2026'
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser()
 
-    if (authHeader !== VALID_TOKEN) {
-      console.error('ERRO: TOKEN RECEBIDO INVÁLIDO:', authHeader)
-      return NextResponse.json({ error: 'ACESSO NEGADO' }, { status: 401 })
+    if (authError || !user) {
+      console.error('ERRO: SESSÃO INVÁLIDA OU EXPIRADA');
+      return NextResponse.json({ error: 'ACESSO NEGADO: SESSÃO INVÁLIDA' }, { status: 401 })
     }
 
     if (!table || !data) {
@@ -35,14 +48,18 @@ export async function POST(req: Request) {
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseKey)
 
-    // 💎 NEXUS: VALIDAÇÃO DE SEGURANÇA MULTI-TENANT
-    // Para operações via Client SDK, o RLS cuida disso. 
-    // Como estamos usando Service Role (Admin), precisamos garantir o isolamento manualmente.
-    if (data.user_id && id) {
-       // Se estamos editando, o registro DEVE pertencer ao user_id enviado OU ser um registro órfão de branding
+    // 💎 NEXUS: SEGURANÇA MÁXIMA MULTI-TENANT
+    // Forçamos o user_id da sessão para garantir que um usuário não salve dados em nome de outro.
+    if (data.user_id && data.user_id !== user.id) {
+       return NextResponse.json({ error: 'VIOLAÇÃO DE IDENTIDADE: user_id diverge da sessão.' }, { status: 403 });
+    }
+    data.user_id = user.id;
+
+    if (id) {
+       // Se estamos editando, o registro DEVE pertencer ao user_id da sessão
        const { data: check } = await supabaseAdmin.from(table).select('user_id').eq('id', id).single();
        
-       if (check && check.user_id && check.user_id !== data.user_id) {
+       if (check && check.user_id && check.user_id !== user.id) {
          return NextResponse.json({ error: 'VIOLAÇÃO DE ISOLAMENTO: Registro pertence a outra marca.' }, { status: 403 });
        }
     }
@@ -59,7 +76,7 @@ export async function POST(req: Request) {
       const userId = data.user_id;
       
       // Upsert baseado no user_id (Garante que cada marca tenha apenas uma config)
-      // Usamos limit(1) e order para ser resiliente a duplicatas legadas
+      // Buscamos o mais recente para atualizar caso existam duplicatas órfãs ou legadas
       const { data: existing } = await supabaseAdmin
         .from('branding')
         .select('id')
