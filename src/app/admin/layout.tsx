@@ -205,7 +205,7 @@ export default function AdminLayout({
       {/* CONTEÚDO PRINCIPAL */}
       <main className="flex-1 w-full overflow-x-hidden">
         {/* BARRA SUPERIOR MOBILE (Ajustada com todas as abas) */}
-        <div className="md:hidden bg-white border-b border-brand-secondary/10 sticky top-0 z-50 shadow-sm">
+        <div className="md:hidden bg-white border-b border-brand-secondary/10 sticky top-0 z-50 shadow-sm pt-[env(safe-area-inset-top,0px)]">
            <div className="p-4 flex justify-between items-center border-b border-brand-secondary/5">
              <div className="flex items-center gap-2">
                <Gem size={16} className="text-brand-primary" />

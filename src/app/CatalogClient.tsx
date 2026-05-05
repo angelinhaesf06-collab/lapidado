@@ -170,7 +170,7 @@ export default function CatalogClient({
   return (
     <div className="flex flex-col w-full min-h-screen bg-[#fffcfc] animate-in fade-in duration-700">
       
-      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-brand-secondary/10 shadow-sm">
+      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-brand-secondary/10 shadow-sm pt-[env(safe-area-inset-top,0px)]">
         <header className="w-full pt-8 pb-4 flex flex-col items-center gap-6">
           {branding?.logo_url ? (
             <Link href={`/?catalogo=true${storeParam}`} className="relative w-40 h-14 md:w-64 md:h-20 transition-all duration-500 hover:scale-110 active:scale-95">
