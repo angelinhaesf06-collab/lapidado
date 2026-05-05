@@ -87,11 +87,16 @@ export default function RegisterPage() {
         return
       }
 
-      // 💎 WHITE-LABEL: Criar entrada inicial de branding com o nome da loja
+      // 💎 WHITE-LABEL: Criar entrada inicial de branding com o nome da loja e slug
       if (data.user) {
+        const store = storeName.trim()
+        const initialSlug = store.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
+        
         const { error: brandingError } = await supabase.from('branding').insert({
           user_id: data.user.id,
-          store_name: storeName.trim().toUpperCase(),
+          store_name: store.toUpperCase(),
+          business_name: store,
+          slug: initialSlug,
           primary_color: '#4a322e', // Padrão luxo
           secondary_color: '#c99090'
         })
