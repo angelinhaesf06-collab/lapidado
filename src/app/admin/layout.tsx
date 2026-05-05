@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
 import Paywall from '@/components/Paywall'
 import { purchasePlan, GOOGLE_PLAY_PLANS, syncSubscriptionWithSupabase } from '@/lib/billing/googlePlay'
+import { createStripeCheckout, STRIPE_PLANS } from '@/lib/billing/stripe'
 
 export default function AdminLayout({
   children,
@@ -63,15 +64,21 @@ export default function AdminLayout({
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      // 🛒 Chama o serviço de compra do Google Play
-      const purchase = await purchasePlan(plan === 'monthly' ? GOOGLE_PLAY_PLANS.MONTHLY : GOOGLE_PLAY_PLANS.YEARLY)
-      
-      if (purchase.success) {
-        // 📡 Sincroniza com o Supabase imediatamente
-        const synced = await syncSubscriptionWithSupabase(supabase, user.id, purchase)
-        if (synced) {
-          window.location.reload() // Recarrega para liberar o acesso
+      // 📱 Detecta se está em ambiente mobile (Capacitor/WebView)
+      const isMobile = typeof window !== 'undefined' && ((window as any).Capacitor || navigator.userAgent.includes('Mobile'));
+
+      if (isMobile) {
+        console.log('📱 Usando Google Play Billing...');
+        const purchase = await purchasePlan(plan === 'monthly' ? GOOGLE_PLAY_PLANS.MONTHLY : GOOGLE_PLAY_PLANS.YEARLY)
+        if (purchase.success) {
+          await syncSubscriptionWithSupabase(supabase, user.id, purchase)
+          window.location.reload()
         }
+      } else {
+        console.log('🌐 Usando Stripe Checkout...');
+        const stripePlan = plan === 'monthly' ? STRIPE_PLANS.MONTHLY : STRIPE_PLANS.YEARLY;
+        const checkout = await createStripeCheckout(stripePlan, user.id, user.email || '')
+        if (!checkout.success) alert(checkout.error)
       }
     } catch (err) {
       alert('Erro ao processar assinatura.')
