@@ -1,11 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-<<<<<<< HEAD
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Gem, Loader2, X, Plus, CheckCircle2 } from 'lucide-react'
-=======
-import { Gem, Loader2, Plus, CheckCircle2, X } from 'lucide-react'
->>>>>>> 2fd71dc5050b2e5cc10ac99c48939af8d7ddbca3
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -14,10 +10,6 @@ export default function NewProductPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
-<<<<<<< HEAD
-  const [aiMode, setAiMode] = useState<'SIMPLES' | 'LUXO' | 'VENDA'>('LUXO')
-=======
->>>>>>> 2fd71dc5050b2e5cc10ac99c48939af8d7ddbca3
   const [images, setImages] = useState<{file: File | null, preview: string}[]>([])
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -28,13 +20,10 @@ export default function NewProductPage() {
   const [margin, setMargin] = useState<string>('100')
   const [salePrice, setSalePrice] = useState<string>('')
   const [stock, setStock] = useState<string>('1')
-<<<<<<< HEAD
-=======
   const [aiStyle, setAiStyle] = useState<'luxo' | 'venda' | 'simples'>('luxo')
->>>>>>> 2fd71dc5050b2e5cc10ac99c48939af8d7ddbca3
 
   const router = useRouter()
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   const FINISH_OPTIONS = ['OURO 18K', 'PRATA', 'PRATA 925', 'OURO ROSE', 'RODIO BRANCO', 'RODIO NEGRO']
   const AI_STYLES = [
@@ -119,11 +108,7 @@ export default function NewProductPage() {
       const response = await fetch('/api/ai/describe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-<<<<<<< HEAD
-        body: JSON.stringify({ image: compressed, mode: aiMode })
-=======
         body: JSON.stringify({ image: compressed, style: aiStyle })
->>>>>>> 2fd71dc5050b2e5cc10ac99c48939af8d7ddbca3
       })
       const data = await response.json()
       if (data.name) setName(String(data.name))
@@ -165,10 +150,7 @@ export default function NewProductPage() {
           finalImageUrl = compressedBase64
         }
       } catch {
-<<<<<<< HEAD
-=======
         // Se der erro no upload, tenta usar a imagem direta
->>>>>>> 2fd71dc5050b2e5cc10ac99c48939af8d7ddbca3
         finalImageUrl = images[0].preview
       }
 
@@ -230,25 +212,6 @@ export default function NewProductPage() {
               </label>
             )}
           </div>
-<<<<<<< HEAD
-          <div className="flex justify-center gap-2 mb-4">
-            {['SIMPLES', 'LUXO', 'VENDA'].map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => setAiMode(m as any)}
-                className={`px-3 py-1.5 rounded-full text-[7px] font-black uppercase tracking-widest transition-all ${
-                  aiMode === m 
-                  ? 'bg-brand-secondary text-white shadow-md scale-105' 
-                  : 'bg-rose-50 text-brand-secondary/40 border border-rose-100 hover:bg-rose-100'
-                }`}
-              >
-                {m}
-              </button>
-            ))}
-          </div>
-          <button type="button" disabled={images.length === 0 || aiLoading} onClick={generateAIDescription} className="w-full py-4.5 rounded-2xl bg-brand-primary text-white text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl hover:brightness-110 active:scale-95 transition-all disabled:opacity-50">
-=======
           <div className="space-y-3">
             <label className="text-[8px] font-black text-brand-secondary uppercase ml-1 tracking-[0.2em]">Estilo da Descrição Mágica</label>
             <div className="grid grid-cols-3 gap-2">
@@ -276,7 +239,6 @@ export default function NewProductPage() {
             onClick={generateAIDescription} 
             className="w-full py-4.5 rounded-2xl bg-brand-primary text-white text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl hover:brightness-110 active:scale-95 transition-all disabled:opacity-50"
           >
->>>>>>> 2fd71dc5050b2e5cc10ac99c48939af8d7ddbca3
             {aiLoading ? <Loader2 className="animate-spin" size={18} /> : <Gem size={18} />} <span>MÁGICA LAPIDADO</span>
           </button>
           {aiError && <p className="text-[9px] text-rose-500 font-bold text-center uppercase tracking-widest">{aiError}</p>}
