@@ -86,7 +86,14 @@ export default function ProductsListPage() {
 
   const handleShareWhatsApp = (product: Product) => {
     const storeName = branding?.business_name || branding?.store_name || 'LAPIDADO'
-    const msg = encodeURIComponent(`OLÁ! ✨ OLHA QUE LINDA ESSA JOIA DA *${storeName.toUpperCase()}*:\n\n💍 *${product.name}*\n💎 VALOR: R$ ${Number(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\nCONFIRA MAIS DETALHES AQUI: ${window.location.origin}/product?id=${product.id}`)
+    const baseUrl = branding?.website || window.location.origin
+    
+    // ⚠️ Alerta se estiver tentando compartilhar localhost sem ter link oficial
+    if (!branding?.website && window.location.hostname === 'localhost') {
+      alert('ATENÇÃO: Você está compartilhando um link de "localhost". Configure o "Link Oficial da Vitrine" em "Minha Marca" para que seus clientes consigam acessar! 💎')
+    }
+
+    const msg = encodeURIComponent(`OLÁ! ✨ OLHA QUE LINDA ESSA JOIA DA *${storeName.toUpperCase()}*:\n\n💍 *${product.name}*\n💎 VALOR: R$ ${Number(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\nCONFIRA MAIS DETALHES AQUI: ${baseUrl}/product?id=${product.id}`)
     window.open(`https://wa.me/?text=${msg}`, '_blank')
   }
 

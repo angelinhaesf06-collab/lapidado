@@ -87,18 +87,27 @@ export default function RegisterPage() {
         return
       }
 
-      // 💎 WHITE-LABEL: Criar entrada inicial de branding com o nome da loja
+      // 💎 WHITE-LABEL: Atualizar entrada inicial de branding (criada pelo trigger) com o nome da loja
       if (data.user) {
-        const { error: brandingError } = await supabase.from('branding').insert({
-          user_id: data.user.id,
-          store_name: storeName.trim().toUpperCase(),
-          primary_color: '#4a322e', // Padrão luxo
-          secondary_color: '#c99090'
-        })
+        const { error: brandingError } = await supabase
+          .from('branding')
+          .update({
+            store_name: storeName.trim().toUpperCase(),
+            business_name: storeName.trim().toUpperCase(),
+            primary_color: '#4a322e',
+            secondary_color: '#c99090'
+          })
+          .eq('user_id', data.user.id)
 
         if (brandingError) {
-          console.error('Erro ao salvar branding:', brandingError)
-          // Não bloqueia o registro se o branding falhar, mas loga o erro
+          console.error('Erro ao atualizar branding inicial:', brandingError)
+          // Se falhar o update (ex: trigger demorou), tentamos um insert como fallback
+          await supabase.from('branding').insert({
+            user_id: data.user.id,
+            store_name: storeName.trim().toUpperCase(),
+            primary_color: '#4a322e',
+            secondary_color: '#c99090'
+          })
         }
       }
 

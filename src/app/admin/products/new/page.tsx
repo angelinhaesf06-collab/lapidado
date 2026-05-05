@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Gem, Loader2, Check, X, Plus, AlertCircle, CheckCircle2, TrendingUp } from 'lucide-react'
+import { Gem, Loader2, X, Plus, CheckCircle2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -10,21 +10,17 @@ export default function NewProductPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
-  const [dbStatus, setDbStatus] = useState<'checking' | 'ok' | 'error'>('checking')
+  const [aiMode, setAiMode] = useState<'SIMPLES' | 'LUXO' | 'VENDA'>('LUXO')
   const [images, setImages] = useState<{file: File | null, preview: string}[]>([])
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('')
   const [materialFinish, setMaterialFinish] = useState('OURO 18K')
   const [categories, setCategories] = useState<{id: string, name: string}[]>([])
-  const [pricingRules, setPricingRules] = useState<{globalMarkup: number, categoryMarkups: Record<string, number>}>({
-    globalMarkup: 100, categoryMarkups: {}
-  })
   const [costPrice, setCostPrice] = useState<string>('')
   const [margin, setMargin] = useState<string>('100')
   const [salePrice, setSalePrice] = useState<string>('')
   const [stock, setStock] = useState<string>('1')
-  const [aiUsed, setAiUsed] = useState(false)
 
   const router = useRouter()
   const supabase = createClient()
@@ -36,7 +32,6 @@ export default function NewProductPage() {
     if (!user) return
     const { data: catData } = await supabase.from('categories').select('*').order('name')
     if (catData) setCategories(catData)
-    setDbStatus('ok')
   }, [supabase])
 
   useEffect(() => { loadData() }, [loadData])
@@ -108,7 +103,7 @@ export default function NewProductPage() {
       const response = await fetch('/api/ai/describe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: compressed })
+        body: JSON.stringify({ image: compressed, mode: aiMode })
       })
       const data = await response.json()
       if (data.name) setName(String(data.name))
@@ -118,7 +113,7 @@ export default function NewProductPage() {
         const found = categories.find(c => c.name.toUpperCase().includes(aiCat) || aiCat.includes(c.name.toUpperCase()))
         if (found) setCategory(found.id)
       }
-    } catch (err) {
+    } catch {
       setAiError("IA INDISPONÍVEL. CONTINUE MANUALMENTE. ✨")
     } finally {
       setAiLoading(false)
@@ -147,11 +142,9 @@ export default function NewProductPage() {
         if (uploadData.url) {
           finalImageUrl = uploadData.url
         } else {
-          // 🚀 PLANO B: Se o servidor de arquivos falhar, usamos a imagem comprimida direta
           finalImageUrl = compressedBase64
         }
-      } catch (e) {
-        // Se der erro no upload, tenta usar a imagem direta
+      } catch {
         finalImageUrl = images[0].preview
       }
 
@@ -181,8 +174,9 @@ export default function NewProductPage() {
       alert('JOIA SALVA! 💎')
       setName(''); setDescription(''); setCostPrice(''); setSalePrice(''); setImages([]); setStock('1')
       router.refresh()
-    } catch (err: any) {
-      alert('ERRO: ' + err.message.toUpperCase())
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro desconhecido'
+      alert('ERRO: ' + message.toUpperCase())
     } finally {
       setIsSaving(false)
     }
@@ -211,6 +205,22 @@ export default function NewProductPage() {
                 <input type="file" className="hidden" onChange={handleImageUpload} accept="image/*" multiple />
               </label>
             )}
+          </div>
+          <div className="flex justify-center gap-2 mb-4">
+            {['SIMPLES', 'LUXO', 'VENDA'].map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setAiMode(m as any)}
+                className={`px-3 py-1.5 rounded-full text-[7px] font-black uppercase tracking-widest transition-all ${
+                  aiMode === m 
+                  ? 'bg-brand-secondary text-white shadow-md scale-105' 
+                  : 'bg-rose-50 text-brand-secondary/40 border border-rose-100 hover:bg-rose-100'
+                }`}
+              >
+                {m}
+              </button>
+            ))}
           </div>
           <button type="button" disabled={images.length === 0 || aiLoading} onClick={generateAIDescription} className="w-full py-4.5 rounded-2xl bg-brand-primary text-white text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl hover:brightness-110 active:scale-95 transition-all disabled:opacity-50">
             {aiLoading ? <Loader2 className="animate-spin" size={18} /> : <Gem size={18} />} <span>MÁGICA LAPIDADO</span>
@@ -282,5 +292,4 @@ export default function NewProductPage() {
       </form>
     </div>
   )
-
 }

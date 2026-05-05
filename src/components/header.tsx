@@ -37,7 +37,12 @@ export default function Header() {
         if (!brandingData) {
           const { data: { user } } = await supabase.auth.getUser()
           if (user) {
-            const { data } = await supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle()
+            const { data } = await supabase.from('branding')
+              .select('*')
+              .eq('user_id', user.id)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle()
             brandingData = data
           }
         }

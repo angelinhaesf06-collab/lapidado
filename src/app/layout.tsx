@@ -52,7 +52,12 @@ function RootLayoutContent({
         // 3. Prioridade 2: Buscar pelo Usuário Logado
         if (!currentBranding && currentUser) {
           console.log('💎 NEXUS: BUSCANDO POR USER_ID:', currentUser.id);
-          const { data } = await supabase.from('branding').select('*').eq('user_id', currentUser.id).maybeSingle();
+          const { data } = await supabase.from('branding')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
           currentBranding = data;
         }
         

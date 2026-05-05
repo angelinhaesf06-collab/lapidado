@@ -11,6 +11,7 @@ export default function BrandingPage() {
   const [logo, setLogo] = useState<string | null>(null)
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [tagline, setTagline] = useState('')
+  const [website, setWebsite] = useState('')
   const [businessName, setBusinessName] = useState('')
   const [topBanner, setTopBanner] = useState('')
   const [primaryColor, setPrimaryColor] = useState('#4a322e')
@@ -43,6 +44,7 @@ export default function BrandingPage() {
         if (data) {
           setBrandingId(data.id)
           setTagline(data.tagline || data.facebook?.split('|')[0] || '') 
+          setWebsite(data.website || '')
           setInstallments(data.installments?.toString() || data.facebook?.split('|')[1] || '10')
           setTopBanner(data.top_banner || data.facebook?.split('|')[2] || '')
           setBusinessName(data.business_name || data.store_name || '')
@@ -87,26 +89,32 @@ export default function BrandingPage() {
   const handleSave = async () => {
     setSaving(true)
     try {
-      let currentLogoUrl = logo
-      if (logoFile) {
-        const formData = new FormData()
-        formData.append('file', logoFile)
-        formData.append('bucket', 'branding')
-        const uploadRes = await fetch('/api/admin/upload', { method: 'POST', body: formData })
-        const uploadData = await uploadRes.json()
-        if (uploadData.url) currentLogoUrl = uploadData.url
-      }
-
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Sessão expirada.')
-
-      if (!businessName.trim()) {
+      const cleanBusinessName = businessName.trim()
+      
+      if (!cleanBusinessName) {
         alert('POR FAVOR, INFORME O NOME DA SUA LOJA. 💎')
         setSaving(false)
         return
       }
 
-      const newSlug = businessName.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
+      let currentLogoUrl = logo
+      if (logoFile) {
+        console.log('💎 NEXUS: Iniciando upload da logo...');
+        const formData = new FormData()
+        formData.append('file', logoFile)
+        formData.append('bucket', 'branding')
+        const uploadRes = await fetch('/api/admin/upload', { method: 'POST', body: formData })
+        if (!uploadRes.ok) throw new Error('Falha no upload da imagem.')
+        const uploadData = await uploadRes.json()
+        if (uploadData.url) currentLogoUrl = uploadData.url
+      }
+
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Sessão expirada. Por favor, faça login novamente.')
+
+      const newSlug = cleanBusinessName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
+
+      console.log('💎 NEXUS: Salvando dados da marca...', { business_name: cleanBusinessName, slug: newSlug });
 
       const response = await fetch('/api/admin/save', {
         method: 'POST',
@@ -115,14 +123,14 @@ export default function BrandingPage() {
           table: 'branding',
           data: {
             user_id: user.id, 
-            business_name: businessName,
-            store_name: businessName.toUpperCase(),
+            business_name: cleanBusinessName,
+            store_name: cleanBusinessName.toUpperCase(),
             slug: newSlug,
             tagline: tagline.toUpperCase(),
             top_banner: topBanner.toUpperCase(),
             installments: parseInt(installments) || 10,
             tiktok: tiktok, 
-            website: tagline.toUpperCase(), 
+            website: website, 
             instagram: instagram,
             primary_color: primaryColor,
             secondary_color: secondaryColor,
@@ -136,8 +144,11 @@ export default function BrandingPage() {
         })
       })
 
-      if (!response.ok) throw new Error('Falha ao salvar dados.')
-      alert('IDENTIDADE ATUALIZADA! 💎')
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || 'Falha ao salvar dados.')
+      
+      alert('IDENTIDADE ATUALIZADA COM SUCESSO! 💎')
+      // 🚀 Recarrega após o OK do usuário para garantir que o cache seja limpo
       window.location.reload()
     } catch (err: unknown) {
       const error = err as Error
@@ -192,6 +203,12 @@ export default function BrandingPage() {
           <div className="space-y-1.5">
             <label className="text-[9px] font-black text-brand-secondary uppercase block ml-1">Frase de Topo da Vitrine</label>
             <input type="text" value={topBanner} onChange={(e) => setTopBanner(e.target.value)} className="w-full px-4 py-3 md:py-4 rounded-xl md:rounded-2xl bg-brand-secondary/5 text-sm font-medium text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all" />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[9px] font-black text-brand-secondary uppercase block ml-1">Link Oficial da Vitrine (Obrigatório para compartilhar)</label>
+            <input type="text" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://sualoja.com" className="w-full px-4 py-3 md:py-4 rounded-xl md:rounded-2xl bg-brand-primary/5 text-sm font-bold text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all" />
+            <p className="text-[7px] font-bold text-brand-secondary/40 uppercase ml-1">Cole aqui o link do seu site para que o botão de compartilhar funcione.</p>
           </div>
         </div>
 

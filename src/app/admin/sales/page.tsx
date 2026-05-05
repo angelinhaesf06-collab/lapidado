@@ -1,19 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { ShoppingCart, Loader2, ArrowLeft, Search, Check, Trash2, Plus, TrendingUp, CreditCard, Banknote, FileText, CheckCircle2, Printer, X, ShieldCheck, Gem, Phone } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { ShoppingCart, Loader2, ArrowLeft, Trash2, Plus, FileText, CheckCircle2, Printer, X, ShieldCheck, Gem, Phone, Check } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
 import { toast } from 'sonner'
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer 
-} from 'recharts'
 
 interface Sale {
   id: string
@@ -91,9 +82,7 @@ export default function SalesPage() {
   const [sales, setSales] = useState<Sale[]>([])
   const [installmentsList, setInstallmentsList] = useState<Installment[]>([])
   const [loading, setLoading] = useState(true)
-  const [loadingMoreSales, setLoadingMoreSales] = useState(false)
   const [salesPage, setSalesPage] = useState(0)
-  const [hasMoreSales, setHasMoreSales] = useState(true)
   const PAGE_SIZE = 15
 
   const [showAddModal, setShowAddModal] = useState(false)
@@ -103,11 +92,9 @@ export default function SalesPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [activeCategory, setActiveCategory] = useState('Todas')
   const [customers, setCustomers] = useState<Customer[]>([])
-  const [searchQuery, setSearchQuery] = useState('')
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().substring(0, 7))
   
   const supabase = createClient()
-  const receiptRef = useRef<HTMLDivElement>(null)
 
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [quantity, setQuantity] = useState(1)
@@ -118,7 +105,6 @@ export default function SalesPage() {
   
   const loadSales = useCallback(async (isInitial = true) => {
     if (isInitial) setLoading(true)
-    else setLoadingMoreSales(true)
     
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
@@ -136,14 +122,14 @@ export default function SalesPage() {
       .range(from, to)
       
     if (salesData) {
+      const typedSales = salesData as unknown as Sale[]
       if (isInitial) {
-        setSales(salesData as unknown as Sale[])
+        setSales(typedSales)
         setSalesPage(0)
       } else {
-        setSales(prev => [...prev, ...(salesData as unknown as Sale[])])
+        setSales(prev => [...prev, ...typedSales])
         setSalesPage(currentPage)
       }
-      setHasMoreSales(salesData.length === PAGE_SIZE)
     }
 
     if (isInitial) {
@@ -157,8 +143,6 @@ export default function SalesPage() {
         .limit(20)
       if (instData) setInstallmentsList(instData as unknown as Installment[])
       setLoading(false)
-    } else {
-      setLoadingMoreSales(false)
     }
   }, [supabase, salesPage])
 
@@ -176,8 +160,6 @@ export default function SalesPage() {
     } catch { toast.error('Erro ao atualizar parcela.') }
   }
 
-  // ... (keep useEffect and other functions)
-
 
   const loadBranding = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -185,20 +167,21 @@ export default function SalesPage() {
     const { data } = await supabase.from('branding').select('*').eq('user_id', user.id).single()
     if (data) setBranding(data)
   }, [supabase])
-const loadProducts = useCallback(async () => {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return
 
-  // ⚡ OTIMIZAÇÃO: Busca essencial + categorias para o filtro funcionar
-  const { data } = await supabase
-    .from('products')
-    .select('id, name, price, image_url, cost_price, stock_quantity, category_id, categories(name)')
-    .eq('user_id', user.id)
-    .gt('stock_quantity', 0)
-    .order('name')
+  const loadProducts = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
 
-  if (data) setProducts(data as unknown as Product[])
-}, [supabase])
+    // ⚡ OTIMIZAÇÃO: Busca essencial + categorias para o filtro funcionar
+    const { data } = await supabase
+      .from('products')
+      .select('id, name, price, image_url, cost_price, stock_quantity, category_id, categories(name)')
+      .eq('user_id', user.id)
+      .gt('stock_quantity', 0)
+      .order('name')
+
+    if (data) setProducts(data as unknown as Product[])
+  }, [supabase])
 
   const loadCustomers = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -218,7 +201,7 @@ const loadProducts = useCallback(async () => {
     loadProducts()
     loadCustomers()
     loadCategories()
-  }, [loadSales, loadBranding, loadProducts, loadCustomers, loadCategories, supabase])
+  }, [loadSales, loadBranding, loadProducts, loadCustomers, loadCategories])
 
   async function handleToggleStatus(sale: Sale) {
     const newStatus = sale.status === 'pago' ? 'pendente' : 'pago'
@@ -267,7 +250,10 @@ const loadProducts = useCallback(async () => {
 
       setShowAddModal(false); setSelectedProduct(null); setCustomerId(''); loadSales(); loadProducts();
       toast.success('Venda Registrada! 💎')
-    } catch (err: any) { toast.error(err.message) } finally { setIsSaving(false) }
+    } catch (err) { 
+      const message = err instanceof Error ? err.message : 'Erro desconhecido'
+      toast.error(message) 
+    } finally { setIsSaving(false) }
   }
 
   const handleWhatsApp = (sale: Sale) => {
@@ -307,147 +293,154 @@ const loadProducts = useCallback(async () => {
   return (
     <div className="max-w-5xl mx-auto pb-20 print:p-0">
       <div className="print:hidden">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-black uppercase text-brand-primary tracking-tighter">Gestão de Vendas</h2>
-          <p className="text-[10px] font-black tracking-[0.3em] text-brand-secondary/60 uppercase">Controle Financeiro 💎</p>
-        </div>
-
-        <div className="flex justify-center mb-10 px-4">
-          <div className="bg-white w-full max-w-[280px] px-4 py-3 rounded-full border border-brand-secondary/10 shadow-sm flex items-center justify-center gap-2">
-            <input 
-              type="month" 
-              value={selectedMonth} 
-              onChange={(e) => setSelectedMonth(e.target.value)} 
-              className="bg-transparent border-none text-[10px] md:text-xs font-black text-brand-primary uppercase outline-none w-full text-center" 
-            />
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <Loader2 className="animate-spin text-brand-secondary" size={32} />
+            <p className="text-[10px] font-black uppercase tracking-widest text-brand-secondary/40">Carregando Vendas...</p>
           </div>
-        </div>
+        ) : (
+          <>
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-black uppercase text-brand-primary tracking-tighter">Gestão de Vendas</h2>
+              <p className="text-[10px] font-black tracking-[0.3em] text-brand-secondary/60 uppercase">Controle Financeiro 💎</p>
+            </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
-          <div className="bg-white p-6 rounded-[30px] border border-brand-secondary/10 text-center shadow-sm">
-            <p className="text-[7px] font-black text-brand-secondary uppercase mb-1">Vendido (Mês)</p>
-            <h4 className="text-xl font-bold text-brand-primary">R$ {filteredSales.reduce((acc, s) => acc + (s.total_value || 0), 0).toLocaleString('pt-BR')}</h4>
-          </div>
-          
-          <div className="bg-amber-500 p-6 rounded-[30px] text-center shadow-lg">
-            <p className="text-[7px] font-black text-white/80 uppercase mb-1">A Receber (Mês)</p>
-            <h4 className="text-xl font-bold text-white">R$ {pendingReceivables.toLocaleString('pt-BR')}</h4>
-          </div>
+            <div className="flex justify-center mb-10 px-4">
+              <div className="bg-white w-full max-w-[280px] px-4 py-3 rounded-full border border-brand-secondary/10 shadow-sm flex items-center justify-center gap-2">
+                <input 
+                  type="month" 
+                  value={selectedMonth} 
+                  onChange={(e) => setSelectedMonth(e.target.value)} 
+                  className="bg-transparent border-none text-[10px] md:text-xs font-black text-brand-primary uppercase outline-none w-full text-center" 
+                />
+              </div>
+            </div>
 
-          <div className="bg-brand-secondary p-6 rounded-[30px] text-center shadow-lg">
-            <p className="text-[7px] font-black text-white/80 uppercase mb-1">A Receber (Total)</p>
-            <h4 className="text-xl font-bold text-white">R$ {totalReceivables.toLocaleString('pt-BR')}</h4>
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
+              <div className="bg-white p-6 rounded-[30px] border border-brand-secondary/10 text-center shadow-sm">
+                <p className="text-[7px] font-black text-brand-secondary uppercase mb-1">Vendido (Mês)</p>
+                <h4 className="text-xl font-bold text-brand-primary">R$ {filteredSales.reduce((acc, s) => acc + (s.total_value || 0), 0).toLocaleString('pt-BR')}</h4>
+              </div>
+              
+              <div className="bg-amber-500 p-6 rounded-[30px] text-center shadow-lg">
+                <p className="text-[7px] font-black text-white/80 uppercase mb-1">A Receber (Mês)</p>
+                <h4 className="text-xl font-bold text-white">R$ {pendingReceivables.toLocaleString('pt-BR')}</h4>
+              </div>
 
-          <div className="bg-brand-primary p-6 rounded-[30px] text-center shadow-lg">
-            <p className="text-[7px] font-black text-white/80 uppercase mb-1">Lucro Estimado (Mês)</p>
-            <h4 className="text-xl font-bold text-white">R$ {filteredSales.reduce((acc, s) => acc + ((s.total_value - (Number(s.cost_price || 0) * s.quantity)) || 0), 0).toLocaleString('pt-BR')}</h4>
-          </div>
-        </div>
+              <div className="bg-brand-secondary p-6 rounded-[30px] text-center shadow-lg">
+                <p className="text-[7px] font-black text-white/80 uppercase mb-1">A Receber (Total)</p>
+                <h4 className="text-xl font-bold text-white">R$ {totalReceivables.toLocaleString('pt-BR')}</h4>
+              </div>
 
-        <button onClick={() => setShowAddModal(true)} className="w-full bg-brand-primary text-white py-5 rounded-[25px] font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-xl mb-8"><Plus size={18} /> Nova Venda Real</button>
+              <div className="bg-brand-primary p-6 rounded-[30px] text-center shadow-lg">
+                <p className="text-[7px] font-black text-white/80 uppercase mb-1">Lucro Estimado (Mês)</p>
+                <h4 className="text-xl font-bold text-white">R$ {filteredSales.reduce((acc, s) => acc + ((s.total_value - (Number(s.cost_price || 0) * s.quantity)) || 0), 0).toLocaleString('pt-BR')}</h4>
+              </div>
+            </div>
 
-        <div className="space-y-3">
-          {filteredSales
-            .map((sale) => {
-            // 💎 NEXUS: Normalização de dados para Joins resilientes
-            const productInfo = Array.isArray(sale.products) ? sale.products[0] : sale.products
-            const imageUrl = productInfo?.image_url
-            
-            return (
-              <div key={sale.id} className={`bg-white p-4 rounded-[25px] border flex items-center gap-3 md:gap-4 group ${sale.status === 'pago' ? 'border-green-100 bg-green-50/10' : 'border-brand-secondary/5 shadow-sm'}`}>
-                <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl overflow-hidden relative border border-brand-secondary/10 bg-rose-50/30 shrink-0">
-                  {imageUrl ? (
-                    <Image src={imageUrl} alt="" fill className="object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-brand-secondary/20"><Gem size={20} /></div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-[10px] font-black text-brand-primary uppercase truncate pr-2">{productInfo?.name || 'Joia não identificada'}</h4>
-                  <p className="text-[8px] font-bold text-brand-secondary/50 uppercase truncate">{sale.customers?.name} • {new Date(sale.created_at).toLocaleDateString('pt-BR')}</p>
-                </div>
-                <div className="flex items-center gap-2 md:gap-3">
-                  <div className="text-right shrink-0">
-                    <p className="text-xs font-black text-brand-primary">R$ {sale.total_value.toLocaleString('pt-BR')}</p>
-                    <button onClick={() => handleToggleStatus(sale)} className={`text-[6px] font-black uppercase px-2 py-0.5 rounded-full border ${sale.status === 'pago' ? 'bg-green-500 text-white border-green-500' : 'text-brand-secondary/40 border-brand-secondary/10'}`}>{sale.status === 'pago' ? 'PAGO' : 'PENDENTE'}</button>
+            <button onClick={() => setShowAddModal(true)} className="w-full bg-brand-primary text-white py-5 rounded-[25px] font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-xl mb-8"><Plus size={18} /> Nova Venda Real</button>
+
+            <div className="space-y-3">
+              {filteredSales
+                .map((sale) => {
+                const productInfo = Array.isArray(sale.products) ? sale.products[0] : sale.products
+                const imageUrl = productInfo?.image_url
+                
+                return (
+                  <div key={sale.id} className={`bg-white p-4 rounded-[25px] border flex items-center gap-3 md:gap-4 group ${sale.status === 'pago' ? 'border-green-100 bg-green-50/10' : 'border-brand-secondary/5 shadow-sm'}`}>
+                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl overflow-hidden relative border border-brand-secondary/10 bg-rose-50/30 shrink-0">
+                      {imageUrl ? (
+                        <Image src={imageUrl} alt="" fill className="object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-brand-secondary/20"><Gem size={20} /></div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-[10px] font-black text-brand-primary uppercase truncate pr-2">{productInfo?.name || 'Joia não identificada'}</h4>
+                      <p className="text-[8px] font-bold text-brand-secondary/50 uppercase truncate">{sale.customers?.name} • {new Date(sale.created_at).toLocaleDateString('pt-BR')}</p>
+                    </div>
+                    <div className="flex items-center gap-2 md:gap-3">
+                      <div className="text-right shrink-0">
+                        <p className="text-xs font-black text-brand-primary">R$ {sale.total_value.toLocaleString('pt-BR')}</p>
+                        <button onClick={() => handleToggleStatus(sale)} className={`text-[6px] font-black uppercase px-2 py-0.5 rounded-full border ${sale.status === 'pago' ? 'bg-green-500 text-white border-green-500' : 'text-brand-secondary/40 border-brand-secondary/10'}`}>{sale.status === 'pago' ? 'PAGO' : 'PENDENTE'}</button>
+                      </div>
+                      <div className="flex gap-1">
+                        <button onClick={() => setShowReceipt(sale)} className="p-2 md:p-2.5 bg-brand-secondary/5 text-brand-primary rounded-xl hover:bg-brand-primary hover:text-white transition-all"><Printer size={14} /></button>
+                        <button onClick={() => handleDeleteSale(sale.id)} className="p-2 text-rose-200 hover:text-rose-500 md:opacity-0 md:group-hover:opacity-100 transition-all"><Trash2 size={14} /></button>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex gap-1">
-                    <button onClick={() => setShowReceipt(sale)} className="p-2 md:p-2.5 bg-brand-secondary/5 text-brand-primary rounded-xl hover:bg-brand-primary hover:text-white transition-all"><Printer size={14} /></button>
-                    <button onClick={() => handleDeleteSale(sale.id)} className="p-2 text-rose-200 hover:text-rose-500 md:opacity-0 md:group-hover:opacity-100 transition-all"><Trash2 size={14} /></button>
-                  </div>
+                )
+              })}
+            </div>
+
+            {/* 📜 CONTROLE DE PROMISSÓRIAS / PARCELAS */}
+            <div className="mt-20">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-600">
+                  <FileText size={20} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-brand-primary uppercase tracking-tighter">Controle de Promissórias</h3>
+                  <p className="text-[8px] font-bold text-brand-secondary/40 uppercase">Acompanhamento de Recebimentos</p>
                 </div>
               </div>
-            )
-          })}
-        </div>
 
-        {/* 📜 CONTROLE DE PROMISSÓRIAS / PARCELAS */}
-        <div className="mt-20">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-600">
-              <FileText size={20} />
+              <div className="bg-white rounded-[35px] border border-brand-secondary/10 overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-brand-secondary/5">
+                        <th className="p-4 text-[7px] font-black uppercase text-brand-secondary/60 tracking-widest">Cliente</th>
+                        <th className="p-4 text-[7px] font-black uppercase text-brand-secondary/60 tracking-widest">Vencimento</th>
+                        <th className="p-4 text-[7px] font-black uppercase text-brand-secondary/60 tracking-widest">Parcela</th>
+                        <th className="p-4 text-[7px] font-black uppercase text-brand-secondary/60 tracking-widest">Valor</th>
+                        <th className="p-4 text-[7px] font-black uppercase text-brand-secondary/60 tracking-widest">Ação</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-brand-secondary/5">
+                      {installmentsList.filter(inst => inst.status === 'pendente').slice(0, 15).map((inst) => (
+                        <tr key={inst.id} className="hover:bg-brand-secondary/5 transition-colors">
+                          <td className="p-4">
+                            <p className="text-[10px] font-black text-brand-primary uppercase">{inst.sales?.customers?.name || 'Cliente Excluído'}</p>
+                            <p className="text-[7px] font-bold text-brand-secondary/40 uppercase truncate max-w-[120px]">{inst.sales?.products?.name}</p>
+                          </td>
+                          <td className="p-4">
+                            <p className="text-[9px] font-bold text-brand-primary">{new Date(inst.due_date).toLocaleDateString('pt-BR')}</p>
+                          </td>
+                          <td className="p-4">
+                            <span className="text-[8px] font-black px-2 py-0.5 rounded-full bg-brand-secondary/10 text-brand-primary uppercase">Nº {inst.installment_number}</span>
+                          </td>
+                          <td className="p-4">
+                            <p className="text-[10px] font-black text-brand-primary">R$ {inst.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                          </td>
+                          <td className="p-4">
+                            <button 
+                              onClick={() => handlePayInstallment(inst)}
+                              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-green-500 text-white text-[8px] font-black uppercase shadow-sm hover:scale-105 transition-all"
+                            >
+                              <CheckCircle2 size={12} /> Dar Baixa
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      {installmentsList.filter(inst => inst.status === 'pendente').length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="p-12 text-center">
+                            <div className="opacity-20 mb-2 flex justify-center"><CheckCircle2 size={32} /></div>
+                            <p className="text-[8px] font-black text-brand-secondary/40 uppercase tracking-widest">Nenhuma promissória pendente</p>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
-            <div>
-              <h3 className="text-sm font-black text-brand-primary uppercase tracking-tighter">Controle de Promissórias</h3>
-              <p className="text-[8px] font-bold text-brand-secondary/40 uppercase">Acompanhamento de Recebimentos</p>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-[35px] border border-brand-secondary/10 overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-brand-secondary/5">
-                    <th className="p-4 text-[7px] font-black uppercase text-brand-secondary/60 tracking-widest">Cliente</th>
-                    <th className="p-4 text-[7px] font-black uppercase text-brand-secondary/60 tracking-widest">Vencimento</th>
-                    <th className="p-4 text-[7px] font-black uppercase text-brand-secondary/60 tracking-widest">Parcela</th>
-                    <th className="p-4 text-[7px] font-black uppercase text-brand-secondary/60 tracking-widest">Valor</th>
-                    <th className="p-4 text-[7px] font-black uppercase text-brand-secondary/60 tracking-widest">Ação</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-brand-secondary/5">
-                  {installmentsList.filter(inst => inst.status === 'pendente').slice(0, 15).map((inst) => (
-                    <tr key={inst.id} className="hover:bg-brand-secondary/5 transition-colors">
-                      <td className="p-4">
-                        <p className="text-[10px] font-black text-brand-primary uppercase">{inst.sales?.customers?.name || 'Cliente Excluído'}</p>
-                        <p className="text-[7px] font-bold text-brand-secondary/40 uppercase truncate max-w-[120px]">{inst.sales?.products?.name}</p>
-                      </td>
-                      <td className="p-4">
-                        <p className="text-[9px] font-bold text-brand-primary">{new Date(inst.due_date).toLocaleDateString('pt-BR')}</p>
-                      </td>
-                      <td className="p-4">
-                        <span className="text-[8px] font-black px-2 py-0.5 rounded-full bg-brand-secondary/10 text-brand-primary uppercase">Nº {inst.installment_number}</span>
-                      </td>
-                      <td className="p-4">
-                        <p className="text-[10px] font-black text-brand-primary">R$ {inst.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                      </td>
-                      <td className="p-4">
-                        <button 
-                          onClick={() => handlePayInstallment(inst)}
-                          className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-green-500 text-white text-[8px] font-black uppercase shadow-sm hover:scale-105 transition-all"
-                        >
-                          <CheckCircle2 size={12} /> Dar Baixa
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {installmentsList.filter(inst => inst.status === 'pendente').length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="p-12 text-center">
-                        <div className="opacity-20 mb-2 flex justify-center"><CheckCircle2 size={32} /></div>
-                        <p className="text-[8px] font-black text-brand-secondary/40 uppercase tracking-widest">Nenhuma promissória pendente</p>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
 
-      {/* 📄 COMPROVANTE ENXUTO 💎 */}
       {showReceipt && (
         <div className="fixed inset-0 bg-white z-[300] flex flex-col p-8 md:p-12 print:p-0">
           <div className="max-w-xl mx-auto w-full space-y-8">
@@ -507,7 +500,6 @@ const loadProducts = useCallback(async () => {
         </div>
       )}
 
-      {/* MODAL DE ADICIONAR (UNCHANGED CODE ...) */}
       {showAddModal && (
         <div className="fixed inset-0 bg-brand-primary/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-4xl h-[85vh] rounded-[40px] flex flex-col overflow-hidden shadow-2xl">
@@ -516,7 +508,6 @@ const loadProducts = useCallback(async () => {
                 <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-rose-50 rounded-full"><X size={20} /></button>
              </div>
 
-             {/* 💎 FILTRO DE CATEGORIAS NO MODAL */}
              <div className="px-6 py-4 bg-rose-50/30 border-b border-brand-secondary/5">
                 <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                   <button 
@@ -540,9 +531,8 @@ const loadProducts = useCallback(async () => {
              <div className="flex-1 overflow-y-auto p-4 md:p-6 grid grid-cols-3 sm:grid-cols-4 gap-2 md:gap-4 bg-rose-50/10 scrollbar-hide">
                 {products
                   .filter(p => {
-                    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase())
                     const matchesCategory = activeCategory === 'Todas' || p.categories?.name === activeCategory
-                    return matchesSearch && matchesCategory
+                    return matchesCategory
                   })
                   .map(p => (
                   <button key={p.id} onClick={() => setSelectedProduct(p)} className={`p-2 md:p-3 rounded-[20px] md:rounded-[30px] border transition-all ${selectedProduct?.id === p.id ? 'bg-brand-primary border-brand-primary scale-105 shadow-xl' : 'bg-white border-brand-secondary/5'}`}>

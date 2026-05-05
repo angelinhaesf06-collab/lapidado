@@ -15,7 +15,7 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
-  const [branding, setBranding] = useState<{name: string, logo: string | null, slug: string | null}>({name: 'LAPIDADO', logo: null, slug: null})
+  const [branding, setBranding] = useState<{name: string, logo: string | null, slug: string | null, website: string | null}>({name: 'LAPIDADO', logo: null, slug: null, website: null})
   const [subscription, setSubscription] = useState<{status: string, trial_ends_at: string | null} | null>(null)
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
@@ -26,16 +26,19 @@ export default function AdminLayout({
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         const { data } = await supabase.from('branding')
-          .select('store_name, business_name, logo_url, facebook, slug, subscription_status, trial_ends_at')
+          .select('store_name, business_name, logo_url, facebook, slug, website, subscription_status, trial_ends_at')
           .eq('user_id', user.id)
-          .single()
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
         
         if (data) {
           const [,,, bName] = (data.facebook || '').split('|')
           setBranding({
             name: data.business_name || data.store_name || bName || 'LAPIDADO',
             logo: data.logo_url || null,
-            slug: data.slug || null
+            slug: data.slug || null,
+            website: data.website || null
           })
           setSubscription({
             status: data.subscription_status || 'trial',
@@ -88,7 +91,15 @@ export default function AdminLayout({
   ]
 
   const shareToWhatsApp = () => {
-    const url = `${window.location.origin}/?catalogo=true${branding.slug ? `&loja=${branding.slug}` : ''}`
+    // 🔗 Prioriza o link oficial cadastrado, senão usa a origem atual
+    const baseUrl = branding.website || window.location.origin
+    
+    // ⚠️ Alerta se estiver tentando compartilhar localhost sem ter link oficial
+    if (!branding.website && window.location.hostname === 'localhost') {
+      alert('ATENÇÃO: Você está compartilhando um link de "localhost" (teste local). Configure o "Link Oficial da Vitrine" em "Minha Marca" para que seus clientes consigam acessar! 💎')
+    }
+
+    const url = `${baseUrl}/?catalogo=true${branding.slug ? `&loja=${branding.slug}` : ''}`
     const text = `Olá! Conheça o novo catálogo digital da *${branding.name.toUpperCase()}*. Peças exclusivas e brilho em cada detalhe: ${url}`
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
   }

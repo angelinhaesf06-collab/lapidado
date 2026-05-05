@@ -59,10 +59,13 @@ export async function POST(req: Request) {
       const userId = data.user_id;
       
       // Upsert baseado no user_id (Garante que cada marca tenha apenas uma config)
+      // Usamos limit(1) e order para ser resiliente a duplicatas legadas
       const { data: existing } = await supabaseAdmin
         .from('branding')
         .select('id')
         .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (existing?.id) {
