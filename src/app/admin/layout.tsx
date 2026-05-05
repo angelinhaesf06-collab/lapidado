@@ -18,7 +18,7 @@ export default function AdminLayout({
   const [branding, setBranding] = useState<{name: string, logo: string | null, slug: string | null, website: string | null}>({name: 'LAPIDADO', logo: null, slug: null, website: null})
   const [subscription, setSubscription] = useState<{status: string, trial_ends_at: string | null} | null>(null)
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     async function loadData() {
