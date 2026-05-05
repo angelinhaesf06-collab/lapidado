@@ -28,12 +28,20 @@ interface Branding {
   [key: string]: any
 }
 
-export default function CatalogClient({ initialBranding }: { initialBranding?: any }) {
+export default function CatalogClient({ 
+  initialBranding, 
+  initialProducts, 
+  initialCategories 
+}: { 
+  initialBranding?: any, 
+  initialProducts?: any[], 
+  initialCategories?: any[] 
+}) {
   const searchParams = useSearchParams()
-  const [allProducts, setAllProducts] = useState<any[]>([])
-  const [dbCategories, setDbCategories] = useState<Category[]>([])
+  const [allProducts, setAllProducts] = useState<any[]>(initialProducts || [])
+  const [dbCategories, setDbCategories] = useState<Category[]>(initialCategories || [])
   const [branding, setBranding] = useState<Branding | null>(initialBranding || null)
-  const [loading, setLoading] = useState(!initialBranding)
+  const [loading, setLoading] = useState(!initialProducts)
   const [activeCategory, setActiveCategory] = useState('Todos')
   
   const storeSlug = searchParams.get('loja')
@@ -49,12 +57,18 @@ export default function CatalogClient({ initialBranding }: { initialBranding?: a
 
   useEffect(() => {
     async function loadInitialData() {
-      if (!initialBranding) setLoading(true)
+      // Se já temos produtos do server, não precisamos carregar de novo imediatamente
+      if (initialProducts && initialProducts.length > 0 && branding) {
+        setLoading(false)
+        return
+      }
+
+      setLoading(true)
       
       try {
-        let currentBranding: Branding | null = initialBranding as Branding | null
+        let currentBranding: Branding | null = branding
         
-        // 1. Identificar qual marca estamos acessando (se não veio do server)
+        // 1. Identificar qual marca estamos acessando
         if (!currentBranding && storeSlug) {
           const { data } = await supabase.from('branding').select('*').eq('slug', storeSlug).maybeSingle()
           currentBranding = data as Branding | null
@@ -69,33 +83,33 @@ export default function CatalogClient({ initialBranding }: { initialBranding?: a
           }
         }
         
-        // 💎 ISOLAMENTO CRÍTICO: Se ainda assim não encontrou, bloqueia o acesso
-        if (!currentBranding) {
-          console.error("MARCA NÃO ENCONTRADA OU ACESSO NÃO AUTORIZADO")
-          setBranding(null)
-          setLoading(false)
-          return
-        }
-
-        if (!branding || branding.id !== currentBranding.id) {
+        if (currentBranding) {
           setBranding(currentBranding)
-        }
-        
-        const currentUserId = currentBranding.user_id
+          const currentUserId = currentBranding.user_id
 
-        const [catsRes, prodsRes] = await Promise.all([
-          supabase.from('categories').select('id, name').eq('user_id', currentUserId).order('name'),
-          supabase.from('products')
+          const [catsRes, prodsRes] = await Promise.all([
+            supabase.from('categories').select('id, name').eq('user_id', currentUserId).order('name'),
+            supabase.from('products')
+              .select('id, name, price, image_url, category_id, stock_quantity')
+              .eq('user_id', currentUserId)
+              .gt('stock_quantity', 0)
+              .order('display_order', { ascending: true, nullsFirst: true })
+              .order('created_at', { ascending: false })
+              .limit(100)
+          ])
+
+          setDbCategories(catsRes.data || [])
+          setAllProducts(prodsRes.data || [])
+        } else if (!initialProducts || initialProducts.length === 0) {
+          // Se não achou branding e não tem produtos iniciais, tenta carregar vitrine global
+          const { data: prods } = await supabase.from('products')
             .select('id, name, price, image_url, category_id, stock_quantity')
-            .eq('user_id', currentUserId)
             .gt('stock_quantity', 0)
-            .order('display_order', { ascending: true, nullsFirst: true })
             .order('created_at', { ascending: false })
             .limit(100)
-        ])
-
-        setDbCategories(catsRes.data || [])
-        setAllProducts(prodsRes.data || [])
+          
+          setAllProducts(prods || [])
+        }
 
       } catch (err) {
         console.error("Erro ao carregar vitrine:", err)
@@ -118,7 +132,7 @@ export default function CatalogClient({ initialBranding }: { initialBranding?: a
     }
 
     checkAccess()
-  }, [isPublicCatalog, storeSlug, router, supabase])
+  }, [isPublicCatalog, storeSlug, router, supabase, initialProducts, initialBranding])
 
   useEffect(() => {
     if (!loading) {
@@ -147,7 +161,7 @@ export default function CatalogClient({ initialBranding }: { initialBranding?: a
         return isNaN(val) ? 10 : val
       }
     } catch {
-      // Erro ignorado propositalmente
+      // Erro ignorado
     }
     return 10
   }, [branding])
@@ -159,16 +173,17 @@ export default function CatalogClient({ initialBranding }: { initialBranding?: a
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-brand-secondary" size={40} /></div>
   }
 
-  if (!loading && !branding && isPublicCatalog) {
+  // Se não tem produtos e não está carregando, mostra estado vazio amigável em vez de erro
+  if (!loading && allProducts.length === 0 && isPublicCatalog) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-10 text-center bg-[#fffcfc]">
         <Gem size={48} className="text-brand-secondary/20 mb-6" />
-        <h2 className="text-2xl font-light tracking-[0.2em] uppercase text-brand-primary mb-4">Catálogo Indisponível</h2>
+        <h2 className="text-2xl font-light tracking-[0.2em] uppercase text-brand-primary mb-4">Vitrine em Manutenção</h2>
         <p className="text-brand-secondary text-[10px] tracking-widest uppercase mb-12 font-light max-w-xs">
-          Não conseguimos encontrar esta vitrine. Verifique se o link está correto ou tente novamente mais tarde.
+          Nenhuma joia disponível no momento. Volte em breve para conferir as novidades.
         </p>
         <Link href="/" className="bg-brand-primary text-white px-12 py-4 rounded-full font-black text-[10px] tracking-[0.3em] uppercase shadow-lg shadow-brand-primary/20">
-          Ir para a Home
+          Atualizar
         </Link>
       </div>
     )
@@ -179,7 +194,7 @@ export default function CatalogClient({ initialBranding }: { initialBranding?: a
       
       <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-brand-secondary/10 shadow-sm">
         <header className="w-full pt-8 pb-4 flex flex-col items-center gap-6">
-          {branding?.logo_url && typeof branding.logo_url === 'string' ? (
+          {branding?.logo_url ? (
             <Link href={`/?catalogo=true${storeParam}`} className="relative w-40 h-14 md:w-64 md:h-20 transition-all duration-500 hover:scale-110 active:scale-95">
               <Image 
                 src={branding.logo_url} 
@@ -207,31 +222,32 @@ export default function CatalogClient({ initialBranding }: { initialBranding?: a
           )}
         </header>
 
-        <nav className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-center gap-2 md:gap-4 items-center">
-          {categoryNames.map((cat) => (
-            <button 
-              key={cat}
-              onClick={() => {
-                setActiveCategory(cat);
-                // Opcional: Atualiza a URL sem recarregar a página para manter o link compartilhável
-                const url = new URL(window.location.href);
-                if (cat === 'Todos') url.searchParams.delete('category');
-                else url.searchParams.set('category', cat);
-                window.history.pushState({}, '', url);
-              }}
-              className={`px-3 py-1.5 md:px-4 md:py-2 transition-all duration-300 font-black text-[8px] md:text-[10px] tracking-[0.1em] md:tracking-[0.2em] uppercase rounded-full border ${
-                activeCategory === cat || (cat === 'Todos' && !activeCategory)
-                ? "bg-brand-primary text-white border-brand-primary shadow-lg scale-105" 
-                : "text-brand-primary/60 hover:text-brand-primary bg-white border-brand-secondary/10 hover:border-brand-primary/30"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </nav>
+        {categoryNames.length > 1 && (
+          <nav className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-center gap-2 md:gap-4 items-center">
+            {categoryNames.map((cat) => (
+              <button 
+                key={cat}
+                onClick={() => {
+                  setActiveCategory(cat);
+                  const url = new URL(window.location.href);
+                  if (cat === 'Todos') url.searchParams.delete('category');
+                  else url.searchParams.set('category', cat);
+                  window.history.pushState({}, '', url);
+                }}
+                className={`px-3 py-1.5 md:px-4 md:py-2 transition-all duration-300 font-black text-[8px] md:text-[10px] tracking-[0.1em] md:tracking-[0.2em] uppercase rounded-full border ${
+                  activeCategory === cat || (cat === 'Todos' && !activeCategory)
+                  ? "bg-brand-primary text-white border-brand-primary shadow-lg scale-105" 
+                  : "text-brand-primary/60 hover:text-brand-primary bg-white border-brand-secondary/10 hover:border-brand-primary/30"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </nav>
+        )}
       </div>
 
-      {(branding?.top_banner || branding?.facebook?.split('|')[2]) && (
+      {(branding?.top_banner || (branding?.facebook && branding.facebook.includes('|') && branding.facebook.split('|')[2])) && (
         <div className="w-full bg-brand-primary py-2 px-4 text-center">
           <p className="text-white text-[7px] md:text-[9px] font-black uppercase tracking-[0.3em] animate-pulse">
             ✨ {(branding?.top_banner || branding?.facebook?.split('|')[2]) as string} ✨
