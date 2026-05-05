@@ -41,7 +41,7 @@ export default function CatalogClient({
   const [allProducts, setAllProducts] = useState<any[]>(initialProducts || [])
   const [dbCategories, setDbCategories] = useState<Category[]>(initialCategories || [])
   const [branding, setBranding] = useState<Branding | null>(initialBranding || null)
-  const [loading, setLoading] = useState(!initialProducts)
+  const [loading, setLoading] = useState(initialProducts && initialProducts.length > 0 ? false : true)
   const [activeCategory, setActiveCategory] = useState('Todos')
   
   const storeSlug = searchParams.get('loja')
@@ -57,8 +57,8 @@ export default function CatalogClient({
 
   useEffect(() => {
     async function loadInitialData() {
-      // Se já temos produtos do server, não precisamos carregar de novo imediatamente
-      if (initialProducts && initialProducts.length > 0 && branding) {
+      // Se já temos produtos do server E temos branding (ou não precisa dele), para por aqui
+      if (allProducts.length > 0 && (branding || !storeSlug)) {
         setLoading(false)
         return
       }
@@ -68,14 +68,14 @@ export default function CatalogClient({
       try {
         let currentBranding: Branding | null = branding
         
-        // 1. Identificar qual marca estamos acessando
+        // 1. Tentar identificar a marca
         if (!currentBranding && storeSlug) {
           const { data } = await supabase.from('branding').select('*').eq('slug', storeSlug).maybeSingle()
           currentBranding = data as Branding | null
         } 
         
-        // 2. Se não houver slug, tenta identificar pelo usuário logado (Dona da Loja)
-        if (!currentBranding) {
+        // 2. Tentar pelo usuário logado se não houver slug
+        if (!currentBranding && !storeSlug) {
           const { data: { user } } = await supabase.auth.getUser()
           if (user) {
             const { data } = await supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle()
@@ -98,17 +98,17 @@ export default function CatalogClient({
               .limit(100)
           ])
 
-          setDbCategories(catsRes.data || [])
-          setAllProducts(prodsRes.data || [])
-        } else if (!initialProducts || initialProducts.length === 0) {
-          // Se não achou branding e não tem produtos iniciais, tenta carregar vitrine global
+          if (catsRes.data) setDbCategories(catsRes.data)
+          if (prodsRes.data) setAllProducts(prodsRes.data)
+        } else {
+          // Vitrine Global se não houver branding específico
           const { data: prods } = await supabase.from('products')
             .select('id, name, price, image_url, category_id, stock_quantity')
             .gt('stock_quantity', 0)
             .order('created_at', { ascending: false })
             .limit(100)
           
-          setAllProducts(prods || [])
+          if (prods) setAllProducts(prods)
         }
 
       } catch (err) {
@@ -133,12 +133,6 @@ export default function CatalogClient({
 
     checkAccess()
   }, [isPublicCatalog, storeSlug, router, supabase, initialProducts, initialBranding])
-
-  useEffect(() => {
-    if (!loading) {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    }
-  }, [activeCategory, loading])
 
   const displayedProducts = useMemo(() => {
     if (!allProducts) return []
@@ -171,22 +165,6 @@ export default function CatalogClient({
 
   if (loading && allProducts.length === 0) {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-brand-secondary" size={40} /></div>
-  }
-
-  // Se não tem produtos e não está carregando, mostra estado vazio amigável em vez de erro
-  if (!loading && allProducts.length === 0 && isPublicCatalog) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-10 text-center bg-[#fffcfc]">
-        <Gem size={48} className="text-brand-secondary/20 mb-6" />
-        <h2 className="text-2xl font-light tracking-[0.2em] uppercase text-brand-primary mb-4">Vitrine em Manutenção</h2>
-        <p className="text-brand-secondary text-[10px] tracking-widest uppercase mb-12 font-light max-w-xs">
-          Nenhuma joia disponível no momento. Volte em breve para conferir as novidades.
-        </p>
-        <Link href="/" className="bg-brand-primary text-white px-12 py-4 rounded-full font-black text-[10px] tracking-[0.3em] uppercase shadow-lg shadow-brand-primary/20">
-          Atualizar
-        </Link>
-      </div>
-    )
   }
 
   return (
@@ -302,9 +280,10 @@ export default function CatalogClient({
           ))}
         </div>
         
-        {displayedProducts.length === 0 && !loading && (
+        {!loading && displayedProducts.length === 0 && (
           <div className="py-20">
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-secondary/30">Nenhum item nesta categoria 💎</p>
+            <Gem size={48} className="text-brand-secondary/20 mb-6 mx-auto" />
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-secondary/30">Nenhum item disponível no momento 💎</p>
           </div>
         )}
       </div>
