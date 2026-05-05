@@ -25,10 +25,13 @@ export default function AdminLayout({
       setLoading(true)
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
+        // 💎 NEXUS: Busca resiliente (evita erro se houver registros duplicados órfãos)
         const { data } = await supabase.from('branding')
           .select('store_name, business_name, logo_url, facebook, slug, subscription_status, trial_ends_at')
           .eq('user_id', user.id)
-          .single()
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
         
         if (data) {
           setBranding({

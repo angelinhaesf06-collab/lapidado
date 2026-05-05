@@ -33,9 +33,12 @@ export default function BrandingPage() {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
 
-        let { data } = await supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle()
-
-        // 💎 REMOVIDO FALLBACK PARA REGISTROS ÓRFÃOS (CAUSAVA MISTURA DE LOGINS)
+        let { data } = await supabase.from('branding')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
 
         if (data) {
           setBrandingId(data.id)
