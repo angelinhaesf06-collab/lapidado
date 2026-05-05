@@ -92,19 +92,14 @@ export default function AdminLayout({
   ]
 
   const shareToWhatsApp = () => {
-    // 🔗 Prioriza o link oficial cadastrado, depois a URL de ambiente, por fim a origem atual
-    const baseUrl = branding.website || process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
+    // 🔗 O sistema é o próprio gerador: URL base + slug da loja
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
     
     if (!branding.slug) {
       return alert('⚠️ POR FAVOR, DEFINA O NOME DA SUA LOJA EM "MINHA MARCA" ANTES DE COMPARTILHAR! 💎')
     }
 
-    // ⚠️ Alerta se estiver tentando compartilhar localhost sem ter link oficial ou variável de ambiente
-    if (!branding.website && !process.env.NEXT_PUBLIC_SITE_URL && window.location.hostname === 'localhost') {
-      alert('ATENÇÃO: Você está compartilhando um link de "localhost" (teste local). Configure o "Link Oficial da Vitrine" em "Minha Marca" para que seus clientes consigam acessar! 💎')
-    }
-
-    const url = `${baseUrl}/?catalogo=true&loja=${branding.slug}`
+    const url = `${siteUrl}/?catalogo=true&loja=${branding.slug}`
     const text = `Olá! Conheça o novo catálogo digital da *${branding.name.toUpperCase()}*. Peças exclusivas e brilho em cada detalhe: ${url}`
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
   }

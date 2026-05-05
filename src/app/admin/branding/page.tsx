@@ -11,7 +11,6 @@ export default function BrandingPage() {
   const [logo, setLogo] = useState<string | null>(null)
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [tagline, setTagline] = useState('')
-  const [website, setWebsite] = useState('')
   const [businessName, setBusinessName] = useState('')
   const [topBanner, setTopBanner] = useState('')
   const [primaryColor, setPrimaryColor] = useState('#4a322e')
@@ -44,7 +43,6 @@ export default function BrandingPage() {
         if (data) {
           setBrandingId(data.id)
           setTagline(data.tagline || data.facebook?.split('|')[0] || '') 
-          setWebsite(data.website || '')
           setInstallments(data.installments?.toString() || data.facebook?.split('|')[1] || '10')
           setTopBanner(data.top_banner || data.facebook?.split('|')[2] || '')
           setBusinessName(data.business_name || data.store_name || '')
@@ -104,7 +102,10 @@ export default function BrandingPage() {
         formData.append('file', logoFile)
         formData.append('bucket', 'branding')
         const uploadRes = await fetch('/api/admin/upload', { method: 'POST', body: formData })
-        if (!uploadRes.ok) throw new Error('Falha no upload da imagem.')
+        if (!uploadRes.ok) {
+          const errorData = await uploadRes.json()
+          throw new Error(errorData.error || 'Falha no upload da imagem.')
+        }
         const uploadData = await uploadRes.json()
         if (uploadData.url) currentLogoUrl = uploadData.url
       }
@@ -113,8 +114,9 @@ export default function BrandingPage() {
       if (!user) throw new Error('Sessão expirada. Por favor, faça login novamente.')
 
       const newSlug = cleanBusinessName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
+      const newWebsite = `${typeof window !== 'undefined' ? window.location.origin : ''}/?catalogo=true&loja=${newSlug}`
 
-      console.log('💎 NEXUS: Salvando dados da marca...', { business_name: cleanBusinessName, slug: newSlug });
+      console.log('💎 NEXUS: Salvando dados da marca...', { business_name: cleanBusinessName, slug: newSlug, website: newWebsite });
 
       const response = await fetch('/api/admin/save', {
         method: 'POST',
@@ -130,7 +132,7 @@ export default function BrandingPage() {
             top_banner: topBanner.toUpperCase(),
             installments: parseInt(installments) || 10,
             tiktok: tiktok, 
-            website: website, 
+            website: newWebsite, 
             instagram: instagram,
             primary_color: primaryColor,
             secondary_color: secondaryColor,

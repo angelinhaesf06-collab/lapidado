@@ -121,15 +121,16 @@ Data: 08 de Abril de 2026
 
 ### 1. Upgrade para Gemini 3.1 Flash Lite (Motor de Elite)
 - **Status:** Implementação confirmada e testada.
-- **Melhoria:** Após nova rodada de testes, o modelo `gemini-3.1-flash-lite-preview` foi validado como operacional.
-- **Configuração de Alta Disponibilidade:**
-    1. **Principal:** `gemini-3.1-flash-lite-preview` (Velocidade máxima e menor custo).
-    2. **Reserva I:** `gemini-flash-latest` (Estabilidade garantida).
-    3. **Reserva II:** `gemini-pro-latest` (Inteligência máxima para casos complexos).
-- **Aplicações:** Ativado tanto na **Mágica Lapidado** (Descrições) quanto no **Leitor de Romaneios**.
+... (mantido)
 
+### 2. Automação da Vitrine & Links Dinâmicos
+- **Fim da Digitação Manual:** Removida a necessidade de o lojista "colar" o link do site. O sistema agora gera a URL automaticamente.
+- **Dynamic Link System:** A URL é construída via código usando o domínio base + o slug da loja (ex: `lapidado.app/?loja=nome-da-loja`).
+- **Sincronização de Compartilhamento:** O botão "Divulgar Whats" e o compartilhamento de produtos agora utilizam exclusivamente o link gerado pelo sistema, garantindo que o cliente sempre caia na vitrine correta.
+- **UX Refinada:** O campo de link na aba "Minha Marca" tornou-se apenas para visualização e cópia, eliminando erros de configuração por parte do usuário.
 
 ## 🔜 Próximos Passos (Amanhã)
+
 - Preparação para lançamento Mobile.
 - Geração do arquivo **.aab (Android App Bundle)** para publicação na Google Play Store.
 - Revisão final de UX para dispositivos móveis.

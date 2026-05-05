@@ -269,21 +269,14 @@ export default function ProductsListPage() {
   const handleShareWhatsApp = (product: Product) => {
     const storeName = branding?.business_name || branding?.store_name || 'LAPIDADO'
     const storeSlug = branding?.slug || ''
-    
-    // 🔗 Prioriza o link oficial cadastrado, depois a URL de ambiente, por fim a origem atual
-    const baseUrl = branding?.website || process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
     
     if (!storeSlug) {
       return alert('⚠️ POR FAVOR, DEFINA O NOME DA SUA LOJA EM "MINHA MARCA" ANTES DE COMPARTILHAR! 💎')
     }
 
-    // ⚠️ Alerta se estiver tentando compartilhar localhost sem ter link oficial ou variável de ambiente
-    if (!branding?.website && !process.env.NEXT_PUBLIC_SITE_URL && window.location.hostname === 'localhost') {
-      alert('ATENÇÃO: Você está compartilhando um link de "localhost". Configure o "Link Oficial da Vitrine" em "Minha Marca" para que seus clientes consigam acessar! 💎')
-    }
-
-    const storeParam = `&loja=${storeSlug}`
-    const msg = encodeURIComponent(`OLÁ! ✨ OLHA QUE LINDA ESSA JOIA DA *${storeName.toUpperCase()}*:\n\n💍 *${product.name}*\n💎 VALOR: R$ ${Number(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\nCONFIRA MAIS DETALHES AQUI: ${baseUrl}/product?id=${product.id}&catalogo=true${storeParam}`)
+    const url = `${siteUrl}/product?id=${product.id}&catalogo=true&loja=${storeSlug}`
+    const msg = encodeURIComponent(`OLÁ! ✨ OLHA QUE LINDA ESSA JOIA DA *${storeName.toUpperCase()}*:\n\n💍 *${product.name}*\n💎 VALOR: R$ ${Number(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\nCONFIRA MAIS DETALHES AQUI: ${url}`)
     window.open(`https://wa.me/?text=${msg}`, '_blank')
   }
 
