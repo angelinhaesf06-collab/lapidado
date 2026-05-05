@@ -114,7 +114,23 @@ Data: 08 de Abril de 2026
 - Correção na geração de **PDF de Precificação**: O cabeçalho agora exibe dinamicamente o nome da marca da empresária.
 - Adição de carimbo de data/hora nos romaneios exportados para controle de estoque e auditoria.
 
+## ✅ Funcionalidades Implementadas Hoje (04 de Maio de 2026)
+... (mantido)
+
+## ✅ Correções Realizadas Hoje (05 de Maio de 2026)
+
+### 1. Upgrade para Gemini 3.1 Flash Lite (Motor de Elite)
+- **Status:** Implementação confirmada e testada.
+- **Melhoria:** Após nova rodada de testes, o modelo `gemini-3.1-flash-lite-preview` foi validado como operacional.
+- **Configuração de Alta Disponibilidade:**
+    1. **Principal:** `gemini-3.1-flash-lite-preview` (Velocidade máxima e menor custo).
+    2. **Reserva I:** `gemini-flash-latest` (Estabilidade garantida).
+    3. **Reserva II:** `gemini-pro-latest` (Inteligência máxima para casos complexos).
+- **Aplicações:** Ativado tanto na **Mágica Lapidado** (Descrições) quanto no **Leitor de Romaneios**.
+
+
 ## 🔜 Próximos Passos (Amanhã)
 - Preparação para lançamento Mobile.
 - Geração do arquivo **.aab (Android App Bundle)** para publicação na Google Play Store.
 - Revisão final de UX para dispositivos móveis.
+

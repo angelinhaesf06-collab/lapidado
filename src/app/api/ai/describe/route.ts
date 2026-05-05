@@ -106,21 +106,32 @@ export async function POST(req: Request) {
 
     let result;
     try {
-      // 🚀 MOTOR 1.5 FLASH: O melhor equilíbrio entre velocidade e qualidade
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      // 🚀 MOTOR 3.1 FLASH LITE: O motor mais moderno e eficiente (2026)
+      console.log("Tentando Gemini 3.1 Flash Lite para Descrição...");
+      const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite-preview" });
       result = await tryGenerate(model, {
         contents: [{ role: 'user', parts: [{ text: systemInstruction }, imagePart] }],
         generationConfig,
         safetySettings
       });
     } catch (e: any) {
-      console.error("Gemini 1.5 Flash falhou, tentando backup:", e.message);
-      const modelBackup = genAI.getGenerativeModel({ model: "gemini-pro-vision" });
-      result = await tryGenerate(modelBackup, {
-        contents: [{ role: 'user', parts: [{ text: systemInstruction }, imagePart] }],
-        generationConfig,
-        safetySettings
-      });
+      console.error("Gemini 3.1 Flash Lite falhou, tentando Flash Latest:", e.message);
+      try {
+        const modelFlash = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+        result = await tryGenerate(modelFlash, {
+          contents: [{ role: 'user', parts: [{ text: systemInstruction }, imagePart] }],
+          generationConfig,
+          safetySettings
+        });
+      } catch (e2: any) {
+        console.error("Gemini Flash falhou, tentando backup Pro:", e2.message);
+        const modelBackup = genAI.getGenerativeModel({ model: "gemini-pro-latest" });
+        result = await tryGenerate(modelBackup, {
+          contents: [{ role: 'user', parts: [{ text: systemInstruction }, imagePart] }],
+          generationConfig,
+          safetySettings
+        });
+      }
     }
 
     const response = await result.response;

@@ -155,6 +155,9 @@ export default function BrandingPage() {
     } finally { setSaving(false) }
   }
 
+  const installmentsOptions = [1, 2, 3, 4, 5, 6, 8, 10, 12]
+  const generatedLink = brandingId && businessName ? `${typeof window !== 'undefined' ? window.location.origin : ''}/?catalogo=true&loja=${businessName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')}` : 'Defina o nome da loja para gerar o link'
+
   if (loading) return <div className="flex justify-center p-20"><Loader2 className="animate-spin text-brand-secondary" size={32} /></div>
 
   return (
@@ -204,10 +207,10 @@ export default function BrandingPage() {
             <input type="text" value={topBanner} onChange={(e) => setTopBanner(e.target.value)} className="w-full px-4 py-3 md:py-4 rounded-xl md:rounded-2xl bg-brand-secondary/5 text-sm font-medium text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all" />
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-[9px] font-black text-brand-secondary uppercase block ml-1">Link Oficial da Vitrine (Obrigatório para compartilhar)</label>
-            <input type="text" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://sualoja.com" className="w-full px-4 py-3 md:py-4 rounded-xl md:rounded-2xl bg-brand-primary/5 text-sm font-bold text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all" />
-            <p className="text-[7px] font-bold text-brand-secondary/40 uppercase ml-1">Cole aqui o link do seu site para que o botão de compartilhar funcione.</p>
+          <div className="p-4 rounded-2xl bg-brand-primary/5 border border-brand-primary/10">
+            <label className="text-[8px] font-black text-brand-primary uppercase block mb-1">Link Automático da Vitrine</label>
+            <p className="text-[10px] font-bold text-brand-primary break-all">{generatedLink}</p>
+            <p className="text-[7px] font-bold text-brand-secondary/40 uppercase mt-2">Gerado automaticamente com base no nome da loja.</p>
           </div>
         </div>
 

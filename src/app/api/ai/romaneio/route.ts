@@ -25,7 +25,7 @@ export async function POST(req: Request) {
 
     let result;
     try {
-      // 🚀 MOTOR DE ELITE: Gemini 3.1 Flash Lite (Velocidade e Precisão para Romaneios)
+      // 🚀 MOTOR 3.1 FLASH LITE: O motor mais moderno e eficiente (2026)
       console.log("Tentando Gemini 3.1 Flash Lite para Romaneio...");
       const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite-preview", systemInstruction });
       result = await model.generateContent({
@@ -33,20 +33,25 @@ export async function POST(req: Request) {
         generationConfig: { maxOutputTokens: 1000, temperature: 0.1 }
       });
     } catch (e) {
-      console.error("Gemini 3.1 Flash Lite falhou, tentando fallback Pro...");
+      console.error("Gemini 3.1 Flash Lite falhou, tentando Flash Latest...");
       try {
-        const modelPro = genAI.getGenerativeModel({ model: "gemini-pro-latest", systemInstruction });
-        result = await modelPro.generateContent({
-          contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
-          generationConfig: { maxOutputTokens: 1000, temperature: 0.1 }
-        });
-      } catch (e2) {
-        console.error("Gemini Pro falhou, tentando fallback Flash Latest...");
         const modelFlash = genAI.getGenerativeModel({ model: "gemini-flash-latest", systemInstruction });
         result = await modelFlash.generateContent({
           contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
           generationConfig: { maxOutputTokens: 1000, temperature: 0.1 }
         });
+      } catch (e2) {
+        console.error("Gemini Flash Latest falhou, tentando fallback Pro...");
+        try {
+          const modelPro = genAI.getGenerativeModel({ model: "gemini-pro-latest", systemInstruction });
+          result = await modelPro.generateContent({
+            contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: base64Data } }] }],
+            generationConfig: { maxOutputTokens: 1000, temperature: 0.1 }
+          });
+        } catch (e3: any) {
+          console.error("Falha total na IA de Romaneio:", e3.message);
+          throw e3;
+        }
       }
     }
 
