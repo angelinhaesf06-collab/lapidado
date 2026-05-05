@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState, useEffect } from 'react'
+import { Suspense, useState, useEffect, useMemo } from 'react'
 import { PlusCircle, AlertCircle, TrendingUp, Package, ShoppingBag } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
