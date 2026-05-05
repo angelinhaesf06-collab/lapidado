@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { PlusCircle, AlertCircle, TrendingUp, Package, ShoppingBag } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useSearchParams } from 'next/navigation'
 
-export default function AdminDashboard() {
+function DashboardContent() {
   const [stats, setStats] = useState({
     totalItems: 0,
     stockCost: 0,
@@ -207,7 +207,7 @@ export default function AdminDashboard() {
 
           <Link href="/admin/sales" className="bg-white p-6 rounded-[35px] border border-brand-secondary/10 shadow-sm flex items-center gap-4 hover:border-brand-primary transition-all group">
             <div className="w-12 h-12 rounded-2xl bg-brand-secondary/5 flex items-center justify-center text-brand-secondary group-hover:bg-brand-primary group-hover:text-white transition-all">
-              <ShoppingCart size={24} />
+              <ShoppingBag size={24} />
             </div>
             <div>
               <h3 className="text-[10px] font-black uppercase tracking-widest text-brand-primary">Registrar Venda</h3>
@@ -218,5 +218,13 @@ export default function AdminDashboard() {
 
       </div>
     </div>
+  )
+}
+
+export default function AdminDashboard() {
+  return (
+    <Suspense fallback={<div className="flex justify-center p-20">Carregando Dashboard...</div>}>
+      <DashboardContent />
+    </Suspense>
   )
 }
