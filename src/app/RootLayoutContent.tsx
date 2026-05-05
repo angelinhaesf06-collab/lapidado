@@ -1,7 +1,7 @@
 'use client'
 
 import { Montserrat } from "next/font/google";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Footer from '@/components/footer';
 import { CartProvider } from '@/lib/cart-context';
@@ -23,7 +23,7 @@ export default function RootLayoutContent({
 }>) {
   const [user, setUser] = useState<any>(null);
   const [branding, setBranding] = useState<any>(null);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const storeSlug = searchParams.get('loja');

@@ -17,7 +17,7 @@ function DashboardContent() {
     pendingReceivables: 0
   })
 
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
   const searchParams = useSearchParams()
   const sessionId = searchParams.get('session_id')
 

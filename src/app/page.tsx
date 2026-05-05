@@ -8,6 +8,13 @@ type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
+async function getBranding(loja?: string) {
+  if (!loja) return null
+  const supabase = await createClient()
+  const { data } = await supabase.from('branding').select('*').eq('slug', loja).maybeSingle()
+  return data
+}
+
 export async function generateMetadata(
   { searchParams }: Props
 ): Promise<Metadata> {
@@ -15,13 +22,7 @@ export async function generateMetadata(
   const loja = resolvedSearchParams.loja as string
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lapidado.vercel.app'
   
-  const supabase = await createClient()
-  
-  let branding = null
-  if (loja) {
-    const { data } = await supabase.from('branding').select('*').eq('slug', loja).maybeSingle()
-    branding = data
-  }
+  const branding = await getBranding(loja)
 
   const storeName = branding?.business_name || branding?.store_name || 'LAPIDADO'
   const tagline = branding?.tagline || 'Mais que acessórios, a sua assinatura de estilo.'
@@ -32,12 +33,14 @@ export async function generateMetadata(
     logoUrl = `${baseUrl}${logoUrl}`
   }
 
+  const title = `${storeName} | Vitrine Oficial 💎`
+
   return {
     metadataBase: new URL(baseUrl),
-    title: `${storeName} | Vitrine Oficial 💎`,
+    title,
     description: tagline,
     openGraph: {
-      title: `${storeName} | Vitrine Oficial 💎`,
+      title,
       description: tagline,
       images: [{
         url: logoUrl,
@@ -46,20 +49,25 @@ export async function generateMetadata(
         alt: storeName,
       }],
       type: 'website',
+      siteName: storeName,
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${storeName} | Vitrine Oficial 💎`,
+      title,
       description: tagline,
       images: [logoUrl],
     },
   }
 }
 
-export default function Home() {
+export default async function Home({ searchParams }: Props) {
+  const resolvedSearchParams = (await searchParams) || {}
+  const loja = resolvedSearchParams.loja as string
+  const initialBranding = await getBranding(loja)
+
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-brand-secondary" size={40} /></div>}>
-      <CatalogClient />
+      <CatalogClient initialBranding={initialBranding} />
     </Suspense>
   )
 }

@@ -1,23 +1,24 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useRouter, notFound, useSearchParams } from 'next/navigation'
 import AddToCartButton from '@/components/cart/add-to-cart-button'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
 import { Loader2, ArrowLeft } from 'lucide-react'
 
-export default function ProductClient() {
+export default function ProductClient({ initialProduct, initialBranding }: { initialProduct?: any, initialBranding?: any }) {
   const searchParams = useSearchParams()
   const id = searchParams.get('id')
   const router = useRouter()
   
-  const [product, setProduct] = useState<any>(null)
-  const [branding, setBranding] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  const [product, setProduct] = useState<any>(initialProduct || null)
+  const [branding, setBranding] = useState<any>(initialBranding || null)
+  const [loading, setLoading] = useState(!initialProduct)
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
+    if (initialProduct && initialBranding) return
     if (!id) {
       setLoading(false)
       return
@@ -50,7 +51,7 @@ export default function ProductClient() {
     }
 
     loadProduct()
-  }, [id, supabase])
+  }, [id, supabase, initialProduct, initialBranding])
 
   if (loading) {
     return (

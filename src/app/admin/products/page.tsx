@@ -164,7 +164,7 @@ export default function ProductsListPage() {
   const PAGE_SIZE = 100 // No modo reorder aumentamos para ver mais
 
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }), // Evita drag acidental no clique

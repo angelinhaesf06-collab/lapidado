@@ -28,17 +28,17 @@ interface Branding {
   [key: string]: any
 }
 
-export default function CatalogClient() {
+export default function CatalogClient({ initialBranding }: { initialBranding?: any }) {
   const searchParams = useSearchParams()
   const [allProducts, setAllProducts] = useState<any[]>([])
   const [dbCategories, setDbCategories] = useState<Category[]>([])
-  const [branding, setBranding] = useState<Branding | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [branding, setBranding] = useState<Branding | null>(initialBranding || null)
+  const [loading, setLoading] = useState(!initialBranding)
   const [activeCategory, setActiveCategory] = useState('Todos')
   
   const storeSlug = searchParams.get('loja')
   const isPublicCatalog = searchParams.get('catalogo') === 'true' || !!storeSlug
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
 
   useEffect(() => {
@@ -49,13 +49,13 @@ export default function CatalogClient() {
 
   useEffect(() => {
     async function loadInitialData() {
-      setLoading(true)
+      if (!initialBranding) setLoading(true)
       
       try {
-        let currentBranding: Branding | null = null
+        let currentBranding: Branding | null = initialBranding as Branding | null
         
-        // 1. Identificar qual marca estamos acessando
-        if (storeSlug) {
+        // 1. Identificar qual marca estamos acessando (se não veio do server)
+        if (!currentBranding && storeSlug) {
           const { data } = await supabase.from('branding').select('*').eq('slug', storeSlug).maybeSingle()
           currentBranding = data as Branding | null
         } 
@@ -77,7 +77,10 @@ export default function CatalogClient() {
           return
         }
 
-        setBranding(currentBranding)
+        if (!branding || branding.id !== currentBranding.id) {
+          setBranding(currentBranding)
+        }
+        
         const currentUserId = currentBranding.user_id
 
         const [catsRes, prodsRes] = await Promise.all([

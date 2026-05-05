@@ -1,4 +1,4 @@
-import { Metadata, ResolvingMetadata } from 'next'
+import { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import ProductClient from './ProductClient'
 import { Suspense } from 'react'
@@ -6,6 +6,27 @@ import { Loader2 } from 'lucide-react'
 
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}
+
+async function getProductData(id: string) {
+  if (!id) return { product: null, branding: null }
+  const supabase = await createClient()
+  
+  const { data: product } = await supabase
+    .from('products')
+    .select('*, categories(name)')
+    .eq('id', id)
+    .single()
+
+  if (!product) return { product: null, branding: null }
+
+  const { data: branding } = await supabase
+    .from('branding')
+    .select('*')
+    .eq('user_id', product.user_id)
+    .single()
+
+  return { product, branding }
 }
 
 export async function generateMetadata(
@@ -17,21 +38,9 @@ export async function generateMetadata(
   
   if (!id) return { title: 'Produto não encontrado | Lapidado' }
 
-  const supabase = await createClient()
-  
-  const { data: product } = await supabase
-    .from('products')
-    .select('*')
-    .eq('id', id)
-    .single()
+  const { product, branding } = await getProductData(id)
 
   if (!product) return { title: 'Produto não encontrado | Lapidado' }
-
-  const { data: branding } = await supabase
-    .from('branding')
-    .select('*')
-    .eq('user_id', product.user_id)
-    .single()
 
   const storeName = branding?.business_name || branding?.store_name || 'LAPIDADO'
   const title = `${product.name} | ${storeName} ✨`
@@ -67,10 +76,14 @@ export async function generateMetadata(
   }
 }
 
-export default function Page() {
+export default async function Page({ searchParams }: Props) {
+  const resolvedSearchParams = (await searchParams) || {}
+  const id = resolvedSearchParams.id as string
+  const { product, branding } = await getProductData(id)
+
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-brand-secondary" size={40} /></div>}>
-      <ProductClient />
+      <ProductClient initialProduct={product} initialBranding={branding} />
     </Suspense>
   )
 }
