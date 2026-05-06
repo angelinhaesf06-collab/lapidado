@@ -30,7 +30,7 @@ export default function AdminLayout({
         const { data } = await supabase.from('branding')
           .select('store_name, business_name, logo_url, facebook, slug, website, subscription_status, trial_ends_at')
           .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
+          .order('updated_at', { ascending: false })
           .limit(1)
           .maybeSingle()
         

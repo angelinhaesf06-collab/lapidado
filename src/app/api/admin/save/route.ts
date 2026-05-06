@@ -129,7 +129,14 @@ export async function POST(req: Request) {
 
     // INVALIDAÇÃO DE CACHE ESTRATÉGICA
     revalidatePath('/')
+    revalidatePath('/admin/branding')
     revalidatePath('/admin/products')
+    
+    // 💎 NEXUS: Revalidação profunda para garantir que o cliente veja a mudança na hora
+    if (table === 'branding') {
+      revalidatePath('/', 'layout') 
+    }
+
     if (id && table === 'products') {
       revalidatePath(`/product/${id}`)
     }
