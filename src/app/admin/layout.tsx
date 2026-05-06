@@ -105,15 +105,12 @@ export default function AdminLayout({
     // 🔗 Prioriza o link oficial cadastrado, depois a URL de ambiente, por fim a origem atual
     const baseUrl = branding.website || process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
     
-    // 💎 NEXUS: O slug já vem processado do useEffect, mas garantimos um fallback final
-    const finalSlug = branding.slug || branding.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
-
-    if (!finalSlug || finalSlug === 'lapidado') {
-      return alert('💎 ANGELA, O NOME DA SUA LOJA AINDA NÃO FOI SALVO CORRETAMENTE.\n\nPor favor, vá em "MINHA MARCA", digite o NOME DA LOJA (diferente de LAPIDADO) e clique no botão SALVAR no final da página. Depois disso, o seu link exclusivo será criado automaticamente! ✨')
-    }
+    // 💎 NEXUS: Fallback total para garantir que o botão NUNCA falhe se houver um nome
+    const storeName = branding.name || 'LAPIDADO'
+    const finalSlug = branding.slug || storeName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
 
     const url = `${baseUrl}/?catalogo=true&loja=${finalSlug}`
-    const text = `Olá! Conheça o novo catálogo digital da *${branding.name.toUpperCase()}*. Peças exclusivas e brilho em cada detalhe: ${url}`
+    const text = `Olá! Conheça o novo catálogo digital da *${storeName.toUpperCase()}*. Peças exclusivas e brilho em cada detalhe: ${url}`
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
   }
 
