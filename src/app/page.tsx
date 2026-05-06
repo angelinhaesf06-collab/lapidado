@@ -15,42 +15,40 @@ type Props = {
 async function getInitialData(loja?: string) {
   const supabase = await createClient()
   
-  let branding = null
-  if (loja) {
-    // 💎 NEXUS: Busca por slug exato ou tenta encontrar pelo business_name limpo
-    const { data } = await supabase.from('branding')
-      .select('*')
-      .or(`slug.eq.${loja},business_name.ilike.%${loja}%`)
-      .order('updated_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-    branding = data
+  if (!loja) {
+    // 🔒 SEGURANÇA MÁXIMA: Se não houver slug de loja, não retornamos NADA.
+    // Isso evita que um novo usuário veja produtos de outro lojista por engano.
+    return { branding: null, products: [], categories: [] }
   }
 
-  // Se for uma vitrine de loja, buscamos os produtos. 
-  // Se não houver branding (global), retornamos vazio pois o Home fará o redirect.
-  if (!branding && !loja) return { branding: null, products: [], categories: [] }
+  // 💎 NEXUS: Busca rigorosa apenas por SLUG exclusivo.
+  const { data: branding } = await supabase.from('branding')
+    .select('*')
+    .eq('slug', loja)
+    .maybeSingle()
 
-  // Se tiver branding, busca produtos desse usuário. 
-  const query = supabase.from('products')
+  if (!branding) {
+    return { branding: null, products: [], categories: [] }
+  }
+
+  // 🔒 FILTRO OBRIGATÓRIO: Busca produtos APENAS do dono desta marca
+  const { data: products } = await supabase.from('products')
     .select('id, name, price, image_url, category_id, stock_quantity, user_id')
+    .eq('user_id', branding.user_id) // Filtro de isolamento total
     .gt('stock_quantity', 0)
     .order('created_at', { ascending: false })
     .limit(100)
-
-  if (branding) {
-    query.eq('user_id', branding.user_id)
-  }
-
-  const { data: products } = await query
   
-  let categories: any[] = []
-  if (branding) {
-    const { data: catData } = await supabase.from('categories').select('id, name').eq('user_id', branding.user_id).order('name')
-    categories = catData || []
-  }
+  const { data: catData } = await supabase.from('categories')
+    .select('id, name')
+    .eq('user_id', branding.user_id) // Filtro de isolamento total
+    .order('name')
 
-  return { branding, products: products || [], categories }
+  return { 
+    branding, 
+    products: products || [], 
+    categories: catData || [] 
+  }
 }
 
 export async function generateMetadata(
@@ -68,15 +66,12 @@ export async function generateMetadata(
   }
 
   const supabase = await createClient()
-  let branding = null
-  if (loja) {
-    // 💎 NEXUS: Busca rigorosa apenas por SLUG para metadados (WhatsApp)
-    const { data } = await supabase.from('branding')
-      .select('*')
-      .eq('slug', loja)
-      .maybeSingle()
-    branding = data
-  }
+  
+  // 💎 NEXUS: Busca rigorosa apenas por SLUG para metadados (WhatsApp)
+  const { data: branding } = await supabase.from('branding')
+    .select('*')
+    .eq('slug', loja)
+    .maybeSingle()
 
   const storeName = branding?.business_name || branding?.store_name || 'LAPIDADO'
   const tagline = branding?.tagline || 'Mais que acessórios, a sua assinatura de estilo.'
@@ -144,11 +139,6 @@ export default async function Home({ searchParams }: Props) {
         initialBranding={branding} 
         initialProducts={products} 
         initialCategories={categories}
-      />
-    </Suspense>
-  )
-}
-s={categories}
       />
     </Suspense>
   )
