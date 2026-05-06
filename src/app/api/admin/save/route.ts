@@ -75,22 +75,43 @@ export async function POST(req: Request) {
     if (table === 'branding') {
       const userId = data.user_id;
       
-      // Upsert baseado no user_id (Garante que cada marca tenha apenas uma config)
-      // Buscamos o mais recente para atualizar caso existam duplicatas órfãs ou legadas
-      const { data: existing } = await supabaseAdmin
+      // 1. Verificar se o slug já existe em OUTRA marca (de outro usuário)
+      if (data.slug) {
+        const { data: conflict } = await supabaseAdmin
+          .from('branding')
+          .select('user_id')
+          .eq('slug', data.slug)
+          .neq('user_id', userId)
+          .maybeSingle();
+        
+        if (conflict) {
+          return NextResponse.json({ 
+            error: 'ESTE NOME DE LOJA JÁ ESTÁ SENDO USADO.', 
+            details: 'Escolha um nome ligeiramente diferente para sua marca.' 
+          }, { status: 400 });
+        }
+      }
+
+      // 2. Buscar o registro mais antigo (o principal) do usuário
+      const { data: records } = await supabaseAdmin
         .from('branding')
         .select('id')
         .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .order('updated_at', { ascending: true });
 
-      if (existing?.id) {
-        console.log('💎 NEXUS: ATUALIZANDO BRANDING EXISTENTE:', existing.id);
-        result = await supabaseAdmin.from(table).update(data).eq('id', existing.id).select();
+      if (records && records.length > 0) {
+        const mainId = records[0].id;
+        console.log('💎 NEXUS: ATUALIZANDO MARCA PRINCIPAL:', mainId);
+        result = await supabaseAdmin.from(table).update(data).eq('id', mainId).select();
+        
+        // 3. FAXINA: Se houver registros duplicados (órfãos), removemos para evitar erros de slug
+        if (records.length > 1) {
+          const idsToRemove = records.slice(1).map(r => r.id);
+          console.log('🧹 NEXUS: REMOVENDO REGISTROS DUPLICADOS:', idsToRemove);
+          await supabaseAdmin.from('branding').delete().in('id', idsToRemove);
+        }
       } else {
-        console.log('💎 NEXUS: CRIANDO NOVO BRANDING PARA USER:', userId);
-        // 💎 NEXUS: Geração explícita de UUID para evitar erro de default value
+        console.log('💎 NEXUS: CRIANDO PRIMEIRA MARCA PARA USER:', userId);
         result = await supabaseAdmin.from(table).insert([{ ...data, id: crypto.randomUUID() }]).select();
       }
     } else if (id) {
