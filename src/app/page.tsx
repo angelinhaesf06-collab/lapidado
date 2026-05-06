@@ -70,11 +70,10 @@ export async function generateMetadata(
   const supabase = await createClient()
   let branding = null
   if (loja) {
+    // 💎 NEXUS: Busca rigorosa apenas por SLUG para metadados (WhatsApp)
     const { data } = await supabase.from('branding')
       .select('*')
-      .or(`slug.eq.${loja},business_name.ilike.%${loja}%`)
-      .order('updated_at', { ascending: false })
-      .limit(1)
+      .eq('slug', loja)
       .maybeSingle()
     branding = data
   }
@@ -145,6 +144,11 @@ export default async function Home({ searchParams }: Props) {
         initialBranding={branding} 
         initialProducts={products} 
         initialCategories={categories}
+      />
+    </Suspense>
+  )
+}
+s={categories}
       />
     </Suspense>
   )
