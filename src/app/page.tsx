@@ -118,10 +118,17 @@ export default async function Home({ searchParams }: Props) {
   const loja = resolvedSearchParams.loja as string
   const catalogo = resolvedSearchParams.catalogo as string
 
-  // 🚀 REDIRECIONAMENTO INTELIGENTE:
-  // Se não houver parâmetro de loja nem forçado como catálogo, vai para o login.
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // 🚀 REDIRECIONAMENTO INTELIGENTE (Nexus 2.0):
   if (!loja && catalogo !== 'true') {
-    redirect('/login')
+    // Se está logada, vai direto para o Dashboard. Se não, vai para o Login.
+    if (user) {
+      redirect('/admin')
+    } else {
+      redirect('/login')
+    }
   }
 
   const { branding, products, categories } = await getInitialData(loja)
