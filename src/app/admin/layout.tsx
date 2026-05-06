@@ -102,14 +102,17 @@ export default function AdminLayout({
   ]
 
   const shareToWhatsApp = () => {
-    // 🔗 O sistema é o próprio gerador: URL base + slug da loja
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
+    // 🔗 Prioriza o link oficial cadastrado, depois a URL de ambiente, por fim a origem atual
+    const baseUrl = branding.website || process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
     
-    if (!branding.slug) {
-      return alert('💎 ANGELA, O NOME DA SUA LOJA AINDA NÃO FOI SALVO CORRETAMENTE.\n\nPor favor, vá em "MINHA MARCA", digite o NOME DA LOJA e clique no botão SALVAR no final da página. Depois disso, o seu link exclusivo será criado automaticamente! ✨')
+    // 💎 NEXUS: O slug já vem processado do useEffect, mas garantimos um fallback final
+    const finalSlug = branding.slug || branding.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
+
+    if (!finalSlug || finalSlug === 'lapidado') {
+      return alert('💎 ANGELA, O NOME DA SUA LOJA AINDA NÃO FOI SALVO CORRETAMENTE.\n\nPor favor, vá em "MINHA MARCA", digite o NOME DA LOJA (diferente de LAPIDADO) e clique no botão SALVAR no final da página. Depois disso, o seu link exclusivo será criado automaticamente! ✨')
     }
 
-    const url = `${siteUrl}/?catalogo=true&loja=${branding.slug}`
+    const url = `${baseUrl}/?catalogo=true&loja=${finalSlug}`
     const text = `Olá! Conheça o novo catálogo digital da *${branding.name.toUpperCase()}*. Peças exclusivas e brilho em cada detalhe: ${url}`
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
   }
