@@ -7,6 +7,7 @@ import { revalidatePath } from 'next/cache'
 export const runtime = 'nodejs'; // 💎 NEXUS: Garantindo compatibilidade total
 
 export async function POST(req: Request) {
+  let result;
   try {
     const { table, data, id } = await req.json()
     
@@ -69,49 +70,55 @@ export async function POST(req: Request) {
       data.slug = data.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').trim()
     }
 
-    let result;
-    
-    // 🚀 LÓGICA DEFINITIVA PARA BRANDING: 1 Registro por Usuário
+    // 🚀 LÓGICA DEFINITIVA PARA BRANDING: 1 Registro por Usuário + Geração de Slug Robusta
     if (table === 'branding') {
       const userId = data.user_id;
-      
-      // 1. Verificar se o slug já existe em OUTRA marca (de outro usuário)
-      if (data.slug) {
-        const { data: conflict } = await supabaseAdmin
-          .from('branding')
-          .select('user_id')
-          .eq('slug', data.slug)
-          .neq('user_id', userId)
-          .maybeSingle();
-        
-        if (conflict) {
-          return NextResponse.json({ 
-            error: 'ESTE NOME DE LOJA JÁ ESTÁ SENDO USADO.', 
-            details: 'Escolha um nome ligeiramente diferente para sua marca.' 
-          }, { status: 400 });
-        }
+
+      // Garantir que o slug exista e seja único
+      if (!data.slug && data.business_name) {
+        data.slug = data.business_name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
       }
-
-      // 2. Buscar o registro mais antigo (o principal) do usuário
-      const { data: records } = await supabaseAdmin
+      
+      // Upsert baseado no user_id (Garante que cada marca tenha apenas uma config)
+      const { data: existing } = await supabaseAdmin
         .from('branding')
-        .select('id')
+        .select('id, slug')
         .eq('user_id', userId)
-        .order('updated_at', { ascending: true });
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      if (records && records.length > 0) {
-        const mainId = records[0].id;
-        console.log('💎 NEXUS: ATUALIZANDO MARCA PRINCIPAL:', mainId);
-        result = await supabaseAdmin.from(table).update(data).eq('id', mainId).select();
+      if (existing?.id) {
+        console.log('💎 NEXUS: ATUALIZANDO BRANDING EXISTENTE:', existing.id);
         
-        // 3. FAXINA: Se houver registros duplicados (órfãos), removemos para evitar erros de slug
-        if (records.length > 1) {
-          const idsToRemove = records.slice(1).map(r => r.id);
-          console.log('🧹 NEXUS: REMOVENDO REGISTROS DUPLICADOS:', idsToRemove);
-          await supabaseAdmin.from('branding').delete().in('id', idsToRemove);
+        // 💎 Garantir que o slug nunca seja nulo ou vazio se o nome existir
+        if ((!data.slug || data.slug === '') && (data.business_name || data.store_name)) {
+          const baseName = data.business_name || data.store_name;
+          data.slug = baseName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
         }
+
+        // Se o slug mudou (ou foi gerado agora), verificamos se ele já existe em OUTRA marca para evitar erro de UNIQUE
+        if (data.slug && data.slug !== existing.slug) {
+          const { data: conflict } = await supabaseAdmin.from('branding').select('id').eq('slug', data.slug).neq('id', existing.id).maybeSingle();
+          if (conflict) {
+            data.slug = `${data.slug}-${Math.floor(Math.random() * 1000)}`; // Resolve conflito adicionando rastro aleatório
+          }
+        }
+
+        result = await supabaseAdmin.from(table).update(data).eq('id', existing.id).select();
       } else {
-        console.log('💎 NEXUS: CRIANDO PRIMEIRA MARCA PARA USER:', userId);
+        console.log('💎 NEXUS: CRIANDO NOVO BRANDING PARA USER:', userId);
+        
+        // Verificação de conflito para novo registro
+        if (data.slug) {
+           const { data: conflict } = await supabaseAdmin.from('branding').select('id').eq('slug', data.slug).maybeSingle();
+           if (conflict) {
+             data.slug = `${data.slug}-${Math.floor(Math.random() * 1000)}`;
+           }
+        } else {
+           data.slug = `loja-${crypto.randomUUID().substring(0, 8)}`;
+        }
+
         result = await supabaseAdmin.from(table).insert([{ ...data, id: crypto.randomUUID() }]).select();
       }
     } else if (id) {
@@ -129,14 +136,7 @@ export async function POST(req: Request) {
 
     // INVALIDAÇÃO DE CACHE ESTRATÉGICA
     revalidatePath('/')
-    revalidatePath('/admin/branding')
     revalidatePath('/admin/products')
-    
-    // 💎 NEXUS: Revalidação profunda para garantir que o cliente veja a mudança na hora
-    if (table === 'branding') {
-      revalidatePath('/', 'layout') 
-    }
-
     if (id && table === 'products') {
       revalidatePath(`/product/${id}`)
     }

@@ -35,10 +35,13 @@ export default function AdminLayout({
           .maybeSingle()
         
         if (data) {
+          const storeName = data.business_name || data.store_name || (data.facebook || '').split('|')[3] || 'LAPIDADO'
+          const storeSlug = data.slug || storeName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
+          
           setBranding({
-            name: data.business_name || data.store_name || (data.facebook || '').split('|')[3] || 'LAPIDADO',
+            name: storeName,
             logo: data.logo_url || null,
-            slug: data.slug || null,
+            slug: storeSlug,
             website: data.website || null
           })
           setSubscription({
@@ -103,7 +106,7 @@ export default function AdminLayout({
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
     
     if (!branding.slug) {
-      return alert('⚠️ POR FAVOR, DEFINA O NOME DA SUA LOJA EM "MINHA MARCA" ANTES DE COMPARTILHAR! 💎')
+      return alert('💎 ANGELA, O NOME DA SUA LOJA AINDA NÃO FOI SALVO CORRETAMENTE.\n\nPor favor, vá em "MINHA MARCA", digite o NOME DA LOJA e clique no botão SALVAR no final da página. Depois disso, o seu link exclusivo será criado automaticamente! ✨')
     }
 
     const url = `${siteUrl}/?catalogo=true&loja=${branding.slug}`

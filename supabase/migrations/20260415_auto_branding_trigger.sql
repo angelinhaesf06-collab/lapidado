@@ -4,10 +4,11 @@
 CREATE OR REPLACE FUNCTION public.handle_new_user_branding()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO public.branding (user_id, business_name, primary_color, secondary_color, facebook, tiktok)
+  INSERT INTO public.branding (user_id, business_name, slug, primary_color, secondary_color, facebook, tiktok)
   VALUES (
     new.id, 
     'Lapidado', 
+    'loja-' || substring(new.id::text, 1, 8),
     '#4a322e', 
     '#c99090', 
     'CATÁLOGO REQUINTADO|10|BEM-VINDA AO BRILHO|Lapidado',
