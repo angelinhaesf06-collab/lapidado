@@ -73,10 +73,34 @@ export default function AdminLayout({
   }, [loadData])
 
   const isBlocked = useMemo(() => {
-    if (loading) return false;
-    // 🔓 DESATIVADO TEMPORARIAMENTE PARA DESENVOLVIMENTO (Ou use a lógica do subscription se desejar)
-    return false;
+    if (loading || !subscription) return false;
+
+    // ✅ Plano Ativo: Acesso liberado
+    if (subscription.status === 'active') return false;
+
+    // ⏳ Período de Teste: Verifica se ainda está no prazo
+    if (subscription.status === 'trial' || subscription.status === 'trialing') {
+      if (!subscription.trial_ends_at) return false; // Se não houver data, libera por segurança
+      
+      const now = new Date();
+      const trialEnd = new Date(subscription.trial_ends_at);
+      
+      // Se a data atual passou do fim do trial, bloqueia
+      return now > trialEnd;
+    }
+
+    // ❌ Outros status (expired, past_due, canceled): Bloqueia
+    return true;
   }, [subscription, loading]);
+
+  const trialDaysLeft = useMemo(() => {
+    if (!subscription?.trial_ends_at) return 0;
+    const now = new Date();
+    const trialEnd = new Date(subscription.trial_ends_at);
+    const diff = trialEnd.getTime() - now.getTime();
+    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+    return days > 0 ? days : 0;
+  }, [subscription]);
 
   const handleSubscribe = async (plan: 'monthly' | 'yearly') => {
     setLoading(true)
@@ -149,7 +173,7 @@ export default function AdminLayout({
     <div className="flex min-h-screen bg-[#fffcfc]">
       
       {/* 🛑 PAYWALL DE BLOQUEIO */}
-      {isBlocked && <Paywall onSubscribe={handleSubscribe} trialDaysLeft={0} />}
+      {isBlocked && <Paywall onSubscribe={handleSubscribe} trialDaysLeft={trialDaysLeft} />}
 
       {/* 💎 SIDEBAR LAPIDADO (ESQUERDA) */}
       <aside className="hidden md:flex w-72 flex-col bg-white border-r border-brand-secondary/10 p-8 sticky top-0 h-screen z-50 shadow-[20px_0_40px_rgba(74,50,46,0.02)]">
