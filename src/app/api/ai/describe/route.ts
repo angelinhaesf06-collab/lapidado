@@ -14,10 +14,10 @@ export async function POST(req: Request) {
 
     const genAI = new GoogleGenerativeAI(apiKey);
     
-    // 🚀 MOTOR DE ÚLTIMA GERAÇÃO: Gemini 2.0 Flash Lite
-    // O modelo mais recente e inteligente do Google para aplicações mobile
+    // 🚀 MOTOR DE VANGUARDA: Gemini 3.1 Flash Lite
+    // A versão mais potente e recente do Google para o mercado de luxo
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.0-flash-lite-preview-02-05",
+      model: "gemini-3.1-flash-lite-preview",
       generationConfig: {
         temperature: 0.7,
         topP: 0.8,
