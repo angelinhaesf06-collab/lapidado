@@ -92,9 +92,11 @@ export async function POST(req: Request) {
         console.log('💎 NEXUS: ATUALIZANDO BRANDING EXISTENTE:', existing.id);
         
         // 💎 Garantir que o slug nunca seja nulo ou vazio se o nome existir
-        if ((!data.slug || data.slug === '') && (data.business_name || data.store_name)) {
+        if ((!data.slug || data.slug === '' || data.slug === 'lapidado') && (data.business_name || data.store_name)) {
           const baseName = data.business_name || data.store_name;
-          data.slug = baseName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
+          if (baseName && baseName.toUpperCase() !== 'LAPIDADO') {
+            data.slug = baseName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
+          }
         }
 
         // Se o slug mudou (ou foi gerado agora), verificamos se ele já existe em OUTRA marca para evitar erro de UNIQUE

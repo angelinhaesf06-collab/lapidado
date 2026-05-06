@@ -23,34 +23,43 @@ export default function AdminLayout({
   const supabase = useMemo(() => createClient(), [])
 
   const loadData = useCallback(async () => {
-    setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      // 💎 NEXUS: Busca ultra-resiliente.
-      const { data } = await supabase.from('branding')
-        .select('store_name, business_name, logo_url, facebook, slug, website, subscription_status, trial_ends_at')
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-      
-      if (data) {
-        const storeName = data.business_name || data.store_name || (data.facebook || '').split('|')[3] || 'LAPIDADO'
-        const storeSlug = data.slug || generateSlug(storeName)
+    try {
+      setLoading(true)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        // 💎 NEXUS: Busca ultra-resiliente com múltiplos fallbacks de ordenação.
+        const { data, error } = await supabase.from('branding')
+          .select('store_name, business_name, logo_url, facebook, slug, website, subscription_status, trial_ends_at')
+          .eq('user_id', user.id)
+          .order('updated_at', { ascending: false, nullsFirst: false })
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
         
-        setBranding({
-          name: storeName,
-          logo: data.logo_url || null,
-          slug: storeSlug,
-          website: data.website || null
-        })
-        setSubscription({
-          status: data.subscription_status || 'trial',
-          trial_ends_at: data.trial_ends_at || null
-        })
+        if (error) console.error('❌ Erro ao buscar branding:', error.message)
+
+        if (data) {
+          // 💎 NEXUS: Prioridade para store_name (personalizado) sobre business_name (padrão)
+          const storeName = data.store_name || data.business_name || (data.facebook || '').split('|')[3] || 'LAPIDADO'
+          const storeSlug = data.slug || generateSlug(storeName)
+          
+          setBranding({
+            name: storeName,
+            logo: data.logo_url || null,
+            slug: storeSlug,
+            website: data.website || null
+          })
+          setSubscription({
+            status: data.subscription_status || 'trial',
+            trial_ends_at: data.trial_ends_at || null
+          })
+        }
       }
+    } catch (err) {
+      console.error('❌ Falha crítica no loadData:', err)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }, [supabase])
 
   useEffect(() => {
