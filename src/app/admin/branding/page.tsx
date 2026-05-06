@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Camera, Loader2, Palette, Phone, Gem } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { generateSlug } from '@/lib/utils'
 import Image from 'next/image'
 
 export default function BrandingPage() {

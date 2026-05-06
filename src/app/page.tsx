@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { generateSlug } from '@/lib/utils'
 import CatalogClient from './CatalogClient'
 import { Suspense } from 'react'
 import { Loader2 } from 'lucide-react'
@@ -13,7 +14,13 @@ async function getInitialData(loja?: string) {
   
   let branding = null
   if (loja) {
-    const { data } = await supabase.from('branding').select('*').eq('slug', loja).maybeSingle()
+    // 💎 NEXUS: Busca por slug exato ou tenta encontrar pelo business_name limpo
+    const { data } = await supabase.from('branding')
+      .select('*')
+      .or(`slug.eq.${loja},business_name.ilike.%${loja}%`)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
     branding = data
   }
 
@@ -44,12 +51,17 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const resolvedSearchParams = (await searchParams) || {}
   const loja = resolvedSearchParams.loja as string
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lapidado.vercel.app'
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lapidado.com.br'
   
   const supabase = await createClient()
   let branding = null
   if (loja) {
-    const { data } = await supabase.from('branding').select('*').eq('slug', loja).maybeSingle()
+    const { data } = await supabase.from('branding')
+      .select('*')
+      .or(`slug.eq.${loja},business_name.ilike.%${loja}%`)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
     branding = data
   }
 
