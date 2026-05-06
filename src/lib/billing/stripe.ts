@@ -4,8 +4,8 @@
  */
 
 export const STRIPE_PLANS = {
-  MONTHLY: 'price_1TTplZHVcB5HCb50xUb7f9IX', // 💎 ATUALIZADO: Price ID Real da Angela
-  YEARLY: process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID || 'price_placeholder_yearly'
+  MONTHLY: 'price_1TTplZHVcB5HCb50xUb7f9IX', // 💎 ATUALIZADO: Price ID Real da Angela (Mensal)
+  YEARLY: 'price_1TTptoHVcB5HCb50qvX9qUdS'   // 💎 ATUALIZADO: Price ID Real da Angela (Anual)
 }
 
 export async function createStripeCheckout(planId: string, userId: string, userEmail: string) {
