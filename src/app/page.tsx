@@ -4,6 +4,7 @@ import { generateSlug } from '@/lib/utils'
 import CatalogClient from './CatalogClient'
 import { Suspense } from 'react'
 import { Loader2 } from 'lucide-react'
+import { redirect } from 'next/navigation'
 
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -24,7 +25,11 @@ async function getInitialData(loja?: string) {
     branding = data
   }
 
-  // Se tiver branding, busca produtos desse usuário. Se não, busca os mais recentes (vitrine global)
+  // Se for uma vitrine de loja, buscamos os produtos. 
+  // Se não houver branding (global), retornamos vazio pois o Home fará o redirect.
+  if (!branding && !loja) return { branding: null, products: [], categories: [] }
+
+  // Se tiver branding, busca produtos desse usuário. 
   const query = supabase.from('products')
     .select('id, name, price, image_url, category_id, stock_quantity, user_id')
     .gt('stock_quantity', 0)
@@ -53,6 +58,13 @@ export async function generateMetadata(
   const loja = resolvedSearchParams.loja as string
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lapidado.com.br'
   
+  if (!loja) {
+    return {
+      title: 'Lapidado | Login 💎',
+      description: 'Acesse seu painel administrativo.'
+    }
+  }
+
   const supabase = await createClient()
   let branding = null
   if (loja) {
@@ -104,6 +116,14 @@ export async function generateMetadata(
 export default async function Home({ searchParams }: Props) {
   const resolvedSearchParams = (await searchParams) || {}
   const loja = resolvedSearchParams.loja as string
+  const catalogo = resolvedSearchParams.catalogo as string
+
+  // 🚀 REDIRECIONAMENTO INTELIGENTE:
+  // Se não houver parâmetro de loja nem forçado como catálogo, vai para o login.
+  if (!loja && catalogo !== 'true') {
+    redirect('/login')
+  }
+
   const { branding, products, categories } = await getInitialData(loja)
 
   return (
