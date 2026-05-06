@@ -51,7 +51,7 @@ export default function Paywall({ onSubscribe, trialDaysLeft }: PaywallProps) {
             >
               <div className="text-left">
                 <p className="text-[10px] font-black uppercase opacity-60">Plano Mensal</p>
-                <p className="text-xl font-black tracking-tight">R$ 49,90 <span className="text-xs opacity-60">/mês</span></p>
+                <p className="text-xl font-black tracking-tight">R$ 69,80 <span className="text-xs opacity-60">/mês</span></p>
               </div>
               <ShoppingBag className="group-hover:rotate-12 transition-transform" />
             </button>
