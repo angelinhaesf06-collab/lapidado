@@ -105,6 +105,9 @@ export async function POST(req: Request) {
           }
         }
 
+        // 💎 Garantir que o updated_at seja atualizado para refletir a mudança imediata
+        data.updated_at = new Date().toISOString();
+
         result = await supabaseAdmin.from(table).update(data).eq('id', existing.id).select();
       } else {
         console.log('💎 NEXUS: CRIANDO NOVO BRANDING PARA USER:', userId);
