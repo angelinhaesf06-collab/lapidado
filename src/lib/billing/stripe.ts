@@ -4,7 +4,7 @@
  */
 
 export const STRIPE_PLANS = {
-  MONTHLY: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID || 'price_1TTplZHVcB5HCb50xUb7f9IX',
+  MONTHLY: 'price_1TTplZHVcB5HCb50xUb7f9IX', // 💎 ATUALIZADO: Price ID Real da Angela
   YEARLY: process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID || 'price_placeholder_yearly'
 }
 
