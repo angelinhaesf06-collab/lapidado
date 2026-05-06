@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ShoppingCart, Package, Gem, PlusCircle, LayoutDashboard, LogOut, ExternalLink, Share2, Coins, Loader2 } from 'lucide-react'
@@ -22,39 +22,46 @@ export default function AdminLayout({
   const [loading, setLoading] = useState(true)
   const supabase = useMemo(() => createClient(), [])
 
-  useEffect(() => {
-    async function loadData() {
-      setLoading(true)
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        // 💎 NEXUS: Busca resiliente (evita erro se houver registros duplicados órfãos)
-        const { data } = await supabase.from('branding')
-          .select('store_name, business_name, logo_url, facebook, slug, website, subscription_status, trial_ends_at')
-          .eq('user_id', user.id)
-          .order('updated_at', { ascending: false })
-          .limit(1)
-          .maybeSingle()
+  const loadData = useCallback(async () => {
+    setLoading(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      // 💎 NEXUS: Busca ultra-resiliente.
+      const { data } = await supabase.from('branding')
+        .select('store_name, business_name, logo_url, facebook, slug, website, subscription_status, trial_ends_at')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      
+      if (data) {
+        const storeName = data.business_name || data.store_name || (data.facebook || '').split('|')[3] || 'LAPIDADO'
+        const storeSlug = data.slug || generateSlug(storeName)
         
-        if (data) {
-          const storeName = data.business_name || data.store_name || (data.facebook || '').split('|')[3] || 'LAPIDADO'
-          const storeSlug = data.slug || storeName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
-          
-          setBranding({
-            name: storeName,
-            logo: data.logo_url || null,
-            slug: storeSlug,
-            website: data.website || null
-          })
-          setSubscription({
-            status: data.subscription_status || 'trial',
-            trial_ends_at: data.trial_ends_at || null
-          })
-        }
+        setBranding({
+          name: storeName,
+          logo: data.logo_url || null,
+          slug: storeSlug,
+          website: data.website || null
+        })
+        setSubscription({
+          status: data.subscription_status || 'trial',
+          trial_ends_at: data.trial_ends_at || null
+        })
       }
-      setLoading(false)
     }
-    loadData()
+    setLoading(false)
   }, [supabase])
+
+  useEffect(() => {
+    loadData()
+    
+    // 💎 NEXUS: Listener para sincronizar quando a aba "Minha Marca" salvar algo
+    if (typeof window !== 'undefined') {
+      window.addEventListener('brandingUpdated', loadData)
+      return () => window.removeEventListener('brandingUpdated', loadData)
+    }
+  }, [loadData])
 
   const isBlocked = useMemo(() => {
     if (loading) return false;

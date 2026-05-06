@@ -6,6 +6,8 @@ import { Suspense } from 'react'
 import { Loader2 } from 'lucide-react'
 import { redirect } from 'next/navigation'
 
+export const dynamic = 'force-dynamic' 
+
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }

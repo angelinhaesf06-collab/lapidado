@@ -156,6 +156,12 @@ export default function BrandingPage() {
       if (!response.ok) throw new Error(result.error || 'Falha ao salvar dados.')
       
       alert('IDENTIDADE ATUALIZADA COM SUCESSO! 💎')
+      
+      // 💎 NEXUS: Notifica o Layout (Pai) que os dados mudaram para atualizar o botão de WhatsApp na hora
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('brandingUpdated'));
+      }
+
       // 💎 NEXUS: Não recarregamos a página para evitar perda de estado visual.
       // O brandingId será atualizado na próxima carga ou podemos manter o estado atual.
     } catch (err: unknown) {
