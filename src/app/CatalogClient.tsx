@@ -41,7 +41,7 @@ export default function CatalogClient({
   const [allProducts, setAllProducts] = useState<any[]>(initialProducts || [])
   const [dbCategories, setDbCategories] = useState<Category[]>(initialCategories || [])
   const [branding, setBranding] = useState<Branding | null>(initialBranding || null)
-  const [loading, setLoading] = useState(initialProducts && initialProducts.length > 0 ? false : true)
+  const [loading, setLoading] = useState(!initialProducts || initialProducts.length === 0)
   const [activeCategory, setActiveCategory] = useState('Todos')
   
   const storeSlug = searchParams.get('loja')
@@ -50,35 +50,21 @@ export default function CatalogClient({
   const router = useRouter()
 
   useEffect(() => {
-    // Sincroniza a categoria inicial da URL se houver
-    const catFromUrl = searchParams.get('category')
-    if (catFromUrl) setActiveCategory(catFromUrl)
-  }, [searchParams])
-
-  useEffect(() => {
-    async function loadInitialData() {
-      // Se já temos produtos do server E temos branding (ou não precisa dele), para por aqui
-      if (allProducts.length > 0 && (branding || !storeSlug)) {
-        setLoading(false)
-        return
-      }
-
-      setLoading(true)
-      
+    async function loadBrandingData() {
       try {
-        let currentBranding: Branding | null = branding
+        let currentBranding: Branding | null = null
         
-        // 1. Tentar identificar a marca
-        if (!currentBranding && storeSlug) {
+        // 1. Prioridade: Slug da URL (Vitrine de Cliente)
+        if (storeSlug) {
           const { data } = await supabase.from('branding').select('*').eq('slug', storeSlug).maybeSingle()
           currentBranding = data as Branding | null
         } 
         
-        // 2. Tentar pelo usuário logado se não houver slug
-        if (!currentBranding && !storeSlug) {
+        // 2. Fallback: Usuário logado (Preview da Empresária)
+        if (!currentBranding) {
           const { data: { user } } = await supabase.auth.getUser()
           if (user) {
-            const { data } = await supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle()
+            const { data } = await supabase.from('branding').select('*').eq('user_id', user.id).order('updated_at', { ascending: false }).limit(1).maybeSingle()
             currentBranding = data as Branding | null
           }
         }
@@ -100,8 +86,8 @@ export default function CatalogClient({
 
           if (catsRes.data) setDbCategories(catsRes.data)
           if (prodsRes.data) setAllProducts(prodsRes.data)
-        } else {
-          // Vitrine Global se não houver branding específico
+        } else if (!storeSlug) {
+          // Vitrine Global (sem branding específico)
           const { data: prods } = await supabase.from('products')
             .select('id, name, price, image_url, category_id, stock_quantity')
             .gt('stock_quantity', 0)
@@ -110,29 +96,15 @@ export default function CatalogClient({
           
           if (prods) setAllProducts(prods)
         }
-
       } catch (err) {
-        console.error("Erro ao carregar vitrine:", err)
+        console.error("Erro ao carregar dados da vitrine:", err)
       } finally {
         setLoading(false)
       }
     }
 
-    const checkAccess = async () => {
-      if (isPublicCatalog) {
-        await loadInitialData()
-      } else {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session) {
-          router.push('/login')
-        } else {
-          await loadInitialData()
-        }
-      }
-    }
-
-    checkAccess()
-  }, [isPublicCatalog, storeSlug, router, supabase, initialProducts, initialBranding])
+    loadBrandingData()
+  }, [storeSlug, supabase, initialProducts, initialBranding])
 
   const displayedProducts = useMemo(() => {
     if (!allProducts) return []
