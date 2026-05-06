@@ -83,28 +83,32 @@ export async function generateMetadata(
   const tagline = branding?.tagline || 'Mais que acessórios, a sua assinatura de estilo.'
   let logoUrl = branding?.logo_url || '/logo-app.png'
   
-  // Garantir que a URL da imagem seja absoluta para o WhatsApp
-  if (logoUrl.startsWith('/')) {
-    logoUrl = `${baseUrl}${logoUrl}`
+  // 💎 NEXUS: Garantir URL absoluta para a logo (WhatsApp exige link completo)
+  if (logoUrl && !logoUrl.startsWith('http')) {
+    logoUrl = `${baseUrl}${logoUrl.startsWith('/') ? '' : '/'}${logoUrl}`
   }
 
-  const title = `${storeName} | Vitrine Oficial 💎`
+  const title = `${storeName.toUpperCase()} | Vitrine Oficial 💎`
 
   return {
     metadataBase: new URL(baseUrl),
     title,
     description: tagline,
+    alternates: {
+      canonical: loja ? `/?loja=${loja}` : '/',
+    },
     openGraph: {
       title,
       description: tagline,
+      url: loja ? `${baseUrl}/?loja=${loja}` : baseUrl,
+      siteName: storeName,
       images: [{
         url: logoUrl,
-        width: 1200,
-        height: 630,
+        width: 800,
+        height: 800,
         alt: storeName,
       }],
       type: 'website',
-      siteName: storeName,
     },
     twitter: {
       card: 'summary_large_image',
