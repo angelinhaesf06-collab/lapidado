@@ -165,10 +165,28 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-[#fffcfc]">
+    <div className="flex min-h-screen bg-[#fffcfc] overflow-hidden">
       
       {/* 🛑 PAYWALL DE BLOQUEIO */}
       {isBlocked && <Paywall onSubscribe={handleSubscribe} trialDaysLeft={trialDaysLeft} />}
+
+      {/* 💎 BARRA DE PROGRESSO NO TOPO (Feedback Instantâneo) */}
+      <style jsx global>{`
+        @keyframes loadingBar {
+          0% { width: 0%; }
+          50% { width: 70%; }
+          100% { width: 100%; }
+        }
+        .route-transition-bar {
+          position: fixed;
+          top: 0;
+          left: 0;
+          height: 3px;
+          background: linear-gradient(90deg, #4a322e, #c99090);
+          z-index: 9999;
+          animation: loadingBar 2s ease-out;
+        }
+      `}</style>
 
       {/* 💎 SIDEBAR LAPIDADO (ESQUERDA) */}
       <aside className="hidden md:flex w-72 flex-col bg-white border-r border-brand-secondary/10 p-8 sticky top-0 h-screen z-50 shadow-[20px_0_40px_rgba(74,50,46,0.02)]">
@@ -203,7 +221,8 @@ export default function AdminLayout({
               <Link 
                 key={item.name}
                 href={item.href} 
-                className={`flex items-center gap-4 px-6 py-4 rounded-[24px] text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 group ${
+                prefetch={true}
+                className={`flex items-center gap-4 px-6 py-4 rounded-[24px] text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 group active:scale-95 ${
                   isActive 
                   ? 'bg-brand-primary text-white shadow-xl shadow-brand-primary/20 translate-x-2' 
                   : 'text-brand-secondary/60 hover:bg-brand-secondary/5 hover:text-brand-primary'
@@ -221,7 +240,7 @@ export default function AdminLayout({
              <Link 
                 href="/?catalogo=true" 
                 target="_blank"
-                className="flex items-center gap-4 px-6 py-4 rounded-[24px] text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary bg-brand-secondary/10 hover:bg-brand-secondary/20 transition-all border border-brand-secondary/10"
+                className="flex items-center gap-4 px-6 py-4 rounded-[24px] text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary bg-brand-secondary/10 hover:bg-brand-secondary/20 transition-all border border-brand-secondary/10 active:scale-95"
               >
                 <ExternalLink size={20} className="text-brand-primary" /> 
                 Ver Vitrine
@@ -229,7 +248,7 @@ export default function AdminLayout({
 
               <button 
                 onClick={shareToWhatsApp}
-                className="w-full flex items-center gap-4 px-6 py-4 rounded-[24px] text-[10px] font-black uppercase tracking-[0.2em] text-white bg-[#25D366] hover:bg-[#128C7E] transition-all shadow-lg shadow-green-500/20"
+                className="w-full flex items-center gap-4 px-6 py-4 rounded-[24px] text-[10px] font-black uppercase tracking-[0.2em] text-white bg-[#25D366] hover:bg-[#128C7E] transition-all shadow-lg shadow-green-500/20 active:scale-95"
               >
                 <Share2 size={20} /> 
                 Divulgar Whats
@@ -241,7 +260,7 @@ export default function AdminLayout({
         <div className="pt-8 border-t border-brand-secondary/10">
            <button 
              onClick={handleSignOut}
-             className="w-full flex items-center gap-4 px-6 py-4 rounded-[24px] text-[10px] font-black uppercase tracking-[0.2em] text-brand-secondary/40 hover:text-rose-500 transition-all"
+             className="w-full flex items-center gap-4 px-6 py-4 rounded-[24px] text-[10px] font-black uppercase tracking-[0.2em] text-brand-secondary/40 hover:text-rose-500 transition-all active:scale-95"
            >
               <LogOut size={20} /> Sair do Painel
            </button>
@@ -249,7 +268,7 @@ export default function AdminLayout({
       </aside>
 
       {/* CONTEÚDO PRINCIPAL */}
-      <main className="flex-1 w-full overflow-x-hidden">
+      <main className="flex-1 w-full overflow-y-auto overflow-x-hidden scroll-smooth">
         {/* BARRA SUPERIOR MOBILE (Ajustada com todas as abas) */}
         <div className="md:hidden bg-white border-b border-brand-secondary/10 sticky top-0 z-50 shadow-sm pt-[env(safe-area-inset-top,0px)]">
            <div className="p-4 flex justify-between items-center border-b border-brand-secondary/5">
@@ -259,10 +278,10 @@ export default function AdminLayout({
              </div>
              
              <div className="flex gap-2">
-               <Link href="/?catalogo=true" target="_blank" className="p-1.5 bg-brand-secondary/10 rounded-full text-brand-primary">
+               <Link href="/?catalogo=true" target="_blank" className="p-1.5 bg-brand-secondary/10 rounded-full text-brand-primary active:scale-90 transition-transform">
                   <ExternalLink size={14} />
                </Link>
-               <button onClick={shareToWhatsApp} className="p-1.5 bg-[#25D366] rounded-full text-white">
+               <button onClick={shareToWhatsApp} className="p-1.5 bg-[#25D366] rounded-full text-white active:scale-90 transition-transform">
                   <Share2 size={14} />
                </button>
              </div>
@@ -276,9 +295,10 @@ export default function AdminLayout({
                  <Link 
                    key={item.name}
                    href={item.href} 
-                   className={`flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl text-[7px] font-black uppercase tracking-tighter transition-all border ${
+                   prefetch={true}
+                   className={`flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl text-[7px] font-black uppercase tracking-tighter transition-all border active:scale-90 duration-200 ${
                      isActive 
-                     ? 'bg-brand-primary text-white border-brand-primary shadow-md' 
+                     ? 'bg-brand-primary text-white border-brand-primary shadow-md scale-[1.02]' 
                      : 'bg-white text-brand-secondary/60 border-brand-secondary/5 hover:text-brand-primary'
                    }`}
                  >
@@ -291,7 +311,7 @@ export default function AdminLayout({
              {/* BOTÃO SAIR MOBILE */}
              <button 
                onClick={handleSignOut}
-               className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl text-[7px] font-black uppercase tracking-tighter transition-all border bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-100"
+               className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl text-[7px] font-black uppercase tracking-tighter transition-all border bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-100 active:scale-90"
              >
                <LogOut size={14} />
                <span className="text-center leading-none">Sair</span>
@@ -299,7 +319,7 @@ export default function AdminLayout({
            </nav>
         </div>
 
-        <div className="px-4 py-8 md:px-12 md:py-16">
+        <div className="px-4 py-8 md:px-12 md:py-16 animate-in fade-in duration-500 slide-in-from-bottom-2">
           {children}
         </div>
       </main>
