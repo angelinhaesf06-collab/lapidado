@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Camera, Loader2, Palette, Phone, Gem } from 'lucide-react'
+import { Camera, Loader2, Palette, Phone, Gem, Copy, Check } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { generateSlug } from '@/lib/utils'
 import Image from 'next/image'
@@ -9,6 +9,7 @@ import Image from 'next/image'
 export default function BrandingPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [copied, setCopied] = useState(false)
   const [logo, setLogo] = useState<string | null>(null)
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [tagline, setTagline] = useState('')
@@ -173,6 +174,13 @@ export default function BrandingPage() {
   const installmentsOptions = [1, 2, 3, 4, 5, 6, 8, 10, 12]
   const generatedLink = brandingId && businessName ? `${typeof window !== 'undefined' ? window.location.origin : ''}/?catalogo=true&loja=${businessName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')}` : 'Defina o nome da loja para gerar o link'
 
+  const copyToClipboard = () => {
+    if (!brandingId || !businessName) return
+    navigator.clipboard.writeText(generatedLink)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
   if (loading) return <div className="flex justify-center p-20"><Loader2 className="animate-spin text-brand-secondary" size={32} /></div>
 
   return (
@@ -229,10 +237,25 @@ export default function BrandingPage() {
             <input type="text" value={topBanner} onChange={(e) => setTopBanner(e.target.value)} className="w-full px-4 py-3 md:py-4 rounded-xl md:rounded-2xl bg-brand-secondary/5 text-sm font-medium text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all" />
           </div>
 
-          <div className="p-4 rounded-2xl bg-brand-primary/5 border border-brand-primary/10">
-            <label className="text-[8px] font-black text-brand-primary uppercase block mb-1">Link Automático da Vitrine</label>
-            <p className="text-[10px] font-bold text-brand-primary break-all">{generatedLink}</p>
-            <p className="text-[7px] font-bold text-brand-secondary/40 uppercase mt-2">Gerado automaticamente com base no nome da loja.</p>
+          <div className="p-4 md:p-5 rounded-2xl md:rounded-[32px] bg-brand-primary/5 border border-brand-primary/10 space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-[8px] md:text-[9px] font-black text-brand-primary uppercase tracking-widest">Link da sua Vitrine</label>
+              <button 
+                onClick={copyToClipboard}
+                disabled={!brandingId || !businessName}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[8px] font-bold uppercase tracking-wider transition-all active:scale-95 ${copied ? 'bg-green-500 text-white shadow-lg shadow-green-200' : 'bg-brand-primary text-white hover:bg-brand-secondary shadow-md shadow-brand-primary/10'}`}
+              >
+                {copied ? <><Check size={12} /> Copiado!</> : <><Copy size={12} /> Copiar Link</>}
+              </button>
+            </div>
+            <div className="p-3 bg-white/50 rounded-xl border border-brand-primary/5">
+              <p className="text-[10px] md:text-xs font-bold text-brand-primary break-all leading-relaxed">
+                {generatedLink}
+              </p>
+            </div>
+            <p className="text-[7px] font-bold text-brand-secondary/40 uppercase tracking-tighter">
+              Este é o link que você deve colocar na sua Bio do Instagram. ✨
+            </p>
           </div>
         </div>
 
