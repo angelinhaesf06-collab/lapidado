@@ -56,7 +56,7 @@ export async function POST(req: Request) {
     const generationConfig = {
       temperature: 0.7, 
       topP: 0.9,
-      maxOutputTokens: 500,
+      maxOutputTokens: 300, // ⚡ REDUZIDO PARA MÁXIMA VELOCIDADE
       responseMimeType: "application/json",
     };
 
@@ -67,8 +67,11 @@ export async function POST(req: Request) {
       { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
     ];
 
-    // 🚀 MOTOR 3.1 FLASH LITE: A versão mais rápida e moderna disponível
-    const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite-preview" });
+    // 🚀 MOTOR 3.1 FLASH LITE: Uso de systemInstruction nativa para maior rapidez
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-3.1-flash-lite-preview",
+      systemInstruction: systemInstruction 
+    });
 
     const imageData = image.includes(",") ? image.split(",")[1] : image;
     
@@ -76,7 +79,6 @@ export async function POST(req: Request) {
       contents: [{ 
         role: 'user', 
         parts: [
-          { text: systemInstruction }, 
           { inlineData: { mimeType: "image/jpeg", data: imageData } }
         ] 
       }],

@@ -89,12 +89,12 @@ export default function NewProductPage() {
       img.src = base64Str
       img.onload = () => {
         const canvas = document.createElement('canvas')
-        const MAX_WIDTH = 800
+        const MAX_WIDTH = 512 // ⚡ REDUZIDO PARA MÁXIMA VELOCIDADE
         let width = img.width, height = img.height
         if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH }
         canvas.width = width; canvas.height = height
         canvas.getContext('2d')?.drawImage(img, 0, 0, width, height)
-        resolve(canvas.toDataURL('image/jpeg', 0.6))
+        resolve(canvas.toDataURL('image/jpeg', 0.5)) // ⚡ QUALIDADE REDUZIDA
       }
     })
   }
