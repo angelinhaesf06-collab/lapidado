@@ -64,8 +64,12 @@ export default function CatalogClient({
         const headerElement = document.querySelector('.sticky');
         const headerHeight = headerElement ? headerElement.clientHeight : 200;
         
+        // Detecta se é mobile para dar um respiro maior
+        const isMobile = window.innerWidth < 768;
+        const extraPadding = isMobile ? 60 : 20;
+        
         const elementPosition = productsTopRef.current.getBoundingClientRect().top;
-        const offsetPosition = elementPosition + window.pageYOffset - (headerHeight + 20); // Altura do header + margem de respiro
+        const offsetPosition = elementPosition + window.pageYOffset - (headerHeight + extraPadding);
 
         window.scrollTo({
           top: offsetPosition,
