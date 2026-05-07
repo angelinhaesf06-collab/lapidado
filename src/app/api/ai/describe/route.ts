@@ -120,13 +120,13 @@ export async function POST(req: Request) {
     return NextResponse.json(finalJson);
 
   } catch (err: any) {
-    console.error("❌ ERRO CRÍTICO NO GEMINI 3.1:", err.message);
+    console.error("❌ ERRO NO GEMINI 3.1:", err.message);
     
-    // Fallback apenas se o erro for real, para não travar o fluxo
+    // Fallback elegante e silencioso (sem detalhes técnicos para a usuária)
     return NextResponse.json({ 
       name: "PEÇA EXCLUSIVA LAPIDADO",
       category: "ACESSÓRIOS",
-      description: `Erro no processamento da IA: ${err.message}. Por favor, verifique se sua chave tem acesso ao modelo 3.1 Flash Lite.`
+      description: "Uma joia que combina design contemporâneo, brilho inesquecível e a sofisticação atemporal do nosso acervo."
     });
   }
 }
