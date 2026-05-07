@@ -86,7 +86,7 @@ export default function AdminLayout({
       if (!subscription?.trial_ends_at) return false; // Se não houver data, libera por segurança
       
       const now = new Date();
-      const trialEnd = new Date(subscription.trial_ends_at as string);
+      const trialEnd = new Date(subscription?.trial_ends_at as string);
       
       // Se a data atual passou do fim do trial, bloqueia
       return now > trialEnd;
