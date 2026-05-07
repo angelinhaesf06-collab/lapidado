@@ -60,7 +60,7 @@ export default function CatalogClient({
       url.searchParams.set('category', cat);
       // ✨ Scroll Suave para o topo da lista de produtos
       if (productsTopRef.current) {
-        const headerOffset = 150; // Compensação para o cabeçalho fixo
+        const headerOffset = 220; // Aumentado para garantir visibilidade do título sob o cabeçalho fixo
         const elementPosition = productsTopRef.current.getBoundingClientRect().top;
         const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
 
