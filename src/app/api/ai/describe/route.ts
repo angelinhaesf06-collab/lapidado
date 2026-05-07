@@ -63,7 +63,6 @@ export async function POST(req: Request) {
       temperature: 0.7, 
       topP: 0.9,
       maxOutputTokens: 600,
-      // Removido responseMimeType para compatibilidade máxima com todas as chaves
     };
 
     const safetySettings = [
@@ -76,50 +75,28 @@ export async function POST(req: Request) {
     const imageData = image.includes(",") ? image.split(",")[1] : image;
     const imagePart = { inlineData: { mimeType: "image/jpeg", data: imageData } };
 
-    let result;
+    // 🚀 MODELO ÚNICO E EXCLUSIVO: Gemini 3.1 Flash Lite
+    // Conforme solicitado: Versões 1.5 PRO e 1.5 FLASH foram COMPLETAMENTE REMOVIDAS.
+    const modelName = "gemini-3.1-flash-lite-preview";
     
-    // 🚀 ORDEM DE PRIORIDADE: 3.1 Flash Lite -> 1.5 Pro -> 1.5 Flash -> Pro Vision
-    const modelsToTry = [
-      "gemini-3.1-flash-lite-preview", 
-      "gemini-1.5-pro", 
-      "gemini-1.5-flash", 
-      "gemini-pro-vision"
-    ];
+    console.log(`Iniciando processamento exclusivo com: ${modelName}...`);
+    const model = genAI.getGenerativeModel({ model: modelName });
     
-    let lastError = "";
-
-    for (const modelName of modelsToTry) {
-      try {
-        console.log(`Tentando IA Lapidado: ${modelName}...`);
-        const model = genAI.getGenerativeModel({ model: modelName });
-        
-        result = await model.generateContent({
-          contents: [{ 
-            role: 'user', 
-            parts: [
-              { text: promptText },
-              imagePart
-            ] 
-          }],
-          generationConfig,
-          safetySettings
-        });
-        
-        if (result) break;
-      } catch (e: any) {
-        lastError = e.message;
-        console.warn(`IA ${modelName} indisponível:`, e.message);
-      }
-    }
-
-    if (!result) {
-       throw new Error(`Nenhum modelo aceito pela sua chave. Erro original: ${lastError}`);
-    }
+    const result = await model.generateContent({
+      contents: [{ 
+        role: 'user', 
+        parts: [
+          { text: promptText },
+          imagePart
+        ] 
+      }],
+      generationConfig,
+      safetySettings
+    });
 
     const response = await result.response;
     let aiText = response.text().trim();
     
-    // Limpeza agressiva para extrair apenas o JSON
     aiText = aiText.replace(/```json/g, "").replace(/```/g, "").trim();
     const jsonMatch = aiText.match(/\{[\s\S]*\}/);
     if (jsonMatch) aiText = jsonMatch[0];
@@ -127,9 +104,9 @@ export async function POST(req: Request) {
     return NextResponse.json(JSON.parse(aiText));
 
   } catch (err: any) {
-    console.error("ERRO CRÍTICO NA IA:", err.message);
+    console.error("ERRO NA IA (MODELO 3.1):", err.message);
     
-    // Fallback de dados para não travar o app
+    // Fallback de segurança para evitar erro 500 no app, mas sem usar modelos 1.5
     return NextResponse.json({ 
       name: "JOIA LAPIDADO",
       category: "ACESSÓRIOS",
