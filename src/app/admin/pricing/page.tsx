@@ -100,7 +100,7 @@ export default function PricingPage() {
     toast.success('Peça adicionada ao romaneio! ✨')
   }
 
-  const generateReportPDF = () => {
+  const generateReportPDF = async () => {
     if (addedItems.length === 0) return toast.error('Adicione itens primeiro! 📸')
     const doc = new jsPDF()
     const storeName = branding?.business_name || branding?.store_name || 'LAPIDADO ERP'
@@ -129,33 +129,44 @@ export default function PricingPage() {
 
     const fileName = `romaneio-${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`
     
-    // 📱 NEXUS: Compatibilidade Mobile Reforçada (Universal Blob Method)
+    // 📱 NEXUS: Compatibilidade Mobile de Alta Performance
     try {
       const pdfBlob = doc.output('blob')
-      const url = URL.createObjectURL(pdfBlob)
       
+      // 💎 TENTATIVA DE COMPARTILHAMENTO NATIVO (Melhor para WhatsApp/Salvar no Mobile)
+      const file = new File([pdfBlob], fileName, { type: 'application/pdf' })
+      
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: 'Romaneio Lapidado',
+          text: `Segue romaneio gerado por ${storeName.toUpperCase()}`
+        })
+        return toast.success('Romaneio compartilhado com sucesso! ✨')
+      }
+
+      // 💻 FALLBACK: Download Tradicional (PC ou navegadores antigos)
+      const url = URL.createObjectURL(pdfBlob)
       const link = document.createElement('a')
       link.href = url
-      link.download = fileName
-      
-      // Adição de atributos cruciais para Safari e navegadores mobile
       link.setAttribute('download', fileName)
-      link.setAttribute('target', '_blank')
-      link.style.display = 'none'
-      
       document.body.appendChild(link)
       link.click()
       
-      // Pequeno delay antes de limpar para garantir o disparo no mobile
       setTimeout(() => {
         document.body.removeChild(link)
         URL.revokeObjectURL(url)
-      }, 500)
+      }, 100)
 
-      toast.success('Romaneio gerado com sucesso! 📄')
+      toast.success('Romaneio baixado com sucesso! 📄')
     } catch (err) {
       console.error('Erro no PDF:', err)
-      toast.error('Erro ao gerar PDF. Tente abrir em outro navegador.')
+      // Tenta o método mais básico se tudo falhar
+      try {
+        doc.save(fileName)
+      } catch (saveErr) {
+        toast.error('Erro ao gerar PDF. Tente usar o navegador Chrome.')
+      }
     }
   }
 

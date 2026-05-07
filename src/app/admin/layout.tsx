@@ -1,10 +1,11 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ShoppingCart, Package, Gem, PlusCircle, LayoutDashboard, LogOut, ExternalLink, Share2, Coins, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { generateSlug } from '@/lib/utils'
 import Image from 'next/image'
 import Paywall from '@/components/Paywall'
 import { purchasePlan, GOOGLE_PLAY_PLANS, syncSubscriptionWithSupabase } from '@/lib/billing/googlePlay'
@@ -21,24 +22,31 @@ export default function AdminLayout({
   const [loading, setLoading] = useState(true)
   const supabase = useMemo(() => createClient(), [])
 
-  useEffect(() => {
-    async function loadData() {
+  const loadData = useCallback(async () => {
+    try {
       setLoading(true)
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        // 💎 NEXUS: Busca resiliente (evita erro se houver registros duplicados órfãos)
-        const { data } = await supabase.from('branding')
+        // 💎 NEXUS: Busca ultra-resiliente com múltiplos fallbacks de ordenação.
+        const { data, error } = await supabase.from('branding')
           .select('store_name, business_name, logo_url, facebook, slug, website, subscription_status, trial_ends_at')
           .eq('user_id', user.id)
-          .order('updated_at', { ascending: false })
+          .order('updated_at', { ascending: false, nullsFirst: false })
+          .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle()
         
+        if (error) console.error('❌ Erro ao buscar branding:', error.message)
+
         if (data) {
+          // 💎 NEXUS: Prioridade para store_name (personalizado) sobre business_name (padrão)
+          const storeName = data.store_name || data.business_name || (data.facebook || '').split('|')[3] || 'LAPIDADO'
+          const storeSlug = data.slug || generateSlug(storeName)
+          
           setBranding({
-            name: data.business_name || data.store_name || (data.facebook || '').split('|')[3] || 'LAPIDADO',
+            name: storeName,
             logo: data.logo_url || null,
-            slug: data.slug || null,
+            slug: storeSlug,
             website: data.website || null
           })
           setSubscription({
@@ -47,16 +55,52 @@ export default function AdminLayout({
           })
         }
       }
+    } catch (err) {
+      console.error('❌ Falha crítica no loadData:', err)
+    } finally {
       setLoading(false)
     }
-    loadData()
   }, [supabase])
 
+  useEffect(() => {
+    loadData()
+    
+    // 💎 NEXUS: Listener para sincronizar quando a aba "Minha Marca" salvar algo
+    if (typeof window !== 'undefined') {
+      window.addEventListener('brandingUpdated', loadData)
+      return () => window.removeEventListener('brandingUpdated', loadData)
+    }
+  }, [loadData])
+
   const isBlocked = useMemo(() => {
-    if (loading) return false;
-    // 🔓 DESATIVADO TEMPORARIAMENTE PARA DESENVOLVIMENTO (Ou use a lógica do subscription se desejar)
-    return false;
+    if (loading || !subscription) return false;
+
+    // ✅ Plano Ativo: Acesso liberado
+    if (subscription.status === 'active') return false;
+
+    // ⏳ Período de Teste: Verifica se ainda está no prazo
+    if (subscription.status === 'trial' || subscription.status === 'trialing') {
+      if (!subscription.trial_ends_at) return false; // Se não houver data, libera por segurança
+      
+      const now = new Date();
+      const trialEnd = new Date(subscription.trial_ends_at);
+      
+      // Se a data atual passou do fim do trial, bloqueia
+      return now > trialEnd;
+    }
+
+    // ❌ Outros status (expired, past_due, canceled): Bloqueia
+    return true;
   }, [subscription, loading]);
+
+  const trialDaysLeft = useMemo(() => {
+    if (!subscription?.trial_ends_at) return 0;
+    const now = new Date();
+    const trialEnd = new Date(subscription.trial_ends_at);
+    const diff = trialEnd.getTime() - now.getTime();
+    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+    return days > 0 ? days : 0;
+  }, [subscription]);
 
   const handleSubscribe = async (plan: 'monthly' | 'yearly') => {
     setLoading(true)
@@ -99,15 +143,15 @@ export default function AdminLayout({
   ]
 
   const shareToWhatsApp = () => {
-    // 🔗 O sistema é o próprio gerador: URL base + slug da loja
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
+    // 🔗 Prioriza o link oficial cadastrado, depois a URL de ambiente, por fim a origem atual
+    const baseUrl = branding.website || process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
     
-    if (!branding.slug) {
-      return alert('⚠️ POR FAVOR, DEFINA O NOME DA SUA LOJA EM "MINHA MARCA" ANTES DE COMPARTILHAR! 💎')
-    }
+    // 💎 NEXUS: Fallback total para garantir que o botão NUNCA falhe se houver um nome
+    const storeName = branding.name || 'LAPIDADO'
+    const finalSlug = branding.slug || storeName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
 
-    const url = `${siteUrl}/?catalogo=true&loja=${branding.slug}`
-    const text = `Olá! Conheça o novo catálogo digital da *${branding.name.toUpperCase()}*. Peças exclusivas e brilho em cada detalhe: ${url}`
+    const url = `${baseUrl}/?catalogo=true&loja=${finalSlug}`
+    const text = `Olá! Conheça o novo catálogo digital da *${storeName.toUpperCase()}*. Peças exclusivas e brilho em cada detalhe: ${url}`
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
   }
 
@@ -129,7 +173,7 @@ export default function AdminLayout({
     <div className="flex min-h-screen bg-[#fffcfc]">
       
       {/* 🛑 PAYWALL DE BLOQUEIO */}
-      {isBlocked && <Paywall onSubscribe={handleSubscribe} trialDaysLeft={0} />}
+      {isBlocked && <Paywall onSubscribe={handleSubscribe} trialDaysLeft={trialDaysLeft} />}
 
       {/* 💎 SIDEBAR LAPIDADO (ESQUERDA) */}
       <aside className="hidden md:flex w-72 flex-col bg-white border-r border-brand-secondary/10 p-8 sticky top-0 h-screen z-50 shadow-[20px_0_40px_rgba(74,50,46,0.02)]">

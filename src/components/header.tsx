@@ -40,7 +40,7 @@ export default function Header() {
             const { data } = await supabase.from('branding')
               .select('*')
               .eq('user_id', user.id)
-              .order('created_at', { ascending: false })
+              .order('updated_at', { ascending: false })
               .limit(1)
               .maybeSingle()
             brandingData = data

@@ -34,13 +34,13 @@ export default function Paywall({ onSubscribe, trialDaysLeft }: PaywallProps) {
               <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center text-green-600 shrink-0">
                 <CheckCircle2 size={16} />
               </div>
-              <p className="text-xs font-medium text-brand-primary/70">IA de elite (Gemini 3 Flash) para descrições luxuosas.</p>
+              <p className="text-xs font-medium text-brand-primary/70">IA de elite (Gemini 3.1 Flash) para descrições luxuosas.</p>
             </div>
             <div className="flex items-start gap-4">
               <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center text-green-600 shrink-0">
                 <CheckCircle2 size={16} />
               </div>
-              <p className="text-xs font-medium text-brand-primary/70">Controle financeiro e emissão de promissórias.</p>
+              <p className="text-xs font-medium text-brand-primary/70">Controle financeiro e emissão de romaneios em PDF.</p>
             </div>
           </div>
 
@@ -51,7 +51,7 @@ export default function Paywall({ onSubscribe, trialDaysLeft }: PaywallProps) {
             >
               <div className="text-left">
                 <p className="text-[10px] font-black uppercase opacity-60">Plano Mensal</p>
-                <p className="text-xl font-black tracking-tight">R$ 49,90 <span className="text-xs opacity-60">/mês</span></p>
+                <p className="text-xl font-black tracking-tight">R$ 69,80 <span className="text-xs opacity-60">/mês</span></p>
               </div>
               <ShoppingBag className="group-hover:rotate-12 transition-transform" />
             </button>
@@ -61,8 +61,8 @@ export default function Paywall({ onSubscribe, trialDaysLeft }: PaywallProps) {
               className="w-full border-2 border-brand-primary text-brand-primary p-6 rounded-3xl flex items-center justify-between group hover:scale-[1.02] transition-all"
             >
               <div className="text-left">
-                <p className="text-[10px] font-black uppercase opacity-60 text-brand-secondary">Plano Anual (Economize 20%)</p>
-                <p className="text-xl font-black tracking-tight">R$ 479,00 <span className="text-xs opacity-60">/ano</span></p>
+                <p className="text-[10px] font-black uppercase opacity-60 text-brand-secondary">Plano Anual (Economize R$ 127,00)</p>
+                <p className="text-xl font-black tracking-tight">R$ 710,00 <span className="text-xs opacity-60">/ano</span></p>
               </div>
               <Gem className="group-hover:scale-110 transition-transform text-brand-secondary" />
             </button>

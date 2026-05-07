@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Gem, Loader2, X, Plus, CheckCircle2 } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { Gem, Loader2, Plus, CheckCircle2, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -23,7 +23,7 @@ export default function NewProductPage() {
   const [aiStyle, setAiStyle] = useState<'luxo' | 'venda' | 'simples'>('luxo')
 
   const router = useRouter()
-  const supabase = useMemo(() => createClient(), [])
+  const supabase = createClient()
 
   const FINISH_OPTIONS = ['OURO 18K', 'PRATA', 'PRATA 925', 'OURO ROSE', 'RODIO BRANCO', 'RODIO NEGRO']
   const AI_STYLES = [
@@ -165,7 +165,6 @@ export default function NewProductPage() {
           finalImageUrl = compressedBase64
         }
       } catch {
-        // Se der erro no upload, tenta usar a imagem direta
         finalImageUrl = images[0].preview
       }
 
@@ -227,6 +226,7 @@ export default function NewProductPage() {
               </label>
             )}
           </div>
+
           <div className="space-y-3">
             <label className="text-[8px] font-black text-brand-secondary uppercase ml-1 tracking-[0.2em]">Estilo da Descrição Mágica</label>
             <div className="grid grid-cols-3 gap-2">

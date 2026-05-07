@@ -34,8 +34,8 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const resolvedSearchParams = (await searchParams) || {}
   const id = resolvedSearchParams.id as string
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lapidado.vercel.app'
-  
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lapidado.com.br'
+
   if (!id) return { title: 'Produto não encontrado | Lapidado' }
 
   const { product, branding } = await getProductData(id)
@@ -43,13 +43,13 @@ export async function generateMetadata(
   if (!product) return { title: 'Produto não encontrado | Lapidado' }
 
   const storeName = branding?.business_name || branding?.store_name || 'LAPIDADO'
-  const title = `${product.name} | ${storeName} ✨`
+  const title = `${product.name.toUpperCase()} | ${storeName.toUpperCase()} 💎`
   const description = product.description?.split('---')[0] || `Confira este(a) ${product.name} no nosso catálogo digital.`
   let imageUrl = product.image_url || '/logo-app.png'
 
-  // Garantir que a URL da imagem seja absoluta para o WhatsApp
-  if (imageUrl.startsWith('/')) {
-    imageUrl = `${baseUrl}${imageUrl}`
+  // 💎 NEXUS: Garantir URL absoluta da imagem da joia para o WhatsApp
+  if (imageUrl && !imageUrl.startsWith('http')) {
+    imageUrl = `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`
   }
 
   return {
@@ -59,10 +59,12 @@ export async function generateMetadata(
     openGraph: {
       title,
       description,
+      url: `${baseUrl}/product?id=${id}`,
+      siteName: storeName,
       images: [{
         url: imageUrl,
-        width: 1200,
-        height: 630,
+        width: 800,
+        height: 800,
         alt: product.name,
       }],
       type: 'article',

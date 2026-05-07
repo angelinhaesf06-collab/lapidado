@@ -1,42 +1,18 @@
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 import { NextResponse } from "next/server";
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold, GenerativeModel, Content, GenerationConfig, SafetySetting } from "@google/generative-ai";
 
 export const runtime = 'nodejs';
-export const maxDuration = 30;
-
-async function tryGenerate(model: GenerativeModel, content: { contents: Content[], generationConfig: GenerationConfig, safetySettings: SafetySetting[] }) {
-  let retries = 1; 
-  const delay = 1000;
-  
-  while (retries >= 0) {
-    try {
-      return await model.generateContent(content);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "";
-      if ((message.includes("503") || message.includes("Service Unavailable")) && retries > 0) {
-        await new Promise(res => setTimeout(res, delay));
-        retries--;
-      } else {
-        throw err;
-      }
-    }
-  }
-  throw new Error("Servidores do Google ocupados.");
-}
 
 export async function POST(req: Request) {
   try {
+    const { image, style } = await req.json();
     const apiKey = (process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "").trim();
+
     if (!apiKey) {
-      console.error("❌ ERRO: GEMINI_API_KEY NÃO ENCONTRADA NO AMBIENTE.");
-      return NextResponse.json({ error: "ERRO_CONFIG", details: "API Key ausente" }, { status: 401 });
+      return NextResponse.json({ error: "Chave da IA não configurada." }, { status: 500 });
     }
 
-    const payload = await req.json();
-    const { image, style, mode } = payload;
-    if (!image) return NextResponse.json({ error: "DADOS_AUSENTES" }, { status: 400 });
-
-    const selectedStyle = style || mode?.toLowerCase() || 'luxo';
+    const genAI = new GoogleGenerativeAI(apiKey);
     
     // 💎 PROMPTS ESPECIALIZADOS (Quiet Luxury)
     const styleConfigs = {
@@ -57,29 +33,8 @@ export async function POST(req: Request) {
       }
     };
 
+    const selectedStyle = style || 'luxo';
     const config = styleConfigs[selectedStyle as keyof typeof styleConfigs] || styleConfigs.luxo;
-
-    const genAI = new GoogleGenerativeAI(apiKey);
-    
-    let finalMime = "image/jpeg";
-    let dataOnly = image;
-
-    if (image.includes(";base64,")) {
-      const parts = image.split(";base64,");
-      finalMime = parts[0].replace("data:", "");
-      dataOnly = parts[1];
-    } else if (image.startsWith("data:")) {
-      const parts = image.split(",");
-      finalMime = parts[0].split(":")[1].split(";")[0];
-      dataOnly = parts[1];
-    }
-
-    const safetySettings = [
-      { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-      { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-      { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-      { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-    ];
 
     const systemInstruction = `Você é um(a) ${config.role} da Lapidado.
     Sua missão é criar nomes e descrições para joias com foco em QUIET LUXURY.
@@ -95,6 +50,7 @@ export async function POST(req: Request) {
     REGRAS:
     - Nomes: Curtos e impactantes (ex: 'Brinco Aura', 'Colar Infinito').
     - Proibido termos genéricos. Foque na valorização da peça.
+    - CATEGORIA: Escolha uma entre [ANEL, BRINCO, COLAR, PULSEIRA, CONJUNTO, ACESSÓRIO].
     - JSON OUTPUT: {"name": "NOME", "category": "CATEGORIA", "description": "CONTEÚDO NO ESTILO ${selectedStyle.toUpperCase()}"}`;
 
     const generationConfig = {
@@ -104,30 +60,29 @@ export async function POST(req: Request) {
       responseMimeType: "application/json",
     };
 
-    const imagePart = {
-      inlineData: { mimeType: finalMime, data: dataOnly }
-    };
+    const safetySettings = [
+      { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+      { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+      { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+      { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+    ];
 
-    let result;
-    try {
-      // 🚀 MOTOR 3.1 FLASH LITE: A versão mais rápida e moderna disponível
-      console.log("Tentando Gemini 3.1 Flash Lite para Descrição...");
-      const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite-preview" });
-      
-      result = await model.generateContent({
-        contents: [{ role: 'user', parts: [{ text: systemInstruction }, imagePart] }],
-        generationConfig,
-        safetySettings
-      });
-    } catch (e: any) {
-      console.error("Gemini 3.1 Flash Lite falhou, tentando Flash 1.5:", e.message);
-      const modelFlash = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      result = await modelFlash.generateContent({
-        contents: [{ role: 'user', parts: [{ text: systemInstruction }, imagePart] }],
-        generationConfig,
-        safetySettings
-      });
-    }
+    // 🚀 MOTOR 3.1 FLASH LITE: A versão mais rápida e moderna disponível
+    const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite-preview" });
+
+    const imageData = image.includes(",") ? image.split(",")[1] : image;
+    
+    const result = await model.generateContent({
+      contents: [{ 
+        role: 'user', 
+        parts: [
+          { text: systemInstruction }, 
+          { inlineData: { mimeType: "image/jpeg", data: imageData } }
+        ] 
+      }],
+      generationConfig,
+      safetySettings
+    });
 
     const response = await result.response;
     let aiText = response.text().trim();
@@ -136,24 +91,10 @@ export async function POST(req: Request) {
     const jsonMatch = aiText.match(/\{[\s\S]*\}/);
     if (jsonMatch) aiText = jsonMatch[0];
 
-    try {
-      const rawJson = JSON.parse(aiText);
-      const clean = (txt: string | undefined) => txt?.toString().replace(/json|```| Aqui está|\[|\]/gi, "").trim() || "";
+    return NextResponse.json(JSON.parse(aiText));
 
-      return NextResponse.json({
-        name: clean(rawJson.name || rawJson.NAME || "Peça Nobre Lapidado"),
-        category: clean(rawJson.category || rawJson.CATEGORY || "OUTROS").toUpperCase(),
-        description: clean(rawJson.description || rawJson.DESCRIPTION || "Uma peça que redefine o conceito de elegância.")
-      });
-    } catch (e: any) {
-      return NextResponse.json({
-        name: "Peça Magnética de Luxo",
-        category: "ACESSÓRIOS",
-        description: "Design contemporâneo com banho nobre e brilho incomparável."
-      });
-    }
-
-  } catch (error: any) {
-    return NextResponse.json({ error: "FALHA_MOTOR_IA", details: error.message }, { status: 500 });
+  } catch (err) {
+    console.error("Erro na IA:", err);
+    return NextResponse.json({ error: "Falha ao processar imagem." }, { status: 500 });
   }
 }

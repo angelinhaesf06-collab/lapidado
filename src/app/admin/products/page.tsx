@@ -164,7 +164,7 @@ export default function ProductsListPage() {
   const PAGE_SIZE = 100 // No modo reorder aumentamos para ver mais
 
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const supabase = useMemo(() => createClient(), [])
+  const supabase = createClient()
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }), // Evita drag acidental no clique
@@ -192,7 +192,7 @@ export default function ProductsListPage() {
         .order('created_at', { ascending: false })
         .range(from, to),
       isInitial ? supabase.from('categories').select('id, name').eq('user_id', user.id).order('name') : Promise.resolve({ data: null }),
-      isInitial ? supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle() : Promise.resolve({ data: null })
+      isInitial ? supabase.from('branding').select('*').eq('user_id', user.id).order('updated_at', { ascending: false }).limit(1).maybeSingle() : Promise.resolve({ data: null })
     ])
 
     if (prodRes.data) {
@@ -268,15 +268,23 @@ export default function ProductsListPage() {
 
   const handleShareWhatsApp = (product: Product) => {
     const storeName = branding?.business_name || branding?.store_name || 'LAPIDADO'
-    const storeSlug = branding?.slug || ''
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
+    // 💎 Fallback para slug caso esteja nulo no banco
+    const storeSlug = branding?.slug || storeName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
     
-    if (!storeSlug) {
-      return alert('⚠️ POR FAVOR, DEFINA O NOME DA SUA LOJA EM "MINHA MARCA" ANTES DE COMPARTILHAR! 💎')
+    // 🔗 Prioriza o link oficial cadastrado, depois a URL de ambiente, por fim a origem atual
+    const baseUrl = branding?.website || process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
+    
+    if (!storeSlug || storeSlug === 'lapidado') {
+      return alert('💎 ANGELA, O NOME DA SUA LOJA AINDA NÃO FOI CONFIGURADO.\n\nPor favor, vá em "MINHA MARCA", digite o NOME DA LOJA (diferente de LAPIDADO) e clique em SALVAR. Isso criará o seu link exclusivo para que você possa compartilhar suas joias! ✨')
     }
 
-    const url = `${siteUrl}/product?id=${product.id}&catalogo=true&loja=${storeSlug}`
-    const msg = encodeURIComponent(`OLÁ! ✨ OLHA QUE LINDA ESSA JOIA DA *${storeName.toUpperCase()}*:\n\n💍 *${product.name}*\n💎 VALOR: R$ ${Number(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\nCONFIRA MAIS DETALHES AQUI: ${url}`)
+    // ⚠️ Alerta se estiver tentando compartilhar localhost sem ter link oficial ou variável de ambiente
+    if (!branding?.website && !process.env.NEXT_PUBLIC_SITE_URL && window.location.hostname === 'localhost') {
+      alert('ATENÇÃO: Você está compartilhando um link de "localhost". Configure o "Link Oficial da Vitrine" em "Minha Marca" para que seus clientes consigam acessar! 💎')
+    }
+
+    const storeParam = `&loja=${storeSlug}`
+    const msg = encodeURIComponent(`OLÁ! ✨ OLHA QUE LINDA ESSA JOIA DA *${storeName.toUpperCase()}*:\n\n💍 *${product.name}*\n💎 VALOR: R$ ${Number(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\nCONFIRA MAIS DETALHES AQUI: ${baseUrl}/product?id=${product.id}&catalogo=true${storeParam}`)
     window.open(`https://wa.me/?text=${msg}`, '_blank')
   }
 

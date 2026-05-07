@@ -1,8 +1,12 @@
 import { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { generateSlug } from '@/lib/utils'
 import CatalogClient from './CatalogClient'
 import { Suspense } from 'react'
 import { Loader2 } from 'lucide-react'
+import { redirect } from 'next/navigation'
+
+export const dynamic = 'force-dynamic' 
 
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -11,32 +15,40 @@ type Props = {
 async function getInitialData(loja?: string) {
   const supabase = await createClient()
   
-  let branding = null
-  if (loja) {
-    const { data } = await supabase.from('branding').select('*').eq('slug', loja).maybeSingle()
-    branding = data
+  if (!loja) {
+    // 🔒 SEGURANÇA MÁXIMA: Se não houver slug de loja, não retornamos NADA.
+    // Isso evita que um novo usuário veja produtos de outro lojista por engano.
+    return { branding: null, products: [], categories: [] }
   }
 
-  // Se tiver branding, busca produtos desse usuário. Se não, busca os mais recentes (vitrine global)
-  const query = supabase.from('products')
+  // 💎 NEXUS: Busca rigorosa apenas por SLUG exclusivo.
+  const { data: branding } = await supabase.from('branding')
+    .select('*')
+    .eq('slug', loja)
+    .maybeSingle()
+
+  if (!branding) {
+    return { branding: null, products: [], categories: [] }
+  }
+
+  // 🔒 FILTRO OBRIGATÓRIO: Busca produtos APENAS do dono desta marca
+  const { data: products } = await supabase.from('products')
     .select('id, name, price, image_url, category_id, stock_quantity, user_id')
+    .eq('user_id', branding.user_id) // Filtro de isolamento total
     .gt('stock_quantity', 0)
     .order('created_at', { ascending: false })
     .limit(100)
-
-  if (branding) {
-    query.eq('user_id', branding.user_id)
-  }
-
-  const { data: products } = await query
   
-  let categories: any[] = []
-  if (branding) {
-    const { data: catData } = await supabase.from('categories').select('id, name').eq('user_id', branding.user_id).order('name')
-    categories = catData || []
-  }
+  const { data: catData } = await supabase.from('categories')
+    .select('id, name')
+    .eq('user_id', branding.user_id) // Filtro de isolamento total
+    .order('name')
 
-  return { branding, products: products || [], categories }
+  return { 
+    branding, 
+    products: products || [], 
+    categories: catData || [] 
+  }
 }
 
 export async function generateMetadata(
@@ -44,41 +56,53 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const resolvedSearchParams = (await searchParams) || {}
   const loja = resolvedSearchParams.loja as string
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lapidado.vercel.app'
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lapidado.com.br'
   
-  const supabase = await createClient()
-  let branding = null
-  if (loja) {
-    const { data } = await supabase.from('branding').select('*').eq('slug', loja).maybeSingle()
-    branding = data
+  if (!loja) {
+    return {
+      title: 'Lapidado | Login 💎',
+      description: 'Acesse seu painel administrativo.'
+    }
   }
+
+  const supabase = await createClient()
+  
+  // 💎 NEXUS: Busca rigorosa apenas por SLUG para metadados (WhatsApp)
+  const { data: branding } = await supabase.from('branding')
+    .select('*')
+    .eq('slug', loja)
+    .maybeSingle()
 
   const storeName = branding?.business_name || branding?.store_name || 'LAPIDADO'
   const tagline = branding?.tagline || 'Mais que acessórios, a sua assinatura de estilo.'
   let logoUrl = branding?.logo_url || '/logo-app.png'
   
-  // Garantir que a URL da imagem seja absoluta para o WhatsApp
-  if (logoUrl.startsWith('/')) {
-    logoUrl = `${baseUrl}${logoUrl}`
+  // 💎 NEXUS: Garantir URL absoluta para a logo (WhatsApp exige link completo)
+  if (logoUrl && !logoUrl.startsWith('http')) {
+    logoUrl = `${baseUrl}${logoUrl.startsWith('/') ? '' : '/'}${logoUrl}`
   }
 
-  const title = `${storeName} | Vitrine Oficial 💎`
+  const title = `${storeName.toUpperCase()} | Vitrine Oficial 💎`
 
   return {
     metadataBase: new URL(baseUrl),
     title,
     description: tagline,
+    alternates: {
+      canonical: loja ? `/?loja=${loja}` : '/',
+    },
     openGraph: {
       title,
       description: tagline,
+      url: loja ? `${baseUrl}/?loja=${loja}` : baseUrl,
+      siteName: storeName,
       images: [{
         url: logoUrl,
-        width: 1200,
-        height: 630,
+        width: 800,
+        height: 800,
         alt: storeName,
       }],
       type: 'website',
-      siteName: storeName,
     },
     twitter: {
       card: 'summary_large_image',
@@ -92,6 +116,21 @@ export async function generateMetadata(
 export default async function Home({ searchParams }: Props) {
   const resolvedSearchParams = (await searchParams) || {}
   const loja = resolvedSearchParams.loja as string
+  const catalogo = resolvedSearchParams.catalogo as string
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // 🚀 REDIRECIONAMENTO INTELIGENTE (Nexus 2.0):
+  if (!loja && catalogo !== 'true') {
+    // Se está logada, vai direto para o Dashboard. Se não, vai para o Login.
+    if (user) {
+      redirect('/admin')
+    } else {
+      redirect('/login')
+    }
+  }
+
   const { branding, products, categories } = await getInitialData(loja)
 
   return (

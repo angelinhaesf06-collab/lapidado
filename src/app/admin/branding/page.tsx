@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Camera, Loader2, Palette, Phone, Gem } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { generateSlug } from '@/lib/utils'
 import Image from 'next/image'
 
 export default function BrandingPage() {
@@ -24,6 +25,7 @@ export default function BrandingPage() {
   const [warrantyTime, setWarrantyTime] = useState('') 
   const [installments, setInstallments] = useState('10')
   const [brandingId, setBrandingId] = useState<string | null>(null)
+  const [currentSlug, setCurrentSlug] = useState<string | null>(null)
 
   const supabase = createClient()
 
@@ -42,10 +44,14 @@ export default function BrandingPage() {
 
         if (data) {
           setBrandingId(data.id)
+          const storeName = data.business_name || data.store_name || ''
+          const storeSlug = data.slug || storeName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
+          
+          setCurrentSlug(storeSlug || null)
           setTagline(data.tagline || data.facebook?.split('|')[0] || '') 
           setInstallments(data.installments?.toString() || data.facebook?.split('|')[1] || '10')
           setTopBanner(data.top_banner || data.facebook?.split('|')[2] || '')
-          setBusinessName(data.business_name || data.store_name || '')
+          setBusinessName(storeName)
           setTiktok(data.tiktok || '') 
           setWarrantyTime(data.warranty_time || '') 
           setPrimaryColor(data.primary_color || '#4a322e')
@@ -150,6 +156,12 @@ export default function BrandingPage() {
       if (!response.ok) throw new Error(result.error || 'Falha ao salvar dados.')
       
       alert('IDENTIDADE ATUALIZADA COM SUCESSO! 💎')
+      
+      // 💎 NEXUS: Notifica o Layout (Pai) que os dados mudaram para atualizar o botão de WhatsApp na hora
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('brandingUpdated'));
+      }
+
       // 💎 NEXUS: Não recarregamos a página para evitar perda de estado visual.
       // O brandingId será atualizado na próxima carga ou podemos manter o estado atual.
     } catch (err: unknown) {
@@ -199,6 +211,13 @@ export default function BrandingPage() {
             <label className="text-[9px] font-black text-brand-secondary uppercase block ml-1">Nome da Loja</label>
             <input type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} className="w-full px-4 py-3 md:py-4 rounded-xl md:rounded-2xl bg-brand-secondary/5 text-sm font-bold text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all" />
           </div>
+
+          {currentSlug && (
+            <div className="p-3 rounded-xl bg-brand-primary/5 border border-brand-primary/10">
+              <p className="text-[7px] font-black text-brand-secondary/40 uppercase tracking-widest mb-1">Link Público da sua Vitrine:</p>
+              <p className="text-[10px] font-bold text-brand-primary break-all">lapidado.app/?loja={currentSlug}</p>
+            </div>
+          )}
 
           <div className="space-y-1.5">
             <label className="text-[9px] font-black text-brand-secondary uppercase block ml-1">Frase de Impacto (Slogan)</label>

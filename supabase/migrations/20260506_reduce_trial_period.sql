@@ -1,6 +1,10 @@
--- GATILHO AUTOMÁTICO PARA CRIAR BRANDING AO CADASTRAR USUÁRIO
--- Isso garante que toda nova empresária já nasça com uma marca configurada
+-- AJUSTE DE PERIODO DE TESTE (TRIAL) PARA 7 DIAS
+-- Foco em conversão rápida para tráfego pago
 
+-- 1. Atualizar o padrão da coluna para futuros registros manuais ou diretos
+ALTER TABLE branding ALTER COLUMN trial_ends_at SET DEFAULT (now() + interval '7 days');
+
+-- 2. Atualizar o gatilho principal (Redundância de segurança)
 CREATE OR REPLACE FUNCTION public.handle_new_user_branding()
 RETURNS trigger AS $$
 BEGIN
@@ -29,9 +33,3 @@ BEGIN
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Ativar o gatilho na tabela de usuários do Supabase (auth.users)
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user_branding();
