@@ -23,8 +23,8 @@ BEGIN
     '#c99090', 
     'CATÁLOGO REQUINTADO|10|BEM-VINDA AO BRILHO|Lapidado',
     '6 MESES DE GARANTIA',
-    'trial',
-    now() + interval '7 days'
+    'inactive',
+    now()
   );
   RETURN new;
 END;

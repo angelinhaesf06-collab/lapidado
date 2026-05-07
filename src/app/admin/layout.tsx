@@ -73,26 +73,12 @@ export default function AdminLayout({
   }, [loadData])
 
   const isBlocked = useMemo(() => {
-    // 🧪 TESTE TEMPORÁRIO: Forçar bloqueio para visualizar o Paywall (Voltar após teste)
-    return true; 
-
     if (loading || !subscription) return false;
 
     // ✅ Plano Ativo: Acesso liberado
     if (subscription?.status === 'active') return false;
 
-    // ⏳ Período de Teste: Verifica se ainda está no prazo
-    if (subscription?.status === 'trial' || subscription?.status === 'trialing') {
-      if (!subscription?.trial_ends_at) return false; // Se não houver data, libera por segurança
-      
-      const now = new Date();
-      const trialEnd = new Date(subscription?.trial_ends_at as string);
-      
-      // Se a data atual passou do fim do trial, bloqueia
-      return now > trialEnd;
-    }
-
-    // ❌ Outros status (expired, past_due, canceled): Bloqueia
+    // ❌ Bloqueio Total: Se não estiver ativo, bloqueia (Período de teste removido)
     return true;
   }, [subscription, loading]);
 
