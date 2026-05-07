@@ -73,6 +73,9 @@ export default function AdminLayout({
   }, [loadData])
 
   const isBlocked = useMemo(() => {
+    // 🧪 TESTE TEMPORÁRIO: Forçar bloqueio para visualizar o Paywall (Voltar após teste)
+    return true; 
+
     if (loading || !subscription) return false;
 
     // ✅ Plano Ativo: Acesso liberado
