@@ -9,6 +9,7 @@ export async function POST(req: Request) {
     const apiKey = (process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "").trim();
 
     if (!apiKey) {
+      console.error("❌ ERRO: GEMINI_API_KEY NÃO ENCONTRADA.");
       return NextResponse.json({ error: "Chave da IA não configurada." }, { status: 500 });
     }
 
@@ -52,17 +53,23 @@ export async function POST(req: Request) {
     - Proibido termos genéricos. Foque na valorização da peça.
     - CATEGORIA: Escolha uma entre [ANEL, BRINCO, COLAR, PULSEIRA, CONJUNTO, ACESSÓRIO].
     
-    RETORNE APENAS UM JSON PURO NO SEGUINTE FORMATO (SEM MARKDOWN):
+    RETORNE UM JSON PURO:
     {
       "name": "NOME DA JOIA",
       "category": "CATEGORIA",
       "description": "Texto da descrição aqui..."
     }`;
 
+    // 🚀 MODELO EXCLUSIVO: Gemini 3.1 Flash Lite
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-3.1-flash-lite-preview",
+      // Alguns modelos preview exigem que o prompt do sistema seja passado aqui ou na primeira mensagem
+    });
+
     const generationConfig = {
       temperature: 0.7, 
       topP: 0.9,
-      maxOutputTokens: 600,
+      maxOutputTokens: 800,
     };
 
     const safetySettings = [
@@ -72,22 +79,21 @@ export async function POST(req: Request) {
       { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
     ];
 
-    const imageData = image.includes(",") ? image.split(",")[1] : image;
-    const imagePart = { inlineData: { mimeType: "image/jpeg", data: imageData } };
+    // Limpeza rigorosa da imagem base64
+    let imageData = image;
+    if (image.includes(",")) {
+      imageData = image.split(",")[1];
+    }
 
-    // 🚀 MODELO ÚNICO E EXCLUSIVO: Gemini 3.1 Flash Lite
-    // Conforme solicitado: Versões 1.5 PRO e 1.5 FLASH foram COMPLETAMENTE REMOVIDAS.
-    const modelName = "gemini-3.1-flash-lite-preview";
-    
-    console.log(`Iniciando processamento exclusivo com: ${modelName}...`);
-    const model = genAI.getGenerativeModel({ model: modelName });
-    
+    console.log("🚀 Enviando para Gemini 3.1 Flash Lite...");
+
+    // Tentativa com formato de prompt mais robusto para visão
     const result = await model.generateContent({
       contents: [{ 
         role: 'user', 
         parts: [
           { text: promptText },
-          imagePart
+          { inlineData: { mimeType: "image/jpeg", data: imageData } }
         ] 
       }],
       generationConfig,
@@ -95,22 +101,32 @@ export async function POST(req: Request) {
     });
 
     const response = await result.response;
-    let aiText = response.text().trim();
+    const text = response.text();
     
+    if (!text) {
+      throw new Error("Resposta vazia da IA.");
+    }
+
+    console.log("✅ Resposta recebida da IA.");
+
+    // Parsing flexível para o JSON
+    let aiText = text.trim();
     aiText = aiText.replace(/```json/g, "").replace(/```/g, "").trim();
     const jsonMatch = aiText.match(/\{[\s\S]*\}/);
     if (jsonMatch) aiText = jsonMatch[0];
 
-    return NextResponse.json(JSON.parse(aiText));
+    const finalJson = JSON.parse(aiText);
+
+    return NextResponse.json(finalJson);
 
   } catch (err: any) {
-    console.error("ERRO NA IA (MODELO 3.1):", err.message);
+    console.error("❌ ERRO CRÍTICO NO GEMINI 3.1:", err.message);
     
-    // Fallback de segurança para evitar erro 500 no app, mas sem usar modelos 1.5
+    // Fallback apenas se o erro for real, para não travar o fluxo
     return NextResponse.json({ 
-      name: "JOIA LAPIDADO",
+      name: "PEÇA EXCLUSIVA LAPIDADO",
       category: "ACESSÓRIOS",
-      description: "Uma peça exclusiva com design atemporal e acabamento nobre."
+      description: `Erro no processamento da IA: ${err.message}. Por favor, verifique se sua chave tem acesso ao modelo 3.1 Flash Lite.`
     });
   }
 }
