@@ -79,11 +79,11 @@ export default function AdminLayout({
     if (loading || !subscription) return false;
 
     // ✅ Plano Ativo: Acesso liberado
-    if (subscription.status === 'active') return false;
+    if (subscription?.status === 'active') return false;
 
     // ⏳ Período de Teste: Verifica se ainda está no prazo
-    if (subscription.status === 'trial' || subscription.status === 'trialing') {
-      if (!subscription.trial_ends_at) return false; // Se não houver data, libera por segurança
+    if (subscription?.status === 'trial' || subscription?.status === 'trialing') {
+      if (!subscription?.trial_ends_at) return false; // Se não houver data, libera por segurança
       
       const now = new Date();
       const trialEnd = new Date(subscription.trial_ends_at);
