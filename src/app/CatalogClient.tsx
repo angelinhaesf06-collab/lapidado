@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -43,11 +43,32 @@ export default function CatalogClient({
   const [branding, setBranding] = useState<Branding | null>(initialBranding || null)
   const [loading, setLoading] = useState(!initialProducts || initialProducts.length === 0)
   const [activeCategory, setActiveCategory] = useState('Todos')
+  const productsTopRef = useRef<HTMLDivElement>(null)
   
   const storeSlug = searchParams.get('loja')
   const isPublicCatalog = searchParams.get('catalogo') === 'true' || !!storeSlug
   const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
+
+  const handleCategoryChange = (cat: string) => {
+    setActiveCategory(cat);
+    const url = new URL(window.location.href);
+    if (cat === 'Todos') url.searchParams.delete('category');
+    else url.searchParams.set('category', cat);
+    window.history.pushState({}, '', url);
+
+    // ✨ Scroll Suave para o topo da lista de produtos
+    if (productsTopRef.current) {
+      const headerOffset = 180; // Compensação para o cabeçalho fixo
+      const elementPosition = productsTopRef.current.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  }
 
   useEffect(() => {
     async function loadBrandingData() {
@@ -177,13 +198,7 @@ export default function CatalogClient({
             {categoryNames.map((cat) => (
               <button 
                 key={cat}
-                onClick={() => {
-                  setActiveCategory(cat);
-                  const url = new URL(window.location.href);
-                  if (cat === 'Todos') url.searchParams.delete('category');
-                  else url.searchParams.set('category', cat);
-                  window.history.pushState({}, '', url);
-                }}
+                onClick={() => handleCategoryChange(cat)}
                 className={`px-3 py-1.5 md:px-4 md:py-2 transition-all duration-300 font-black text-[8px] md:text-[10px] tracking-[0.1em] md:tracking-[0.2em] uppercase rounded-full border ${
                   activeCategory === cat || (cat === 'Todos' && !activeCategory)
                   ? "bg-brand-primary text-white border-brand-primary shadow-lg scale-105" 
@@ -205,7 +220,7 @@ export default function CatalogClient({
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 py-8 md:py-16 w-full text-center">
+      <div ref={productsTopRef} className="max-w-7xl mx-auto px-4 py-8 md:py-16 w-full text-center">
         <div className="mb-8 md:mb-16">
           <h2 className="text-lg md:text-2xl font-light tracking-[0.4em] uppercase text-brand-primary mb-4 animate-in slide-in-from-bottom-2 duration-700">
             {activeCategory === 'Todos' || !activeCategory ? `${branding?.store_name || 'Coleção'} Exclusiva` : activeCategory}

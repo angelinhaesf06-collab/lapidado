@@ -87,10 +87,14 @@ export async function POST(req: Request) {
     TOM DE VOZ: ${config.tone}
     PALAVRAS-CHAVE: ${config.keywords}
 
+    ESTRUTURA DA DESCRIÇÃO:
+    1. Um parágrafo curto (máximo 2 frases) de introdução emocional e envolvente.
+    2. Detalhes técnicos em Bullet Points (cite o banho nobre, acabamento e pedrarias se houver).
+    3. Uma sugestão de "Como usar".
+
     REGRAS:
     - Nomes: Curtos e impactantes (ex: 'Brinco Aura', 'Colar Infinito').
-    - Detalhes Técnicos: Observe se a peça é dourada (Ouro) ou prateada (Ródio) e cite o brilho das pedras/zircônias.
-    - Texto: Máximo 3 frases curtas e envolventes.
+    - Proibido termos genéricos. Foque na valorização da peça.
     - JSON OUTPUT: {"name": "NOME", "category": "CATEGORIA", "description": "CONTEÚDO NO ESTILO ${selectedStyle.toUpperCase()}"}`;
 
     const generationConfig = {
@@ -106,32 +110,23 @@ export async function POST(req: Request) {
 
     let result;
     try {
-      // 🚀 MOTOR 3.1 FLASH LITE: O motor mais moderno e eficiente (2026)
+      // 🚀 MOTOR 3.1 FLASH LITE: A versão mais rápida e moderna disponível
       console.log("Tentando Gemini 3.1 Flash Lite para Descrição...");
       const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite-preview" });
-      result = await tryGenerate(model, {
+      
+      result = await model.generateContent({
         contents: [{ role: 'user', parts: [{ text: systemInstruction }, imagePart] }],
         generationConfig,
         safetySettings
       });
     } catch (e: any) {
-      console.error("Gemini 3.1 Flash Lite falhou, tentando Flash Latest:", e.message);
-      try {
-        const modelFlash = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
-        result = await tryGenerate(modelFlash, {
-          contents: [{ role: 'user', parts: [{ text: systemInstruction }, imagePart] }],
-          generationConfig,
-          safetySettings
-        });
-      } catch (e2: any) {
-        console.error("Gemini Flash falhou, tentando backup Pro:", e2.message);
-        const modelBackup = genAI.getGenerativeModel({ model: "gemini-pro-latest" });
-        result = await tryGenerate(modelBackup, {
-          contents: [{ role: 'user', parts: [{ text: systemInstruction }, imagePart] }],
-          generationConfig,
-          safetySettings
-        });
-      }
+      console.error("Gemini 3.1 Flash Lite falhou, tentando Flash 1.5:", e.message);
+      const modelFlash = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      result = await modelFlash.generateContent({
+        contents: [{ role: 'user', parts: [{ text: systemInstruction }, imagePart] }],
+        generationConfig,
+        safetySettings
+      });
     }
 
     const response = await result.response;

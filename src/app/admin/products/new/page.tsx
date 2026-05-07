@@ -111,8 +111,23 @@ export default function NewProductPage() {
         body: JSON.stringify({ image: compressed, style: aiStyle })
       })
       const data = await response.json()
+      
       if (data.name) setName(String(data.name))
-      if (data.description) setDescription(String(data.description))
+      
+      if (data.description) {
+        // ✨ Efeito de Streaming (Typing Effect) para melhorar a percepção de velocidade
+        const fullText = String(data.description)
+        setDescription('') // Limpa antes de começar
+        let currentText = ''
+        const words = fullText.split(' ')
+        
+        for (let i = 0; i < words.length; i++) {
+          currentText += words[i] + ' '
+          setDescription(currentText)
+          await new Promise(res => setTimeout(res, 30)) // Velocidade da "digitação"
+        }
+      }
+
       if (data.category) {
         const aiCat = String(data.category).toUpperCase()
         const found = categories.find(c => c.name.toUpperCase().includes(aiCat) || aiCat.includes(c.name.toUpperCase()))
