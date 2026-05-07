@@ -101,7 +101,6 @@ export default function LoginPage() {
             <label className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.3em] ml-2 block opacity-80">E-mail de Acesso</label>
             <input 
               type="email" 
-              required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-6 md:px-8 py-4 md:py-5 rounded-[24px] md:rounded-[28px] bg-[#fffaf9]/50 border-2 border-transparent focus:border-rose-100 focus:bg-white outline-none transition-all text-[#4a322e] text-sm font-semibold placeholder:text-stone-300 shadow-inner"
@@ -113,7 +112,6 @@ export default function LoginPage() {
             <label className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.3em] ml-2 block opacity-80">Senha Mestra</label>
             <input 
               type="password" 
-              required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-6 md:px-8 py-4 md:py-5 rounded-[24px] md:rounded-[28px] bg-[#fffaf9]/50 border-2 border-transparent focus:border-rose-100 focus:bg-white outline-none transition-all text-[#4a322e] text-sm font-semibold placeholder:text-stone-300 shadow-inner"
@@ -123,6 +121,7 @@ export default function LoginPage() {
 
           {/* Botão de Ação Sólido */}
           <button 
+            type="submit"
             disabled={loading}
             className="w-full bg-[#4a322e] text-white py-5 md:py-6 rounded-[28px] md:rounded-[32px] text-[10px] md:text-xs font-black uppercase tracking-[0.2em] md:tracking-[0.3em] shadow-2xl shadow-rose-200/50 hover:bg-[#c99090] hover:shadow-rose-300/40 transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center px-4"
           >
