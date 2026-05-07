@@ -9,7 +9,6 @@ export async function POST(req: Request) {
     const apiKey = (process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "").trim();
 
     if (!apiKey) {
-      console.error("❌ ERRO: GEMINI_API_KEY NÃO ENCONTRADA.");
       return NextResponse.json({ error: "Chave da IA não configurada." }, { status: 500 });
     }
 
@@ -57,7 +56,7 @@ export async function POST(req: Request) {
     const generationConfig = {
       temperature: 0.7, 
       topP: 0.9,
-      maxOutputTokens: 400,
+      maxOutputTokens: 500,
       responseMimeType: "application/json",
     };
 
@@ -72,41 +71,44 @@ export async function POST(req: Request) {
     const imagePart = { inlineData: { mimeType: "image/jpeg", data: imageData } };
 
     let result;
-    try {
-      // 🚀 MOTOR 1: Tentar o modelo solicitado (3.1 Flash Lite)
-      console.log("Tentando Gemini 3.1 Flash Lite...");
-      const model = genAI.getGenerativeModel({ 
-        model: "gemini-3.1-flash-lite-preview",
-        systemInstruction: { role: 'system', parts: [{ text: systemText }] }
-      });
-      result = await model.generateContent({
-        contents: [{ role: 'user', parts: [imagePart] }],
-        generationConfig,
-        safetySettings
-      });
-    } catch (e1: any) {
-      console.warn("⚠️ Gemini 3.1 falhou, tentando 1.5 Flash (Estável)...", e1.message);
+    
+    // 🚀 MOTOR DE COMPATIBILIDADE MÁXIMA
+    // Tentamos primeiro o Gemini 1.5 Flash (mais comum), depois o Gemini Pro Vision (legado)
+    const modelsToTry = ["gemini-1.5-flash-latest", "gemini-1.5-flash", "gemini-pro-vision"];
+    let lastError = "";
+
+    for (const modelName of modelsToTry) {
       try {
-        // 🚀 MOTOR 2: Modelo Estável 1.5 Flash
-        const modelStable = genAI.getGenerativeModel({ 
-          model: "gemini-1.5-flash",
-          systemInstruction: { role: 'system', parts: [{ text: systemText }] }
-        });
-        result = await modelStable.generateContent({
-          contents: [{ role: 'user', parts: [imagePart] }],
+        console.log(`Tentando modelo: ${modelName}...`);
+        const model = genAI.getGenerativeModel({ model: modelName });
+        
+        // Enviamos o prompt junto com a imagem para máxima compatibilidade com versões antigas do SDK/Modelos
+        result = await model.generateContent({
+          contents: [{ 
+            role: 'user', 
+            parts: [
+              { text: systemText },
+              imagePart
+            ] 
+          }],
           generationConfig,
           safetySettings
         });
-      } catch (e2: any) {
-        console.error("❌ ERRO CRÍTICO NA IA:", e2.message);
-        throw e2;
+        
+        if (result) break;
+      } catch (e: any) {
+        lastError = e.message;
+        console.warn(`Modelo ${modelName} falhou:`, e.message);
       }
+    }
+
+    if (!result) {
+       throw new Error(`Nenhum modelo compatível com sua chave: ${lastError}`);
     }
 
     const response = await result.response;
     let aiText = response.text().trim();
     
-    // Limpeza de Markdown
     aiText = aiText.replace(/```json/g, "").replace(/```/g, "").trim();
     const jsonMatch = aiText.match(/\{[\s\S]*\}/);
     if (jsonMatch) aiText = jsonMatch[0];
@@ -114,9 +116,9 @@ export async function POST(req: Request) {
     return NextResponse.json(JSON.parse(aiText));
 
   } catch (err: any) {
-    console.error("ERRO FINAL NA ROTA IA:", err.message);
+    console.error("ERRO CRÍTICO NA IA:", err.message);
     return NextResponse.json({ 
-      error: "Falha ao processar imagem.",
+      error: "Sua chave de API não suporta este recurso ou o serviço está instável.",
       details: err.message 
     }, { status: 500 });
   }
