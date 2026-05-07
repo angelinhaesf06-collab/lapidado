@@ -58,11 +58,14 @@ export default function CatalogClient({
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       url.searchParams.set('category', cat);
-      // ✨ Scroll Suave para o topo da lista de produtos
+      // ✨ Scroll Suave Inteligente
       if (productsTopRef.current) {
-        const headerOffset = 220; // Aumentado para garantir visibilidade do título sob o cabeçalho fixo
+        // Busca a altura real do cabeçalho fixo no momento do clique
+        const headerElement = document.querySelector('.sticky');
+        const headerHeight = headerElement ? headerElement.clientHeight : 200;
+        
         const elementPosition = productsTopRef.current.getBoundingClientRect().top;
-        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+        const offsetPosition = elementPosition + window.pageYOffset - (headerHeight + 20); // Altura do header + margem de respiro
 
         window.scrollTo({
           top: offsetPosition,
