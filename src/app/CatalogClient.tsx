@@ -102,7 +102,7 @@ export default function CatalogClient({
               .gt('stock_quantity', 0)
               .order('display_order', { ascending: true, nullsFirst: true })
               .order('created_at', { ascending: false })
-              .limit(100)
+              .limit(20) // ⚡ REDUZIDO PARA CARREGAR MAIS RÁPIDO
           ])
 
           if (catsRes.data) setDbCategories(catsRes.data)
