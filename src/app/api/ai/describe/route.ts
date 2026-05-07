@@ -105,10 +105,28 @@ export async function POST(req: Request) {
 
   } catch (err: any) {
     console.error("❌ ERRO NO GEMINI 3.1:", err.message);
-    return NextResponse.json({ 
-      name: "PEÇA EXCLUSIVA LAPIDADO",
-      category: "ACESSÓRIOS",
-      description: "Uma joia que combina design contemporâneo e o brilho inesquecível do nosso acervo."
-    });
+    
+    // 💎 FALLBACKS PERSONALIZADOS POR ESTILO
+    const fallbacks = {
+      luxo: {
+        name: "PEÇA EXCLUSIVA LAPIDADO",
+        category: "ACESSÓRIOS",
+        description: "Uma joia que combina design contemporâneo, brilho inesquecível e a sofisticação atemporal do nosso acervo."
+      },
+      venda: {
+        name: "DESTAQUE DA COLEÇÃO",
+        category: "ACESSÓRIOS",
+        description: "Peça indispensável que eleva qualquer look. Acabamento premium com brilho intenso para mulheres que não abrem mão do poder."
+      },
+      simples: {
+        name: "JOIA ESSENCIAL",
+        category: "ACESSÓRIOS",
+        description: "Design clean e versátil, perfeito para o dia a dia. Alta durabilidade com banho nobre e acabamento impecável."
+      }
+    };
+
+    const selectedFallback = fallbacks[selectedStyle as keyof typeof fallbacks] || fallbacks.luxo;
+
+    return NextResponse.json(selectedFallback);
   }
 }
