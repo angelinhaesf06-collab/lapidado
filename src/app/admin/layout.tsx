@@ -75,10 +75,16 @@ export default function AdminLayout({
   const isBlocked = useMemo(() => {
     if (loading || !subscription) return false;
 
-    // ✅ Plano Ativo: Acesso liberado
+    // 📱 DETECÇÃO DE PLATAFORMA: Liberação para Teste Fechado do Google
+    const isAndroidApp = typeof window !== 'undefined' && (window as any).Capacitor;
+    
+    // ✅ Se estiver no App Android, libera o acesso para os testadores do Google
+    if (isAndroidApp) return false;
+
+    // ✅ Plano Ativo: Acesso liberado em qualquer plataforma
     if (subscription?.status === 'active') return false;
 
-    // ❌ Bloqueio Total: Se não estiver ativo, bloqueia (Período de teste removido)
+    // ❌ Bloqueio Total para WEB (Tráfego Pago): Se não estiver ativo, bloqueia
     return true;
   }, [subscription, loading]);
 
