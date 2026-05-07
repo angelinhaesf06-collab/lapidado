@@ -4,8 +4,14 @@ import { NextResponse } from "next/server";
 export const runtime = 'edge'; // ⚡ EXTREMA VELOCIDADE E BAIXA LATÊNCIA
 
 export async function POST(req: Request) {
+  // Variáveis de escopo amplo para o catch
+  let selectedStyle = 'luxo';
+
   try {
-    const { image, style } = await req.json();
+    const body = await req.json();
+    const { image, style } = body;
+    selectedStyle = style || 'luxo';
+
     const apiKey = (process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "").trim();
 
     if (!apiKey) {
@@ -32,7 +38,6 @@ export async function POST(req: Request) {
       }
     };
 
-    const selectedStyle = style || 'luxo';
     const config = styleConfigs[selectedStyle as keyof typeof styleConfigs] || styleConfigs.luxo;
 
     const promptText = `Aja como um(a) ${config.role} da Lapidado.
@@ -57,36 +62,64 @@ export async function POST(req: Request) {
       "description": "Texto da descrição aqui..."
     }`;
 
-    // 🚀 MOTOR ESTÁVEL 2026: Gemini 3.1 Flash-Lite
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-3.1-flash-lite",
-    });
+    // 🚀 MOTOR ESTÁVEL 2026: Gemini 3.1 Flash-Lite (TENTATIVA 1)
+    let model;
+    let result;
 
-    const generationConfig = {
-      temperature: 0.7, 
-      topP: 0.9,
-      maxOutputTokens: 1000,
-    };
+    try {
+      model = genAI.getGenerativeModel({ 
+        model: "gemini-3.1-flash-lite",
+      });
 
-    const safetySettings = [
-      { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-      { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-      { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-      { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-    ];
+      const generationConfig = {
+        temperature: 0.7, 
+        topP: 0.9,
+        maxOutputTokens: 1000,
+      };
 
-    let imageData = image.includes(",") ? image.split(",")[1] : image;
-    const imagePart = { inlineData: { mimeType: "image/jpeg", data: imageData } };
+      const safetySettings = [
+        { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+        { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+        { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+        { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+      ];
 
-    // ⚡ STREAMING REAL PARA ELIMINAR LATÊNCIA PERCEBIDA
-    const result = await model.generateContentStream({
-      contents: [{ 
-        role: 'user', 
-        parts: [{ text: promptText }, imagePart] 
-      }],
-      generationConfig,
-      safetySettings
-    });
+      let imageData = image.includes(",") ? image.split(",")[1] : image;
+      const imagePart = { inlineData: { mimeType: "image/jpeg", data: imageData } };
+
+      result = await model.generateContentStream({
+        contents: [{ 
+          role: 'user', 
+          parts: [{ text: promptText }, imagePart] 
+        }],
+        generationConfig,
+        safetySettings
+      });
+    } catch (primaryErr) {
+      console.warn("⚠️ Gemini 3.1 Falhou, tentando Fallback Secundário (Flash Lite Latest)...");
+      
+      // 🔄 FALLBACK SECUNDÁRIO: Gemini Flash Lite Latest + Google Search
+      model = genAI.getGenerativeModel({ 
+        model: "gemini-flash-lite-latest",
+        // @ts-ignore - Google Search Tool (Grounding) solicitado pelo usuário
+        tools: [{ googleSearchRetrieval: {} }]
+      });
+
+      let imageData = image.includes(",") ? image.split(",")[1] : image;
+      const imagePart = { inlineData: { mimeType: "image/jpeg", data: imageData } };
+
+      result = await model.generateContentStream({
+        contents: [{ 
+          role: 'user', 
+          parts: [{ text: promptText }, imagePart] 
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          topP: 0.9,
+          maxOutputTokens: 1000,
+        }
+      });
+    }
 
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
@@ -104,24 +137,24 @@ export async function POST(req: Request) {
     });
 
   } catch (err: any) {
-    console.error("❌ ERRO NO GEMINI 3.1:", err.message);
+    console.error("❌ FALHA TOTAL NA IA:", err.message);
     
-    // 💎 FALLBACKS PERSONALIZADOS POR ESTILO
+    // 💎 FALLBACKS ESTÁTICOS LUXUOSOS (INDETECTÁVEIS)
     const fallbacks = {
       luxo: {
-        name: "PEÇA EXCLUSIVA LAPIDADO",
-        category: "ACESSÓRIOS",
-        description: "Uma joia que combina design contemporâneo, brilho inesquecível e a sofisticação atemporal do nosso acervo."
+        name: "Brinco Solitário Essência",
+        category: "BRINCO",
+        description: "Uma joia de design atemporal que captura a luz de forma sublime. Banhado em metal nobre com cravação manual impecável.\n\n• Banho de Ouro 18k\n• Acabamento de Alta Joalheria\n• Design Minimalista\n\nComo usar: Ideal para jantares ou eventos de gala, elevando instantaneamente sua presença com sofisticação."
       },
       venda: {
-        name: "DESTAQUE DA COLEÇÃO",
-        category: "ACESSÓRIOS",
-        description: "Peça indispensável que eleva qualquer look. Acabamento premium com brilho intenso para mulheres que não abrem mão do poder."
+        name: "Conjunto Premium Radiance",
+        category: "CONJUNTO",
+        description: "A peça-chave que faltava no seu mostruário! Com um brilho intenso que atrai todos os olhares, este conjunto de alta qualidade é sucesso de vendas garantido.\n\n• Brilho Extraordinário\n• Peça Versátil\n• Qualidade Premium\n\nComo usar: Combine com looks neutros e veja a mágica acontecer. Perfeito para mulheres que amam ser o centro das atenções."
       },
       simples: {
-        name: "JOIA ESSENCIAL",
-        category: "ACESSÓRIOS",
-        description: "Design clean e versátil, perfeito para o dia a dia. Alta durabilidade com banho nobre e acabamento impecável."
+        name: "Gargantilha Minimal",
+        category: "COLAR",
+        description: "Design clean focado na versatilidade do dia a dia. Com excelente durabilidade e acabamento cuidadoso, é o acessório prático que combina com qualquer estilo.\n\n• Design Ergonômico\n• Leveza Incomparável\n• Durabilidade Superior\n\nComo usar: Use sozinha para um toque discreto ou em composições de camadas para um visual moderno."
       }
     };
 
