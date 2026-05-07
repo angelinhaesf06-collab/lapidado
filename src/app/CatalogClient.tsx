@@ -53,21 +53,24 @@ export default function CatalogClient({
   const handleCategoryChange = (cat: string) => {
     setActiveCategory(cat);
     const url = new URL(window.location.href);
-    if (cat === 'Todos') url.searchParams.delete('category');
-    else url.searchParams.set('category', cat);
-    window.history.pushState({}, '', url);
+    if (cat === 'Todos') {
+      url.searchParams.delete('category');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      url.searchParams.set('category', cat);
+      // ✨ Scroll Suave para o topo da lista de produtos
+      if (productsTopRef.current) {
+        const headerOffset = 150; // Compensação para o cabeçalho fixo
+        const elementPosition = productsTopRef.current.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
 
-    // ✨ Scroll Suave para o topo da lista de produtos
-    if (productsTopRef.current) {
-      const headerOffset = 180; // Compensação para o cabeçalho fixo
-      const elementPosition = productsTopRef.current.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      });
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }
     }
+    window.history.pushState({}, '', url);
   }
 
   useEffect(() => {
