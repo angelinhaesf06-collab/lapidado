@@ -9,6 +9,7 @@ export async function POST(req: Request) {
     const apiKey = (process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "").trim();
 
     if (!apiKey) {
+      console.error("❌ ERRO: GEMINI_API_KEY NÃO ENCONTRADA.");
       return NextResponse.json({ error: "Chave da IA não configurada." }, { status: 500 });
     }
 
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
     const selectedStyle = style || 'luxo';
     const config = styleConfigs[selectedStyle as keyof typeof styleConfigs] || styleConfigs.luxo;
 
-    const systemInstruction = `Você é um(a) ${config.role} da Lapidado.
+    const systemText = `Você é um(a) ${config.role} da Lapidado.
     Sua missão é criar nomes e descrições para joias com foco em QUIET LUXURY.
     
     TOM DE VOZ: ${config.tone}
@@ -56,7 +57,7 @@ export async function POST(req: Request) {
     const generationConfig = {
       temperature: 0.7, 
       topP: 0.9,
-      maxOutputTokens: 300, // ⚡ REDUZIDO PARA MÁXIMA VELOCIDADE
+      maxOutputTokens: 400,
       responseMimeType: "application/json",
     };
 
@@ -67,36 +68,56 @@ export async function POST(req: Request) {
       { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
     ];
 
-    // 🚀 MOTOR 3.1 FLASH LITE: Uso de systemInstruction nativa para maior rapidez
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-3.1-flash-lite-preview",
-      systemInstruction: systemInstruction 
-    });
-
     const imageData = image.includes(",") ? image.split(",")[1] : image;
-    
-    const result = await model.generateContent({
-      contents: [{ 
-        role: 'user', 
-        parts: [
-          { inlineData: { mimeType: "image/jpeg", data: imageData } }
-        ] 
-      }],
-      generationConfig,
-      safetySettings
-    });
+    const imagePart = { inlineData: { mimeType: "image/jpeg", data: imageData } };
+
+    let result;
+    try {
+      // 🚀 MOTOR 1: Tentar o modelo solicitado (3.1 Flash Lite)
+      console.log("Tentando Gemini 3.1 Flash Lite...");
+      const model = genAI.getGenerativeModel({ 
+        model: "gemini-3.1-flash-lite-preview",
+        systemInstruction: { role: 'system', parts: [{ text: systemText }] }
+      });
+      result = await model.generateContent({
+        contents: [{ role: 'user', parts: [imagePart] }],
+        generationConfig,
+        safetySettings
+      });
+    } catch (e1: any) {
+      console.warn("⚠️ Gemini 3.1 falhou, tentando 1.5 Flash (Estável)...", e1.message);
+      try {
+        // 🚀 MOTOR 2: Modelo Estável 1.5 Flash
+        const modelStable = genAI.getGenerativeModel({ 
+          model: "gemini-1.5-flash",
+          systemInstruction: { role: 'system', parts: [{ text: systemText }] }
+        });
+        result = await modelStable.generateContent({
+          contents: [{ role: 'user', parts: [imagePart] }],
+          generationConfig,
+          safetySettings
+        });
+      } catch (e2: any) {
+        console.error("❌ ERRO CRÍTICO NA IA:", e2.message);
+        throw e2;
+      }
+    }
 
     const response = await result.response;
     let aiText = response.text().trim();
-    aiText = aiText.replace(/```json/g, "").replace(/```/g, "").trim();
     
+    // Limpeza de Markdown
+    aiText = aiText.replace(/```json/g, "").replace(/```/g, "").trim();
     const jsonMatch = aiText.match(/\{[\s\S]*\}/);
     if (jsonMatch) aiText = jsonMatch[0];
 
     return NextResponse.json(JSON.parse(aiText));
 
-  } catch (err) {
-    console.error("Erro na IA:", err);
-    return NextResponse.json({ error: "Falha ao processar imagem." }, { status: 500 });
+  } catch (err: any) {
+    console.error("ERRO FINAL NA ROTA IA:", err.message);
+    return NextResponse.json({ 
+      error: "Falha ao processar imagem.",
+      details: err.message 
+    }, { status: 500 });
   }
 }
