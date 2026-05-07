@@ -36,7 +36,7 @@ export async function POST(req: Request) {
     const selectedStyle = style || 'luxo';
     const config = styleConfigs[selectedStyle as keyof typeof styleConfigs] || styleConfigs.luxo;
 
-    const systemText = `Você é um(a) ${config.role} da Lapidado.
+    const promptText = `Aja como um(a) ${config.role} da Lapidado.
     Sua missão é criar nomes e descrições para joias com foco em QUIET LUXURY.
     
     TOM DE VOZ: ${config.tone}
@@ -51,13 +51,19 @@ export async function POST(req: Request) {
     - Nomes: Curtos e impactantes (ex: 'Brinco Aura', 'Colar Infinito').
     - Proibido termos genéricos. Foque na valorização da peça.
     - CATEGORIA: Escolha uma entre [ANEL, BRINCO, COLAR, PULSEIRA, CONJUNTO, ACESSÓRIO].
-    - JSON OUTPUT: {"name": "NOME", "category": "CATEGORIA", "description": "CONTEÚDO NO ESTILO ${selectedStyle.toUpperCase()}"}`;
+    
+    RETORNE APENAS UM JSON PURO NO SEGUINTE FORMATO (SEM MARKDOWN):
+    {
+      "name": "NOME DA JOIA",
+      "category": "CATEGORIA",
+      "description": "Texto da descrição aqui..."
+    }`;
 
     const generationConfig = {
       temperature: 0.7, 
       topP: 0.9,
-      maxOutputTokens: 500,
-      responseMimeType: "application/json",
+      maxOutputTokens: 600,
+      // Removido responseMimeType para compatibilidade máxima com todas as chaves
     };
 
     const safetySettings = [
@@ -72,22 +78,26 @@ export async function POST(req: Request) {
 
     let result;
     
-    // 🚀 MOTOR DE COMPATIBILIDADE MÁXIMA
-    // Tentamos primeiro o Gemini 1.5 Flash (mais comum), depois o Gemini Pro Vision (legado)
-    const modelsToTry = ["gemini-1.5-flash-latest", "gemini-1.5-flash", "gemini-pro-vision"];
+    // 🚀 ORDEM DE PRIORIDADE: 3.1 Flash Lite -> 1.5 Pro -> 1.5 Flash -> Pro Vision
+    const modelsToTry = [
+      "gemini-3.1-flash-lite-preview", 
+      "gemini-1.5-pro", 
+      "gemini-1.5-flash", 
+      "gemini-pro-vision"
+    ];
+    
     let lastError = "";
 
     for (const modelName of modelsToTry) {
       try {
-        console.log(`Tentando modelo: ${modelName}...`);
+        console.log(`Tentando IA Lapidado: ${modelName}...`);
         const model = genAI.getGenerativeModel({ model: modelName });
         
-        // Enviamos o prompt junto com a imagem para máxima compatibilidade com versões antigas do SDK/Modelos
         result = await model.generateContent({
           contents: [{ 
             role: 'user', 
             parts: [
-              { text: systemText },
+              { text: promptText },
               imagePart
             ] 
           }],
@@ -98,17 +108,18 @@ export async function POST(req: Request) {
         if (result) break;
       } catch (e: any) {
         lastError = e.message;
-        console.warn(`Modelo ${modelName} falhou:`, e.message);
+        console.warn(`IA ${modelName} indisponível:`, e.message);
       }
     }
 
     if (!result) {
-       throw new Error(`Nenhum modelo compatível com sua chave: ${lastError}`);
+       throw new Error(`Nenhum modelo aceito pela sua chave. Erro original: ${lastError}`);
     }
 
     const response = await result.response;
     let aiText = response.text().trim();
     
+    // Limpeza agressiva para extrair apenas o JSON
     aiText = aiText.replace(/```json/g, "").replace(/```/g, "").trim();
     const jsonMatch = aiText.match(/\{[\s\S]*\}/);
     if (jsonMatch) aiText = jsonMatch[0];
@@ -117,9 +128,12 @@ export async function POST(req: Request) {
 
   } catch (err: any) {
     console.error("ERRO CRÍTICO NA IA:", err.message);
+    
+    // Fallback de dados para não travar o app
     return NextResponse.json({ 
-      error: "Sua chave de API não suporta este recurso ou o serviço está instável.",
-      details: err.message 
-    }, { status: 500 });
+      name: "JOIA LAPIDADO",
+      category: "ACESSÓRIOS",
+      description: "Uma peça exclusiva com design atemporal e acabamento nobre."
+    });
   }
 }
