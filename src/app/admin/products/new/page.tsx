@@ -103,6 +103,9 @@ export default function NewProductPage() {
     if (images.length === 0 || aiLoading) return
     setAiLoading(true)
     setAiError(null)
+    setName('')
+    setDescription('')
+    
     try {
       const compressed = await compressImage(images[0].preview)
       const response = await fetch('/api/ai/describe', {
@@ -110,30 +113,43 @@ export default function NewProductPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image: compressed, style: aiStyle })
       })
-      const data = await response.json()
+
+      if (!response.body) throw new Error("Sem stream")
       
-      if (data.name) setName(String(data.name))
-      
-      if (data.description) {
-        // ✨ Efeito de Streaming (Typing Effect) para melhorar a percepção de velocidade
-        const fullText = String(data.description)
-        setDescription('') // Limpa antes de começar
-        let currentText = ''
-        const words = fullText.split(' ')
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let fullText = ""
+
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) break
         
-        for (let i = 0; i < words.length; i++) {
-          currentText += words[i] + ' '
-          setDescription(currentText)
-          await new Promise(res => setTimeout(res, 30)) // Velocidade da "digitação"
+        const chunk = decoder.decode(value)
+        fullText += chunk
+        
+        // 💎 Extração Inteligente Progressiva
+        // Tenta pegar o nome se já existir no JSON parcial
+        const nameMatch = fullText.match(/"name":\s*"([^"]*)"?/)
+        if (nameMatch && nameMatch[1]) setName(nameMatch[1].toUpperCase())
+
+        // Tenta pegar a descrição se já existir no JSON parcial
+        const descMatch = fullText.match(/"description":\s*"([^"]*)"?/)
+        if (descMatch && descMatch[1]) {
+          // Remove escapes de aspas e novas linhas para exibição limpa
+          const cleanDesc = descMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"')
+          setDescription(cleanDesc)
+        }
+
+        // Tenta pegar a categoria
+        const catMatch = fullText.match(/"category":\s*"([^"]*)"?/)
+        if (catMatch && catMatch[1]) {
+          const aiCat = catMatch[1].toUpperCase()
+          const found = categories.find(c => c.name.toUpperCase().includes(aiCat) || aiCat.includes(c.name.toUpperCase()))
+          if (found) setCategory(found.id)
         }
       }
-
-      if (data.category) {
-        const aiCat = String(data.category).toUpperCase()
-        const found = categories.find(c => c.name.toUpperCase().includes(aiCat) || aiCat.includes(c.name.toUpperCase()))
-        if (found) setCategory(found.id)
-      }
-    } catch {
+    } catch (err) {
+      console.error("Erro no stream:", err)
       setAiError("IA INDISPONÍVEL. CONTINUE MANUALMENTE. ✨")
     } finally {
       setAiLoading(false)

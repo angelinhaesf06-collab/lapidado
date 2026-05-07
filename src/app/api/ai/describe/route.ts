@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
-export const runtime = 'nodejs';
+export const runtime = 'edge'; // ⚡ EXTREMA VELOCIDADE E BAIXA LATÊNCIA
 
 export async function POST(req: Request) {
   try {
@@ -9,13 +9,11 @@ export async function POST(req: Request) {
     const apiKey = (process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "").trim();
 
     if (!apiKey) {
-      console.error("❌ ERRO: GEMINI_API_KEY NÃO ENCONTRADA.");
       return NextResponse.json({ error: "Chave da IA não configurada." }, { status: 500 });
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
     
-    // 💎 PROMPTS ESPECIALIZADOS (Quiet Luxury)
     const styleConfigs = {
       luxo: {
         role: "Mestre joalheira e copywriter de alto luxo.",
@@ -50,7 +48,6 @@ export async function POST(req: Request) {
 
     REGRAS:
     - Nomes: Curtos e impactantes (ex: 'Brinco Aura', 'Colar Infinito').
-    - Proibido termos genéricos. Foque na valorização da peça.
     - CATEGORIA: Escolha uma entre [ANEL, BRINCO, COLAR, PULSEIRA, CONJUNTO, ACESSÓRIO].
     
     RETORNE UM JSON PURO:
@@ -60,16 +57,15 @@ export async function POST(req: Request) {
       "description": "Texto da descrição aqui..."
     }`;
 
-    // 🚀 MODELO EXCLUSIVO: Gemini 3.1 Flash Lite
+    // 🚀 MOTOR ESTÁVEL 2026: Gemini 3.1 Flash-Lite
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-3.1-flash-lite-preview",
-      // Alguns modelos preview exigem que o prompt do sistema seja passado aqui ou na primeira mensagem
+      model: "gemini-3.1-flash-lite",
     });
 
     const generationConfig = {
       temperature: 0.7, 
       topP: 0.9,
-      maxOutputTokens: 800,
+      maxOutputTokens: 1000,
     };
 
     const safetySettings = [
@@ -79,54 +75,40 @@ export async function POST(req: Request) {
       { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
     ];
 
-    // Limpeza rigorosa da imagem base64
-    let imageData = image;
-    if (image.includes(",")) {
-      imageData = image.split(",")[1];
-    }
+    let imageData = image.includes(",") ? image.split(",")[1] : image;
+    const imagePart = { inlineData: { mimeType: "image/jpeg", data: imageData } };
 
-    console.log("🚀 Enviando para Gemini 3.1 Flash Lite...");
-
-    // Tentativa com formato de prompt mais robusto para visão
-    const result = await model.generateContent({
+    // ⚡ STREAMING REAL PARA ELIMINAR LATÊNCIA PERCEBIDA
+    const result = await model.generateContentStream({
       contents: [{ 
         role: 'user', 
-        parts: [
-          { text: promptText },
-          { inlineData: { mimeType: "image/jpeg", data: imageData } }
-        ] 
+        parts: [{ text: promptText }, imagePart] 
       }],
       generationConfig,
       safetySettings
     });
 
-    const response = await result.response;
-    const text = response.text();
-    
-    if (!text) {
-      throw new Error("Resposta vazia da IA.");
-    }
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        for await (const chunk of result.stream) {
+          const text = chunk.text();
+          controller.enqueue(encoder.encode(text));
+        }
+        controller.close();
+      },
+    });
 
-    console.log("✅ Resposta recebida da IA.");
-
-    // Parsing flexível para o JSON
-    let aiText = text.trim();
-    aiText = aiText.replace(/```json/g, "").replace(/```/g, "").trim();
-    const jsonMatch = aiText.match(/\{[\s\S]*\}/);
-    if (jsonMatch) aiText = jsonMatch[0];
-
-    const finalJson = JSON.parse(aiText);
-
-    return NextResponse.json(finalJson);
+    return new Response(stream, {
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
 
   } catch (err: any) {
     console.error("❌ ERRO NO GEMINI 3.1:", err.message);
-    
-    // Fallback elegante e silencioso (sem detalhes técnicos para a usuária)
     return NextResponse.json({ 
       name: "PEÇA EXCLUSIVA LAPIDADO",
       category: "ACESSÓRIOS",
-      description: "Uma joia que combina design contemporâneo, brilho inesquecível e a sofisticação atemporal do nosso acervo."
+      description: "Uma joia que combina design contemporâneo e o brilho inesquecível do nosso acervo."
     });
   }
 }
