@@ -263,7 +263,9 @@ export default function CatalogClient({
       <div ref={productsTopRef} className="max-w-7xl mx-auto px-4 py-12 md:py-20 w-full text-center overflow-visible">
         <div className="mb-12 md:mb-20 pt-4">
           <h2 className="text-lg md:text-2xl font-light tracking-[0.4em] uppercase text-brand-primary mb-4 animate-in slide-in-from-bottom-2 duration-700 block">
-            {activeCategory === 'Todos' || !activeCategory ? `${branding?.store_name || 'Coleção'} Exclusiva` : activeCategory}
+            {(activeCategory === 'Todos' || !activeCategory) 
+              ? `${branding?.store_name || 'Coleção'} Exclusiva` 
+              : activeCategory}
           </h2>
           <div className="w-12 h-[1px] bg-brand-secondary/40 mx-auto" />
         </div>
