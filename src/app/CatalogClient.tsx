@@ -202,8 +202,9 @@ export default function CatalogClient({
   return (
     <div className="flex flex-col w-full min-h-screen bg-[#fffcfc] animate-in fade-in duration-700">
       
-      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-brand-secondary/10 shadow-sm pt-[env(safe-area-inset-top,0px)]">
-        <header className="w-full pt-8 pb-4 flex flex-col items-center gap-6">
+      {/* 💎 CABEÇALHO DINÂMICO COM SAFE AREA PARA MOBILE */}
+      <div className="sticky top-0 z-[100] bg-white/95 backdrop-blur-xl border-b border-brand-secondary/10 shadow-sm pt-[env(safe-area-inset-top,20px)] overflow-visible">
+        <header className="w-full pt-6 pb-4 flex flex-col items-center gap-6">
           {branding?.logo_url ? (
             <Link href={`/?catalogo=true${storeParam}`} className="relative w-40 h-14 md:w-64 md:h-20 transition-all duration-500 hover:scale-110 active:scale-95">
               <Image 
@@ -233,7 +234,7 @@ export default function CatalogClient({
         </header>
 
         {categoryNames.length > 1 && (
-          <nav className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-center gap-2 md:gap-4 items-center">
+          <nav className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-center gap-2 md:gap-4 items-center overflow-visible">
             {categoryNames.map((cat) => (
               <button 
                 key={cat}
@@ -252,16 +253,16 @@ export default function CatalogClient({
       </div>
 
       {(branding?.top_banner || (branding?.facebook && branding.facebook.includes('|') && branding.facebook.split('|')[2])) && (
-        <div className="w-full bg-brand-primary py-2 px-4 text-center">
+        <div className="w-full bg-brand-primary py-2 px-4 text-center relative z-[90]">
           <p className="text-white text-[7px] md:text-[9px] font-black uppercase tracking-[0.3em] animate-pulse">
             ✨ {(branding?.top_banner || branding?.facebook?.split('|')[2]) as string} ✨
           </p>
         </div>
       )}
 
-      <div ref={productsTopRef} className="max-w-7xl mx-auto px-4 py-8 md:py-16 w-full text-center">
-        <div className="mb-8 md:mb-16">
-          <h2 className="text-lg md:text-2xl font-light tracking-[0.4em] uppercase text-brand-primary mb-4 animate-in slide-in-from-bottom-2 duration-700">
+      <div ref={productsTopRef} className="max-w-7xl mx-auto px-4 py-12 md:py-20 w-full text-center overflow-visible">
+        <div className="mb-12 md:mb-20 pt-4">
+          <h2 className="text-lg md:text-2xl font-light tracking-[0.4em] uppercase text-brand-primary mb-4 animate-in slide-in-from-bottom-2 duration-700 block">
             {activeCategory === 'Todos' || !activeCategory ? `${branding?.store_name || 'Coleção'} Exclusiva` : activeCategory}
           </h2>
           <div className="w-12 h-[1px] bg-brand-secondary/40 mx-auto" />
