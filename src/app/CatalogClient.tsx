@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { generateSlug, triggerHaptic } from '@/lib/utils'
+import Link from 'next/link'
 import Image from 'next/image'
 import AddToCartButton from '@/components/cart/add-to-cart-button'
 import { useRouter, useSearchParams } from 'next/navigation'
