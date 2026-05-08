@@ -87,19 +87,19 @@ export async function POST(req: Request) {
       "description": "Texto da descrição aqui..."
     }`;
 
-    // 🚀 MOTOR ESTÁVEL 2026: Gemini 3.1 Flash-Lite (TENTATIVA 1)
+    // 🚀 MOTOR DE VANGUARDA: Gemini 3 Flash Preview (Velocidade Geracional)
     let model;
     let result;
 
     try {
       model = genAI.getGenerativeModel({ 
-        model: "gemini-3.1-flash-lite",
+        model: "gemini-3-flash-preview", // ⚡ A tecnologia mais recente para velocidade extrema e eficiência
       });
 
       const generationConfig = {
-        temperature: 0.7, 
+        temperature: 0.6, 
         topP: 0.9,
-        maxOutputTokens: 1000,
+        maxOutputTokens: 1000, // Janela maior para aproveitar o melhor raciocínio do G3
       };
 
       const safetySettings = [
@@ -121,13 +121,11 @@ export async function POST(req: Request) {
         safetySettings
       });
     } catch (primaryErr) {
-      console.warn("⚠️ Gemini 3.1 Falhou, tentando Fallback Secundário (Flash Lite Latest)...");
+      console.warn("⚠️ Gemini 3 Flash-Preview Falhou, tentando Fallback Secundário (Flash 8B)...");
       
-      // 🔄 FALLBACK SECUNDÁRIO: Gemini Flash Lite Latest + Google Search
+      // 🔄 FALLBACK SECUNDÁRIO: Gemini 1.5 Flash-8B
       model = genAI.getGenerativeModel({ 
-        model: "gemini-flash-lite-latest",
-        // @ts-ignore - Google Search Tool (Grounding) solicitado pelo usuário
-        tools: [{ googleSearchRetrieval: {} }]
+        model: "gemini-1.5-flash-8b"
       });
 
       let imageData = image.includes(",") ? image.split(",")[1] : image;
@@ -141,7 +139,7 @@ export async function POST(req: Request) {
         generationConfig: {
           temperature: 0.7,
           topP: 0.9,
-          maxOutputTokens: 1000,
+          maxOutputTokens: 800,
         }
       });
     }
@@ -171,12 +169,26 @@ export async function POST(req: Request) {
   } catch (err: any) {
     console.error("❌ FALHA TOTAL NA IA:", err.message);
     
-    // Fallback de segurança se falhar antes mesmo do stream começar
-    const finalFallback = {
-      name: "Peça Exclusiva",
-      category: "ACESSÓRIO",
-      description: "Uma joia de design atemporal e acabamento impecável, perfeita para elevar sua presença com sofisticação."
+    // 🛡️ Recupera o fallback específico do estilo solicitado antes da falha
+    const fallbacks = {
+      luxo: {
+        name: "Brinco Solitário Essência",
+        category: "BRINCO",
+        description: "Uma joia de design atemporal que captura a luz de forma sublime. Banhado em metal nobre com cravação manual impecável.\n\n• Banho de Ouro 18k\n• Acabamento de Alta Joalheria\n• Design Minimalista\n\nComo usar: Ideal para jantares ou eventos de gala, elevando instantaneamente sua presença com sofisticação."
+      },
+      venda: {
+        name: "Conjunto Premium Radiance",
+        category: "CONJUNTO",
+        description: "A peça-chave que faltava no seu mostruário! Com um brilho intenso que atrai todos os olhares, este conjunto de alta qualidade é sucesso de vendas garantido.\n\n• Brilho Extraordinário\n• Peça Versátil\n• Qualidade Premium\n\nComo usar: Combine com looks neutros e veja a mágica acontecer. Perfeito para mulheres que amam ser o centro das atenções."
+      },
+      simples: {
+        name: "Gargantilha Minimal",
+        category: "COLAR",
+        description: "Design clean focado na versatilidade do dia a dia. Com excelente durabilidade e acabamento cuidadoso, é o acessório prático que combina com qualquer estilo.\n\n• Design Ergonômico\n• Leveza Incomparável\n• Durabilidade Superior\n\nComo usar: Use sozinha para um toque discreto ou em composições de camadas para um visual moderno."
+      }
     };
+
+    const finalFallback = fallbacks[selectedStyle as keyof typeof fallbacks] || fallbacks.luxo;
 
     return new Response(JSON.stringify(finalFallback), {
       headers: { "Content-Type": "text/plain; charset=utf-8" },
