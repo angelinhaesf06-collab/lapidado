@@ -74,10 +74,10 @@ export async function generateMetadata(
     .maybeSingle()
 
   const storeName = branding?.business_name || branding?.store_name || 'LAPIDADO'
-  const tagline = branding?.tagline || 'Mais que acessórios, a sua assinatura de estilo.'
+  const description = branding?.tagline || 'Confira nosso catálogo de semijoias exclusivo e monte sua sacola.'
   let logoUrl = branding?.logo_url || '/logo-app.png'
   
-  // 💎 NEXUS: Garantir URL absoluta para a logo (WhatsApp exige link completo)
+  // 💎 NEXUS: Garantir URL absoluta para a logo (WhatsApp exige link completo para gerar o preview)
   if (logoUrl && !logoUrl.startsWith('http')) {
     logoUrl = `${baseUrl}${logoUrl.startsWith('/') ? '' : '/'}${logoUrl}`
   }
@@ -87,19 +87,19 @@ export async function generateMetadata(
   return {
     metadataBase: new URL(baseUrl),
     title,
-    description: tagline,
+    description,
     alternates: {
       canonical: loja ? `/?loja=${loja}` : '/',
     },
     openGraph: {
       title,
-      description: tagline,
+      description,
       url: loja ? `${baseUrl}/?loja=${loja}` : baseUrl,
       siteName: storeName,
       images: [{
         url: logoUrl,
-        width: 800,
-        height: 800,
+        width: 1200, // Largura ideal para OG
+        height: 630,  // Altura ideal para OG
         alt: storeName,
       }],
       type: 'website',
@@ -107,7 +107,7 @@ export async function generateMetadata(
     twitter: {
       card: 'summary_large_image',
       title,
-      description: tagline,
+      description,
       images: [logoUrl],
     },
   }
