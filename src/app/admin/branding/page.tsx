@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Camera, Loader2, Palette, Phone, Gem, Copy, Check } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { generateSlug } from '@/lib/utils'
+import { generateSlug, triggerHaptic } from '@/lib/utils'
 import Image from 'next/image'
 
 export default function BrandingPage() {
@@ -157,6 +157,7 @@ export default function BrandingPage() {
       if (!response.ok) throw new Error(result.error || 'Falha ao salvar dados.')
       
       alert('IDENTIDADE ATUALIZADA COM SUCESSO! 💎')
+      triggerHaptic('heavy')
       
       // 💎 NEXUS: Notifica o Layout (Pai) que os dados mudaram para atualizar o botão de WhatsApp na hora
       if (typeof window !== 'undefined') {
@@ -177,6 +178,7 @@ export default function BrandingPage() {
   const copyToClipboard = () => {
     if (!brandingId || !businessName) return
     navigator.clipboard.writeText(generatedLink)
+    triggerHaptic('medium')
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }

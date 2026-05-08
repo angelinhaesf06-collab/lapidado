@@ -1,8 +1,7 @@
 'use client'
 
 import { useEffect, useState, useMemo, useRef } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import Link from 'next/link'
+import { generateSlug, triggerHaptic } from '@/lib/utils'
 import Image from 'next/image'
 import AddToCartButton from '@/components/cart/add-to-cart-button'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -52,6 +51,7 @@ export default function CatalogClient({
 
   const handleCategoryChange = (cat: string) => {
     setActiveCategory(cat);
+    triggerHaptic('light');
     const url = new URL(window.location.href);
     if (cat === 'Todos') {
       url.searchParams.delete('category');
@@ -167,7 +167,34 @@ export default function CatalogClient({
   const storeParam = storeSlug ? `&loja=${storeSlug}` : ''
 
   if (loading && allProducts.length === 0) {
-    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-brand-secondary" size={40} /></div>
+    return (
+      <div className="flex flex-col w-full min-h-screen bg-[#fffcfc] animate-pulse">
+        {/* Skeleton Header */}
+        <div className="w-full pt-12 pb-8 flex flex-col items-center gap-6 border-b border-brand-secondary/5 bg-white">
+          <div className="w-48 h-16 bg-brand-secondary/5 rounded-2xl" />
+          <div className="w-64 h-2 bg-brand-secondary/5 rounded-full" />
+          <div className="flex gap-3 mt-4">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="w-16 h-8 bg-brand-secondary/5 rounded-full" />
+            ))}
+          </div>
+        </div>
+
+        {/* Skeleton Products Grid */}
+        <div className="max-w-7xl mx-auto px-4 py-16 w-full">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 md:gap-x-12 gap-y-10 md:gap-y-24">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <div key={i} className="flex flex-col items-center w-full">
+                <div className="aspect-[4/5] w-full bg-brand-secondary/5 rounded-[32px] md:rounded-[50px] mb-5 shadow-sm" />
+                <div className="w-3/4 h-3 bg-brand-secondary/5 rounded-full mb-3" />
+                <div className="w-1/2 h-4 bg-brand-secondary/5 rounded-full mb-4" />
+                <div className="w-full h-12 bg-brand-secondary/5 rounded-[20px]" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -239,7 +266,7 @@ export default function CatalogClient({
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 md:gap-x-12 gap-y-10 md:gap-y-24 px-1 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-          {displayedProducts.map((product) => (
+          {displayedProducts.map((product, index) => (
             <div key={product.id} className="group flex flex-col items-center w-full">
               <Link href={`/product?id=${product.id}&catalogo=true${storeParam}`} className="w-full focus:outline-none">
                 <div className="aspect-[4/5] w-full bg-white rounded-[32px] md:rounded-[50px] overflow-hidden mb-5 shadow-[0_20px_50px_rgba(74,50,46,0.04)] border border-white relative transition-all duration-500 group-hover:shadow-[0_30px_70px_rgba(74,50,46,0.1)] group-hover:-translate-y-2">
@@ -250,6 +277,7 @@ export default function CatalogClient({
                       fill 
                       sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                       className="object-cover transition-transform duration-[1.5s] group-hover:scale-110" 
+                      priority={index < 8}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-brand-secondary/5">

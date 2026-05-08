@@ -13,3 +13,18 @@ export function generateSlug(text: string): string {
     .replace(/-+/g, '-')            // Remove hifens duplicados
     .replace(/^-|-$/g, '')          // Remove hifens no início ou fim
 }
+
+/**
+ * Aciona um feedback tátil (vibração) sutil no celular.
+ * Usado para dar o "Native Feel" ao realizar ações importantes.
+ */
+export function triggerHaptic(intensity: 'light' | 'medium' | 'heavy' = 'light') {
+  if (typeof window !== 'undefined' && navigator.vibrate) {
+    const patterns = {
+      light: [10],
+      medium: [20],
+      heavy: [50]
+    }
+    navigator.vibrate(patterns[intensity])
+  }
+}

@@ -3,6 +3,7 @@
 import { Gem, Check } from 'lucide-react'
 import { useState } from 'react'
 import { useCart, type CartItem } from '@/lib/cart-context'
+import { triggerHaptic } from '@/lib/utils'
 
 export default function AddToCartButton({ product }: { product: CartItem }) {
   const [added, setAdded] = useState(false)
@@ -10,6 +11,7 @@ export default function AddToCartButton({ product }: { product: CartItem }) {
 
   const handleAddToCart = () => {
     addToCart(product)
+    triggerHaptic('medium')
     
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
