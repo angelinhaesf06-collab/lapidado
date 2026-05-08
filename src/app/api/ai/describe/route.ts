@@ -7,12 +7,17 @@ export async function POST(req: Request) {
   // Variáveis de escopo amplo para o catch
   let selectedStyle = 'luxo';
 
-  try {
-    const body = await req.json();
-    const { image, style } = body;
-    selectedStyle = style || 'luxo';
+    try {
+      const body = await req.json();
+      const { image, style } = body;
+      
+      if (!image) {
+        return NextResponse.json({ error: "Imagem não fornecida." }, { status: 400 });
+      }
 
-    const apiKey = (process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "").trim();
+      selectedStyle = style || 'luxo';
+
+      const apiKey = (process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "").trim();
 
     if (!apiKey) {
       return NextResponse.json({ error: "Chave da IA não configurada." }, { status: 500 });
@@ -38,7 +43,27 @@ export async function POST(req: Request) {
       }
     };
 
+    // 💎 FALLBACKS ESTÁTICOS LUXUOSOS (INDETECTÁVEIS)
+    const fallbacks = {
+      luxo: {
+        name: "Brinco Solitário Essência",
+        category: "BRINCO",
+        description: "Uma joia de design atemporal que captura a luz de forma sublime. Banhado em metal nobre com cravação manual impecável.\n\n• Banho de Ouro 18k\n• Acabamento de Alta Joalheria\n• Design Minimalista\n\nComo usar: Ideal para jantares ou eventos de gala, elevando instantaneamente sua presença com sofisticação."
+      },
+      venda: {
+        name: "Conjunto Premium Radiance",
+        category: "CONJUNTO",
+        description: "A peça-chave que faltava no seu mostruário! Com um brilho intenso que atrai todos os olhares, este conjunto de alta qualidade é sucesso de vendas garantido.\n\n• Brilho Extraordinário\n• Peça Versátil\n• Qualidade Premium\n\nComo usar: Combine com looks neutros e veja a mágica acontecer. Perfeito para mulheres que amam ser o centro das atenções."
+      },
+      simples: {
+        name: "Gargantilha Minimal",
+        category: "COLAR",
+        description: "Design clean focado na versatilidade do dia a dia. Com excelente durabilidade e acabamento cuidadoso, é o acessório prático que combina com qualquer estilo.\n\n• Design Ergonômico\n• Leveza Incomparável\n• Durabilidade Superior\n\nComo usar: Use sozinha para um toque discreto ou em composições de camadas para um visual moderno."
+      }
+    };
+
     const config = styleConfigs[selectedStyle as keyof typeof styleConfigs] || styleConfigs.luxo;
+    const selectedFallback = fallbacks[selectedStyle as keyof typeof fallbacks] || fallbacks.luxo;
 
     const promptText = `Aja como um(a) ${config.role} da Lapidado.
     Sua missão é criar nomes e descrições para joias com foco em QUIET LUXURY.
@@ -124,11 +149,18 @@ export async function POST(req: Request) {
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
-        for await (const chunk of result.stream) {
-          const text = chunk.text();
-          controller.enqueue(encoder.encode(text));
+        try {
+          for await (const chunk of result.stream) {
+            const text = chunk.text();
+            controller.enqueue(encoder.encode(text));
+          }
+        } catch (streamErr) {
+          console.error("❌ Erro durante o stream da IA:", streamErr);
+          // Se o stream quebrar, enviamos o fallback como resposta final no corpo do stream
+          controller.enqueue(encoder.encode(JSON.stringify(selectedFallback)));
+        } finally {
+          controller.close();
         }
-        controller.close();
       },
     });
 
@@ -139,27 +171,15 @@ export async function POST(req: Request) {
   } catch (err: any) {
     console.error("❌ FALHA TOTAL NA IA:", err.message);
     
-    // 💎 FALLBACKS ESTÁTICOS LUXUOSOS (INDETECTÁVEIS)
-    const fallbacks = {
-      luxo: {
-        name: "Brinco Solitário Essência",
-        category: "BRINCO",
-        description: "Uma joia de design atemporal que captura a luz de forma sublime. Banhado em metal nobre com cravação manual impecável.\n\n• Banho de Ouro 18k\n• Acabamento de Alta Joalheria\n• Design Minimalista\n\nComo usar: Ideal para jantares ou eventos de gala, elevando instantaneamente sua presença com sofisticação."
-      },
-      venda: {
-        name: "Conjunto Premium Radiance",
-        category: "CONJUNTO",
-        description: "A peça-chave que faltava no seu mostruário! Com um brilho intenso que atrai todos os olhares, este conjunto de alta qualidade é sucesso de vendas garantido.\n\n• Brilho Extraordinário\n• Peça Versátil\n• Qualidade Premium\n\nComo usar: Combine com looks neutros e veja a mágica acontecer. Perfeito para mulheres que amam ser o centro das atenções."
-      },
-      simples: {
-        name: "Gargantilha Minimal",
-        category: "COLAR",
-        description: "Design clean focado na versatilidade do dia a dia. Com excelente durabilidade e acabamento cuidadoso, é o acessório prático que combina com qualquer estilo.\n\n• Design Ergonômico\n• Leveza Incomparável\n• Durabilidade Superior\n\nComo usar: Use sozinha para um toque discreto ou em composições de camadas para um visual moderno."
-      }
+    // Fallback de segurança se falhar antes mesmo do stream começar
+    const finalFallback = {
+      name: "Peça Exclusiva",
+      category: "ACESSÓRIO",
+      description: "Uma joia de design atemporal e acabamento impecável, perfeita para elevar sua presença com sofisticação."
     };
 
-    const selectedFallback = fallbacks[selectedStyle as keyof typeof fallbacks] || fallbacks.luxo;
-
-    return NextResponse.json(selectedFallback);
+    return new Response(JSON.stringify(finalFallback), {
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
   }
 }
