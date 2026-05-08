@@ -60,15 +60,15 @@ export default function CatalogClient({
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       url.searchParams.set('category', cat);
-      // ✨ Scroll Suave Inteligente
+      // ✨ Scroll Suave Inteligente e Harmonioso
       if (productsTopRef.current) {
         // Busca a altura real do cabeçalho fixo no momento do clique
         const headerElement = document.querySelector('.sticky');
         const headerHeight = headerElement ? headerElement.clientHeight : 200;
         
-        // Detecta se é mobile para dar um respiro maior
+        // Detecta se é mobile para dar um respiro MUITO maior e evitar sumiço
         const isMobile = window.innerWidth < 768;
-        const extraPadding = isMobile ? 60 : 20;
+        const extraPadding = isMobile ? 100 : 40; 
         
         const elementPosition = productsTopRef.current.getBoundingClientRect().top;
         const offsetPosition = elementPosition + window.pageYOffset - (headerHeight + extraPadding);
