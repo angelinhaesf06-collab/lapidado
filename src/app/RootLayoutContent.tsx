@@ -68,8 +68,15 @@ export default function RootLayoutContent({
   const primary = (brand?.primary_color && isValidHex(brand.primary_color)) ? brand.primary_color : '#4a322e';
   const secondary = (brand?.secondary_color && isValidHex(brand.secondary_color)) ? brand.secondary_color : '#c99090';
   
-  const isAuthPage = pathname.includes('/login') || pathname.includes('/register');
-  const isAdminPage = pathname.includes('/admin');
+  const isAuthPage = pathname?.includes('/login') || pathname?.includes('/register') || pathname?.includes('/auth');
+  const isAdminPage = pathname?.includes('/admin');
+  const isLegalPage = 
+    pathname?.includes('/politica') || 
+    pathname?.includes('/privacidade') || 
+    pathname?.includes('/termos') || 
+    pathname?.includes('/excluir-conta') ||
+    pathname?.includes('/cookies') ||
+    pathname?.includes('/policies');
   const showFooter = !isAuthPage && !isAdminPage;
 
   return (
@@ -86,7 +93,7 @@ export default function RootLayoutContent({
       <Toaster position="top-center" richColors />
       <CartProvider>
         <AdminBar user={user} />
-        {!isAdminPage && !isAuthPage && <CartIcon />}
+        {!isAdminPage && !isAuthPage && !isLegalPage && <CartIcon />}
         <main className="flex-1">
           {children}
         </main>

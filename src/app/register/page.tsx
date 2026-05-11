@@ -273,6 +273,12 @@ export default function RegisterPage() {
                     'Criar Acesso Empresária 💎'
                   )}
                 </button>
+
+                <p className="text-[10px] text-[#7a5c58] text-center px-4 leading-relaxed">
+                  Ao clicar em criar acesso, você concorda com nossos{' '}
+                  <Link href="/termos" className="text-[#c99090] font-bold hover:underline">Termos</Link> e{' '}
+                  <Link href="/privacidade" className="text-[#c99090] font-bold hover:underline">Política de Privacidade</Link>.
+                </p>
               </form>
             )}
           </>
