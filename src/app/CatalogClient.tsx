@@ -234,12 +234,12 @@ export default function CatalogClient({
         </header>
 
         {categoryNames.length > 1 && (
-          <nav className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-center gap-2 md:gap-4 items-center overflow-visible">
+          <nav className="max-w-7xl mx-auto px-4 py-4 flex flex-wrap justify-center gap-2 md:gap-4 items-center overflow-visible">
             {categoryNames.map((cat) => (
               <button 
                 key={cat}
                 onClick={() => handleCategoryChange(cat)}
-                className={`px-3 py-1.5 md:px-4 md:py-2 transition-all duration-300 font-black text-[8px] md:text-[10px] tracking-[0.1em] md:tracking-[0.2em] uppercase rounded-full border ${
+                className={`px-4 py-2 md:px-4 md:py-2 transition-all duration-300 font-black text-[10px] md:text-[10px] tracking-[0.1em] md:tracking-[0.2em] uppercase rounded-full border ${
                   activeCategory === cat || (cat === 'Todos' && !activeCategory)
                   ? "bg-brand-primary text-white border-brand-primary shadow-lg scale-105" 
                   : "text-brand-primary/60 hover:text-brand-primary bg-white border-brand-secondary/10 hover:border-brand-primary/30"
@@ -320,3 +320,4 @@ export default function CatalogClient({
     </div>
   )
 }
+
