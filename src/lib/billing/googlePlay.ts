@@ -59,13 +59,13 @@ export async function purchasePackage(rcPackage: any) {
 
   try {
     console.log(`🛒 Iniciando compra do pacote: ${rcPackage.identifier}`);
-    const { purchaserInfo } = await Purchases.purchasePackage({ aPackage: rcPackage });
+    const { customerInfo } = await Purchases.purchasePackage({ aPackage: rcPackage });
     
-    const isActive = purchaserInfo.entitlements.active[REVENUECAT_CONF.ENTITLEMENT_ID] !== undefined;
+    const isActive = customerInfo.entitlements.active[REVENUECAT_CONF.ENTITLEMENT_ID] !== undefined;
     
     return {
       success: isActive,
-      purchaserInfo
+      customerInfo
     }
   } catch (error: any) {
     if (error.userCancelled) {
@@ -87,14 +87,27 @@ export async function purchasePlan(planType: 'monthly' | 'yearly') {
   const pkg = planType === 'monthly' ? offerings.monthly : offerings.annual;
   if (!pkg) throw new Error(`Pacote ${planType} não encontrado no RevenueCat.`);
   
-  return await purchasePackage(pkg);
+  return await purchasePlanLegacy(pkg);
+}
+
+/**
+ * Internal helper to handle the purchase result mapping
+ */
+async function purchasePlanLegacy(pkg: any) {
+  const result = await purchasePackage(pkg);
+  return {
+    success: result.success,
+    customerInfo: result.customerInfo,
+    // Provide legacy name for safety during transition
+    purchaserInfo: result.customerInfo 
+  };
 }
 
 /**
  * Sincroniza o status da assinatura com o Supabase após compra no Google Play
  */
-export async function syncSubscriptionWithSupabase(supabase: any, userId: string, purchaserInfo: any) {
-  const entitlement = purchaserInfo.entitlements.active[REVENUECAT_CONF.ENTITLEMENT_ID];
+export async function syncSubscriptionWithSupabase(supabase: any, userId: string, customerInfo: any) {
+  const entitlement = customerInfo.entitlements.active[REVENUECAT_CONF.ENTITLEMENT_ID];
   if (!entitlement) return false;
 
   const { error } = await supabase
