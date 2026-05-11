@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import { generateSlug } from '@/lib/utils'
 import Image from 'next/image'
 import Paywall from '@/components/Paywall'
-import { purchasePlan, GOOGLE_PLAY_PLANS, syncSubscriptionWithSupabase } from '@/lib/billing/googlePlay'
+import { purchasePlan, GOOGLE_PLAY_PLANS, syncSubscriptionWithSupabase } from '../../lib/billing/googlePlay'
 import { createStripeCheckout, STRIPE_PLANS } from '@/lib/billing/stripe'
 
 export default function AdminLayout({

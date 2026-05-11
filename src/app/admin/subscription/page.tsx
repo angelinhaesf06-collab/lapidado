@@ -3,12 +3,16 @@
 import { Gem, CheckCircle2, ShoppingBag, Loader2 } from 'lucide-react'
 import { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { purchasePlan, GOOGLE_PLAY_PLANS, syncSubscriptionWithSupabase } from '@/lib/billing/googlePlay'
+import { purchasePlan, GOOGLE_PLAY_PLANS, syncSubscriptionWithSupabase } from '../../../lib/billing/googlePlay'
 import { createStripeCheckout, STRIPE_PLANS } from '@/lib/billing/stripe'
 
 export default function SubscriptionPage() {
   const [loading, setLoading] = useState(false)
-  const [subscription, setSubscription] = useState<any>(null)
+  const [subscription, setSubscription] = useState<{
+    subscription_status: string;
+    trial_ends_at: string | null;
+    google_play_subscription_id: string | null;
+  } | null>(null)
   const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
@@ -45,6 +49,7 @@ export default function SubscriptionPage() {
         if (!checkout.success) alert(checkout.error)
       }
     } catch (err) {
+      console.error('Erro na assinatura:', err)
       alert('Erro ao processar assinatura.')
     } finally {
       setLoading(false)
