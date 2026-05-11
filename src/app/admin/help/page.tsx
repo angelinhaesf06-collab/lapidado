@@ -9,6 +9,10 @@ export default function HelpPage() {
       question: 'Como cadastrar minha marca?', 
       answer: 'Vá na aba "Minha Marca", preencha o nome da sua loja e envie seu logotipo. O sistema extrairá as cores automaticamente.' 
     },
+    {
+      question: 'Como cadastrar novas categorias?',
+      answer: 'Acesse a aba "Categorias" no menu lateral, digite o nome da categoria desejada (ex: Brincos, Conjuntos) e clique em Adicionar. Elas servirão para organizar sua vitrine automaticamente.'
+    },
     { 
       question: 'Como funciona a IA Mágica?', 
       answer: 'Ao cadastrar um produto, envie uma foto nítida. A IA Gemini analisará a peça e escreverá uma descrição luxuosa para você.' 
