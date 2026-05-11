@@ -137,41 +137,51 @@ export default function CategoriesPage() {
         </form>
       </div>
 
-      {/* LISTAGEM EM GRADE DENSA (3 Colunas no Mobile) */}
-      <div className="flex-1 bg-white/40 p-2 rounded-2xl border border-rose-50 shadow-sm overflow-y-auto no-scrollbar">
-        <div className="grid grid-cols-2 xs:grid-cols-3 gap-1.5">
+      {/* LISTAGEM EM GRADE DENSA (2 Colunas no Mobile) */}
+      <div className="flex-1 bg-white/40 p-3 rounded-2xl border border-rose-50 shadow-sm overflow-y-auto no-scrollbar">
+        <div className="grid grid-cols-2 gap-2">
           {loading ? (
-            <div className="col-span-full flex justify-center py-4 text-brand-secondary/40"><Loader2 className="animate-spin" size={16} /></div>
+            <div className="col-span-full flex justify-center py-8 text-brand-secondary/40"><Loader2 className="animate-spin" size={24} /></div>
           ) : categories.length > 0 ? (
             categories.map((cat) => (
-              <div key={cat.id} className="bg-white/90 p-2 rounded-lg border border-rose-50 flex flex-col justify-between h-16 relative">
+              <div key={cat.id} className="bg-white/90 p-4 rounded-xl border border-rose-50 flex flex-col justify-between min-h-[90px] relative shadow-sm">
                 {editingId === cat.id ? (
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-2">
                     <input 
                       type="text" 
                       value={editingName} 
                       onChange={(e) => setEditingName(e.target.value.toUpperCase())}
-                      className="w-full bg-rose-50/50 px-1 py-0.5 rounded text-[7px] font-bold outline-none border border-brand-secondary"
+                      className="w-full bg-rose-50/50 px-2 py-1.5 rounded-lg text-[10px] font-bold outline-none border-2 border-brand-secondary"
                       autoFocus
                     />
-                    <div className="flex justify-end gap-1">
-                      <button onClick={() => handleUpdate(cat.id)} className="text-green-500"><Check size={10} /></button>
-                      <button onClick={() => setEditingId(null)} className="text-rose-500"><X size={10} /></button>
+                    <div className="flex justify-end gap-3">
+                      <button onClick={() => handleUpdate(cat.id)} className="p-1 text-green-500 hover:scale-110 transition-transform"><Check size={18} /></button>
+                      <button onClick={() => setEditingId(null)} className="p-1 text-rose-500 hover:scale-110 transition-transform"><X size={18} /></button>
                     </div>
                   </div>
                 ) : (
                   <>
-                    <span className="text-[7px] font-black text-brand-primary uppercase leading-tight truncate">{cat.name}</span>
-                    <div className="flex justify-end gap-0.5 mt-auto">
-                      <button onClick={() => { setEditingId(cat.id); setEditingName(cat.name); }} className="p-1 text-brand-secondary/30 hover:text-brand-primary"><Pencil size={8} /></button>
-                      <button onClick={() => handleDelete(cat.id)} className="p-1 text-rose-200 hover:text-rose-500"><Trash2 size={8} /></button>
+                    <span className="text-[10px] font-black text-brand-primary uppercase leading-tight line-clamp-2">{cat.name}</span>
+                    <div className="flex justify-end gap-2 mt-auto">
+                      <button 
+                        onClick={() => { setEditingId(cat.id); setEditingName(cat.name); }} 
+                        className="p-2 bg-brand-secondary/5 text-brand-secondary hover:text-brand-primary rounded-lg transition-colors"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(cat.id)} 
+                        className="p-2 bg-rose-50 text-rose-300 hover:text-rose-500 rounded-lg transition-colors"
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
                   </>
                 )}
               </div>
             ))
           ) : (
-            <p className="col-span-full text-center text-[7px] text-brand-primary/30 uppercase font-black py-4">Vazio 💎</p>
+            <p className="col-span-full text-center text-[10px] text-brand-primary/30 uppercase font-black py-10">Vazio 💎</p>
           )}
         </div>
       </div>
