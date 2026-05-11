@@ -108,7 +108,7 @@ export default function AdminLayout({
 
       if (isMobile) {
         console.log('📱 Usando Google Play Billing...');
-        const planType = plan === 'monthly' ? GOOGLE_PLAY_PLANS.MONTHLY : GOOGLE_PLAY_PLANS.YEARLY;
+        const planType: 'monthly' | 'yearly' = plan === 'monthly' ? GOOGLE_PLAY_PLANS.MONTHLY : GOOGLE_PLAY_PLANS.YEARLY;
         const purchase = await purchasePlan(planType)
         if (purchase.success && purchase.purchaserInfo) {
           await syncSubscriptionWithSupabase(supabase, user.id, purchase.purchaserInfo)

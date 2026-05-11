@@ -19,7 +19,7 @@ export const REVENUECAT_CONF = {
 export const GOOGLE_PLAY_PLANS = {
   MONTHLY: 'monthly',
   YEARLY: 'yearly'
-}
+} as const
 
 export async function initializeBilling(userId?: string) {
   if (!Capacitor.isNativePlatform()) {
