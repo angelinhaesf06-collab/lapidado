@@ -200,7 +200,7 @@ export default function CatalogClient({
   }
 
   return (
-    <div className="flex flex-col w-full min-h-screen bg-[#fffcfc] animate-in fade-in duration-700">
+    <div className="flex flex-col w-full bg-[#fffcfc] animate-in fade-in duration-700">
       
       {/* 💎 CABEÇALHO DINÂMICO COM SAFE AREA PARA MOBILE */}
       <div className="sticky top-0 z-[100] bg-white/95 backdrop-blur-xl border-b border-brand-secondary/10 shadow-sm pt-[env(safe-area-inset-top,20px)] overflow-visible">
@@ -260,7 +260,7 @@ export default function CatalogClient({
         </div>
       )}
 
-      <div ref={productsTopRef} className="max-w-7xl mx-auto px-4 py-12 md:py-20 w-full text-center overflow-visible">
+      <div ref={productsTopRef} className="max-w-7xl mx-auto px-4 py-12 md:py-24 w-full text-center overflow-visible pb-32">
         <div className="mb-12 md:mb-20 pt-4">
           <h2 className="text-lg md:text-2xl font-light tracking-[0.4em] uppercase text-brand-primary mb-4 animate-in slide-in-from-bottom-2 duration-700 block">
             {(activeCategory === 'Todos' || !activeCategory) 
