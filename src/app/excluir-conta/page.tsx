@@ -104,7 +104,7 @@ export default function ExcluirConta() {
             </p>
             
             <div className="bg-brand-secondary/5 p-6 rounded-3xl border border-brand-secondary/10 text-center">
-              <p className="text-lg font-black text-brand-primary">suporte@lapidado.com.br</p>
+              <p className="text-lg font-black text-brand-primary">angelinhaesf06@gmail.com</p>
             </div>
           </section>
 
