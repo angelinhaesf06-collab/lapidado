@@ -1,5 +1,6 @@
 import React from 'react'
-import { FileText, CheckCircle, AlertCircle, Scale, Gem } from 'lucide-react'
+import { FileText, CheckCircle, AlertCircle, Scale, Gem, ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 
 export const metadata = {
   title: 'Termos de Uso | Lapidado',
@@ -11,13 +12,24 @@ export default function TermosPage() {
     <div className="min-h-screen bg-[#fffcfc] py-20 px-6">
       <div className="max-w-3xl mx-auto space-y-12">
         
+        {/* Botão Voltar */}
+        <div className="flex justify-start">
+          <Link 
+            href="/admin/policies" 
+            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-brand-secondary hover:text-brand-primary transition-colors"
+          >
+            <ArrowLeft size={14} />
+            Voltar ao Painel
+          </Link>
+        </div>
+
         {/* Cabeçalho */}
         <div className="text-center space-y-4">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-brand-secondary/10 rounded-full text-brand-primary mb-4">
             <Scale size={32} />
           </div>
           <h1 className="text-4xl font-black text-brand-primary uppercase tracking-tighter">Termos de Uso</h1>
-          <p className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.3em]">Última atualização: 4 de maio de 2026</p>
+          <p className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.3em]">Última atualização: 11 de maio de 2026</p>
         </div>
 
         <div className="bg-white p-8 md:p-12 rounded-[40px] border border-brand-secondary/10 shadow-sm space-y-8 text-brand-primary/80 leading-relaxed">
@@ -53,7 +65,14 @@ export default function TermosPage() {
               <h2 className="text-lg font-black uppercase tracking-tight">3. Assinaturas e Pagamentos</h2>
             </div>
             <p className="text-sm">
-              O acesso aos recursos avançados (Pro) é realizado via assinatura recorrente processada pelo **Stripe**. O cancelamento pode ser feito a qualquer momento pelo painel administrativo, interrompendo a renovação para o próximo ciclo.
+              O acesso aos recursos avançados (Pro e Lite) é realizado via assinatura recorrente. Os pagamentos são processados externamente por:
+            </p>
+            <ul className="list-disc ml-6 space-y-2 text-sm">
+              <li><strong>Google Play Billing:</strong> Para usuários do aplicativo nativo Android.</li>
+              <li><strong>Stripe:</strong> Para assinaturas realizadas via navegador/web.</li>
+            </ul>
+            <p className="text-sm">
+              O cancelamento pode ser feito a qualquer momento pelo painel administrativo ou pela central de assinaturas da loja de aplicativos, interrompendo a renovação para o próximo ciclo.
             </p>
           </section>
 
@@ -69,7 +88,7 @@ export default function TermosPage() {
 
           <div className="pt-8 border-t border-brand-secondary/10 text-center">
             <p className="text-[11px] font-bold text-brand-secondary uppercase">
-              Dúvidas Jurídicas: juridico@lapidado.com.br
+              Dúvidas: angelinhaesf06@gmail.com
             </p>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import React from 'react'
-import { ShieldCheck, Lock, Eye, FileText, Gem } from 'lucide-react'
+import { ShieldCheck, Lock, Eye, FileText, Gem, ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 
 export const metadata = {
   title: 'Política de Privacidade | Lapidado',
@@ -11,13 +12,24 @@ export default function PrivacidadePage() {
     <div className="min-h-screen bg-[#fffcfc] py-20 px-6">
       <div className="max-w-3xl mx-auto space-y-12">
         
+        {/* Botão Voltar */}
+        <div className="flex justify-start">
+          <Link 
+            href="/admin/policies" 
+            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-brand-secondary hover:text-brand-primary transition-colors"
+          >
+            <ArrowLeft size={14} />
+            Voltar ao Painel
+          </Link>
+        </div>
+
         {/* Cabeçalho */}
         <div className="text-center space-y-4">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-brand-secondary/10 rounded-full text-brand-primary mb-4">
             <ShieldCheck size={32} />
           </div>
           <h1 className="text-4xl font-black text-brand-primary uppercase tracking-tighter">Política de Privacidade</h1>
-          <p className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.3em]">Última atualização: 4 de maio de 2026</p>
+          <p className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.3em]">Última atualização: 11 de maio de 2026</p>
         </div>
 
         <div className="bg-white p-8 md:p-12 rounded-[40px] border border-brand-secondary/10 shadow-sm space-y-8 text-brand-primary/80 leading-relaxed">
@@ -50,10 +62,17 @@ export default function PrivacidadePage() {
           <section className="space-y-4">
             <div className="flex items-center gap-3 text-brand-primary">
               <Lock size={20} />
-              <h2 className="text-lg font-black uppercase tracking-tight">3. Segurança dos Dados</h2>
+              <h2 className="text-lg font-black uppercase tracking-tight">3. Segurança dos Dados e Pagamentos</h2>
             </div>
             <p className="text-sm">
-              Todos os dados são armazenados em infraestrutura de nuvem de alta segurança (Supabase/PostgreSQL) com criptografia de ponta a ponta. O acesso aos dados é estritamente restrito ao usuário proprietário da conta (Multi-Tenant Isolation).
+              Todos os dados são armazenados em infraestrutura de nuvem de alta segurança (Supabase/PostgreSQL) com criptografia. Os processamentos de pagamentos e assinaturas são realizados de forma externa e segura pelos nossos parceiros:
+            </p>
+            <ul className="list-disc ml-6 space-y-2 text-sm">
+              <li><strong>Stripe:</strong> Processamento de cartões de crédito e faturamento web.</li>
+              <li><strong>Google Play Billing:</strong> Processamento de assinaturas e compras in-app em dispositivos Android.</li>
+            </ul>
+            <p className="text-xs text-brand-secondary italic">
+              O Lapidado não armazena dados sensíveis de cartões de crédito em seus próprios servidores.
             </p>
           </section>
 
@@ -69,7 +88,7 @@ export default function PrivacidadePage() {
 
           <div className="pt-8 border-t border-brand-secondary/10 text-center">
             <p className="text-[11px] font-bold text-brand-secondary uppercase">
-              Contato: suporte@lapidado.com.br
+              Contato: angelinhaesf06@gmail.com
             </p>
           </div>
         </div>
