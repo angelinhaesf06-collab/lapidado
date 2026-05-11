@@ -38,7 +38,8 @@ export default function SubscriptionPage() {
       const isMobile = typeof window !== 'undefined' && ((window as any).Capacitor || navigator.userAgent.includes('Mobile'));
 
       if (isMobile) {
-        const purchase = await purchasePlan(plan === 'monthly' ? GOOGLE_PLAY_PLANS.MONTHLY : GOOGLE_PLAY_PLANS.YEARLY)
+        const planType = plan === 'monthly' ? GOOGLE_PLAY_PLANS.MONTHLY : GOOGLE_PLAY_PLANS.YEARLY;
+        const purchase = await purchasePlan(planType)
         if (purchase.success && purchase.purchaserInfo) {
           await syncSubscriptionWithSupabase(supabase, user.id, purchase.purchaserInfo)
           window.location.reload()
