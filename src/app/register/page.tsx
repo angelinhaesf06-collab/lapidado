@@ -105,6 +105,17 @@ export default function RegisterPage() {
         if (brandingError) {
           console.error('Erro ao configurar branding inicial:', brandingError)
         }
+
+        // 💎 NEXUS: CATEGORIAS PADRÃO PARA MULTI-MARCAS
+        const defaultCategories = ['CONJUNTOS', 'BRINCOS', 'COLARES', 'PULSEIRAS', 'ANÉIS']
+        const categoryData = defaultCategories.map(cat => ({
+          user_id: data.user.id,
+          name: cat,
+          slug: cat.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-')
+        }))
+
+        const { error: catError } = await supabase.from('categories').insert(categoryData)
+        if (catError) console.error('Erro ao criar categorias iniciais:', catError)
       }
 
       // 💎 AUTO-LOGIN NEXUS: Removendo burocracia de e-mail
