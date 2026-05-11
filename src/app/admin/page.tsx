@@ -140,7 +140,7 @@ function DashboardContent() {
         
         {/* DASHBOARD DE PERFORMANCE (VENDAS REAIS) */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Link href="/admin/sales" className="bg-brand-primary p-8 rounded-[40px] text-white shadow-xl hover:scale-[1.02] transition-all group">
+          <Link href="/admin/sales" className="bg-brand-primary p-8 rounded-[40px] text-white shadow-lg sm:shadow-xl hover:scale-[1.02] transition-[transform,shadow,background-color] duration-300 group transform-gpu">
             <div className="flex justify-between items-start mb-4">
                <TrendingUp size={24} className="text-brand-secondary" />
                <span className="text-[7px] font-black uppercase tracking-widest bg-white/10 px-2 py-1 rounded-full">Ver Detalhes</span>
@@ -159,7 +159,7 @@ function DashboardContent() {
             </div>
           </Link>
 
-          <Link href="/admin/sales" className="bg-amber-500 p-8 rounded-[40px] text-white shadow-xl hover:scale-[1.02] transition-all group">
+          <Link href="/admin/sales" className="bg-amber-500 p-8 rounded-[40px] text-white shadow-lg sm:shadow-xl hover:scale-[1.02] transition-[transform,shadow,background-color] duration-300 group transform-gpu">
             <div className="flex justify-between items-start mb-4">
                <AlertCircle size={24} className="text-amber-200" />
                <span className="text-[7px] font-black uppercase tracking-widest bg-white/10 px-2 py-1 rounded-full">Promissórias</span>
@@ -172,7 +172,7 @@ function DashboardContent() {
             </div>
           </Link>
 
-          <div className="bg-white p-8 rounded-[40px] border border-brand-secondary/10 shadow-sm flex flex-col justify-between">
+          <div className="bg-white p-8 rounded-[40px] border border-brand-secondary/10 shadow-sm flex flex-col justify-between transform-gpu">
             <div>
               <div className="flex justify-between items-start mb-4">
                 <Package size={24} className="text-brand-primary" />

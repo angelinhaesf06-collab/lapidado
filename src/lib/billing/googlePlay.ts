@@ -3,44 +3,88 @@
  * Este serviço gerencia a comunicação com a API do Google Play via Capacitor.
  */
 
-export const GOOGLE_PLAY_PLANS = {
-  MONTHLY: 'lapidado_pro_mensal',
-  YEARLY: 'lapidado_pro_anual'
+import { Purchases, LOG_LEVEL } from '@revenuecat/purchases-capacitor';
+import { Capacitor } from '@capacitor/core';
+
+/**
+ * 💎 NEXUS: GOOGLE PLAY BILLING SERVICE (REVENUECAT)
+ * Este serviço gerencia a comunicação com a API do Google Play de forma nativa.
+ */
+
+export const REVENUECAT_CONF = {
+  GOOGLE_API_KEY: process.env.NEXT_PUBLIC_REVENUECAT_GOOGLE_KEY || 'goog_placeholder',
+  ENTITLEMENT_ID: 'pro'
 }
 
-export async function initializeBilling() {
-  console.log('📡 Inicializando Google Play Billing...')
-  // Aqui entrará a lógica de Purchases.setup()
-}
+export async function initializeBilling(userId?: string) {
+  if (!Capacitor.isNativePlatform()) {
+    console.log('💻 Rodando em Web: Google Play Billing desativado.');
+    return false;
+  }
 
-export async function purchasePlan(planId: string) {
   try {
-    console.log(`🛒 Iniciando compra do plano: ${planId}`)
+    console.log('📡 Inicializando RevenueCat (Google Play)...');
+    await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
+    await Purchases.configure({ 
+      apiKey: REVENUECAT_CONF.GOOGLE_API_KEY,
+      appUserID: userId
+    });
+    return true;
+  } catch (e) {
+    console.error('❌ Falha ao configurar RevenueCat:', e);
+    return false;
+  }
+}
+
+export async function getOfferings() {
+  if (!Capacitor.isNativePlatform()) return null;
+  try {
+    const offerings = await Purchases.getOfferings();
+    return offerings.current;
+  } catch (e) {
+    console.error('❌ Erro ao buscar ofertas:', e);
+    return null;
+  }
+}
+
+export async function purchasePackage(rcPackage: any) {
+  if (!Capacitor.isNativePlatform()) {
+    throw new Error('As compras só podem ser realizadas no aplicativo nativo.');
+  }
+
+  try {
+    console.log(`🛒 Iniciando compra do pacote: ${rcPackage.identifier}`);
+    const { purchaserInfo } = await Purchases.purchasePackage({ aPackage: rcPackage });
     
-    // Simulação de fluxo de sucesso para testes
-    // No dispositivo real, isso chamará Purchases.purchasePackage()
+    const isActive = purchaserInfo.entitlements.active[REVENUECAT_CONF.ENTITLEMENT_ID] !== undefined;
     
     return {
-      success: true,
-      orderId: 'GPA.' + Math.random().toString().substring(2, 14),
-      purchaseToken: 'token_' + Math.random().toString(36).substring(7)
+      success: isActive,
+      purchaserInfo
     }
-  } catch (error) {
-    console.error('❌ Erro na compra:', error)
-    return { success: false, error }
+  } catch (error: any) {
+    if (error.userCancelled) {
+      console.log('⚠️ Usuário cancelou a compra.');
+      return { success: false, cancelled: true };
+    }
+    console.error('❌ Erro na compra:', error);
+    return { success: false, error: error.message };
   }
 }
 
 /**
- * Sincroniza o status da assinatura com o Supabase
+ * Sincroniza o status da assinatura com o Supabase após compra no Google Play
  */
-export async function syncSubscriptionWithSupabase(supabase: any, userId: string, purchaseData: any) {
+export async function syncSubscriptionWithSupabase(supabase: any, userId: string, purchaserInfo: any) {
+  const entitlement = purchaserInfo.entitlements.active[REVENUECAT_CONF.ENTITLEMENT_ID];
+  if (!entitlement) return false;
+
   const { error } = await supabase
     .from('branding')
     .update({
       subscription_status: 'active',
-      google_play_subscription_id: purchaseData.orderId,
-      subscription_expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // Exemplo: +30 dias
+      google_play_subscription_id: entitlement.productIdentifier,
+      subscription_expires_at: entitlement.expirationDate
     })
     .eq('user_id', userId)
 
