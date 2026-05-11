@@ -6,7 +6,8 @@
 export const STRIPE_PLANS = {
   // 💎 NEXUS: Prioridade total para as variáveis da Vercel mostradas no print
   MONTHLY: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID || 'price_1TTplZHVcB5HCb50xUb7f9IX',
-  YEARLY: process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID || 'price_1TTptoHVcB5HCb50qvX9qUdS'
+  YEARLY: process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID || 'price_1TTptoHVcB5HCb50qvX9qUdS',
+  LITE_YEARLY: process.env.NEXT_PUBLIC_STRIPE_LITE_YEARLY_PRICE_ID || 'price_lite_yearly_placeholder'
 }
 
 export async function createStripeCheckout(planId: string, userId: string, userEmail: string) {

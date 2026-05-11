@@ -30,7 +30,7 @@ export default function SubscriptionPage() {
     loadSubscription()
   }, [supabase])
 
-  const handleSubscribe = async (plan: 'lite' | 'monthly' | 'yearly') => {
+  const handleSubscribe = async (plan: 'lite' | 'lite_yearly' | 'monthly' | 'yearly') => {
     setLoading(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -39,8 +39,9 @@ export default function SubscriptionPage() {
       const isMobile = typeof window !== 'undefined' && ((window as any).Capacitor || navigator.userAgent.includes('Mobile'));
 
       if (isMobile) {
-        let planType: 'lite' | 'monthly' | 'yearly';
+        let planType: 'lite' | 'lite_yearly' | 'monthly' | 'yearly';
         if (plan === 'lite') planType = GOOGLE_PLAY_PLANS.LITE;
+        else if (plan === 'lite_yearly') planType = GOOGLE_PLAY_PLANS.LITE_YEARLY;
         else if (plan === 'monthly') planType = GOOGLE_PLAY_PLANS.MONTHLY;
         else planType = GOOGLE_PLAY_PLANS.YEARLY;
 
@@ -50,8 +51,15 @@ export default function SubscriptionPage() {
           window.location.reload()
         }
       } else {
-        if (plan === 'lite') {
-           alert('O plano Lite está disponível apenas no aplicativo Android via Google Play.');
+        if (plan === 'lite' || plan === 'lite_yearly') {
+           if (plan === 'lite') {
+             alert('O plano Lite Mensal está disponível apenas no aplicativo Android via Google Play.');
+             return;
+           }
+           // Se for lite_yearly na web, tenta Stripe
+           const stripePlan = STRIPE_PLANS.LITE_YEARLY;
+           const checkout = await createStripeCheckout(stripePlan, user.id, user.email || '')
+           if (!checkout.success) alert(checkout.error)
            return;
         }
         const stripePlan = plan === 'monthly' ? STRIPE_PLANS.MONTHLY : STRIPE_PLANS.YEARLY;
@@ -186,43 +194,61 @@ export default function SubscriptionPage() {
           <div className="space-y-6">
             <h4 className="text-[12px] font-black text-brand-primary uppercase tracking-[0.2em] mb-6">Mudar de Plano</h4>
             
-            <button 
-              onClick={() => handleSubscribe('lite')}
-              disabled={loading}
-              className="w-full bg-rose-50/50 p-6 rounded-3xl flex items-center justify-between group hover:scale-[1.02] transition-all border border-brand-secondary/5"
-            >
-              <div className="text-left">
-                <p className="text-[8px] font-black uppercase text-brand-secondary/60">Lite (IA + Vitrine)</p>
-                <p className="text-lg font-black text-brand-primary">R$ 49,90/mês</p>
-                <p className="text-[7px] font-bold text-brand-secondary/40 uppercase mt-1">* Sem gestão financeira</p>
-              </div>
-              {loading ? <Loader2 size={20} className="animate-spin text-brand-primary" /> : <ShoppingBag size={20} className="text-brand-primary/40" />}
-            </button>
+            <div className="grid grid-cols-1 gap-4">
+              {/* LITE PLANS */}
+              <div className="space-y-3">
+                <p className="text-[9px] font-black text-brand-secondary uppercase tracking-widest ml-2">Lite (IA + Vitrine)</p>
+                <button 
+                  onClick={() => handleSubscribe('lite')}
+                  disabled={loading}
+                  className="w-full bg-rose-50/30 p-5 rounded-3xl flex items-center justify-between group hover:scale-[1.01] transition-all border border-brand-secondary/5"
+                >
+                  <div className="text-left">
+                    <p className="text-lg font-black text-brand-primary">R$ 49,90<span className="text-[10px] opacity-40">/mês</span></p>
+                  </div>
+                  {loading ? <Loader2 size={18} className="animate-spin text-brand-primary" /> : <ShoppingBag size={18} className="text-brand-primary/40" />}
+                </button>
 
-            <button 
-              onClick={() => handleSubscribe('monthly')}
-              disabled={loading}
-              className="w-full bg-white p-6 rounded-3xl flex items-center justify-between group hover:scale-[1.02] transition-all shadow-sm border border-brand-secondary/10"
-            >
-              <div className="text-left">
-                <p className="text-[8px] font-black uppercase text-brand-secondary opacity-60">Pro Mensal (Completo)</p>
-                <p className="text-lg font-black text-brand-primary">R$ 69,80/mês</p>
+                <button 
+                  onClick={() => handleSubscribe('lite_yearly')}
+                  disabled={loading}
+                  className="w-full bg-rose-50/60 p-5 rounded-3xl flex items-center justify-between group hover:scale-[1.01] transition-all border border-brand-secondary/10"
+                >
+                  <div className="text-left">
+                    <p className="text-lg font-black text-brand-primary">R$ 499,00<span className="text-[10px] opacity-40">/ano</span></p>
+                    <p className="text-[7px] font-bold text-brand-secondary uppercase mt-0.5">Economize R$ 99,80</p>
+                  </div>
+                  {loading ? <Loader2 size={18} className="animate-spin text-brand-primary" /> : <Gem size={18} className="text-brand-secondary" />}
+                </button>
               </div>
-              {loading ? <Loader2 size={20} className="animate-spin text-brand-primary" /> : <ShoppingBag size={20} className="text-brand-primary" />}
-            </button>
 
-            <button 
-              onClick={() => handleSubscribe('yearly')}
-              disabled={loading}
-              className="w-full bg-brand-primary p-8 rounded-[40px] flex items-center justify-between group hover:scale-[1.02] transition-all shadow-xl"
-            >
-              <div className="text-left text-white">
-                <p className="text-[8px] font-black uppercase text-brand-secondary/60">Pro Anual (Melhor Valor)</p>
-                <p className="text-2xl font-black">R$ 710,00/ano</p>
-                <p className="text-[7px] font-bold text-white/40 uppercase mt-1">Economize R$ 127,60/ano</p>
+              {/* PRO PLANS */}
+              <div className="space-y-3 mt-4">
+                <p className="text-[9px] font-black text-brand-primary uppercase tracking-widest ml-2">Pro (Completo + Financeiro)</p>
+                <button 
+                  onClick={() => handleSubscribe('monthly')}
+                  disabled={loading}
+                  className="w-full bg-white p-5 rounded-3xl flex items-center justify-between group hover:scale-[1.01] transition-all shadow-sm border border-brand-secondary/10"
+                >
+                  <div className="text-left">
+                    <p className="text-lg font-black text-brand-primary">R$ 69,80<span className="text-[10px] opacity-40">/mês</span></p>
+                  </div>
+                  {loading ? <Loader2 size={18} className="animate-spin text-brand-primary" /> : <ShoppingBag size={18} className="text-brand-primary" />}
+                </button>
+
+                <button 
+                  onClick={() => handleSubscribe('yearly')}
+                  disabled={loading}
+                  className="w-full bg-brand-primary p-6 rounded-[32px] flex items-center justify-between group hover:scale-[1.01] transition-all shadow-xl"
+                >
+                  <div className="text-left text-white">
+                    <p className="text-xl font-black">R$ 710,00<span className="text-[10px] opacity-40">/ano</span></p>
+                    <p className="text-[7px] font-bold text-white/40 uppercase mt-0.5">Economize R$ 127,60</p>
+                  </div>
+                  {loading ? <Loader2 size={20} className="animate-spin text-white" /> : <Gem size={20} className="text-white" />}
+                </button>
               </div>
-              {loading ? <Loader2 size={20} className="animate-spin text-white" /> : <Gem size={24} className="text-white" />}
-            </button>
+            </div>
           </div>
         </div>
       </div>

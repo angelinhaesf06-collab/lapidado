@@ -18,6 +18,7 @@ export const REVENUECAT_CONF = {
 
 export const GOOGLE_PLAY_PLANS = {
   LITE: 'lite',
+  LITE_YEARLY: 'lite_yearly',
   MONTHLY: 'monthly',
   YEARLY: 'yearly'
 } as const
@@ -81,12 +82,13 @@ export async function purchasePackage(rcPackage: any) {
 /**
  * Compatibility Wrapper for Legacy UI code
  */
-export async function purchasePlan(planType: 'lite' | 'monthly' | 'yearly') {
+export async function purchasePlan(planType: 'lite' | 'lite_yearly' | 'monthly' | 'yearly') {
   const offerings = await getOfferings();
   if (!offerings) throw new Error('Nenhuma oferta disponível no momento.');
   
   let pkg;
   if (planType === 'lite') pkg = offerings.weekly || (offerings as any).lite; // Usando fallback para weekly ou custom
+  else if (planType === 'lite_yearly') pkg = (offerings as any).lite_yearly || (offerings as any).annual_lite;
   else if (planType === 'monthly') pkg = offerings.monthly;
   else pkg = offerings.annual;
 
