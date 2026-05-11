@@ -1,10 +1,11 @@
 'use client'
 
-import { Gem, CheckCircle2, ShoppingBag, Loader2, Trash2, ShieldCheck, Sparkles } from 'lucide-react'
+import { Gem, CheckCircle2, ShoppingBag, Loader2, Trash2, ShieldCheck, Sparkles, RefreshCcw, ExternalLink } from 'lucide-react'
 import { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { purchasePlan, GOOGLE_PLAY_PLANS, syncSubscriptionWithSupabase } from '../../../lib/billing/googlePlay'
+import { purchasePlan, GOOGLE_PLAY_PLANS, syncSubscriptionWithSupabase, restorePurchases } from '../../../lib/billing/googlePlay'
 import { createStripeCheckout, STRIPE_PLANS } from '@/lib/billing/stripe'
+import Link from 'next/link'
 
 export default function SubscriptionPage() {
   const [loading, setLoading] = useState(false)
@@ -49,7 +50,6 @@ export default function SubscriptionPage() {
           window.location.reload()
         }
       } else {
-        // Fallback Stripe para o plano lite (usando ID mensal por enquanto ou erro se não configurado)
         if (plan === 'lite') {
            alert('O plano Lite está disponível apenas no aplicativo Android via Google Play.');
            return;
@@ -66,13 +66,32 @@ export default function SubscriptionPage() {
     }
   }
 
+  const handleRestore = async () => {
+    setLoading(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const result = await restorePurchases()
+      if (result.success && result.customerInfo) {
+        await syncSubscriptionWithSupabase(supabase, user.id, result.customerInfo)
+        alert('Assinatura restaurada com sucesso! ✨')
+        window.location.reload()
+      } else {
+        alert('Nenhuma assinatura ativa encontrada para esta conta do Google Play.')
+      }
+    } catch (err) {
+      alert('Erro ao restaurar compras.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleCancelSubscription = () => {
     const isMobile = typeof window !== 'undefined' && ((window as any).Capacitor || navigator.userAgent.includes('Mobile'));
     if (isMobile) {
-      // Abre a central de assinaturas do Google Play
       window.open('https://play.google.com/store/account/subscriptions', '_blank');
     } else {
-      // Abre suporte para cancelamento via Stripe/Web
       window.open('https://wa.me/5511999999999?text=Olá, gostaria de cancelar minha assinatura do Lapidado.', '_blank');
     }
   }
@@ -87,15 +106,25 @@ export default function SubscriptionPage() {
           <p className="text-brand-secondary text-[10px] font-black tracking-[0.4em] uppercase mt-2">Mantenha seu brilho sempre ativo 💎</p>
         </div>
         
-        {subscription?.subscription_status === 'active' && (
+        <div className="flex gap-4">
           <button 
-            onClick={handleCancelSubscription}
-            className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-rose-500/50 hover:text-rose-600 transition-colors p-2"
+            onClick={handleRestore}
+            className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-brand-secondary hover:text-brand-primary transition-colors p-2"
           >
-            <Trash2 size={12} />
-            Excluir Assinatura
+            <RefreshCcw size={12} className={loading ? 'animate-spin' : ''} />
+            Restaurar Acesso
           </button>
-        )}
+
+          {subscription?.subscription_status === 'active' && (
+            <button 
+              onClick={handleCancelSubscription}
+              className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-rose-500/50 hover:text-rose-600 transition-colors p-2"
+            >
+              <Trash2 size={12} />
+              Excluir Assinatura
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="bg-white p-8 md:p-12 rounded-[50px] border border-brand-secondary/10 shadow-sm mb-8">
@@ -137,12 +166,26 @@ export default function SubscriptionPage() {
                 ))}
               </ul>
             </div>
+
+            {/* NOTA POLÍTICA GOOGLE (OBRIGATÓRIO) */}
+            <div className="pt-6 border-t border-brand-secondary/5">
+               <p className="text-[8px] text-brand-secondary/50 font-medium leading-relaxed">
+                 Sua assinatura será processada pela Google Play Store. A cobrança é recorrente e a renovação automática ocorre a menos que seja cancelada 24h antes do fim do período. Você pode gerenciar ou cancelar em "Assinaturas" na Google Play.
+               </p>
+               <div className="flex gap-4 mt-4">
+                 <Link href="/privacidade" className="text-[8px] font-black uppercase tracking-widest text-brand-secondary hover:text-brand-primary flex items-center gap-1">
+                   Privacidade <ExternalLink size={8} />
+                 </Link>
+                 <Link href="/termos" className="text-[8px] font-black uppercase tracking-widest text-brand-secondary hover:text-brand-primary flex items-center gap-1">
+                   Termos <ExternalLink size={8} />
+                 </Link>
+               </div>
+            </div>
           </div>
 
           <div className="space-y-6">
             <h4 className="text-[12px] font-black text-brand-primary uppercase tracking-[0.2em] mb-6">Mudar de Plano</h4>
             
-            {/* NOVO PLANO LITE */}
             <button 
               onClick={() => handleSubscribe('lite')}
               disabled={loading}
@@ -150,7 +193,7 @@ export default function SubscriptionPage() {
             >
               <div className="text-left">
                 <p className="text-[8px] font-black uppercase text-brand-secondary/60">Lite (IA + Vitrine)</p>
-                <p className="text-lg font-black text-brand-primary">R$ 49,90</p>
+                <p className="text-lg font-black text-brand-primary">R$ 49,90/mês</p>
                 <p className="text-[7px] font-bold text-brand-secondary/40 uppercase mt-1">* Sem gestão financeira</p>
               </div>
               {loading ? <Loader2 size={20} className="animate-spin text-brand-primary" /> : <ShoppingBag size={20} className="text-brand-primary/40" />}
@@ -163,7 +206,7 @@ export default function SubscriptionPage() {
             >
               <div className="text-left">
                 <p className="text-[8px] font-black uppercase text-brand-secondary opacity-60">Pro Mensal (Completo)</p>
-                <p className="text-lg font-black text-brand-primary">R$ 69,80</p>
+                <p className="text-lg font-black text-brand-primary">R$ 69,80/mês</p>
               </div>
               {loading ? <Loader2 size={20} className="animate-spin text-brand-primary" /> : <ShoppingBag size={20} className="text-brand-primary" />}
             </button>
@@ -175,19 +218,13 @@ export default function SubscriptionPage() {
             >
               <div className="text-left text-white">
                 <p className="text-[8px] font-black uppercase text-brand-secondary/60">Pro Anual (Melhor Valor)</p>
-                <p className="text-2xl font-black">R$ 710,00</p>
+                <p className="text-2xl font-black">R$ 710,00/ano</p>
                 <p className="text-[7px] font-bold text-white/40 uppercase mt-1">Economize R$ 127,60/ano</p>
               </div>
               {loading ? <Loader2 size={20} className="animate-spin text-white" /> : <Gem size={24} className="text-white" />}
             </button>
           </div>
         </div>
-      </div>
-
-      <div className="mt-8 text-center">
-        <p className="text-[8px] font-bold text-brand-secondary/30 uppercase tracking-[0.2em]">
-          Assinaturas processadas com segurança via Google Play ou Stripe
-        </p>
       </div>
     </div>
   )

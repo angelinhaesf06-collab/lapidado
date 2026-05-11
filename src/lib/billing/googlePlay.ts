@@ -109,6 +109,21 @@ async function purchasePlanLegacy(pkg: any) {
 }
 
 /**
+ * Recupera assinaturas existentes (Obrigatório para Google Play)
+ */
+export async function restorePurchases() {
+  if (!Capacitor.isNativePlatform()) return { success: false };
+  try {
+    const { customerInfo } = await Purchases.restorePurchases();
+    const isActive = customerInfo.entitlements.active[REVENUECAT_CONF.ENTITLEMENT_ID] !== undefined;
+    return { success: isActive, customerInfo };
+  } catch (e) {
+    console.error('❌ Erro ao restaurar compras:', e);
+    return { success: false };
+  }
+}
+
+/**
  * Sincroniza o status da assinatura com o Supabase após compra no Google Play
  */
 export async function syncSubscriptionWithSupabase(supabase: any, userId: string, customerInfo: any) {
