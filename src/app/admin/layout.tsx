@@ -207,8 +207,13 @@ export default function AdminLayout({
               />
             </div>
           ) : (
-            <div className="w-10 h-10 rounded-full bg-brand-primary flex items-center justify-center text-white shadow-lg shadow-brand-primary/20 mb-2">
-              <Gem size={22} />
+            <div className="relative w-12 h-12 mb-2">
+              <Image 
+                src="/logo-app.png" 
+                alt="Lapidado Logo" 
+                fill
+                className="object-contain rounded-xl" 
+              />
             </div>
           )}
           <div>
@@ -277,7 +282,14 @@ export default function AdminLayout({
         <div className="md:hidden bg-white border-b border-brand-secondary/10 sticky top-0 z-50 shadow-sm pt-[env(safe-area-inset-top,0px)]">
            <div className="p-4 flex justify-between items-center border-b border-brand-secondary/5">
              <div className="flex items-center gap-2">
-               <Gem size={16} className="text-brand-primary" />
+               <div className="relative w-6 h-6">
+                 <Image 
+                   src="/logo-app.png" 
+                   alt="Logo" 
+                   fill
+                   className="object-contain rounded-md" 
+                 />
+               </div>
                <span className="text-[9px] font-black uppercase tracking-widest text-brand-primary">{branding.name}</span>
              </div>
              
