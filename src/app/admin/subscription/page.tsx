@@ -251,6 +251,23 @@ export default function SubscriptionPage() {
             </div>
           </div>
         </div>
+
+        {/* 💎 NEXUS: CONFORMIDADE GOOGLE PLAY - ACESSO RÁPIDO À EXCLUSÃO */}
+        <div className="mt-16 pt-12 border-t border-rose-100/50">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6 bg-rose-50/20 p-8 rounded-[40px] border border-rose-100/30">
+            <div className="text-center md:text-left">
+              <h4 className="text-[10px] font-black text-rose-500 uppercase tracking-[0.3em] mb-2">Gestão de Dados</h4>
+              <p className="text-xs text-brand-primary/60 font-medium">Deseja encerrar sua conta e apagar todos os seus dados permanentemente?</p>
+            </div>
+            <Link 
+              href="/excluir-conta"
+              className="px-8 py-4 bg-white border border-rose-100 text-rose-500 text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm flex items-center gap-2 group"
+            >
+              <Trash2 size={14} className="group-hover:animate-bounce" />
+              Excluir Minha Conta
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   )
