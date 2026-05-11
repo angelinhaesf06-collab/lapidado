@@ -20,6 +20,10 @@ export default function HelpPage() {
     { 
       question: 'O cliente pode comprar direto pelo site?', 
       answer: 'Sim! O cliente adiciona à sacola e, ao finalizar, os dados do pedido e endereço são enviados diretamente para o seu WhatsApp.' 
+    },
+    {
+      question: 'Como as peças aparecem na vitrine?',
+      answer: 'Assim que você salva uma peça, ela já aparece automaticamente na sua vitrine pública dentro da categoria que você cadastrou. Não precisa de nenhuma ação extra!'
     }
   ]
 
@@ -33,10 +37,10 @@ export default function HelpPage() {
     },
     { 
       title: 'E-mail de Suporte', 
-      desc: 'suporte@lapidado.com.br', 
+      desc: 'angelinhaesf06@gmail.com', 
       icon: HelpCircle, 
       color: 'bg-brand-secondary',
-      href: 'mailto:suporte@lapidado.com.br'
+      href: 'mailto:angelinhaesf06@gmail.com'
     },
     { 
       title: 'Guia de Uso PDF', 
