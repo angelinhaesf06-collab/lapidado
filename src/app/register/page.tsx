@@ -109,7 +109,7 @@ export default function RegisterPage() {
         // 💎 NEXUS: CATEGORIAS PADRÃO PARA MULTI-MARCAS
         const defaultCategories = ['CONJUNTOS', 'BRINCOS', 'COLARES', 'PULSEIRAS', 'ANÉIS']
         const categoryData = defaultCategories.map(cat => ({
-          user_id: data.user.id,
+          user_id: data.user?.id,
           name: cat,
           slug: cat.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-')
         }))
