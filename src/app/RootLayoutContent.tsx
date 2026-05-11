@@ -81,7 +81,7 @@ export default function RootLayoutContent({
 
   return (
     <body 
-      className={`${montserrat.variable} font-montserrat bg-[#fffcfc] text-[#4a322e] min-h-screen flex flex-col antialiased`}
+      className={`${montserrat.variable} font-montserrat bg-[#fffcfc] text-[#4a322e] antialiased`}
       style={{ 
         // @ts-ignore
         '--brand-primary': primary, 
@@ -94,7 +94,7 @@ export default function RootLayoutContent({
       <CartProvider>
         <AdminBar user={user} />
         {!isAdminPage && !isAuthPage && !isLegalPage && <CartIcon />}
-        <main className="flex-1">
+        <main>
           {children}
         </main>
       </CartProvider>
