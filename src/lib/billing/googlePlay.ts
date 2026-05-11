@@ -16,6 +16,11 @@ export const REVENUECAT_CONF = {
   ENTITLEMENT_ID: 'pro'
 }
 
+export const GOOGLE_PLAY_PLANS = {
+  MONTHLY: 'monthly',
+  YEARLY: 'yearly'
+}
+
 export async function initializeBilling(userId?: string) {
   if (!Capacitor.isNativePlatform()) {
     console.log('💻 Rodando em Web: Google Play Billing desativado.');
@@ -70,6 +75,19 @@ export async function purchasePackage(rcPackage: any) {
     console.error('❌ Erro na compra:', error);
     return { success: false, error: error.message };
   }
+}
+
+/**
+ * Compatibility Wrapper for Legacy UI code
+ */
+export async function purchasePlan(planType: 'monthly' | 'yearly') {
+  const offerings = await getOfferings();
+  if (!offerings) throw new Error('Nenhuma oferta disponível no momento.');
+  
+  const pkg = planType === 'monthly' ? offerings.monthly : offerings.annual;
+  if (!pkg) throw new Error(`Pacote ${planType} não encontrado no RevenueCat.`);
+  
+  return await purchasePackage(pkg);
 }
 
 /**
