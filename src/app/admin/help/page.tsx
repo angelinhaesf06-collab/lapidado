@@ -32,11 +32,18 @@ export default function HelpPage() {
       href: 'https://wa.me/5511999999999' // Substituir pelo número real
     },
     { 
+      title: 'E-mail de Suporte', 
+      desc: 'suporte@lapidado.com.br', 
+      icon: HelpCircle, 
+      color: 'bg-brand-secondary',
+      href: 'mailto:suporte@lapidado.com.br'
+    },
+    { 
       title: 'Guia de Uso PDF', 
       desc: 'Baixe o manual completo do sistema.', 
       icon: FileText, 
       color: 'bg-brand-primary',
-      href: '#'
+      href: '/manual-lapidado.pdf'
     }
   ]
 
