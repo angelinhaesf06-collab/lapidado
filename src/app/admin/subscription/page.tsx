@@ -39,13 +39,13 @@ export default function SubscriptionPage() {
       const isMobile = typeof window !== 'undefined' && ((window as any).Capacitor || navigator.userAgent.includes('Mobile'));
 
       if (isMobile) {
-        let planType: 'lite' | 'lite_yearly' | 'monthly' | 'yearly';
+        let planType: 'lite' | 'liteyearly' | 'monthly' | 'yearly';
         if (plan === 'lite') planType = GOOGLE_PLAY_PLANS.LITE;
         else if (plan === 'lite_yearly') planType = GOOGLE_PLAY_PLANS.LITE_YEARLY;
         else if (plan === 'monthly') planType = GOOGLE_PLAY_PLANS.MONTHLY;
         else planType = GOOGLE_PLAY_PLANS.YEARLY;
 
-        const purchase = await purchasePlan(planType)
+        const purchase = await purchasePlan(planType as any)
         if (purchase.success && purchase.customerInfo) {
           await syncSubscriptionWithSupabase(supabase, user.id, purchase.customerInfo)
           window.location.reload()
