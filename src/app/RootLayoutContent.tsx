@@ -87,13 +87,13 @@ export default function RootLayoutContent({
 
   return (
     <body 
-      className={`${montserrat.variable} font-montserrat bg-[#FAF7F2] text-[#5D4037] antialiased`}
+      className={`${montserrat.variable} font-montserrat bg-[#F5F0E6] text-[#5D4037] antialiased`}
       style={{ 
         // @ts-ignore
         '--brand-primary': primary, 
         // @ts-ignore
         '--brand-secondary': secondary,
-        '--background': '#FAF7F2'
+        '--background': '#F5F0E6'
       }}
     >
       <Toaster position="top-center" richColors />
