@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'LAPIDADO',
   webDir: 'out',
   server: {
-    url: 'https://lapidado.com.br',
+    url: 'https://lapidado.vercel.app',
     cleartext: true
   }
 };
