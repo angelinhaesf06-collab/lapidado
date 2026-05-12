@@ -51,12 +51,12 @@ export default function SubscriptionPage() {
           window.location.reload()
         }
       } else {
-        if (plan === 'lite' || plan === 'lite_yearly') {
+        if (plan === 'lite' || plan === 'liteyearly') {
            if (plan === 'lite') {
              alert('O plano Lite Mensal está disponível apenas no aplicativo Android via Google Play.');
              return;
            }
-           // Se for lite_yearly na web, tenta Stripe
+           // Se for liteyearly na web, tenta Stripe
            const stripePlan = STRIPE_PLANS.LITE_YEARLY;
            const checkout = await createStripeCheckout(stripePlan, user.id, user.email || '')
            if (!checkout.success) alert(checkout.error)
