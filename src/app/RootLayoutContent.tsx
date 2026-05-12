@@ -9,6 +9,7 @@ import AdminBar from '@/components/admin-bar';
 import CartIcon from '@/components/cart/cart-icon';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Toaster } from 'sonner';
+import { initializeBilling } from '@/lib/billing/googlePlay';
 
 const montserrat = Montserrat({ 
   subsets: ["latin"], 
@@ -33,6 +34,11 @@ export default function RootLayoutContent({
       try {
         const { data: { user: currentUser } } = await supabase.auth.getUser();
         setUser(currentUser);
+
+        // 📡 Inicializa faturamento no app nativo
+        if (currentUser) {
+          initializeBilling(currentUser.id);
+        }
 
         let currentBranding = null;
         const urlParams = new URLSearchParams(window.location.search);
