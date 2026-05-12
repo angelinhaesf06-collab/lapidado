@@ -193,7 +193,7 @@ export default function AdminLayout({
       `}</style>
 
       {/* 💎 SIDEBAR LAPIDADO (ESQUERDA) */}
-      <aside className="hidden md:flex w-72 flex-col bg-white border-r border-brand-secondary/10 p-8 sticky top-0 h-screen z-50 shadow-[20px_0_40px_rgba(74,50,46,0.02)]">
+      <aside className="hidden md:flex w-72 flex-col bg-[#F5F0E6] border-r border-brand-secondary/10 p-8 sticky top-0 h-screen z-50 shadow-[20px_0_40px_rgba(74,50,46,0.02)]">
         
         {/* LOGO DINÂMICA DO LOJISTA (MULTI-MARCAS) */}
         <div className="flex flex-col items-center gap-4 mb-16 px-2 text-center">
@@ -279,7 +279,7 @@ export default function AdminLayout({
       {/* CONTEÚDO PRINCIPAL */}
       <main className="flex-1 w-full overflow-y-auto overflow-x-hidden scroll-smooth">
         {/* BARRA SUPERIOR MOBILE (Ajustada com todas as abas) */}
-        <div className="md:hidden bg-white border-b border-brand-secondary/10 sticky top-0 z-50 shadow-sm pt-[env(safe-area-inset-top,0px)]">
+        <div className="md:hidden bg-[#F5F0E6] border-b border-brand-secondary/10 sticky top-0 z-50 shadow-sm pt-[env(safe-area-inset-top,0px)]">
            <div className="p-4 flex justify-between items-center border-b border-brand-secondary/5">
              <div className="flex items-center gap-2">
                <div className="relative w-6 h-6">
