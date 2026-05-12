@@ -170,7 +170,7 @@ export default function CatalogClient({
 
   if (loading && allProducts.length === 0) {
     return (
-      <div className="flex flex-col w-full min-h-screen bg-[#fffcfc] animate-pulse">
+      <div className="flex flex-col w-full min-h-screen animate-pulse">
         {/* Skeleton Header */}
         <div className="w-full pt-12 pb-8 flex flex-col items-center gap-6 border-b border-brand-secondary/5 bg-white">
           <div className="w-48 h-16 bg-brand-secondary/5 rounded-2xl" />
@@ -200,7 +200,7 @@ export default function CatalogClient({
   }
 
   return (
-    <div className="flex flex-col w-full bg-[#fffcfc] animate-in fade-in duration-700">
+    <div className="flex flex-col w-full animate-in fade-in duration-700">
       
       {/* 💎 CABEÇALHO DINÂMICO COM SAFE AREA PARA MOBILE */}
       <div className="sticky top-0 z-[100] bg-white/95 backdrop-blur-xl border-b border-brand-secondary/10 shadow-sm pt-[env(safe-area-inset-top,20px)] overflow-visible">

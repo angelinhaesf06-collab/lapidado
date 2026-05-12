@@ -161,7 +161,7 @@ export default function AdminLayout({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-rose-50/10 flex flex-col items-center justify-center gap-4">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
         <Loader2 className="animate-spin text-brand-secondary" size={40} />
         <p className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.3em]">Validando Acesso...</p>
       </div>
@@ -169,7 +169,7 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-[#fffcfc] overflow-hidden">
+    <div className="flex min-h-screen overflow-hidden">
       
       {/* 🛑 PAYWALL DE BLOQUEIO */}
       {isBlocked && <Paywall onSubscribe={handleSubscribe} trialDaysLeft={trialDaysLeft} />}
@@ -257,7 +257,7 @@ export default function AdminLayout({
 
               <button 
                 onClick={shareToWhatsApp}
-                className="w-full flex items-center gap-4 px-6 py-4 rounded-[24px] text-[10px] font-black uppercase tracking-[0.2em] text-white bg-[#25D366] hover:bg-[#128C7E] transition-[background-color,transform] shadow-lg shadow-green-500/20 active:scale-95"
+                className="w-full flex items-center gap-4 px-6 py-4 rounded-[24px] text-[10px] font-black uppercase tracking-em text-white bg-[#25D366] hover:bg-[#128C7E] transition-[background-color,transform] shadow-lg shadow-green-500/20 active:scale-95"
               >
                 <Share2 size={20} /> 
                 Divulgar Whats
@@ -277,7 +277,7 @@ export default function AdminLayout({
       </aside>
 
       {/* CONTEÚDO PRINCIPAL */}
-      <main className="flex-1 w-full overflow-y-auto overflow-x-hidden scroll-smooth bg-[#fffcfc]">
+      <main className="flex-1 w-full overflow-y-auto overflow-x-hidden scroll-smooth">
         {/* BARRA SUPERIOR MOBILE (Ajustada com todas as abas) */}
         <div className="md:hidden bg-white border-b border-brand-secondary/10 sticky top-0 z-50 shadow-sm pt-[env(safe-area-inset-top,0px)]">
            <div className="p-4 flex justify-between items-center border-b border-brand-secondary/5">
