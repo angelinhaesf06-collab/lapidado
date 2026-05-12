@@ -254,7 +254,7 @@ export default function CatalogClient({
 
       {(branding?.top_banner ?? branding?.facebook?.split('|')[2]) && (
         <div className="w-full bg-brand-primary py-1.5 px-4 text-center">
-          <p className="text-white text-[7px] md:text-[9px] font-black uppercase tracking-[0.4em] md:tracking-[0.6em]">
+          <p className="text-white text-[7px] md:text-[9px] font-black uppercase tracking-[0.2em] md:tracking-[0.6em] break-words">
             ✨ {(branding?.top_banner ?? branding?.facebook?.split('|')[2]) as string} ✨
           </p>
         </div>
@@ -262,7 +262,7 @@ export default function CatalogClient({
 
       <div ref={productsTopRef} className="max-w-7xl mx-auto px-4 py-12 md:py-24 w-full text-center overflow-visible pb-32">
         <div className="mb-12 md:mb-20 pt-4">
-          <h2 className="text-lg md:text-2xl font-light tracking-[0.4em] uppercase text-brand-primary mb-4 animate-in slide-in-from-bottom-2 duration-700 block">
+          <h2 className="text-lg md:text-2xl font-light tracking-[0.2em] md:tracking-[0.4em] uppercase text-brand-primary mb-4 animate-in slide-in-from-bottom-2 duration-700 block break-words">
             {(activeCategory === 'Todos' || !activeCategory) 
               ? `${branding?.store_name || 'Coleção'} Exclusiva` 
               : activeCategory}
