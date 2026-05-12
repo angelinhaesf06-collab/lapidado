@@ -210,7 +210,7 @@ export default function SubscriptionPage() {
                 </button>
 
                 <button 
-                  onClick={() => handleSubscribe('lite_yearly')}
+                  onClick={() => handleSubscribe('liteyearly')}
                   disabled={loading}
                   className="w-full bg-rose-50/60 p-5 rounded-3xl flex items-center justify-between group hover:scale-[1.01] transition-all border border-brand-secondary/10"
                 >
