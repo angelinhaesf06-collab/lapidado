@@ -88,7 +88,7 @@ export async function purchasePlan(planType: 'lite' | 'liteyearly' | 'monthly' |
   
   let pkg;
   if (planType === 'lite') pkg = offerings.monthly; // $rc_monthly na imagem
-  else if (planType === 'lite_yearly') pkg = offerings.annual; // $rc_annual na imagem
+  else if (planType === 'liteyearly') pkg = offerings.annual; // $rc_annual na imagem
   else if (planType === 'monthly') pkg = (offerings as any).custom_lifetime; 
   else pkg = (offerings as any).custom_yearly_2;
 
