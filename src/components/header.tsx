@@ -52,8 +52,8 @@ export default function Header() {
         if (brandingData) {
           setBranding({ 
             logo_url: brandingData.logo_url,
-            tagline: brandingData.tagline || brandingData.facebook?.split('|')[0] || null,
-            topBanner: brandingData.top_banner || brandingData.facebook?.split('|')[2] || null,
+            tagline: brandingData.tagline ?? brandingData.facebook?.split('|')[0] ?? null,
+            topBanner: brandingData.top_banner ?? brandingData.facebook?.split('|')[2] ?? null,
             warranty: brandingData.warranty_time || null,
             store_name: brandingData.business_name || brandingData.store_name || 'LAPIDADO'
           })

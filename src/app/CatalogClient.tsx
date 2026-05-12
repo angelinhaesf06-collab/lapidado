@@ -252,10 +252,10 @@ export default function CatalogClient({
         )}
       </div>
 
-      {(branding?.top_banner || (branding?.facebook && branding.facebook.includes('|') && branding.facebook.split('|')[2])) && (
-        <div className="w-full bg-brand-primary py-2 px-4 text-center relative z-[90]">
-          <p className="text-white text-[7px] md:text-[9px] font-black uppercase tracking-[0.3em] animate-pulse">
-            ✨ {(branding?.top_banner || branding?.facebook?.split('|')[2]) as string} ✨
+      {(branding?.top_banner ?? branding?.facebook?.split('|')[2]) && (
+        <div className="w-full bg-brand-primary py-1.5 px-4 text-center">
+          <p className="text-white text-[7px] md:text-[9px] font-black uppercase tracking-[0.4em] md:tracking-[0.6em]">
+            ✨ {(branding?.top_banner ?? branding?.facebook?.split('|')[2]) as string} ✨
           </p>
         </div>
       )}

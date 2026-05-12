@@ -29,7 +29,7 @@ export default function AdminLayout({
       if (user) {
         // 💎 NEXUS: Busca ultra-resiliente com múltiplos fallbacks de ordenação.
         const { data, error } = await supabase.from('branding')
-          .select('store_name, business_name, logo_url, facebook, slug, website, subscription_status, trial_ends_at')
+          .select('store_name, business_name, logo_url, facebook, slug, website, subscription_status, trial_ends_at, top_banner, tagline')
           .eq('user_id', user.id)
           .order('updated_at', { ascending: false, nullsFirst: false })
           .order('created_at', { ascending: false })
@@ -150,7 +150,7 @@ export default function AdminLayout({
     const finalSlug = branding.slug || storeName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
 
     const url = `${baseUrl}/?catalogo=true&loja=${finalSlug}`
-    const text = `Olá! Conheça o novo catálogo digital da *${storeName.toUpperCase()}*. Peças exclusivas e brilho em cada detalhe: ${url}`
+    const text = `💎 *${storeName.toUpperCase()}* | Catálogo Exclusivo\n\nOlá! Confira as nossas novidades e peças selecionadas em nossa vitrine digital. Brilho e requinte a apenas um toque:\n\n🔗 ${url}`
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
   }
 

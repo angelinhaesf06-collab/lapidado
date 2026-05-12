@@ -49,9 +49,12 @@ export default function BrandingPage() {
           const storeSlug = data.slug || storeName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
           
           setCurrentSlug(storeSlug || null)
-          setTagline(data.tagline || data.facebook?.split('|')[0] || '') 
-          setInstallments(data.installments?.toString() || data.facebook?.split('|')[1] || '10')
-          setTopBanner(data.top_banner || data.facebook?.split('|')[2] || '')
+          
+          // 💎 NEXUS: Lógica de fallback aprimorada para priorizar colunas dedicadas
+          setTagline(data.tagline ?? data.facebook?.split('|')[0] ?? '') 
+          setInstallments(data.installments?.toString() ?? data.facebook?.split('|')[1] ?? '10')
+          setTopBanner(data.top_banner ?? data.facebook?.split('|')[2] ?? '')
+          
           setBusinessName(storeName)
           setTiktok(data.tiktok || '') 
           setWarrantyTime(data.warranty_time || '') 
