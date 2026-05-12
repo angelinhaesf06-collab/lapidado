@@ -87,8 +87,8 @@ export async function purchasePlan(planType: 'lite' | 'lite_yearly' | 'monthly' 
   if (!offerings) throw new Error('Nenhuma oferta disponível no momento.');
   
   let pkg;
-  if (planType === 'lite') pkg = offerings.weekly || (offerings as any).lite; // Usando fallback para weekly ou custom
-  else if (planType === 'lite_yearly') pkg = (offerings as any).lite_yearly || (offerings as any).annual_lite;
+  if (planType === 'lite') pkg = (offerings as any).lite || offerings.weekly;
+  else if (planType === 'lite_yearly') pkg = (offerings as any).liteyearly || offerings.annual;
   else if (planType === 'monthly') pkg = offerings.monthly;
   else pkg = offerings.annual;
 
