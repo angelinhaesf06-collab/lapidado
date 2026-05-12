@@ -30,7 +30,7 @@ export default function SubscriptionPage() {
     loadSubscription()
   }, [supabase])
 
-  const handleSubscribe = async (plan: 'lite' | 'lite_yearly' | 'monthly' | 'yearly') => {
+  const handleSubscribe = async (plan: 'lite' | 'liteyearly' | 'monthly' | 'yearly') => {
     setLoading(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -41,11 +41,11 @@ export default function SubscriptionPage() {
       if (isMobile) {
         let planType: 'lite' | 'liteyearly' | 'monthly' | 'yearly';
         if (plan === 'lite') planType = GOOGLE_PLAY_PLANS.LITE;
-        else if (plan === 'lite_yearly') planType = GOOGLE_PLAY_PLANS.LITE_YEARLY;
+        else if (plan === 'liteyearly') planType = GOOGLE_PLAY_PLANS.LITE_YEARLY;
         else if (plan === 'monthly') planType = GOOGLE_PLAY_PLANS.MONTHLY;
         else planType = GOOGLE_PLAY_PLANS.YEARLY;
 
-        const purchase = await purchasePlan(planType as any)
+        const purchase = await purchasePlan(planType)
         if (purchase.success && purchase.customerInfo) {
           await syncSubscriptionWithSupabase(supabase, user.id, purchase.customerInfo)
           window.location.reload()

@@ -82,7 +82,7 @@ export async function purchasePackage(rcPackage: any) {
 /**
  * Compatibility Wrapper for Legacy UI code
  */
-export async function purchasePlan(planType: 'lite' | 'lite_yearly' | 'monthly' | 'yearly') {
+export async function purchasePlan(planType: 'lite' | 'liteyearly' | 'monthly' | 'yearly') {
   const offerings = await getOfferings();
   if (!offerings) throw new Error('Nenhuma oferta disponível no momento.');
   
