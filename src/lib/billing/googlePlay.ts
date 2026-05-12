@@ -30,12 +30,21 @@ export async function initializeBilling(userId?: string) {
   }
 
   try {
+    const apiKey = REVENUECAT_CONF.GOOGLE_API_KEY;
     console.log('📡 Inicializando RevenueCat (Google Play)...');
+    console.log(`🔑 Usando API Key: ${apiKey.substring(0, 8)}...`);
+
+    if (apiKey === 'goog_placeholder' || !apiKey) {
+      console.error('❌ ERRO: NEXT_PUBLIC_REVENUECAT_GOOGLE_KEY não configurada no ambiente!');
+      return false;
+    }
+
     await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
     await Purchases.configure({ 
-      apiKey: REVENUECAT_CONF.GOOGLE_API_KEY,
+      apiKey: apiKey,
       appUserID: userId
     });
+    console.log('✅ RevenueCat configurado com sucesso!');
     return true;
   } catch (e) {
     console.error('❌ Falha ao configurar RevenueCat:', e);
@@ -44,12 +53,19 @@ export async function initializeBilling(userId?: string) {
 }
 
 export async function getOfferings() {
-  if (!Capacitor.isNativePlatform()) return null;
+  if (!Capacitor.isNativePlatform()) {
+    console.warn('⚠️ getOfferings chamado fora de plataforma nativa');
+    return null;
+  }
   try {
+    console.log('📡 Buscando ofertas no RevenueCat...');
     const offerings = await Purchases.getOfferings();
+    console.log('🎁 Ofertas recebidas:', JSON.stringify(offerings));
     return offerings.current;
-  } catch (e) {
+  } catch (e: any) {
     console.error('❌ Erro ao buscar ofertas:', e);
+    // Log detalhado para o usuário
+    if (e.message) console.error('Mensagem de erro:', e.message);
     return null;
   }
 }
