@@ -70,11 +70,11 @@ export default function CatalogClient({
       if (productsTopRef.current) {
         // Busca a altura real do cabeçalho fixo no momento do clique
         const headerElement = document.querySelector('.sticky');
-        const headerHeight = headerElement ? headerElement.clientHeight : 150;
+        const headerHeight = headerElement ? headerElement.clientHeight : 100;
         
-        // Detecta se é mobile para dar um respiro MUITO maior e evitar sumiço
+        // Detecta se é mobile para um ajuste preciso
         const isMobile = window.innerWidth < 768;
-        const extraPadding = isMobile ? 80 : 40; 
+        const extraPadding = isMobile ? 40 : 20; 
         
         const elementPosition = productsTopRef.current.getBoundingClientRect().top;
         const offsetPosition = elementPosition + window.pageYOffset - (headerHeight + extraPadding);
@@ -200,13 +200,13 @@ export default function CatalogClient({
   }
 
   return (
-    <div className="flex flex-col w-full animate-in fade-in duration-700 bg-[#F5F0E6]">
+    <div className="flex flex-col w-full min-h-screen animate-in fade-in duration-700 bg-[#F5F0E6]">
       
       {/* 💎 CABEÇALHO DINÂMICO COMPACTO COM SAFE AREA */}
-      <div className="sticky top-0 z-[100] bg-[#F5F0E6]/95 backdrop-blur-xl border-b border-brand-secondary/10 shadow-sm pt-[env(safe-area-inset-top,20px)] overflow-visible">
-        <header className="w-full pt-4 pb-2 flex flex-col items-center gap-3">
+      <div className="sticky top-0 z-[100] bg-[#F5F0E6]/95 backdrop-blur-xl border-b border-brand-secondary/10 shadow-sm pt-[env(safe-area-inset-top,10px)] overflow-visible">
+        <header className="w-full pt-3 pb-1 flex flex-col items-center gap-2">
           {branding?.logo_url && !logoError ? (
-            <Link href={`/?catalogo=true${storeParam}`} className="relative block w-32 md:w-48 h-10 md:h-14 transition-all duration-500 hover:scale-105 active:scale-95">
+            <Link href={`/?catalogo=true${storeParam}`} className="relative block w-24 md:w-36 h-8 md:h-12 transition-all duration-500 hover:scale-105 active:scale-95">
               <img 
                 src={branding.logo_url} 
                 alt={branding.store_name || 'Logo'} 
@@ -215,33 +215,27 @@ export default function CatalogClient({
               />
             </Link>
           ) : (
-            <div className="flex flex-col items-center gap-1.5">
-               <div className="w-8 h-8 rounded-full bg-brand-primary flex items-center justify-center text-white shadow-md">
-                  <Gem size={16} />
+            <div className="flex flex-col items-center gap-1">
+               <div className="w-6 h-6 rounded-full bg-brand-primary flex items-center justify-center text-white shadow-md">
+                  <Gem size={12} />
                </div>
-               <h1 className="text-[10px] md:text-[14px] font-black uppercase tracking-[0.4em] text-brand-primary">
+               <h1 className="text-[9px] md:text-[12px] font-black uppercase tracking-[0.3em] text-brand-primary">
                   {branding?.store_name || 'LAPIDADO'}
                </h1>
             </div>
           )}
-          
-          {branding?.tagline && (
-            <p className="text-[7px] md:text-[9px] font-black uppercase tracking-[0.3em] text-brand-secondary/60 max-w-[80%] text-center leading-relaxed">
-              {branding.tagline}
-            </p>
-          )}
         </header>
 
         {categoryNames.length > 1 && (
-          <nav className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-center gap-2 md:gap-3 items-center overflow-visible">
+          <nav className="max-w-7xl mx-auto px-4 py-2 flex flex-wrap justify-center gap-1.5 md:gap-2.5 items-center overflow-visible pb-3">
             {categoryNames.map((cat) => (
               <button 
                 key={cat}
                 onClick={() => handleCategoryChange(cat)}
-                className={`px-3 py-1.5 md:px-4 md:py-2 transition-all duration-300 font-black text-[8px] md:text-[9px] tracking-[0.1em] uppercase rounded-full border ${
+                className={`px-2.5 py-1 md:px-3.5 md:py-1.5 transition-all duration-300 font-black text-[7px] md:text-[8px] tracking-[0.1em] uppercase rounded-full border ${
                   activeCategory === cat || (cat === 'Todos' && !activeCategory)
                   ? "bg-brand-primary text-white border-brand-primary shadow-md scale-105" 
-                  : "text-brand-primary/60 hover:text-brand-primary bg-white/50 border-brand-secondary/10"
+                  : "text-brand-primary/60 hover:text-brand-primary bg-white/40 border-brand-secondary/5"
                 }`}
               >
                 {cat}
@@ -252,31 +246,31 @@ export default function CatalogClient({
       </div>
 
       {(branding?.top_banner ?? branding?.facebook?.split('|')[2]) && (
-        <div className="w-full bg-brand-primary py-1 px-4 text-center">
-          <p className="text-white text-[7px] md:text-[8px] font-black uppercase tracking-[0.2em] md:tracking-[0.4em] break-words">
+        <div className="w-full bg-brand-primary py-0.5 px-4 text-center">
+          <p className="text-white text-[6px] md:text-[7px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] break-words">
             ✨ {(branding?.top_banner ?? branding?.facebook?.split('|')[2]) as string} ✨
           </p>
         </div>
       )}
 
-      <div ref={productsTopRef} className="max-w-7xl mx-auto px-4 py-8 md:py-16 w-full text-center overflow-visible pb-32">
-        <div className="mb-8 md:mb-16 pt-2">
-          <h2 className="text-sm md:text-xl font-light tracking-[0.2em] md:tracking-[0.3em] uppercase text-brand-primary mb-3 animate-in slide-in-from-bottom-2 duration-700 block break-words">
+      <div ref={productsTopRef} className="max-w-7xl mx-auto px-4 py-6 md:py-10 w-full text-center overflow-visible">
+        <div className="mb-6 md:mb-10 pt-2">
+          <h2 className="text-[10px] md:text-sm font-light tracking-[0.3em] uppercase text-brand-primary mb-2 animate-in slide-in-from-bottom-2 duration-700 block break-words">
             {(activeCategory === 'Todos' || !activeCategory) 
               ? `${branding?.store_name || 'Coleção'} Exclusiva` 
               : activeCategory}
           </h2>
-          <div className="w-8 h-[1px] bg-brand-secondary/30 mx-auto" />
+          <div className="w-6 h-[1px] bg-brand-secondary/20 mx-auto" />
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 md:gap-x-10 gap-y-8 md:gap-y-20 px-1 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-2.5 md:gap-x-8 gap-y-6 md:gap-y-16 px-0.5 animate-in fade-in slide-in-from-bottom-4 duration-1000">
           {displayedProducts.map((product, index) => {
             const isBroken = !product.image_url || imageErrors[product.id];
             
             return (
               <div key={product.id} className="group flex flex-col items-center w-full">
                 <Link href={`/product?id=${product.id}&catalogo=true${storeParam}`} className="w-full focus:outline-none">
-                  <div className="aspect-[4/5] w-full bg-brand-secondary/5 rounded-[32px] md:rounded-[40px] overflow-hidden mb-4 shadow-sm relative transition-all duration-500 group-hover:shadow-md group-hover:-translate-y-1">
+                  <div className="aspect-[4/5] w-full bg-brand-secondary/5 rounded-[24px] md:rounded-[36px] overflow-hidden mb-3 shadow-sm relative transition-all duration-500 group-hover:shadow-md group-hover:-translate-y-1 border border-brand-secondary/5">
                     {!isBroken ? (
                       <img 
                         src={product.image_url} 
@@ -286,26 +280,26 @@ export default function CatalogClient({
                         onError={() => handleImageError(product.id)}
                       />
                     ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center gap-2 opacity-20">
-                        <Gem size={24} />
-                        <span className="text-[7px] font-black uppercase tracking-widest">Sem Foto</span>
+                      <div className="w-full h-full flex flex-col items-center justify-center gap-2 opacity-10">
+                        <Gem size={20} />
+                        <span className="text-[6px] font-black uppercase tracking-widest">Sem Foto</span>
                       </div>
                     )}
                   </div>
                   
-                  <div className="px-1 text-center w-full mb-4">
-                    <h4 className="text-[9px] md:text-[11px] font-black tracking-[0.1em] uppercase text-brand-primary mb-1 leading-relaxed transition-colors group-hover:text-brand-secondary truncate px-2">{product.name}</h4>
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-[13px] md:text-[18px] font-bold text-brand-primary">
+                  <div className="px-0.5 text-center w-full mb-3">
+                    <h4 className="text-[8px] md:text-[10px] font-black tracking-[0.05em] uppercase text-brand-primary mb-0.5 leading-relaxed transition-colors group-hover:text-brand-secondary truncate px-1">{product.name}</h4>
+                    <div className="flex flex-col gap-0">
+                      <span className="text-[11px] md:text-[14px] font-bold text-brand-primary">
                         R$ {Number(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </span>
-                      <p className="text-brand-secondary text-[7px] md:text-[8px] font-black tracking-widest uppercase opacity-40">
+                      <p className="text-brand-secondary text-[6px] md:text-[7px] font-black tracking-widest uppercase opacity-30">
                         {installments}x de R$ {(Number(product.price) / installments).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </p>
                     </div>
                   </div>
                 </Link>
-                <div className="w-full px-1 md:px-4">
+                <div className="w-full px-0.5 md:px-2">
                   <AddToCartButton product={product} />
                 </div>
               </div>
@@ -315,8 +309,8 @@ export default function CatalogClient({
         
         {!loading && displayedProducts.length === 0 && (
           <div className="py-20">
-            <Gem size={32} className="text-brand-secondary/20 mb-4 mx-auto" />
-            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-brand-secondary/30">Coleção em breve 💎</p>
+            <Gem size={24} className="text-brand-secondary/10 mb-3 mx-auto" />
+            <p className="text-[8px] font-black uppercase tracking-[0.3em] text-brand-secondary/20">Coleção em breve 💎</p>
           </div>
         )}
       </div>
