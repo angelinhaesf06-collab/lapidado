@@ -60,7 +60,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: `SUPABASE_BLOCK: ${error.message}` }, { status: 500 })
     }
 
-    const { data: { publicUrl } } = supabaseAdmin.storage.from(bucket).getPublicUrl(fileName)
+    // 🔗 GERAÇÃO DE URL PÚBLICA DEFINITIVA
+    const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${bucket}/${fileName}`
     return NextResponse.json({ url: publicUrl })
 
   } catch (err: any) {
