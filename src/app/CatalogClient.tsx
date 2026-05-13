@@ -204,9 +204,9 @@ export default function CatalogClient({
       
       {/* 💎 CABEÇALHO DINÂMICO COMPACTO COM SAFE AREA */}
       <div className="sticky top-0 z-[100] bg-[#F5F0E6]/95 backdrop-blur-xl border-b border-brand-secondary/10 shadow-sm pt-[env(safe-area-inset-top,10px)] overflow-visible">
-        <header className="w-full pt-3 pb-1 flex flex-col items-center gap-2">
+        <header className="w-full pt-4 pb-2 flex flex-col items-center gap-3">
           {branding?.logo_url && !logoError ? (
-            <Link href={`/?catalogo=true${storeParam}`} className="relative block w-24 md:w-36 h-8 md:h-12 transition-all duration-500 hover:scale-105 active:scale-95">
+            <Link href={`/?catalogo=true${storeParam}`} className="relative block w-36 md:w-56 h-12 md:h-20 transition-all duration-500 hover:scale-105 active:scale-95">
               <img 
                 src={branding.logo_url} 
                 alt={branding.store_name || 'Logo'} 
