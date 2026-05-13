@@ -16,7 +16,7 @@ export default function CartIcon() {
   return (
     <Link 
       href={cartUrl}
-      className="fixed bottom-8 right-8 p-4 bg-brand-primary text-white rounded-full shadow-2xl hover:scale-110 transition-transform flex items-center gap-2 group z-[100]"
+      className="fixed bottom-[calc(2rem+env(safe-area-inset-bottom,0px))] right-8 p-4 bg-brand-primary text-white rounded-full shadow-2xl hover:scale-110 transition-transform flex items-center gap-2 group z-[100]"
     >
       <ShoppingBag size={24} />
       {itemCount > 0 && (

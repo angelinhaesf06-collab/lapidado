@@ -73,7 +73,7 @@ export default function Footer() {
   if (!branding) return null
 
   return (
-    <footer className="bg-[#F5F0E6] border-t border-brand-secondary/10 pt-10 pb-8">
+    <footer className="bg-[#F5F0E6] border-t border-brand-secondary/10 pt-10 pb-[calc(2rem+env(safe-area-inset-bottom,0px))]">
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-10">
         
         {/* Lado 1: Identidade e Endereço */}

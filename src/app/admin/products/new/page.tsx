@@ -191,12 +191,6 @@ export default function NewProductPage() {
       } catch (err) {
         console.error("Erro no upload, usando base64:", err)
       }
-          const uploadData = await uploadRes.json()
-          if (uploadData.url) finalImageUrl = uploadData.url
-        }
-      } catch (err) {
-        console.error("Erro no upload, usando base64:", err)
-      }
 
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('SESSÃO EXPIRADA. FAÇA LOGIN NOVAMENTE.')

@@ -202,8 +202,8 @@ export default function CatalogClient({
   return (
     <div className="flex flex-col w-full animate-in fade-in duration-700 bg-[#F5F0E6]">
       
-      {/* 💎 CABEÇALHO DINÂMICO COMPACTO */}
-      <div className="sticky top-0 z-[100] bg-[#F5F0E6]/95 backdrop-blur-xl border-b border-brand-secondary/10 shadow-sm pt-[env(safe-area-inset-top,10px)] overflow-visible">
+      {/* 💎 CABEÇALHO DINÂMICO COMPACTO COM SAFE AREA */}
+      <div className="sticky top-0 z-[100] bg-[#F5F0E6]/95 backdrop-blur-xl border-b border-brand-secondary/10 shadow-sm pt-[env(safe-area-inset-top,20px)] overflow-visible">
         <header className="w-full pt-4 pb-2 flex flex-col items-center gap-3">
           {branding?.logo_url && !logoError ? (
             <Link href={`/?catalogo=true${storeParam}`} className="relative block w-32 md:w-48 h-10 md:h-14 transition-all duration-500 hover:scale-105 active:scale-95">
