@@ -55,7 +55,7 @@ export default function PrivacidadePage() {
               <h2 className="text-lg font-black uppercase tracking-tight">2. Processamento por IA</h2>
             </div>
             <p className="text-sm">
-              Utilizamos a tecnologia **Google Gemini API** para o processamento de imagens e geração de descrições automáticas. Ao utilizar a função "Mágica Lapidado", a imagem da joia e as características técnicas são enviadas de forma segura aos servidores do Google para análise e retorno de texto refinado. Nenhum dado pessoal é enviado para treinamento de modelos de terceiros.
+              Utilizamos a tecnologia **Google Gemini API** para o processamento de imagens e geração de descrições automáticas. Ao utilizar a função &quot;Mágica Lapidado&quot;, a imagem da joia e as características técnicas são enviadas de forma segura aos servidores do Google para análise e retorno de texto refinado. Nenhum dado pessoal é enviado para treinamento de modelos de terceiros.
             </p>
           </section>
 

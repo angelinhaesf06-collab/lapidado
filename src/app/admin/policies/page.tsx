@@ -39,7 +39,7 @@ export default function PoliciesPage() {
       <div className="mt-16 p-8 bg-rose-50/20 rounded-[40px] border border-brand-secondary/5">
         <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary mb-4">Compromisso Lapidado</h4>
         <p className="text-xs text-brand-primary/60 leading-relaxed italic">
-          "Acreditamos que a segurança é a base para o crescimento do seu negócio. Nossas políticas são revisadas periodicamente para garantir conformidade com a LGPD e as melhores práticas do mercado digital de luxo."
+          &quot;Acreditamos que a segurança é a base para o crescimento do seu negócio. Nossas políticas são revisadas periodicamente para garantir conformidade com a LGPD e as melhores práticas do mercado digital de luxo.&quot;
         </p>
       </div>
     </div>

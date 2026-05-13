@@ -51,12 +51,7 @@ export default function CustomersPage() {
   const [newCustomer, setNewCustomer] = useState({ name: '', cpf: '', address: '', phone: '' })
   const supabase = createClient()
 
-  useEffect(() => {
-    loadCustomers()
-  }, [])
-
-  // 🚀 OTIMIZAÇÃO: Busca apenas o essencial primeiro
-  async function loadCustomers() {
+  const loadCustomers = React.useCallback(async () => {
     try {
       setLoading(true)
       const { data: { user } } = await supabase.auth.getUser()
@@ -75,7 +70,11 @@ export default function CustomersPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [supabase])
+
+  useEffect(() => {
+    loadCustomers()
+  }, [loadCustomers])
 
   // 🚀 OTIMIZAÇÃO: Busca vendas e parcelas apenas quando expandir o cliente
   async function toggleExpand(customerId: string) {

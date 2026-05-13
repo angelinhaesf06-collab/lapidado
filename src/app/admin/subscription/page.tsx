@@ -178,7 +178,7 @@ export default function SubscriptionPage() {
             {/* NOTA POLÍTICA GOOGLE (OBRIGATÓRIO) */}
             <div className="pt-6 border-t border-brand-secondary/5">
                <p className="text-[8px] text-brand-secondary/50 font-medium leading-relaxed">
-                 Sua assinatura será processada pela Google Play Store. A cobrança é recorrente e a renovação automática ocorre a menos que seja cancelada 24h antes do fim do período. Você pode gerenciar ou cancelar em "Assinaturas" na Google Play.
+                 Sua assinatura será processada pela Google Play Store. A cobrança é recorrente e a renovação automática ocorre a menos que seja cancelada 24h antes do fim do período. Você pode gerenciar ou cancelar em &quot;Assinaturas&quot; na Google Play.
                </p>
                <div className="flex gap-4 mt-4">
                  <Link href="/privacidade" className="text-[8px] font-black uppercase tracking-widest text-brand-secondary hover:text-brand-primary flex items-center gap-1">

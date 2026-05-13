@@ -177,7 +177,7 @@ export default function AdminLayout({
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+      <div className="min-h-[100svh] flex flex-col items-center justify-center gap-4">
         <Loader2 className="animate-spin text-brand-secondary" size={40} />
         <p className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.3em]">Validando Acesso...</p>
       </div>
@@ -185,7 +185,7 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="flex min-h-screen overflow-hidden">
+    <div className="flex min-h-[100svh] overflow-hidden">
       
       {/* 🛑 PAYWALL DE BLOQUEIO */}
       {isBlocked && <Paywall onSubscribe={handleSubscribe as any} trialDaysLeft={trialDaysLeft} />}
@@ -293,7 +293,7 @@ export default function AdminLayout({
       </aside>
 
       {/* CONTEÚDO PRINCIPAL */}
-      <main className="flex-1 w-full overflow-y-auto overflow-x-hidden scroll-smooth">
+      <main className="flex-1 w-full overflow-y-auto overflow-x-hidden scroll-smooth pb-[env(safe-area-inset-bottom,24px)]">
         {/* BARRA SUPERIOR MOBILE (Ajustada com todas as abas) */}
         <div className="md:hidden bg-[#F5F0E6] border-b border-brand-secondary/10 sticky top-0 z-50 shadow-sm pt-[env(safe-area-inset-top,0px)]">
            <div className="p-4 flex justify-between items-center border-b border-brand-secondary/5">

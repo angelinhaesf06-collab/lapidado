@@ -232,7 +232,7 @@ export default function ProductsListPage() {
 
   useEffect(() => {
     loadData(true)
-  }, [])
+  }, [loadData])
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
