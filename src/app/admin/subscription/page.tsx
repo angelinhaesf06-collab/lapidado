@@ -146,7 +146,7 @@ export default function SubscriptionPage() {
           {subscription?.subscription_status === 'active' && (
             <div className="bg-green-50 px-6 py-3 rounded-full flex items-center gap-3">
               <ShieldCheck size={20} className="text-green-600" />
-              <span className="text-[10px] font-black text-green-700 uppercase tracking-widest">Acesso Vitalício Garantido</span>
+              <span className="text-[10px] font-black text-green-700 uppercase tracking-widest">Assinatura Ativa</span>
             </div>
           )}
         </div>

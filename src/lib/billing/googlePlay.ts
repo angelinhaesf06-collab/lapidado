@@ -103,12 +103,15 @@ export async function purchasePlan(planType: 'lite' | 'liteyearly' | 'monthly' |
   if (!offerings) throw new Error('Nenhuma oferta disponível no momento.');
   
   let pkg;
-  if (planType === 'lite') pkg = offerings.monthly; // $rc_monthly na imagem
-  else if (planType === 'liteyearly') pkg = offerings.annual; // $rc_annual na imagem
-  else if (planType === 'monthly') pkg = (offerings as any).custom_lifetime; 
-  else pkg = (offerings as any).custom_yearly_2;
+  if (planType === 'lite') pkg = offerings.monthly; 
+  else if (planType === 'liteyearly') pkg = offerings.annual; 
+  else if (planType === 'monthly') pkg = (offerings as any).custom_monthly_pro || (offerings as any).custom_lifetime; 
+  else pkg = (offerings as any).custom_yearly_pro || (offerings as any).custom_yearly_2;
 
-  if (!pkg) throw new Error(`Pacote ${planType} não encontrado no RevenueCat.`);
+  if (!pkg) {
+    console.error(`Pacote ${planType} não encontrado. Ofertas disponíveis:`, Object.keys(offerings));
+    throw new Error(`O plano ${planType.toUpperCase()} não foi localizado nas ofertas atuais do Google Play.`);
+  }
   
   return await purchasePlanLegacy(pkg);
 }
