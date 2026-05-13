@@ -90,14 +90,14 @@ export default function NewProductPage() {
       img.onload = () => {
         try {
           const canvas = document.createElement('canvas')
-          const MAX_WIDTH = 800 // 💎 Equilíbrio entre qualidade e peso
+          const MAX_WIDTH = 600 // ⚡ VELOCIDADE TURBO
           let width = img.width, height = img.height
           if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH }
           canvas.width = width; canvas.height = height
           const ctx = canvas.getContext('2d')
           if (!ctx) return resolve(base64Str)
           ctx.drawImage(img, 0, 0, width, height)
-          resolve(canvas.toDataURL('image/jpeg', 0.7))
+          resolve(canvas.toDataURL('image/jpeg', 0.5)) // ⚡ COMPRESSÃO OTIMIZADA
         } catch (e) {
           console.error("Erro na compressão:", e)
           resolve(base64Str)
@@ -171,13 +171,26 @@ export default function NewProductPage() {
       
       try {
         const compressedBase64 = await compressImage(images[0].preview)
-        const res = await fetch(compressedBase64)
-        const blob = await res.blob()
+        
+        // ⚡ CONVERSÃO ULTRA-RÁPIDA (Base64 para Blob)
+        const byteString = atob(compressedBase64.split(',')[1])
+        const mimeString = compressedBase64.split(',')[0].split(':')[1].split(';')[0]
+        const ab = new ArrayBuffer(byteString.length)
+        const ia = new Uint8Array(ab)
+        for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i)
+        const blob = new Blob([ab], { type: mimeString })
+
         const formData = new FormData()
         formData.append('file', blob, 'foto.jpg')
         
         const uploadRes = await fetch('/api/admin/upload', { method: 'POST', body: formData })
         if (uploadRes.ok) {
+          const uploadData = await uploadRes.json()
+          if (uploadData.url) finalImageUrl = uploadData.url
+        }
+      } catch (err) {
+        console.error("Erro no upload, usando base64:", err)
+      }
           const uploadData = await uploadRes.json()
           if (uploadData.url) finalImageUrl = uploadData.url
         }
