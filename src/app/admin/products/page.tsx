@@ -77,15 +77,12 @@ function SortableProduct({ product, margin, deletingId, handleDelete, handleShar
       className={`bg-white rounded-[40px] border border-brand-secondary/5 overflow-hidden shadow-sm hover:shadow-xl transition-all group ${isSorting ? 'ring-2 ring-brand-primary/20 cursor-grab active:cursor-grabbing' : ''}`}
     >
       {/* IMAGEM E AÇÕES RÁPIDAS */}
-      <div className="aspect-square relative overflow-hidden bg-brand-secondary/5">
+      <div className="aspect-square relative overflow-hidden bg-brand-secondary/5 border-b border-brand-secondary/5">
         {hasValidImage ? (
-          <Image 
+          <img 
             src={product.image_url} 
             alt={product.name}
-            className="object-cover group-hover:scale-110 transition-transform duration-700" 
-            fill
-            priority={false}
-            sizes="(max-width: 768px) 100vw, 33vw"
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
             onError={(e) => {
               console.error("Erro ao carregar imagem no admin:", product.image_url);
               setImageError(true);
