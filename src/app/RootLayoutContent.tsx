@@ -89,12 +89,10 @@ export default function RootLayoutContent({
     <body 
       className={`${montserrat.variable} font-montserrat bg-[#F5F0E6] text-[#5D4037] antialiased min-h-screen`}
       style={{ 
-        // @ts-expect-error - Custom CSS properties are not yet supported by React's style prop types
         '--brand-primary': primary, 
-        // @ts-expect-error - Custom CSS properties are not yet supported by React's style prop types
         '--brand-secondary': secondary,
         '--background': '#F5F0E6'
-      }}
+      } as React.CSSProperties}
     >
       <Toaster position="top-center" richColors />
       <CartProvider>
