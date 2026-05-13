@@ -49,6 +49,10 @@ Data: 08 de Abril de 2026
 - Implementação de **Baixa Automática no Estoque**: Ao registrar uma venda, a quantidade da peça diminui no acervo instantaneamente.
 - Registro histórico de vendas com nome da cliente, data e lucro detalhado.
 
+### 🎨 Ajustes Estéticos e UI/UX (Maio 2026)
+- **Cabeçalho Bege (Versão App)**: Alteração da cor de fundo do cabeçalho em dispositivos móveis para um tom de bege sofisticado (`#f5e6d3`), substituindo o branco anterior para reforçar a identidade visual luxuosa da marca.
+- **DNA Cromático**: Integração da nova variável `--brand-beige` ao sistema de temas do Tailwind.
+
 ### 2. Dashboard de Alta Performance (DRE Luxo)
 - Reestruturação total do Painel Administrativo com foco em **Lucro Real**.
 - Diferenciação entre **Faturamento (Dinheiro Entrando)** e **Lucro Real (Faturamento - Custo)**.

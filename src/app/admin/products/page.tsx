@@ -146,7 +146,7 @@ function SortableProduct({ product, margin, deletingId, handleDelete, handleShar
       <div className="p-6 space-y-4">
         <div>
           <p className="text-[8px] font-black text-brand-secondary uppercase tracking-[0.2em] mb-1">{product.categories?.name || 'Joia'}</p>
-          <h3 className="text-sm font-bold text-brand-primary uppercase truncate">{product.name}</h3>
+          <h3 className="text-sm font-bold text-brand-primary uppercase whitespace-normal break-words leading-tight">{product.name}</h3>
           {product.material_finish && (
             <p className="text-[7px] font-bold text-brand-secondary/60 uppercase mt-1 tracking-widest">{product.material_finish}</p>
           )}

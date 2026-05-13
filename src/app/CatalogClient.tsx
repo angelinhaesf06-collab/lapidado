@@ -290,9 +290,11 @@ export default function CatalogClient({
                     )}
                   </div>
                   
-                  <div className="px-0.5 text-center w-full mb-3">
-                    <h4 className="text-[8px] md:text-[10px] font-black tracking-[0.05em] uppercase text-brand-primary mb-0.5 leading-relaxed transition-colors group-hover:text-brand-secondary truncate px-1">{product.name}</h4>
-                    <div className="flex flex-col gap-0">
+                  <div className="px-0.5 text-center w-full mb-3 min-h-fit h-auto">
+                    <h4 className="text-[8px] md:text-[10px] font-black tracking-[0.05em] uppercase text-brand-primary mb-1 leading-relaxed transition-colors group-hover:text-brand-secondary px-1 whitespace-normal break-words h-auto">
+                      {product.name}
+                    </h4>
+                    <div className="flex flex-col gap-0 h-auto">
                       <span className="text-[11px] md:text-[14px] font-bold text-brand-primary">
                         R$ {Number(product.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </span>

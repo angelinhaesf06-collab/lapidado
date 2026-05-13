@@ -148,7 +148,7 @@ export default function ProductClient({ initialProduct, initialBranding }: { ini
             <h3 className="text-[9px] font-semibold text-brand-primary uppercase tracking-[0.5em] mb-4">
               Descrição da Peça
             </h3>
-            <p className="text-xl text-brand-primary/80 font-light leading-relaxed max-w-md">
+            <p className="text-xl text-brand-primary/80 font-light leading-relaxed max-w-2xl whitespace-pre-wrap">
               {displayDescription}
             </p>
           </div>
