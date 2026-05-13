@@ -84,7 +84,7 @@ export default async function Page({ searchParams }: Props) {
   const { product, branding } = await getProductData(id)
 
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-brand-secondary" size={40} /></div>}>
+    <Suspense fallback={<div className="min-h-[100svh] flex items-center justify-center"><Loader2 className="animate-spin text-brand-secondary" size={40} /></div>}>
       <ProductClient initialProduct={product} initialBranding={branding} />
     </Suspense>
   )

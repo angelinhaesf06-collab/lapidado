@@ -49,7 +49,7 @@ export default function AtivarPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#fffafa] px-4">
+    <div className="min-h-[100svh] flex items-center justify-center bg-[#fffafa] px-4">
       <div className="bg-white p-12 rounded-[60px] shadow-2xl shadow-rose-100 max-w-md w-full text-center border border-rose-50">
         <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-8">
           <Gem className="text-[#c99090]" size={40} />

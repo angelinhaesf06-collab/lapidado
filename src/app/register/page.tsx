@@ -143,7 +143,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-[#fffaf9] relative overflow-hidden">
+    <div className="min-h-[100svh] flex items-center justify-center px-4 bg-[#fffaf9] relative overflow-hidden">
       {/* Background Decorativo Mais Vibrante */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
          <div className="absolute -top-10 -right-10 w-[300px] h-[300px] bg-rose-200/40 rounded-full blur-3xl animate-pulse" />

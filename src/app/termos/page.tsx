@@ -9,7 +9,7 @@ export const metadata = {
 
 export default function TermosPage() {
   return (
-    <div className="min-h-screen bg-[#fffcfc] py-20 px-6">
+    <div className="min-h-[100svh] bg-[#fffcfc] py-20 px-6">
       <div className="max-w-3xl mx-auto space-y-12">
         
         {/* Botão Voltar */}

@@ -200,7 +200,7 @@ export default function CatalogClient({
   }
 
   return (
-    <div className="flex flex-col w-full min-h-screen animate-in fade-in duration-700 bg-[#F5F0E6]">
+    <div className="flex flex-col w-full min-h-[100svh] animate-in fade-in duration-700 bg-[#F5F0E6]">
       
       {/* 💎 CABEÇALHO DINÂMICO COMPACTO COM SAFE AREA */}
       <div className="sticky top-0 z-[100] bg-[#F5F0E6]/95 backdrop-blur-xl border-b border-brand-secondary/10 shadow-sm pt-[env(safe-area-inset-top,10px)] overflow-visible">

@@ -55,7 +55,7 @@ export default function ProductClient({ initialProduct, initialBranding }: { ini
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-[100svh] flex items-center justify-center">
         <Loader2 className="animate-spin text-brand-secondary" size={40} />
       </div>
     )

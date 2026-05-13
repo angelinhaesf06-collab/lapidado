@@ -134,7 +134,7 @@ export default async function Home({ searchParams }: Props) {
   const { branding, products, categories } = await getInitialData(loja)
 
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-brand-secondary" size={40} /></div>}>
+    <Suspense fallback={<div className="min-h-[100svh] flex items-center justify-center"><Loader2 className="animate-spin text-brand-secondary" size={40} /></div>}>
       <CatalogClient 
         initialBranding={branding} 
         initialProducts={products} 

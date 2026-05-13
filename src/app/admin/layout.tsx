@@ -209,7 +209,7 @@ export default function AdminLayout({
       `}</style>
 
       {/* 💎 SIDEBAR LAPIDADO (ESQUERDA) */}
-      <aside className="hidden md:flex w-72 flex-col bg-[#F5F0E6] border-r border-brand-secondary/10 p-8 sticky top-0 h-screen z-50 shadow-[20px_0_40px_rgba(74,50,46,0.02)]">
+      <aside className="hidden md:flex w-72 flex-col bg-[#F5F0E6] border-r border-brand-secondary/10 p-8 sticky top-0 h-[100svh] z-50 shadow-[20px_0_40px_rgba(74,50,46,0.02)]">
         
         {/* LOGO DINÂMICA DO LOJISTA (MULTI-MARCAS) */}
         <div className="flex flex-col items-center gap-4 mb-16 px-2 text-center">

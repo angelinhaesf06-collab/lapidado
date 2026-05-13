@@ -87,7 +87,7 @@ export default function RootLayoutContent({
 
   return (
     <body 
-      className={`${montserrat.variable} font-montserrat bg-[#F5F0E6] text-[#5D4037] antialiased min-h-screen`}
+      className={`${montserrat.variable} font-montserrat bg-[#F5F0E6] text-[#5D4037] antialiased min-h-[100svh]`}
       style={{ 
         '--brand-primary': primary, 
         '--brand-secondary': secondary,
