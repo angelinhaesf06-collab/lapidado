@@ -206,13 +206,11 @@ export default function CatalogClient({
       <div className="sticky top-0 z-[100] bg-[#F5F0E6]/95 backdrop-blur-xl border-b border-brand-secondary/10 shadow-sm pt-[env(safe-area-inset-top,10px)] overflow-visible">
         <header className="w-full pt-4 pb-2 flex flex-col items-center gap-3">
           {branding?.logo_url && !logoError ? (
-            <Link href={`/?catalogo=true${storeParam}`} className="relative w-32 h-10 md:w-48 md:h-14 transition-all duration-500 hover:scale-105 active:scale-95">
-              <Image 
+            <Link href={`/?catalogo=true${storeParam}`} className="relative block w-32 md:w-48 h-10 md:h-14 transition-all duration-500 hover:scale-105 active:scale-95">
+              <img 
                 src={branding.logo_url} 
                 alt={branding.store_name || 'Logo'} 
-                fill 
-                className="object-contain"
-                priority
+                className="w-full h-full object-contain"
                 onError={() => setLogoError(true)}
               />
             </Link>
@@ -280,13 +278,11 @@ export default function CatalogClient({
                 <Link href={`/product?id=${product.id}&catalogo=true${storeParam}`} className="w-full focus:outline-none">
                   <div className="aspect-[4/5] w-full bg-brand-secondary/5 rounded-[32px] md:rounded-[40px] overflow-hidden mb-4 shadow-sm relative transition-all duration-500 group-hover:shadow-md group-hover:-translate-y-1">
                     {!isBroken ? (
-                      <Image 
+                      <img 
                         src={product.image_url} 
                         alt="" 
-                        fill 
-                        sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                        className="object-cover transition-transform duration-[1.5s] group-hover:scale-110" 
-                        priority={index < 4}
+                        className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110" 
+                        loading={index < 8 ? "eager" : "lazy"}
                         onError={() => handleImageError(product.id)}
                       />
                     ) : (
