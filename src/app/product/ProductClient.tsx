@@ -109,7 +109,16 @@ export default function ProductClient({ initialProduct, initialBranding }: { ini
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center w-full">
         <div className="relative aspect-[4/5] bg-white rounded-[80px] overflow-hidden shadow-2xl border border-brand-secondary/10 mx-auto w-full max-w-lg">
-          <Image src={product.image_url} alt={product.name} className="object-cover" fill sizes="(max-width: 768px) 100vw, 50vw" priority />
+          {product.image_url ? (
+            <Image src={product.image_url} alt={product.name} className="object-cover" fill sizes="(max-width: 768px) 100vw, 50vw" priority />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center bg-brand-secondary/5 text-brand-secondary/20 gap-4">
+              <div className="w-20 h-20 rounded-full border-2 border-dashed border-brand-secondary/20 flex items-center justify-center">
+                <span className="text-4xl">💎</span>
+              </div>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em]">Foto não disponível</p>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col items-center text-center max-w-xl mx-auto lg:mx-0">

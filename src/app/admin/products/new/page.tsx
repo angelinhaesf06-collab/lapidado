@@ -88,14 +88,22 @@ export default function NewProductPage() {
       const img = new window.Image()
       img.src = base64Str
       img.onload = () => {
-        const canvas = document.createElement('canvas')
-        const MAX_WIDTH = 512 // ⚡ REDUZIDO PARA MÁXIMA VELOCIDADE
-        let width = img.width, height = img.height
-        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH }
-        canvas.width = width; canvas.height = height
-        canvas.getContext('2d')?.drawImage(img, 0, 0, width, height)
-        resolve(canvas.toDataURL('image/jpeg', 0.5)) // ⚡ QUALIDADE REDUZIDA
+        try {
+          const canvas = document.createElement('canvas')
+          const MAX_WIDTH = 800 // 💎 Equilíbrio entre qualidade e peso
+          let width = img.width, height = img.height
+          if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH }
+          canvas.width = width; canvas.height = height
+          const ctx = canvas.getContext('2d')
+          if (!ctx) return resolve(base64Str)
+          ctx.drawImage(img, 0, 0, width, height)
+          resolve(canvas.toDataURL('image/jpeg', 0.7))
+        } catch (e) {
+          console.error("Erro na compressão:", e)
+          resolve(base64Str)
+        }
       }
+      img.onerror = () => resolve(base64Str)
     })
   }
 
@@ -128,19 +136,15 @@ export default function NewProductPage() {
         fullText += chunk
         
         // 💎 Extração Inteligente Progressiva
-        // Tenta pegar o nome se já existir no JSON parcial
         const nameMatch = fullText.match(/"name":\s*"([^"]*)"?/)
         if (nameMatch && nameMatch[1]) setName(nameMatch[1].toUpperCase())
 
-        // Tenta pegar a descrição se já existir no JSON parcial
         const descMatch = fullText.match(/"description":\s*"([^"]*)"?/)
         if (descMatch && descMatch[1]) {
-          // Remove escapes de aspas e novas linhas para exibição limpa
           const cleanDesc = descMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"')
           setDescription(cleanDesc)
         }
 
-        // Tenta pegar a categoria
         const catMatch = fullText.match(/"category":\s*"([^"]*)"?/)
         if (catMatch && catMatch[1]) {
           const aiCat = catMatch[1].toUpperCase()
@@ -163,7 +167,7 @@ export default function NewProductPage() {
 
     setIsSaving(true)
     try {
-      let finalImageUrl = ""
+      let finalImageUrl = images[0].preview
       
       try {
         const compressedBase64 = await compressImage(images[0].preview)
@@ -173,15 +177,12 @@ export default function NewProductPage() {
         formData.append('file', blob, 'foto.jpg')
         
         const uploadRes = await fetch('/api/admin/upload', { method: 'POST', body: formData })
-        const uploadData = await uploadRes.json()
-        
-        if (uploadData.url) {
-          finalImageUrl = uploadData.url
-        } else {
-          finalImageUrl = compressedBase64
+        if (uploadRes.ok) {
+          const uploadData = await uploadRes.json()
+          if (uploadData.url) finalImageUrl = uploadData.url
         }
-      } catch {
-        finalImageUrl = images[0].preview
+      } catch (err) {
+        console.error("Erro no upload, usando base64:", err)
       }
 
       const { data: { user } } = await supabase.auth.getUser()
@@ -208,7 +209,7 @@ export default function NewProductPage() {
       if (!result.success) throw new Error(result.error)
       
       alert('JOIA SALVA! 💎')
-      setName(''); setDescription(''); setCostPrice(''); setSalePrice(''); setImages([]); setStock('1')
+      setName(''); setDescription(''); setCostPrice(''); setSalePrice(''); setImages([]); setStock('1'); setCategory('')
       router.refresh()
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro desconhecido'

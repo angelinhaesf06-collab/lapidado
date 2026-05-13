@@ -70,14 +70,14 @@ export default function Header() {
       
       {/* BANNER MINIMALISTA (DNA CROMÁTICO) */}
       {branding?.topBanner && (
-        <div className="w-full bg-brand-primary py-1.5 text-center overflow-hidden shadow-inner">
-           <p className="text-white text-[7px] md:text-[9px] font-black uppercase tracking-[0.4em] md:tracking-[0.6em] animate-pulse">
+        <div className="w-full bg-brand-primary py-1 text-center overflow-hidden shadow-inner">
+           <p className="text-white text-[7px] md:text-[8px] font-black uppercase tracking-[0.3em] md:tracking-[0.5em] animate-pulse">
              ✨ {branding.topBanner} ✨
            </p>
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 md:px-8 py-3 md:py-5 relative">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-2 md:py-3 relative">
         
         {/* ESTRUTURA DE ALTA PRECISÃO: Logo (Esq), Frase (Centro Absoluto), Sacola (Dir) */}
         <div className="flex items-center justify-between w-full">
@@ -85,13 +85,13 @@ export default function Header() {
           {/* LOGOTIPO (ESQUERDA) */}
           <Link href="/?catalogo=true" className="flex-shrink-0 group z-10">
             {branding?.logo_url ? (
-              <div className="relative w-20 md:w-48 h-8 md:h-14 transition-all duration-500 group-hover:scale-105">
+              <div className="relative w-16 md:w-32 h-6 md:h-10 transition-all duration-500 group-hover:scale-105">
                  <img src={branding.logo_url} alt={branding.store_name || "Logo"} className="w-full h-full object-contain object-left" />
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-brand-primary flex items-center justify-center text-white">
-                  <span className="text-xs font-bold italic">{(branding?.store_name || 'L')[0]}</span>
+                <div className="w-6 h-6 rounded-full bg-brand-primary flex items-center justify-center text-white">
+                  <span className="text-[10px] font-bold italic">{(branding?.store_name || 'L')[0]}</span>
                 </div>
               </div>
             )}
@@ -100,7 +100,7 @@ export default function Header() {
           {/* FRASE DE IMPACTO (CENTRO ABSOLUTO NO DESKTOP E MOBILE) */}
           {branding?.tagline && (
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[40%] md:max-w-[50%] pointer-events-none">
-              <p className="text-[7px] md:text-[10px] font-black tracking-[0.1em] md:tracking-[0.5em] uppercase text-brand-primary leading-tight line-clamp-2 text-center">
+              <p className="text-[6px] md:text-[9px] font-black tracking-[0.1em] md:tracking-[0.4em] uppercase text-brand-primary leading-tight line-clamp-2 text-center opacity-80">
                 {branding.tagline}
               </p>
             </div>
@@ -110,13 +110,13 @@ export default function Header() {
           <div className="flex items-center justify-self-end">
             <Link 
               href="/cart?catalogo=true" 
-              className="group flex items-center gap-2 p-1.5 md:p-3 rounded-xl bg-brand-primary/10 hover:bg-brand-primary transition-all text-brand-primary hover:text-white"
+              className="group flex items-center gap-2 p-1 md:p-2 rounded-lg bg-brand-primary/10 hover:bg-brand-primary transition-all text-brand-primary hover:text-white"
               aria-label={`Ver sacola de compras com ${itemCount} itens`}
             >
                <div className="relative">
-                 <ShoppingBag className="w-5 h-5 md:w-6 md:h-6" strokeWidth={1.5} aria-hidden="true" />
+                 <ShoppingBag className="w-4 h-4 md:w-5 md:h-5" strokeWidth={1.5} aria-hidden="true" />
                  {itemCount > 0 && (
-                   <span className="absolute -top-2 -right-2 w-4 h-4 bg-brand-primary text-white text-[8px] flex items-center justify-center rounded-full border-2 border-white shadow-md font-black animate-bounce">
+                   <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-brand-primary text-white text-[7px] flex items-center justify-center rounded-full border border-white shadow-sm font-black">
                      {itemCount}
                    </span>
                  )}

@@ -133,6 +133,30 @@ function EditProductContent() {
     })
   }
 
+  const compressImage = async (base64Str: string): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new window.Image()
+      img.src = base64Str
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas')
+          const MAX_WIDTH = 800
+          let width = img.width, height = img.height
+          if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH }
+          canvas.width = width; canvas.height = height
+          const ctx = canvas.getContext('2d')
+          if (!ctx) return resolve(base64Str)
+          ctx.drawImage(img, 0, 0, width, height)
+          resolve(canvas.toDataURL('image/jpeg', 0.7))
+        } catch (e) {
+          console.error("Erro na compressão:", e)
+          resolve(base64Str)
+        }
+      }
+      img.onerror = () => resolve(base64Str)
+    })
+  }
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -140,15 +164,30 @@ function EditProductContent() {
       let finalImageUrl = images[0]?.preview
 
       if (images[0]?.file) {
-        const formData = new FormData()
-        formData.append('file', images[0].file)
-        const uploadRes = await fetch('/api/admin/upload', { 
-          method: 'POST', 
-          headers: { 'Authorization': 'Bearer LAPIDADO_ADMIN_2026' },
-          body: formData 
-        })
-        const uploadData = await uploadRes.json()
-        if (uploadData.url) finalImageUrl = uploadData.url
+        try {
+          const compressedBase64 = await compressImage(images[0].preview)
+          const res = await fetch(compressedBase64)
+          const blob = await res.blob()
+          const formData = new FormData()
+          formData.append('file', blob, 'foto.jpg')
+          
+          const uploadRes = await fetch('/api/admin/upload', { 
+            method: 'POST', 
+            headers: { 'Authorization': 'Bearer LAPIDADO_ADMIN_2026' },
+            body: formData 
+          })
+          
+          if (uploadRes.ok) {
+            const uploadData = await uploadRes.json()
+            if (uploadData.url) finalImageUrl = uploadData.url
+          } else {
+            console.warn("Upload falhou na edição, usando base64")
+            finalImageUrl = compressedBase64
+          }
+        } catch (err) {
+          console.error("Erro no upload da edição:", err)
+          finalImageUrl = images[0].preview
+        }
       }
 
       const { data: { user } } = await supabase.auth.getUser()

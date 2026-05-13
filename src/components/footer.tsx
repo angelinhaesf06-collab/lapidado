@@ -73,31 +73,31 @@ export default function Footer() {
   if (!branding) return null
 
   return (
-    <footer className="bg-white border-t border-brand-secondary/10 pt-20 pb-12">
-      <div className="max-w-7xl mx-auto px-8 grid grid-cols-1 md:grid-cols-3 gap-16">
+    <footer className="bg-[#F5F0E6] border-t border-brand-secondary/10 pt-10 pb-8">
+      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-10">
         
         {/* Lado 1: Identidade e Endereço */}
-        <div className="flex flex-col items-center md:items-start space-y-8">
+        <div className="flex flex-col items-center md:items-start space-y-4">
           {branding.logo_url ? (
             <Image 
               src={branding.logo_url} 
               alt="Logo" 
-              className="h-16 w-auto object-contain grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-700" 
-              width={150} 
-              height={64} 
+              className="h-10 w-auto object-contain grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-700" 
+              width={100} 
+              height={40} 
             />
           ) : (
-            <h3 className="text-2xl font-bold text-brand-primary uppercase tracking-widest opacity-60">
+            <h3 className="text-lg font-bold text-brand-primary uppercase tracking-widest opacity-60">
               {branding.store_name || branding.business_name || 'LAPIDADO'}
             </h3>
           )}
 
           {branding.address && (
-            <div className="space-y-3 text-center md:text-left">
-              <h4 className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.3em]">Nossa Localização</h4>
-              <div className="flex items-start justify-center md:justify-start gap-3 text-brand-primary/70">
-                <MapPin size={16} className="shrink-0 mt-0.5" />
-                <span className="text-[11px] font-bold tracking-widest uppercase leading-relaxed max-w-[200px]">
+            <div className="space-y-2 text-center md:text-left">
+              <h4 className="text-[8px] font-black text-brand-secondary uppercase tracking-[0.2em]">Localização</h4>
+              <div className="flex items-start justify-center md:justify-start gap-2 text-brand-primary/70">
+                <MapPin size={12} className="shrink-0 mt-0.5" />
+                <span className="text-[9px] font-bold tracking-widest uppercase leading-tight max-w-[180px]">
                   {branding.address}
                 </span>
               </div>
@@ -106,42 +106,42 @@ export default function Footer() {
         </div>
 
         {/* Lado 2: Atendimento e Acesso */}
-        <div className="flex flex-col items-center space-y-8">
-          <div className="space-y-6 flex flex-col items-center">
-            <h4 className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.3em]">Atendimento</h4>
+        <div className="flex flex-col items-center space-y-6">
+          <div className="space-y-4 flex flex-col items-center">
+            <h4 className="text-[8px] font-black text-brand-secondary uppercase tracking-[0.2em]">Atendimento</h4>
             
-            <div className="space-y-4">
+            <div className="space-y-3">
               {branding.phone && (
-                <a href={getWhatsAppLink()} target="_blank" className="flex items-center gap-3 text-brand-primary hover:text-brand-secondary transition-colors group bg-brand-secondary/5 px-6 py-3 rounded-full border border-brand-secondary/5">
-                  <Phone size={14} className="text-brand-primary" />
-                  <span className="text-[11px] font-black tracking-widest">{branding.phone}</span>
+                <a href={getWhatsAppLink()} target="_blank" className="flex items-center gap-2 text-brand-primary hover:text-brand-secondary transition-colors group bg-brand-primary/5 px-4 py-2 rounded-full border border-brand-primary/5">
+                  <Phone size={12} className="text-brand-primary" />
+                  <span className="text-[10px] font-black tracking-widest">{branding.phone}</span>
                 </a>
               )}
             </div>
           </div>
 
-          <div className="pt-4">
-            <Link href="/login" className="flex items-center gap-2 text-[9px] font-black text-brand-secondary/40 hover:text-brand-primary uppercase tracking-[0.4em] transition-all group">
-              <User size={12} className="group-hover:scale-110 transition-transform" />
-              Área Administrativa
+          <div className="">
+            <Link href="/login" className="flex items-center gap-1.5 text-[8px] font-black text-brand-secondary/40 hover:text-brand-primary uppercase tracking-[0.3em] transition-all group">
+              <User size={10} className="group-hover:scale-110 transition-transform" />
+              Admin
             </Link>
           </div>
         </div>
 
         {/* Lado 3: Conecte-se (Redes Sociais) */}
-        <div className="flex flex-col items-center md:items-end space-y-8">
-          <div className="space-y-6 flex flex-col items-center md:items-end">
-            <h4 className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.3em]">Siga Nosso Brilho</h4>
+        <div className="flex flex-col items-center md:items-end space-y-6">
+          <div className="space-y-4 flex flex-col items-center md:items-end">
+            <h4 className="text-[8px] font-black text-brand-secondary uppercase tracking-[0.2em]">Conecte-se</h4>
 
-            <div className="flex gap-4">
+            <div className="flex gap-3">
               {branding.instagram && (
                 <a 
                   href={`https://instagram.com/${branding.instagram.replace('@', '').trim()}`} 
                   target="_blank" 
-                  className="p-5 rounded-full bg-brand-secondary/5 text-brand-primary hover:bg-brand-primary hover:text-white hover:scale-110 transition-all border border-brand-secondary/5 shadow-sm"
+                  className="p-3 rounded-full bg-brand-primary/5 text-brand-primary hover:bg-brand-primary hover:text-white hover:scale-110 transition-all border border-brand-primary/5 shadow-sm"
                   title="Instagram"
                 >
-                  <InstagramIcon size={20} />
+                  <InstagramIcon size={16} />
                 </a>
               )}
               
@@ -149,44 +149,40 @@ export default function Footer() {
                 <a 
                   href={`https://tiktok.com/@${branding.tiktok.replace('@', '').trim()}`} 
                   target="_blank" 
-                  className="p-5 rounded-full bg-brand-secondary/5 text-brand-primary hover:bg-brand-primary hover:text-white hover:scale-110 transition-all border border-brand-secondary/5 shadow-sm"
+                  className="p-3 rounded-full bg-brand-primary/5 text-brand-primary hover:bg-brand-primary hover:text-white hover:scale-110 transition-all border border-brand-primary/5 shadow-sm"
                   title="TikTok"
                 >
-                  <Music2 size={20} />
+                  <Music2 size={16} />
                 </a>
               )}
             </div>
           </div>
 
           {branding.warranty_time && (
-            <div className="bg-brand-primary/5 px-4 py-2 rounded-full border border-brand-primary/10">
-              <p className="text-[8px] text-brand-primary font-black uppercase tracking-widest flex items-center gap-2">
-                <Gem size={10} /> 
-                {branding.warranty_time.toUpperCase().includes('GARANTIA') ? branding.warranty_time : `${branding.warranty_time} DE GARANTIA`}
+            <div className="bg-brand-primary/5 px-3 py-1.5 rounded-full border border-brand-primary/10">
+              <p className="text-[7px] text-brand-primary font-black uppercase tracking-widest flex items-center gap-1.5">
+                <Gem size={8} /> 
+                {branding.warranty_time.toUpperCase().includes('GARANTIA') ? branding.warranty_time : `${branding.warranty_time} GARANTIA`}
               </p>
             </div>
           )}
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-8 mt-20 pt-8 border-t border-brand-secondary/5 flex flex-col items-center gap-6">
-        <div className="flex flex-wrap justify-center gap-x-8 gap-y-4">
-          <Link href="/privacidade" className="text-[9px] font-black text-brand-secondary/40 hover:text-brand-primary uppercase tracking-[0.2em] transition-colors">Política de Privacidade</Link>
-          <Link href="/termos" className="text-[9px] font-black text-brand-secondary/40 hover:text-brand-primary uppercase tracking-[0.2em] transition-colors">Termos de Uso</Link>
-          <Link href="/excluir-conta" className="text-[9px] font-black text-brand-secondary/40 hover:text-brand-primary uppercase tracking-[0.2em] transition-colors">Exclusão de Dados</Link>
+      <div className="max-w-7xl mx-auto px-6 mt-10 pt-6 border-t border-brand-secondary/5 flex flex-col items-center gap-4">
+        <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
+          <Link href="/privacidade" className="text-[8px] font-black text-brand-secondary/40 hover:text-brand-primary uppercase tracking-[0.1em] transition-colors">Privacidade</Link>
+          <Link href="/termos" className="text-[8px] font-black text-brand-secondary/40 hover:text-brand-primary uppercase tracking-[0.1em] transition-colors">Termos</Link>
+          <Link href="/excluir-conta" className="text-[8px] font-black text-brand-secondary/40 hover:text-brand-primary uppercase tracking-[0.1em] transition-colors">Exclusão</Link>
         </div>
         
-        <div className="text-center space-y-2">
-          <p className="text-[8px] text-brand-secondary/40 font-bold uppercase tracking-[0.5em]">
-            © {new Date().getFullYear()} — {branding.store_name || branding.business_name || 'LAPIDADO'} — TODOS OS DIREITOS RESERVADOS.
+        <div className="text-center space-y-1">
+          <p className="text-[7px] text-brand-secondary/40 font-bold uppercase tracking-[0.3em]">
+            © {new Date().getFullYear()} — {branding.store_name || branding.business_name || 'LAPIDADO'}
           </p>
-          <p className="text-[7px] text-brand-secondary/30 font-black uppercase tracking-[0.3em]">
-            ANGEL SEMIJOIAS — CNPJ: 56.706.942/0001-44 — SUPORTE@LAPIDADO.COM.BR
+          <p className="text-[6px] text-brand-secondary/30 font-black uppercase tracking-[0.2em]">
+            ANGEL SEMIJOIAS — CNPJ: 56.706.942/0001-44
           </p>
-        </div>
-
-        <div className="flex items-center gap-2 opacity-20 hover:opacity-50 transition-opacity">
-          <span className="text-[7px] font-bold text-brand-primary tracking-widest uppercase">Mais que acessórios, a sua assinatura de estilo.</span>
         </div>
       </div>
     </footer>
