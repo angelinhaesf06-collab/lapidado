@@ -46,6 +46,7 @@ interface Category {
 
 // 💎 COMPONENTE DE ITEM ORDENÁVEL
 function SortableProduct({ product, margin, deletingId, handleDelete, handleShareWhatsApp, isSorting }: any) {
+  const [imageError, setImageError] = useState(false)
   const {
     attributes,
     listeners,
@@ -63,6 +64,12 @@ function SortableProduct({ product, margin, deletingId, handleDelete, handleShar
     touchAction: isSorting ? 'none' : 'auto', // 💎 Importante para mobile
   }
 
+  const hasValidImage = product.image_url && 
+                        product.image_url !== '' && 
+                        product.image_url !== 'undefined' && 
+                        product.image_url !== 'null' &&
+                        !imageError
+
   return (
     <div 
       ref={setNodeRef} 
@@ -71,17 +78,21 @@ function SortableProduct({ product, margin, deletingId, handleDelete, handleShar
     >
       {/* IMAGEM E AÇÕES RÁPIDAS */}
       <div className="aspect-square relative overflow-hidden bg-brand-secondary/5">
-        {product.image_url ? (
+        {hasValidImage ? (
           <Image 
             src={product.image_url} 
-            alt={product.name} 
+            alt="" // 💎 Alt vazio aqui para não poluir se quebrar, o nome já está abaixo
             className="object-cover group-hover:scale-110 transition-transform duration-700" 
             fill
             sizes="(max-width: 768px) 100vw, 33vw"
+            onError={() => setImageError(true)}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-brand-secondary/20">
-            <ImageIcon size={48} />
+          <div className="w-full h-full flex flex-col items-center justify-center text-brand-secondary/10 gap-2 bg-brand-secondary/5">
+            <div className="w-12 h-12 rounded-full border-2 border-dashed border-brand-secondary/20 flex items-center justify-center">
+              <span className="text-xl">💎</span>
+            </div>
+            <p className="text-[7px] font-black uppercase tracking-widest opacity-40">Sem Foto</p>
           </div>
         )}
         
