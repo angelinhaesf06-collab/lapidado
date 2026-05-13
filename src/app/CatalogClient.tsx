@@ -4,7 +4,6 @@ import { useEffect, useState, useMemo, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { generateSlug, triggerHaptic } from '@/lib/utils'
 import Link from 'next/link'
-import Image from 'next/image'
 import AddToCartButton from '@/components/cart/add-to-cart-button'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2, Gem } from 'lucide-react'
@@ -265,16 +264,20 @@ export default function CatalogClient({
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-2.5 md:gap-x-8 gap-y-6 md:gap-y-16 px-0.5 animate-in fade-in slide-in-from-bottom-4 duration-1000">
           {displayedProducts.map((product, index) => {
-            const isBroken = !product.image_url || imageErrors[product.id];
+            const hasValidImage = product.image_url && 
+                                 product.image_url.length > 5 &&
+                                 product.image_url !== 'undefined' && 
+                                 product.image_url !== 'null' &&
+                                 !imageErrors[product.id];
             
             return (
               <div key={product.id} className="group flex flex-col items-center w-full">
                 <Link href={`/product?id=${product.id}&catalogo=true${storeParam}`} className="w-full focus:outline-none">
                   <div className="aspect-[4/5] w-full bg-brand-secondary/5 rounded-[24px] md:rounded-[36px] overflow-hidden mb-3 shadow-sm relative transition-all duration-500 group-hover:shadow-md group-hover:-translate-y-1 border border-brand-secondary/5">
-                    {!isBroken ? (
+                    {hasValidImage ? (
                       <img 
                         src={product.image_url} 
-                        alt="" 
+                        alt={product.name} 
                         className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110" 
                         loading={index < 8 ? "eager" : "lazy"}
                         onError={() => handleImageError(product.id)}

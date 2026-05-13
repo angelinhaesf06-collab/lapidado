@@ -79,15 +79,21 @@ function SortableProduct({ product, margin, deletingId, handleDelete, handleShar
       {/* IMAGEM E AÇÕES RÁPIDAS */}
       <div className="aspect-square relative overflow-hidden bg-brand-secondary/5 border-b border-brand-secondary/5">
         {hasValidImage ? (
-          <img 
-            src={product.image_url} 
-            alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-            onError={(e) => {
-              console.error("Erro ao carregar imagem no admin:", product.image_url);
-              setImageError(true);
-            }}
-          />
+          <div className="relative w-full h-full">
+            <img 
+              src={product.image_url} 
+              alt={product.name}
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+              onError={(e) => {
+                console.error("Erro ao carregar imagem no admin:", product.image_url);
+                setImageError(true);
+              }}
+            />
+            {/* DEBUG INFO: Apenas para Angela ver se o link existe */}
+            <div className="absolute bottom-2 left-2 bg-black/50 text-[5px] text-white p-1 rounded backdrop-blur-sm pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+              URL: {product.image_url.substring(0, 30)}...
+            </div>
+          </div>
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-brand-secondary/10 gap-2 bg-brand-secondary/5">
             <div className="w-12 h-12 rounded-full border-2 border-dashed border-brand-secondary/20 flex items-center justify-center">
