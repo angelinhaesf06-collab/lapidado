@@ -97,7 +97,7 @@ export default function AdminLayout({
     return days > 0 ? days : 0;
   }, [subscription]);
 
-  const handleSubscribe = async (plan: 'monthly' | 'yearly') => {
+  const handleSubscribe = async (plan: 'lite' | 'liteyearly' | 'monthly' | 'yearly') => {
     setLoading(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -108,7 +108,12 @@ export default function AdminLayout({
 
       if (isMobile) {
         console.log('📱 Usando Google Play Billing...');
-        const planType: 'monthly' | 'yearly' = plan === 'monthly' ? GOOGLE_PLAY_PLANS.MONTHLY : GOOGLE_PLAY_PLANS.YEARLY;
+        let planType: 'lite' | 'liteyearly' | 'monthly' | 'yearly';
+        if (plan === 'lite') planType = GOOGLE_PLAY_PLANS.LITE;
+        else if (plan === 'liteyearly') planType = GOOGLE_PLAY_PLANS.LITE_YEARLY;
+        else if (plan === 'monthly') planType = GOOGLE_PLAY_PLANS.MONTHLY;
+        else planType = GOOGLE_PLAY_PLANS.YEARLY;
+
         const purchase = await purchasePlan(planType)
         if (purchase.success && purchase.purchaserInfo) {
           await syncSubscriptionWithSupabase(supabase, user.id, purchase.purchaserInfo)
@@ -116,6 +121,17 @@ export default function AdminLayout({
         }
       } else {
         console.log('🌐 Usando Stripe Checkout...');
+        if (plan === 'lite' || plan === 'liteyearly') {
+           if (plan === 'lite') {
+             alert('O plano Lite Mensal está disponível apenas no aplicativo Android via Google Play.');
+             setLoading(false);
+             return;
+           }
+           const stripePlan = STRIPE_PLANS.LITE_YEARLY;
+           const checkout = await createStripeCheckout(stripePlan, user.id, user.email || '')
+           if (!checkout.success) alert(checkout.error)
+           return;
+        }
         const stripePlan = plan === 'monthly' ? STRIPE_PLANS.MONTHLY : STRIPE_PLANS.YEARLY;
         const checkout = await createStripeCheckout(stripePlan, user.id, user.email || '')
         if (!checkout.success) alert(checkout.error)
