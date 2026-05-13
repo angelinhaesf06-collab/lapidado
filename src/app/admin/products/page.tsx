@@ -65,7 +65,7 @@ function SortableProduct({ product, margin, deletingId, handleDelete, handleShar
   }
 
   const hasValidImage = product.image_url && 
-                        product.image_url !== '' && 
+                        product.image_url.length > 5 &&
                         product.image_url !== 'undefined' && 
                         product.image_url !== 'null' &&
                         !imageError
@@ -81,11 +81,15 @@ function SortableProduct({ product, margin, deletingId, handleDelete, handleShar
         {hasValidImage ? (
           <Image 
             src={product.image_url} 
-            alt="" // 💎 Alt vazio aqui para não poluir se quebrar, o nome já está abaixo
+            alt={product.name}
             className="object-cover group-hover:scale-110 transition-transform duration-700" 
             fill
+            priority={false}
             sizes="(max-width: 768px) 100vw, 33vw"
-            onError={() => setImageError(true)}
+            onError={(e) => {
+              console.error("Erro ao carregar imagem no admin:", product.image_url);
+              setImageError(true);
+            }}
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-brand-secondary/10 gap-2 bg-brand-secondary/5">
