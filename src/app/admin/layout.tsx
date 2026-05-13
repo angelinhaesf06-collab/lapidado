@@ -188,7 +188,7 @@ export default function AdminLayout({
     <div className="flex min-h-screen overflow-hidden">
       
       {/* 🛑 PAYWALL DE BLOQUEIO */}
-      {isBlocked && <Paywall onSubscribe={handleSubscribe} trialDaysLeft={trialDaysLeft} />}
+      {isBlocked && <Paywall onSubscribe={handleSubscribe as any} trialDaysLeft={trialDaysLeft} />}
 
       {/* 💎 BARRA DE PROGRESSO NO TOPO (Feedback Instantâneo) */}
       <style jsx global>{`
