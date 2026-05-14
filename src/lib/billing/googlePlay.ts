@@ -36,9 +36,13 @@ export async function initializeBilling(userId?: string, supabase?: any) {
     console.log('📡 Inicializando RevenueCat (Google Play)...');
 
     if (apiKey === 'goog_placeholder' || !apiKey) {
-      console.error('❌ ERRO: NEXT_PUBLIC_REVENUECAT_GOOGLE_KEY não configurada no ambiente!');
+      const msg = '❌ ERRO: NEXT_PUBLIC_REVENUECAT_GOOGLE_KEY não localizada! Verifique as variáveis de ambiente no Vercel.';
+      console.error(msg);
+      if (isNative) alert(msg);
       return false;
     }
+
+    console.log(`📡 Chave detectada (início): ${apiKey.substring(0, 8)}...`);
 
     await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
     await Purchases.configure({ 
