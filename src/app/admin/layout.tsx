@@ -43,8 +43,10 @@ export default function AdminLayout({
           const storeName = data.store_name || data.business_name || (data.facebook || '').split('|')[3] || 'LAPIDADO'
           const storeSlug = data.slug || generateSlug(storeName)
           
-          // 💎 NEXUS: Anti-cache para o logotipo. Adiciona um timestamp na URL se ela existir.
-          const logoUrl = data.logo_url ? `${data.logo_url}${data.logo_url.includes('?') ? '&' : '?'}t=${Date.now()}` : null;
+          // 💎 NEXUS: Anti-cache para o logotipo. Adiciona um timestamp apenas se for uma URL real (http).
+          const logoUrl = (data.logo_url && data.logo_url.startsWith('http')) 
+            ? `${data.logo_url}${data.logo_url.includes('?') ? '&' : '?'}t=${Date.now()}` 
+            : data.logo_url || null;
 
           setBranding({
             name: storeName,
@@ -75,19 +77,6 @@ export default function AdminLayout({
     }
   }, [loadData])
 
-  const isBlocked = useMemo(() => {
-    if (loading || !subscription) return false;
-
-    // ✅ Se estiver no App Nativo (Android/iOS), libera o acesso para os testadores do Google
-    if (isNative) return false;
-
-    // ✅ Plano Ativo: Acesso liberado em qualquer plataforma
-    if (subscription?.status === 'active') return false;
-
-    // ❌ Bloqueio Total para WEB (Tráfego Pago): Se não estiver ativo, bloqueia
-    return true;
-  }, [subscription, loading]);
-
   const trialDaysLeft = useMemo(() => {
     if (!subscription?.trial_ends_at) return 0;
     const now = new Date();
@@ -96,6 +85,19 @@ export default function AdminLayout({
     const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
     return days > 0 ? days : 0;
   }, [subscription]);
+
+  const isBlocked = useMemo(() => {
+    if (loading || !subscription) return false;
+
+    // ✅ Se estiver no App Nativo (Android/iOS), libera o acesso para os testadores do Google
+    if (isNative) return false;
+
+    // ✅ Plano Ativo ou Trial com dias restantes: Acesso liberado
+    if (subscription?.status === 'active' || (subscription?.status === 'trial' && trialDaysLeft > 0)) return false;
+
+    // ❌ Bloqueio Total para WEB (Tráfego Pago): Se não houver plano ou trial vencido, bloqueia
+    return true;
+  }, [subscription, loading, trialDaysLeft]);
 
   const handleSubscribe = async (plan: 'lite' | 'liteyearly' | 'monthly' | 'yearly') => {
     setLoading(true)

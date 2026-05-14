@@ -89,13 +89,13 @@ export async function POST(req: Request) {
       "description": "Texto da descrição aqui..."
     }`;
 
-    // 🚀 MOTOR DE VANGUARDA: Gemini 3.1 Flash Lite (O mais moderno e eficiente)
+    // 🚀 MOTOR DE VANGUARDA: Gemini 3 Flash Preview (Velocidade Geracional)
     let model;
     let result;
 
     try {
       model = genAI.getGenerativeModel({ 
-        model: "gemini-3.1-flash-lite-preview", // ⚡ A tecnologia mais recente para eficiência extrema
+        model: "gemini-3-flash-preview", // ⚡ A tecnologia mais recente para velocidade extrema e eficiência
       });
 
       const generationConfig = {
