@@ -120,13 +120,23 @@ export async function purchasePlan(planType: 'lite' | 'liteyearly' | 'monthly' |
  * Internal helper to handle the purchase result mapping
  */
 async function purchasePlanLegacy(pkg: any) {
-  const result = await purchasePackage(pkg);
-  return {
-    success: result.success,
-    customerInfo: result.customerInfo,
-    // Provide legacy name for safety during transition
-    purchaserInfo: result.customerInfo 
-  };
+  try {
+    const result = await purchasePackage(pkg);
+    return {
+      success: result.success,
+      customerInfo: result.customerInfo,
+      purchaserInfo: result.customerInfo,
+      error: result.error,
+      cancelled: result.cancelled
+    };
+  } catch (e: any) {
+    return {
+      success: false,
+      customerInfo: undefined,
+      purchaserInfo: undefined,
+      error: e.message || 'Erro desconhecido na compra'
+    };
+  }
 }
 
 /**

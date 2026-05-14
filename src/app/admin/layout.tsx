@@ -125,8 +125,11 @@ export default function AdminLayout({
         if (purchase.success && purchase.purchaserInfo) {
           await syncSubscriptionWithSupabase(supabase, user.id, purchase.purchaserInfo)
           window.location.reload()
-        } else if (purchase.error) {
-          alert(`Erro na Google Play: ${purchase.error}`);
+        } else {
+          const errorMsg = (purchase as any).error;
+          if (errorMsg) {
+            alert(`Erro na Google Play: ${errorMsg}`);
+          }
         }
       } else {
         console.log('🌐 Usando Stripe Checkout...');
