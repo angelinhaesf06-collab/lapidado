@@ -123,8 +123,9 @@ export async function purchasePlan(planType: 'lite' | 'liteyearly' | 'monthly' |
   
   let pkg;
   // 💎 NEXUS: Mapeamento exato com base no print da Angela (ofrng5100c63ea8)
+  // Usamos (offerings as any) para evitar erros de build com IDs customizados
   if (planType === 'lite') pkg = offerings.monthly; 
-  else if (planType === 'liteyearly') pkg = offerings.annual || offerings.yearly; 
+  else if (planType === 'liteyearly') pkg = offerings.annual || (offerings as any).yearly; 
   else if (planType === 'monthly') pkg = (offerings as any).lifetime || (offerings as any).custom_lifetime; 
   else pkg = (offerings as any).yearly_2 || (offerings as any).custom_yearly_2;
 
