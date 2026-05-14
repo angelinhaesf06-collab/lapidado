@@ -60,11 +60,18 @@ export async function getOfferings() {
   try {
     console.log('📡 Buscando ofertas no RevenueCat...');
     const offerings = await Purchases.getOfferings();
-    console.log('🎁 Ofertas recebidas:', JSON.stringify(offerings));
+    
+    if (offerings.current) {
+      console.log('🎁 Oferta ATUAL (current):', offerings.current.identifier);
+      console.log('📦 Pacotes disponíveis na oferta atual:', offerings.current.availablePackages.map(p => p.identifier).join(', '));
+    } else {
+      console.warn('⚠️ Nenhuma oferta "current" configurada no RevenueCat.');
+    }
+
+    console.log('📚 Todas as ofertas configuradas:', Object.keys(offerings.all).join(', '));
     return offerings.current;
   } catch (e: any) {
     console.error('❌ Erro ao buscar ofertas:', e);
-    // Log detalhado para o usuário
     if (e.message) console.error('Mensagem de erro:', e.message);
     return null;
   }
@@ -76,7 +83,7 @@ export async function purchasePackage(rcPackage: any) {
   }
 
   try {
-    console.log(`🛒 Iniciando compra do pacote: ${rcPackage.identifier}`);
+    console.log(`🛒 Iniciando compra do pacote: ${rcPackage.identifier} (${rcPackage.product.identifier})`);
     const { customerInfo } = await Purchases.purchasePackage({ aPackage: rcPackage });
     
     const isActive = customerInfo.entitlements.active[REVENUECAT_CONF.ENTITLEMENT_ID] !== undefined;
@@ -90,8 +97,18 @@ export async function purchasePackage(rcPackage: any) {
       console.log('⚠️ Usuário cancelou a compra.');
       return { success: false, cancelled: true };
     }
+    
+    // 💎 NEXUS: Detecção de processamento do Google (ITEM_UNAVAILABLE)
+    const isUnavailable = error.message?.includes('ITEM_UNAVAILABLE') || error.code === '3';
+    if (isUnavailable) {
+      console.error('🚫 Erro Google Play: ITEM_UNAVAILABLE. O Google ainda está processando a nova versão ou o produto.');
+    }
+
     console.error('❌ Erro na compra:', error);
-    return { success: false, error: error.message };
+    return { 
+      success: false, 
+      error: isUnavailable ? 'O Google Play ainda está processando este item. Tente novamente em alguns minutos.' : error.message 
+    };
   }
 }
 
