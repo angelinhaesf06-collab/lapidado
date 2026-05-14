@@ -89,19 +89,19 @@ export async function POST(req: Request) {
       "description": "Texto da descrição aqui..."
     }`;
 
-    // 🚀 MOTOR DE VANGUARDA: Gemini 3 Flash Preview (Velocidade Geracional)
+    // 🚀 MOTOR DE VANGUARDA: Gemini 1.5 Flash (Estabilidade e Velocidade)
     let model;
     let result;
 
     try {
       model = genAI.getGenerativeModel({ 
-        model: "gemini-3-flash-preview", // ⚡ A tecnologia mais recente para velocidade extrema e eficiência
+        model: "gemini-1.5-flash", // ⚡ Modelo estável de alta performance
       });
 
       const generationConfig = {
         temperature: 0.6, 
         topP: 0.9,
-        maxOutputTokens: 150, // Limite estrito para economia de tokens
+        maxOutputTokens: 200, // Janela ligeiramente maior para garantir o fechamento do JSON
       };
 
       const safetySettings = [
@@ -123,7 +123,7 @@ export async function POST(req: Request) {
         safetySettings
       });
     } catch (primaryErr) {
-      console.warn("⚠️ Gemini 3 Flash-Preview Falhou, tentando Fallback Secundário (Flash 8B)...");
+      console.warn("⚠️ Gemini 1.5 Flash Falhou, tentando Fallback Secundário (Flash 8B)...");
       
       // 🔄 FALLBACK SECUNDÁRIO: Gemini 1.5 Flash-8B
       model = genAI.getGenerativeModel({ 
@@ -141,7 +141,7 @@ export async function POST(req: Request) {
         generationConfig: {
           temperature: 0.7,
           topP: 0.9,
-          maxOutputTokens: 150,
+          maxOutputTokens: 200,
         }
       });
     }
