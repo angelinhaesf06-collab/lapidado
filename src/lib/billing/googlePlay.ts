@@ -76,20 +76,23 @@ export async function getOfferings() {
     console.log('📡 Buscando ofertas no RevenueCat...');
     const offerings = await Purchases.getOfferings();
     
+    if (!offerings || !offerings.all || Object.keys(offerings.all).length === 0) {
+      console.warn('⚠️ Nenhuma oferta encontrada na configuração do RevenueCat.');
+      return null;
+    }
+
     // 💎 NEXUS: Fallback inteligente - se não houver 'current', pega a primeira disponível
     const selectedOffering = offerings.current || Object.values(offerings.all)[0];
 
     if (selectedOffering) {
       console.log(`🎁 Oferta Selecionada: ${selectedOffering.identifier} (${offerings.current ? 'Current' : 'Fallback'})`);
       console.log('📦 Pacotes Disponíveis:', selectedOffering.availablePackages.map(p => p.identifier).join(', '));
-    } else {
-      console.warn('⚠️ Nenhuma oferta (current ou all) encontrada no RevenueCat.');
     }
 
     return selectedOffering || null;
   } catch (e: any) {
-    console.error('❌ Erro ao buscar ofertas:', e);
-    return null;
+    console.error('❌ Erro crítico ao buscar ofertas no RevenueCat:', e);
+    throw new Error(e.message || 'Erro de conexão com o serviço de assinaturas.');
   }
 }
 
@@ -115,15 +118,15 @@ export async function purchasePackage(rcPackage: any) {
     }
     
     // 💎 NEXUS: Detecção de processamento do Google (ITEM_UNAVAILABLE)
-    const isUnavailable = error.message?.includes('ITEM_UNAVAILABLE') || error.code === '3';
+    const isUnavailable = error.message?.includes('ITEM_UNAVAILABLE') || error.code === '3' || error.message?.includes('Billing is unavailable');
     if (isUnavailable) {
-      console.error('🚫 Erro Google Play: ITEM_UNAVAILABLE. O Google ainda está processando a nova versão ou o produto.');
+      console.error('🚫 Erro Google Play: ITEM_UNAVAILABLE ou Billing Unavailable.');
     }
 
     console.error('❌ Erro na compra:', error);
     return { 
       success: false, 
-      error: isUnavailable ? 'O Google Play ainda está processando este item. Tente novamente em alguns minutos.' : error.message 
+      error: isUnavailable ? 'O faturamento do Google Play está temporariamente indisponível ou processando. Verifique se o app está assinado e se você está logado na Play Store.' : error.message 
     };
   }
 }
@@ -133,7 +136,9 @@ export async function purchasePackage(rcPackage: any) {
  */
 export async function purchasePlan(planType: 'lite' | 'liteyearly' | 'monthly' | 'yearly') {
   const offerings = await getOfferings();
-  if (!offerings) throw new Error('Nenhuma oferta disponível no momento. Verifique sua conexão.');
+  if (!offerings) {
+    throw new Error('Nenhuma oferta (Offering) configurada como "Current" no RevenueCat. Verifique seu painel.');
+  }
   
   let pkg = null;
   const avail = offerings.availablePackages;
