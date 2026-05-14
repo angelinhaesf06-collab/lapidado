@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import { generateSlug } from '@/lib/utils'
 import Image from 'next/image'
 import Paywall from '@/components/Paywall'
-import { purchasePlan, GOOGLE_PLAY_PLANS, syncSubscriptionWithSupabase } from '../../lib/billing/googlePlay'
+import { purchasePlan, GOOGLE_PLAY_PLANS, syncSubscriptionWithSupabase, isNative } from '../../lib/billing/googlePlay'
 import { createStripeCheckout, STRIPE_PLANS } from '@/lib/billing/stripe'
 
 export default function AdminLayout({
@@ -75,11 +75,8 @@ export default function AdminLayout({
   const isBlocked = useMemo(() => {
     if (loading || !subscription) return false;
 
-    // 📱 DETECÇÃO DE PLATAFORMA: Liberação para Teste Fechado do Google
-    const isAndroidApp = typeof window !== 'undefined' && (window as any).Capacitor;
-    
-    // ✅ Se estiver no App Android, libera o acesso para os testadores do Google
-    if (isAndroidApp) return false;
+    // ✅ Se estiver no App Nativo (Android/iOS), libera o acesso para os testadores do Google
+    if (isNative) return false;
 
     // ✅ Plano Ativo: Acesso liberado em qualquer plataforma
     if (subscription?.status === 'active') return false;
@@ -106,14 +103,9 @@ export default function AdminLayout({
         return
       }
 
-      // 📱 Detecta se está em ambiente mobile (Capacitor/WebView) ou iOS/Android Browser
-      const isNativeApp = typeof window !== 'undefined' && (window as any).Capacitor;
-      const isMobileBrowser = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      const isMobile = isNativeApp || isMobileBrowser;
+      console.log(`📱 Ambiente detectado: ${isNative ? 'App Nativo' : 'Browser/Web'}`);
 
-      console.log(`📱 Ambiente detectado: ${isNativeApp ? 'App Nativo' : isMobileBrowser ? 'Browser Mobile' : 'Desktop'}`);
-
-      if (isNativeApp) {
+      if (isNative) {
         console.log('📱 Usando Google Play Billing (RevenueCat)...');
         let planType: 'lite' | 'liteyearly' | 'monthly' | 'yearly';
         if (plan === 'lite') planType = GOOGLE_PLAY_PLANS.LITE;

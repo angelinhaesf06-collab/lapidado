@@ -3,7 +3,7 @@
 import { Gem, CheckCircle2, ShoppingBag, Loader2, Trash2, ShieldCheck, Sparkles, RefreshCcw, ExternalLink } from 'lucide-react'
 import { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { purchasePlan, GOOGLE_PLAY_PLANS, syncSubscriptionWithSupabase, restorePurchases } from '../../../lib/billing/googlePlay'
+import { purchasePlan, GOOGLE_PLAY_PLANS, syncSubscriptionWithSupabase, restorePurchases, isNative } from '../../../lib/billing/googlePlay'
 import { createStripeCheckout, STRIPE_PLANS } from '@/lib/billing/stripe'
 import Link from 'next/link'
 
@@ -39,13 +39,9 @@ export default function SubscriptionPage() {
         return
       }
 
-      const isNativeApp = typeof window !== 'undefined' && (window as any).Capacitor;
-      const isMobileBrowser = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      const isMobile = isNativeApp || isMobileBrowser;
+      console.log(`📱 [SubscriptionPage] Ambiente detectado: ${isNative ? 'App Nativo' : 'Browser/Web'}`);
 
-      console.log(`📱 [SubscriptionPage] Ambiente detectado: ${isNativeApp ? 'App Nativo' : isMobileBrowser ? 'Browser Mobile' : 'Desktop'}`);
-
-      if (isNativeApp) {
+      if (isNative) {
         console.log('📱 Usando Google Play Billing (RevenueCat)...');
         let planType: 'lite' | 'liteyearly' | 'monthly' | 'yearly';
         if (plan === 'lite') planType = GOOGLE_PLAY_PLANS.LITE;

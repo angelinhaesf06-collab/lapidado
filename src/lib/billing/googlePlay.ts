@@ -16,6 +16,8 @@ export const REVENUECAT_CONF = {
   ENTITLEMENT_ID: 'pro'
 }
 
+export const isNative = Capacitor.isNativePlatform();
+
 export const GOOGLE_PLAY_PLANS = {
   LITE: 'lite',
   LITE_YEARLY: 'liteyearly',
@@ -24,7 +26,7 @@ export const GOOGLE_PLAY_PLANS = {
 } as const
 
 export async function initializeBilling(userId?: string) {
-  if (!Capacitor.isNativePlatform()) {
+  if (!isNative) {
     console.log('💻 Rodando em Web: Google Play Billing desativado.');
     return false;
   }
@@ -32,7 +34,6 @@ export async function initializeBilling(userId?: string) {
   try {
     const apiKey = REVENUECAT_CONF.GOOGLE_API_KEY;
     console.log('📡 Inicializando RevenueCat (Google Play)...');
-    console.log(`🔑 Usando API Key: ${apiKey.substring(0, 8)}...`);
 
     if (apiKey === 'goog_placeholder' || !apiKey) {
       console.error('❌ ERRO: NEXT_PUBLIC_REVENUECAT_GOOGLE_KEY não configurada no ambiente!');
@@ -53,7 +54,7 @@ export async function initializeBilling(userId?: string) {
 }
 
 export async function getOfferings() {
-  if (!Capacitor.isNativePlatform()) {
+  if (!isNative) {
     console.warn('⚠️ getOfferings chamado fora de plataforma nativa');
     return null;
   }
@@ -61,18 +62,19 @@ export async function getOfferings() {
     console.log('📡 Buscando ofertas no RevenueCat...');
     const offerings = await Purchases.getOfferings();
     
-    if (offerings.current) {
-      console.log('🎁 Oferta ATUAL (current):', offerings.current.identifier);
-      console.log('📦 Pacotes disponíveis na oferta atual:', offerings.current.availablePackages.map(p => p.identifier).join(', '));
+    // 💎 NEXUS: Fallback inteligente - se não houver 'current', pega a primeira disponível
+    const selectedOffering = offerings.current || Object.values(offerings.all)[0];
+
+    if (selectedOffering) {
+      console.log(`🎁 Oferta Selecionada: ${selectedOffering.identifier} (${offerings.current ? 'Current' : 'Fallback'})`);
+      console.log('📦 Pacotes:', selectedOffering.availablePackages.map(p => p.identifier).join(', '));
     } else {
-      console.warn('⚠️ Nenhuma oferta "current" configurada no RevenueCat.');
+      console.warn('⚠️ Nenhuma oferta (current ou all) encontrada no RevenueCat.');
     }
 
-    console.log('📚 Todas as ofertas configuradas:', Object.keys(offerings.all).join(', '));
-    return offerings.current;
+    return selectedOffering || null;
   } catch (e: any) {
     console.error('❌ Erro ao buscar ofertas:', e);
-    if (e.message) console.error('Mensagem de erro:', e.message);
     return null;
   }
 }
