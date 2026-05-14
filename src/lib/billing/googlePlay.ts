@@ -25,7 +25,7 @@ export const GOOGLE_PLAY_PLANS = {
   YEARLY: 'yearly'
 } as const
 
-export async function initializeBilling(userId?: string) {
+export async function initializeBilling(userId?: string, supabase?: any) {
   if (!isNative) {
     console.log('💻 Rodando em Web: Google Play Billing desativado.');
     return false;
@@ -46,6 +46,20 @@ export async function initializeBilling(userId?: string) {
       appUserID: userId
     });
     console.log('✅ RevenueCat configurado com sucesso!');
+
+    // 💎 NEXUS: Sincronização Automática Silenciosa (Startup)
+    // Se tivermos o userId e o cliente Supabase, verificamos o status real agora.
+    if (userId && supabase) {
+      console.log('🔄 Iniciando sincronização silenciosa de assinatura...');
+      try {
+        const { customerInfo } = await Purchases.getCustomerInfo();
+        await syncSubscriptionWithSupabase(supabase, userId, customerInfo);
+        console.log('✨ Sincronização de startup concluída.');
+      } catch (syncErr) {
+        console.warn('⚠️ Falha na sincronização silenciosa inicial (usuário pode estar offline):', syncErr);
+      }
+    }
+
     return true;
   } catch (e) {
     console.error('❌ Falha ao configurar RevenueCat:', e);
@@ -67,7 +81,7 @@ export async function getOfferings() {
 
     if (selectedOffering) {
       console.log(`🎁 Oferta Selecionada: ${selectedOffering.identifier} (${offerings.current ? 'Current' : 'Fallback'})`);
-      console.log('📦 Pacotes:', selectedOffering.availablePackages.map(p => p.identifier).join(', '));
+      console.log('📦 Pacotes Disponíveis:', selectedOffering.availablePackages.map(p => p.identifier).join(', '));
     } else {
       console.warn('⚠️ Nenhuma oferta (current ou all) encontrada no RevenueCat.');
     }
@@ -115,24 +129,44 @@ export async function purchasePackage(rcPackage: any) {
 }
 
 /**
- * Compatibility Wrapper for Legacy UI code
+ * 💎 NEXUS: Mapeador Universal de Planos (Resiliente a IDs customizados)
  */
 export async function purchasePlan(planType: 'lite' | 'liteyearly' | 'monthly' | 'yearly') {
   const offerings = await getOfferings();
-  if (!offerings) throw new Error('Nenhuma oferta disponível no momento.');
+  if (!offerings) throw new Error('Nenhuma oferta disponível no momento. Verifique sua conexão.');
   
-  let pkg;
-  // 💎 NEXUS: Mapeamento exato com base no print da Angela (ofrng5100c63ea8)
-  // Usamos (offerings as any) para evitar erros de build com IDs customizados
-  if (planType === 'lite') pkg = offerings.monthly; 
-  else if (planType === 'liteyearly') pkg = offerings.annual || (offerings as any).yearly; 
-  else if (planType === 'monthly') pkg = (offerings as any).lifetime || (offerings as any).custom_lifetime; 
-  else pkg = (offerings as any).yearly_2 || (offerings as any).custom_yearly_2;
+  let pkg = null;
+  const avail = offerings.availablePackages;
+
+  // 💎 Estratégia de Busca:
+  // 1. Tentar por IDs customizados comuns (ofrng_lite_mensal, etc)
+  // 2. Tentar por aliases padrão do RevenueCat (monthly, annual)
+  // 3. Tentar por substrings nos identificadores
+
+  if (planType === 'lite') {
+    pkg = offerings.monthly || 
+          avail.find(p => p.identifier.includes('lite') && (p.identifier.includes('mon') || p.identifier.includes('mensal'))) ||
+          avail.find(p => p.identifier === 'lite');
+  } 
+  else if (planType === 'liteyearly') {
+    pkg = offerings.annual || offerings.yearly ||
+          avail.find(p => p.identifier.includes('lite') && (p.identifier.includes('ann') || p.identifier.includes('year') || p.identifier.includes('anual'))) ||
+          avail.find(p => p.identifier === 'lite_yearly');
+  } 
+  else if (planType === 'monthly') { // Pro Monthly
+    pkg = avail.find(p => (p.identifier.includes('pro') || p.identifier.includes('monthly_2')) && (p.identifier.includes('mon') || p.identifier.includes('mensal'))) ||
+          (offerings as any).lifetime || // Fallback legado para o erro identificado
+          offerings.monthly; // Último recurso
+  } 
+  else if (planType === 'yearly') { // Pro Yearly
+    pkg = offerings.annual || offerings.yearly ||
+          avail.find(p => (p.identifier.includes('pro') || p.identifier.includes('yearly_2')) && (p.identifier.includes('ann') || p.identifier.includes('year') || p.identifier.includes('anual')));
+  }
 
   if (!pkg) {
-    console.error(`Pacote ${planType} não encontrado. Ofertas disponíveis:`, Object.keys(offerings));
-    const available = offerings.availablePackages.map(p => p.identifier).join(', ');
-    throw new Error(`O plano ${planType.toUpperCase()} não foi localizado. Pacotes na vitrine: ${available}`);
+    console.error(`❌ Pacote ${planType} não mapeado. Disponíveis:`, avail.map(p => p.identifier));
+    const availableStr = avail.map(p => p.identifier).join(', ');
+    throw new Error(`O plano ${planType.toUpperCase()} não foi localizado na loja. Disponíveis: ${availableStr}`);
   }
   
   return await purchasePlanLegacy(pkg);

@@ -162,6 +162,10 @@ export default function BrandingPage() {
       alert('IDENTIDADE ATUALIZADA COM SUCESSO! 💎')
       triggerHaptic('heavy')
       
+      // 💎 NEXUS: Atualiza o estado local com a URL final e limpa o arquivo pendente
+      setLogo(currentLogoUrl)
+      setLogoFile(null)
+
       // 💎 NEXUS: Notifica o Layout (Pai) que os dados mudaram para atualizar o botão de WhatsApp na hora
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new Event('brandingUpdated'));

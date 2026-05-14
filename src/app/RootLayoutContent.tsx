@@ -37,7 +37,7 @@ export default function RootLayoutContent({
 
         // 📡 Inicializa faturamento no app nativo
         if (currentUser) {
-          initializeBilling(currentUser.id);
+          initializeBilling(currentUser.id, supabase);
         }
 
         let currentBranding = null;

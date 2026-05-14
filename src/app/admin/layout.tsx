@@ -43,9 +43,12 @@ export default function AdminLayout({
           const storeName = data.store_name || data.business_name || (data.facebook || '').split('|')[3] || 'LAPIDADO'
           const storeSlug = data.slug || generateSlug(storeName)
           
+          // 💎 NEXUS: Anti-cache para o logotipo. Adiciona um timestamp na URL se ela existir.
+          const logoUrl = data.logo_url ? `${data.logo_url}${data.logo_url.includes('?') ? '&' : '?'}t=${Date.now()}` : null;
+
           setBranding({
             name: storeName,
-            logo: data.logo_url || null,
+            logo: logoUrl,
             slug: storeSlug,
             website: data.website || null
           })

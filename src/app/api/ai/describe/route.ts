@@ -48,17 +48,17 @@ export async function POST(req: Request) {
       luxo: {
         name: "Brinco Solitário Essência",
         category: "BRINCO",
-        description: "Uma joia de design atemporal que captura a luz de forma sublime. Banhado em metal nobre com cravação manual impecável.\n\n• Banho de Ouro 18k\n• Acabamento de Alta Joalheria\n• Design Minimalista\n\nComo usar: Ideal para jantares ou eventos de gala, elevando instantaneamente sua presença com sofisticação."
+        description: "Elegância que transcende o tempo.\n\nFicha Técnica:\n• Material: Metal Nobre\n• Banho: Ouro 18k\n• Detalhes: Cravação manual e polimento espelhado\n\nSugestão de Uso: Perfeito para elevar looks de gala ou eventos sociais sofisticados."
       },
       venda: {
         name: "Conjunto Premium Radiance",
         category: "CONJUNTO",
-        description: "A peça-chave que faltava no seu mostruário! Com um brilho intenso que atrai todos os olhares, este conjunto de alta qualidade é sucesso de vendas garantido.\n\n• Brilho Extraordinário\n• Peça Versátil\n• Qualidade Premium\n\nComo usar: Combine com looks neutros e veja a mágica acontecer. Perfeito para mulheres que amam ser o centro das atenções."
+        description: "O brilho intenso que seu mostruário merece.\n\nFicha Técnica:\n• Material: Liga de Alta Fusão\n• Banho: Ouro 18k Premium\n• Detalhes: Brilho extraordinário e alta durabilidade\n\nSugestão de Uso: Ideal para quem busca ser o centro das atenções com elegância."
       },
       simples: {
         name: "Gargantilha Minimal",
         category: "COLAR",
-        description: "Design clean focado na versatilidade do dia a dia. Com excelente durabilidade e acabamento cuidadoso, é o acessório prático que combina com qualquer estilo.\n\n• Design Ergonômico\n• Leveza Incomparável\n• Durabilidade Superior\n\nComo usar: Use sozinha para um toque discreto ou em composições de camadas para um visual moderno."
+        description: "Design clean para a versatilidade do seu dia.\n\nFicha Técnica:\n• Material: Hipoalergênico\n• Banho: Ouro 18k\n• Detalhes: Design ergonômico e leveza superior\n\nSugestão de Uso: Perfeita para usar sozinha ou em composições modernas de camadas."
       }
     };
 
@@ -71,14 +71,16 @@ export async function POST(req: Request) {
     TOM DE VOZ: ${config.tone}
     PALAVRAS-CHAVE: ${config.keywords}
 
-    ESTRUTURA DA DESCRIÇÃO:
-    1. Um parágrafo curto (máximo 2 frases) de introdução emocional e envolvente.
-    2. Detalhes técnicos em Bullet Points (cite o banho nobre, acabamento e pedrarias se houver).
-    3. Uma sugestão de "Como usar".
+    ESTRUTURA OBRIGATÓRIA DA DESCRIÇÃO (MÁXIMO 400 CARACTERES):
+    1. Frase de Impacto (curta e envolvente).
+    2. Ficha Técnica (tópicos sobre material, banho e detalhes como pedrarias/tamanho).
+    3. Sugestão de Uso/Look (uma frase curta).
 
     REGRAS:
     - Nomes: Curtos e impactantes (ex: 'Brinco Aura', 'Colar Infinito').
     - CATEGORIA: Escolha uma entre [ANEL, BRINCO, COLAR, PULSEIRA, CONJUNTO, ACESSÓRIO].
+    - LIMITE: A descrição total deve ter entre 250 e 400 caracteres.
+    - ESTILO: Extremamente direto, luxuoso e focado em tópicos.
     
     RETORNE UM JSON PURO:
     {
@@ -99,7 +101,7 @@ export async function POST(req: Request) {
       const generationConfig = {
         temperature: 0.6, 
         topP: 0.9,
-        maxOutputTokens: 1000, // Janela maior para aproveitar o melhor raciocínio do G3
+        maxOutputTokens: 150, // Limite estrito para economia de tokens
       };
 
       const safetySettings = [
@@ -139,7 +141,7 @@ export async function POST(req: Request) {
         generationConfig: {
           temperature: 0.7,
           topP: 0.9,
-          maxOutputTokens: 800,
+          maxOutputTokens: 150,
         }
       });
     }
@@ -174,17 +176,17 @@ export async function POST(req: Request) {
       luxo: {
         name: "Brinco Solitário Essência",
         category: "BRINCO",
-        description: "Uma joia de design atemporal que captura a luz de forma sublime. Banhado em metal nobre com cravação manual impecável.\n\n• Banho de Ouro 18k\n• Acabamento de Alta Joalheria\n• Design Minimalista\n\nComo usar: Ideal para jantares ou eventos de gala, elevando instantaneamente sua presença com sofisticação."
+        description: "Elegância que transcende o tempo.\n\nFicha Técnica:\n• Material: Metal Nobre\n• Banho: Ouro 18k\n• Detalhes: Cravação manual e polimento espelhado\n\nSugestão de Uso: Perfeito para elevar looks de gala ou eventos sociais sofisticados."
       },
       venda: {
         name: "Conjunto Premium Radiance",
         category: "CONJUNTO",
-        description: "A peça-chave que faltava no seu mostruário! Com um brilho intenso que atrai todos os olhares, este conjunto de alta qualidade é sucesso de vendas garantido.\n\n• Brilho Extraordinário\n• Peça Versátil\n• Qualidade Premium\n\nComo usar: Combine com looks neutros e veja a mágica acontecer. Perfeito para mulheres que amam ser o centro das atenções."
+        description: "O brilho intenso que seu mostruário merece.\n\nFicha Técnica:\n• Material: Liga de Alta Fusão\n• Banho: Ouro 18k Premium\n• Detalhes: Brilho extraordinário e alta durabilidade\n\nSugestão de Uso: Ideal para quem busca ser o centro das atenções com elegância."
       },
       simples: {
         name: "Gargantilha Minimal",
         category: "COLAR",
-        description: "Design clean focado na versatilidade do dia a dia. Com excelente durabilidade e acabamento cuidadoso, é o acessório prático que combina com qualquer estilo.\n\n• Design Ergonômico\n• Leveza Incomparável\n• Durabilidade Superior\n\nComo usar: Use sozinha para um toque discreto ou em composições de camadas para um visual moderno."
+        description: "Design clean para a versatilidade do seu dia.\n\nFicha Técnica:\n• Material: Hipoalergênico\n• Banho: Ouro 18k\n• Detalhes: Design ergonômico e leveza superior\n\nSugestão de Uso: Perfeita para usar sozinha ou em composições modernas de camadas."
       }
     };
 
