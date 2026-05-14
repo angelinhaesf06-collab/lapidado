@@ -32,7 +32,7 @@ export async function initializeBilling(userId?: string, supabase?: any) {
   }
 
   try {
-    const apiKey = REVENUECAT_CONF.GOOGLE_API_KEY;
+    const apiKey = REVENUECAT_CONF.GOOGLE_API_KEY.trim();
     console.log('📡 Inicializando RevenueCat (Google Play)...');
 
     if (apiKey === 'goog_placeholder' || !apiKey) {
