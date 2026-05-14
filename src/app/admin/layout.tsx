@@ -125,19 +125,12 @@ export default function AdminLayout({
         }
       } else {
         console.log('🌐 Usando Stripe Checkout...');
-        if (plan === 'lite' || plan === 'liteyearly') {
-           if (plan === 'lite') {
-             alert('O plano Lite Mensal está disponível apenas no aplicativo Android via Google Play.');
-             setLoading(false);
-             return;
-           }
-           const stripePlan = STRIPE_PLANS.LITE_YEARLY;
-           console.log(`🎟️ Plano selecionado: Lite Anual (${stripePlan})`);
-           const checkout = await createStripeCheckout(stripePlan, user.id, user.email || '')
-           if (!checkout.success) alert(`Erro no Stripe: ${checkout.error}`)
-           return;
-        }
-        const stripePlan = plan === 'monthly' ? STRIPE_PLANS.MONTHLY : STRIPE_PLANS.YEARLY;
+        let stripePlan = '';
+        if (plan === 'lite') stripePlan = STRIPE_PLANS.LITE_MONTHLY;
+        else if (plan === 'liteyearly') stripePlan = STRIPE_PLANS.LITE_YEARLY;
+        else if (plan === 'monthly') stripePlan = STRIPE_PLANS.MONTHLY;
+        else stripePlan = STRIPE_PLANS.YEARLY;
+
         console.log(`🎟️ Plano selecionado: ${plan} (${stripePlan})`);
         const checkout = await createStripeCheckout(stripePlan, user.id, user.email || '')
         if (!checkout.success) alert(`Erro no Stripe: ${checkout.error}`)
