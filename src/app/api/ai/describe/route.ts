@@ -89,19 +89,19 @@ export async function POST(req: Request) {
       "description": "Texto da descrição aqui..."
     }`;
 
-    // 🚀 MOTOR DE VANGUARDA: Gemini 1.5 Flash (Estabilidade e Velocidade)
+    // 🚀 MOTOR DE VANGUARDA: Gemini 3.1 Flash Lite (O mais moderno e eficiente)
     let model;
     let result;
 
     try {
       model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-flash", // ⚡ Modelo estável de alta performance
+        model: "gemini-3.1-flash-lite-preview", // ⚡ A tecnologia mais recente para eficiência extrema
       });
 
       const generationConfig = {
         temperature: 0.6, 
         topP: 0.9,
-        maxOutputTokens: 200, // Janela ligeiramente maior para garantir o fechamento do JSON
+        maxOutputTokens: 200, // Equilíbrio entre economia e segurança do JSON
       };
 
       const safetySettings = [
@@ -123,7 +123,7 @@ export async function POST(req: Request) {
         safetySettings
       });
     } catch (primaryErr) {
-      console.warn("⚠️ Gemini 1.5 Flash Falhou, tentando Fallback Secundário (Flash 8B)...");
+      console.warn("⚠️ Gemini 3.1 Flash Lite Falhou, tentando Fallback Secundário (Flash 8B)...");
       
       // 🔄 FALLBACK SECUNDÁRIO: Gemini 1.5 Flash-8B
       model = genAI.getGenerativeModel({ 
