@@ -34,11 +34,19 @@ export default function SubscriptionPage() {
     setLoading(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user) {
+        alert('Usuário não autenticado.')
+        return
+      }
 
-      const isMobile = typeof window !== 'undefined' && ((window as any).Capacitor || navigator.userAgent.includes('Mobile'));
+      const isNativeApp = typeof window !== 'undefined' && (window as any).Capacitor;
+      const isMobileBrowser = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const isMobile = isNativeApp || isMobileBrowser;
 
-      if (isMobile) {
+      console.log(`📱 [SubscriptionPage] Ambiente detectado: ${isNativeApp ? 'App Nativo' : isMobileBrowser ? 'Browser Mobile' : 'Desktop'}`);
+
+      if (isNativeApp) {
+        console.log('📱 Usando Google Play Billing (RevenueCat)...');
         let planType: 'lite' | 'liteyearly' | 'monthly' | 'yearly';
         if (plan === 'lite') planType = GOOGLE_PLAY_PLANS.LITE;
         else if (plan === 'liteyearly') planType = GOOGLE_PLAY_PLANS.LITE_YEARLY;
@@ -46,29 +54,37 @@ export default function SubscriptionPage() {
         else planType = GOOGLE_PLAY_PLANS.YEARLY;
 
         const purchase = await purchasePlan(planType)
-        if (purchase.success && purchase.customerInfo) {
-          await syncSubscriptionWithSupabase(supabase, user.id, purchase.customerInfo)
+        if (purchase.success && (purchase as any).purchaserInfo) {
+          await syncSubscriptionWithSupabase(supabase, user.id, (purchase as any).purchaserInfo)
           window.location.reload()
+        } else {
+          const errorMsg = (purchase as any).error;
+          if (errorMsg) {
+            alert(`Erro na Google Play: ${errorMsg}`);
+          }
         }
       } else {
+        console.log('🌐 Usando Stripe Checkout...');
         if (plan === 'lite' || plan === 'liteyearly') {
            if (plan === 'lite') {
              alert('O plano Lite Mensal está disponível apenas no aplicativo Android via Google Play.');
+             setLoading(false);
              return;
            }
-           // Se for liteyearly na web, tenta Stripe
            const stripePlan = STRIPE_PLANS.LITE_YEARLY;
+           console.log(`🎟️ Plano selecionado: Lite Anual (${stripePlan})`);
            const checkout = await createStripeCheckout(stripePlan, user.id, user.email || '')
-           if (!checkout.success) alert(checkout.error)
+           if (!checkout.success) alert(`Erro no Stripe: ${checkout.error}`)
            return;
         }
         const stripePlan = plan === 'monthly' ? STRIPE_PLANS.MONTHLY : STRIPE_PLANS.YEARLY;
+        console.log(`🎟️ Plano selecionado: ${plan} (${stripePlan})`);
         const checkout = await createStripeCheckout(stripePlan, user.id, user.email || '')
-        if (!checkout.success) alert(checkout.error)
+        if (!checkout.success) alert(`Erro no Stripe: ${checkout.error}`)
       }
-    } catch (err) {
-      console.error('Erro na assinatura:', err)
-      alert('Erro ao processar assinatura.')
+    } catch (err: any) {
+      console.error('❌ Erro crítico na assinatura:', err)
+      alert(`Erro ao processar assinatura: ${err.message || 'Erro desconhecido'}`)
     } finally {
       setLoading(false)
     }
