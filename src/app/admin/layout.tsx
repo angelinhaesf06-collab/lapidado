@@ -101,13 +101,20 @@ export default function AdminLayout({
     setLoading(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user) {
+        alert('Usuário não autenticado.')
+        return
+      }
 
-      // 📱 Detecta se está em ambiente mobile (Capacitor/WebView)
-      const isMobile = typeof window !== 'undefined' && ((window as any).Capacitor || navigator.userAgent.includes('Mobile'));
+      // 📱 Detecta se está em ambiente mobile (Capacitor/WebView) ou iOS/Android Browser
+      const isNativeApp = typeof window !== 'undefined' && (window as any).Capacitor;
+      const isMobileBrowser = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const isMobile = isNativeApp || isMobileBrowser;
 
-      if (isMobile) {
-        console.log('📱 Usando Google Play Billing...');
+      console.log(`📱 Ambiente detectado: ${isNativeApp ? 'App Nativo' : isMobileBrowser ? 'Browser Mobile' : 'Desktop'}`);
+
+      if (isNativeApp) {
+        console.log('📱 Usando Google Play Billing (RevenueCat)...');
         let planType: 'lite' | 'liteyearly' | 'monthly' | 'yearly';
         if (plan === 'lite') planType = GOOGLE_PLAY_PLANS.LITE;
         else if (plan === 'liteyearly') planType = GOOGLE_PLAY_PLANS.LITE_YEARLY;
@@ -118,6 +125,8 @@ export default function AdminLayout({
         if (purchase.success && purchase.purchaserInfo) {
           await syncSubscriptionWithSupabase(supabase, user.id, purchase.purchaserInfo)
           window.location.reload()
+        } else if (purchase.error) {
+          alert(`Erro na Google Play: ${purchase.error}`);
         }
       } else {
         console.log('🌐 Usando Stripe Checkout...');
@@ -128,16 +137,19 @@ export default function AdminLayout({
              return;
            }
            const stripePlan = STRIPE_PLANS.LITE_YEARLY;
+           console.log(`🎟️ Plano selecionado: Lite Anual (${stripePlan})`);
            const checkout = await createStripeCheckout(stripePlan, user.id, user.email || '')
-           if (!checkout.success) alert(checkout.error)
+           if (!checkout.success) alert(`Erro no Stripe: ${checkout.error}`)
            return;
         }
         const stripePlan = plan === 'monthly' ? STRIPE_PLANS.MONTHLY : STRIPE_PLANS.YEARLY;
+        console.log(`🎟️ Plano selecionado: ${plan} (${stripePlan})`);
         const checkout = await createStripeCheckout(stripePlan, user.id, user.email || '')
-        if (!checkout.success) alert(checkout.error)
+        if (!checkout.success) alert(`Erro no Stripe: ${checkout.error}`)
       }
-    } catch (err) {
-      alert('Erro ao processar assinatura.')
+    } catch (err: any) {
+      console.error('❌ Erro crítico ao processar assinatura:', err)
+      alert(`Erro ao processar assinatura: ${err.message || 'Erro desconhecido'}`)
     } finally {
       setLoading(false)
     }

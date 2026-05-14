@@ -12,8 +12,12 @@ export const STRIPE_PLANS = {
 
 export async function createStripeCheckout(planId: string, userId: string, userEmail: string) {
   try {
-    console.log(`🛒 Iniciando checkout Stripe: ${planId}`)
+    console.log(`🛒 Iniciando checkout Stripe para o plano: ${planId}`)
+    console.log(`👤 Usuário: ${userId} (${userEmail})`)
     
+    // Alerta temporário para diagnóstico no frontend
+    // alert(`Iniciando Stripe: ${planId}`);
+
     const response = await fetch('/api/billing/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -24,14 +28,17 @@ export async function createStripeCheckout(planId: string, userId: string, userE
       })
     })
 
+    console.log(`📡 Resposta da API de checkout: status ${response.status}`)
     const data = await response.json()
+    console.log(`📦 Dados recebidos da API:`, data)
     
     if (data.url) {
+      console.log(`🚀 Redirecionando para: ${data.url}`)
       window.location.href = data.url
       return { success: true }
     }
     
-    throw new Error(data.error || 'Falha ao gerar link de pagamento')
+    throw new Error(data.error || 'Falha ao gerar link de pagamento no Stripe')
   } catch (error: any) {
     console.error('❌ Erro no checkout Stripe:', error)
     return { success: false, error: error.message }
