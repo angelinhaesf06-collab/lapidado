@@ -122,14 +122,16 @@ export async function purchasePlan(planType: 'lite' | 'liteyearly' | 'monthly' |
   if (!offerings) throw new Error('Nenhuma oferta disponível no momento.');
   
   let pkg;
+  // 💎 NEXUS: Mapeamento exato com base no print da Angela (ofrng5100c63ea8)
   if (planType === 'lite') pkg = offerings.monthly; 
-  else if (planType === 'liteyearly') pkg = offerings.annual; 
-  else if (planType === 'monthly') pkg = (offerings as any).custom_monthly_pro || (offerings as any).custom_lifetime; 
-  else pkg = (offerings as any).custom_yearly_pro || (offerings as any).custom_yearly_2;
+  else if (planType === 'liteyearly') pkg = offerings.annual || offerings.yearly; 
+  else if (planType === 'monthly') pkg = (offerings as any).lifetime || (offerings as any).custom_lifetime; 
+  else pkg = (offerings as any).yearly_2 || (offerings as any).custom_yearly_2;
 
   if (!pkg) {
     console.error(`Pacote ${planType} não encontrado. Ofertas disponíveis:`, Object.keys(offerings));
-    throw new Error(`O plano ${planType.toUpperCase()} não foi localizado nas ofertas atuais do Google Play.`);
+    const available = offerings.availablePackages.map(p => p.identifier).join(', ');
+    throw new Error(`O plano ${planType.toUpperCase()} não foi localizado. Pacotes na vitrine: ${available}`);
   }
   
   return await purchasePlanLegacy(pkg);
