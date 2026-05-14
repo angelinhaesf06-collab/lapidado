@@ -149,7 +149,7 @@ export async function purchasePlan(planType: 'lite' | 'liteyearly' | 'monthly' |
           avail.find(p => p.identifier === 'lite');
   } 
   else if (planType === 'liteyearly') {
-    pkg = offerings.annual || offerings.yearly ||
+    pkg = offerings.annual || (offerings as any).yearly ||
           avail.find(p => p.identifier.includes('lite') && (p.identifier.includes('ann') || p.identifier.includes('year') || p.identifier.includes('anual'))) ||
           avail.find(p => p.identifier === 'lite_yearly');
   } 
@@ -159,7 +159,7 @@ export async function purchasePlan(planType: 'lite' | 'liteyearly' | 'monthly' |
           offerings.monthly; // Último recurso
   } 
   else if (planType === 'yearly') { // Pro Yearly
-    pkg = offerings.annual || offerings.yearly ||
+    pkg = offerings.annual || (offerings as any).yearly ||
           avail.find(p => (p.identifier.includes('pro') || p.identifier.includes('yearly_2')) && (p.identifier.includes('ann') || p.identifier.includes('year') || p.identifier.includes('anual')));
   }
 
