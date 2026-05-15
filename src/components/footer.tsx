@@ -78,19 +78,9 @@ export default function Footer() {
         
         {/* Lado 1: Identidade e Endereço */}
         <div className="flex flex-col items-center md:items-start space-y-4">
-          {branding.logo_url ? (
-            <Image 
-              src={branding.logo_url} 
-              alt="Logo" 
-              className="h-10 w-auto object-contain grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-700" 
-              width={100} 
-              height={40} 
-            />
-          ) : (
-            <h3 className="text-lg font-bold text-brand-primary uppercase tracking-widest opacity-60">
-              {branding.store_name || branding.business_name || 'LAPIDADO'}
-            </h3>
-          )}
+          <h3 className="text-lg font-bold text-brand-primary uppercase tracking-widest opacity-60">
+            {branding.store_name || branding.business_name || ''}
+          </h3>
 
           {branding.address && (
             <div className="space-y-2 text-center md:text-left">

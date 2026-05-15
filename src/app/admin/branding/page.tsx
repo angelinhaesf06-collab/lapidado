@@ -249,11 +249,6 @@ export default function BrandingPage() {
           )}
 
           <div className="space-y-1.5">
-            <label className="text-[9px] font-black text-brand-secondary uppercase block ml-1">Frase de Impacto (Slogan)</label>
-            <input type="text" value={tagline} onChange={(e) => setTagline(e.target.value)} className="w-full px-4 py-3 md:py-4 rounded-xl md:rounded-2xl bg-brand-secondary/5 text-sm font-medium text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all" />
-          </div>
-
-          <div className="space-y-1.5">
             <label className="text-[9px] font-black text-brand-secondary uppercase block ml-1">Frase de Topo da Vitrine</label>
             <input type="text" value={topBanner} onChange={(e) => setTopBanner(e.target.value)} className="w-full px-4 py-3 md:py-4 rounded-xl md:rounded-2xl bg-brand-secondary/5 text-sm font-medium text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all" />
           </div>
