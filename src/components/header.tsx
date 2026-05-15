@@ -47,15 +47,13 @@ export default function Header() {
           }
         }
         
-        // 3. REMOVIDO FALLBACK INSEGURO QUE CAUSAVA MISTURA DE LOGINS
-        
         if (brandingData) {
           setBranding({ 
             logo_url: brandingData.logo_url,
             tagline: brandingData.tagline ?? brandingData.facebook?.split('|')[0] ?? null,
             topBanner: brandingData.top_banner ?? brandingData.facebook?.split('|')[2] ?? null,
             warranty: brandingData.warranty_time || null,
-            store_name: brandingData.business_name || brandingData.store_name || 'LAPIDADO'
+            store_name: brandingData.business_name || brandingData.store_name || ''
           })
         }
       } catch {
@@ -91,7 +89,7 @@ export default function Header() {
             ) : (
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full bg-brand-primary flex items-center justify-center text-white">
-                  <span className="text-[10px] font-bold italic">{(branding?.store_name || 'L')[0]}</span>
+                  <span className="text-[10px] font-bold italic">{(branding?.store_name || '')[0]}</span>
                 </div>
               </div>
             )}
