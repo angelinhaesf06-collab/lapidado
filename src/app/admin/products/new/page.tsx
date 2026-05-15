@@ -122,7 +122,7 @@ export default function NewProductPage() {
         body: JSON.stringify({ image: compressed, style: aiStyle })
       })
 
-      if (!response.body) throw new Error("Sem stream")
+      if (!response.body) throw new Error("Sem resposta do servidor")
       
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
@@ -131,29 +131,29 @@ export default function NewProductPage() {
       while (true) {
         const { value, done } = await reader.read()
         if (done) break
-        
-        const chunk = decoder.decode(value)
-        fullText += chunk
-        
-        // 💎 Extração Inteligente Progressiva
-        const nameMatch = fullText.match(/"name":\s*"([^"]*)"?/)
-        if (nameMatch && nameMatch[1]) setName(nameMatch[1].toUpperCase())
+        fullText += decoder.decode(value)
+      }
 
-        const descMatch = fullText.match(/"description":\s*"([^"]*)"?/)
-        if (descMatch && descMatch[1]) {
-          const cleanDesc = descMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"')
-          setDescription(cleanDesc)
-        }
-
-        const catMatch = fullText.match(/"category":\s*"([^"]*)"?/)
-        if (catMatch && catMatch[1]) {
-          const aiCat = catMatch[1].toUpperCase()
+      // 💎 Limpeza e Parse Seguro do JSON
+      try {
+        const cleanJson = fullText.substring(fullText.indexOf('{'), fullText.lastIndexOf('}') + 1)
+        const result = JSON.parse(cleanJson)
+        
+        if (result.name) setName(result.name.toUpperCase())
+        if (result.description) setDescription(result.description.toUpperCase())
+        
+        if (result.category) {
+          const aiCat = result.category.toUpperCase()
           const found = categories.find(c => c.name.toUpperCase().includes(aiCat) || aiCat.includes(c.name.toUpperCase()))
           if (found) setCategory(found.id)
         }
+      } catch (parseErr) {
+        console.error("Erro ao parsear JSON da IA:", fullText)
+        setAiError("ERRO NO FORMATO DA RESPOSTA. TENTE NOVAMENTE. ✨")
       }
+
     } catch (err) {
-      console.error("Erro no stream:", err)
+      console.error("Erro na IA:", err)
       setAiError("IA INDISPONÍVEL. CONTINUE MANUALMENTE. ✨")
     } finally {
       setAiLoading(false)
