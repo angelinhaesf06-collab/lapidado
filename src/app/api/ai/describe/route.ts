@@ -95,13 +95,13 @@ export async function POST(req: Request) {
 
     try {
       model = genAI.getGenerativeModel({ 
-        model: "gemini-3-flash-preview", // ⚡ A tecnologia mais recente para velocidade extrema e eficiência
+        model: "gemini-flash-latest", // ⚡ Modelo ultra-rápido e estável em 2026
       });
 
       const generationConfig = {
-        temperature: 0.6, 
+        temperature: 0.7, 
         topP: 0.9,
-        maxOutputTokens: 200, // Equilíbrio entre economia e segurança do JSON
+        maxOutputTokens: 400, // Espaço para descrições luxuosas
       };
 
       const safetySettings = [

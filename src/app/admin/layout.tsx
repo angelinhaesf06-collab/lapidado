@@ -38,22 +38,24 @@ export default function AdminLayout({
         
         if (error) console.error('❌ Erro ao buscar branding:', error.message)
 
-        if (data) {
-          // 💎 NEXUS: Prioridade para store_name (personalizado) sobre business_name (padrão)
-          const storeName = data.store_name || data.business_name || (data.facebook || '').split('|')[3] || 'LAPIDADO'
-          const storeSlug = data.slug || generateSlug(storeName)
-          
-          // 💎 NEXUS: Anti-cache para o logotipo. Adiciona um timestamp apenas se for uma URL real (http).
-          const logoUrl = (data.logo_url && data.logo_url.startsWith('http')) 
-            ? `${data.logo_url}${data.logo_url.includes('?') ? '&' : '?'}t=${Date.now()}` 
-            : data.logo_url || null;
+        // 💎 NEXUS: Prioridade para store_name (personalizado) sobre business_name (padrão)
+        const storeName = data.store_name || data.business_name || (data.facebook || '').split('|')[3] || 'LAPIDADO'
+        const storeSlug = data.slug || generateSlug(storeName)
+        
+        // 💎 NEXUS: Anti-cache para o logotipo sem duplicar parâmetros.
+        let logoUrl = data.logo_url || null;
+        if (logoUrl && logoUrl.startsWith('http')) {
+          const urlObj = new URL(logoUrl);
+          urlObj.searchParams.set('t', Date.now().toString());
+          logoUrl = urlObj.toString();
+        }
 
-          setBranding({
-            name: storeName,
-            logo: logoUrl,
-            slug: storeSlug,
-            website: data.website || null
-          })
+        setBranding({
+          name: storeName,
+          logo: logoUrl,
+          slug: storeSlug,
+          website: data.website || null
+        })
           setSubscription({
             status: data.subscription_status || 'trial',
             trial_ends_at: data.trial_ends_at || null

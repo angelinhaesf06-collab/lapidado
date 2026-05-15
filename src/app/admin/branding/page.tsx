@@ -204,8 +204,20 @@ export default function BrandingPage() {
           <div className="flex items-center gap-3 mb-2"><Palette className="text-brand-secondary" size={16} /><h3 className="text-[10px] md:text-xs font-bold text-brand-primary uppercase tracking-wider">Identidade Visual</h3></div>
           
           <div className="flex flex-col items-center gap-4">
-            <div className="relative w-24 h-28 md:w-28 md:h-28 rounded-full overflow-hidden border-2 border-dashed border-brand-secondary/20 flex items-center justify-center bg-brand-secondary/5 group">
-              {logo ? <Image src={logo} alt="LOGO" fill className="object-contain p-3" /> : <Camera size={24} className="text-brand-secondary/30" />}
+            <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-3xl overflow-hidden border-2 border-dashed border-brand-secondary/20 flex items-center justify-center bg-brand-secondary/5 group">
+              {logo ? (
+                <img 
+                  src={logo} 
+                  alt="LOGO" 
+                  className="w-full h-full object-contain" 
+                  onError={(e) => {
+                    console.error("Erro ao carregar logo:", logo);
+                    (e.target as HTMLImageElement).src = "/logo-app.png";
+                  }}
+                />
+              ) : (
+                <Camera size={24} className="text-brand-secondary/30" />
+              )}
               <label className="absolute inset-0 cursor-pointer flex items-center justify-center bg-black/0 hover:bg-black/5 transition-all">
                 <input type="file" className="hidden" onChange={handleLogoUpload} accept="image/*" />
               </label>

@@ -178,7 +178,7 @@ export default function SalesPage() {
       .select('id, name, price, image_url, cost_price, stock_quantity, category_id, categories(name)')
       .eq('user_id', user.id)
       .gt('stock_quantity', 0)
-      .order('name')
+      .order('created_at', { ascending: false })
 
     if (data) setProducts(data as unknown as Product[])
   }, [supabase])
