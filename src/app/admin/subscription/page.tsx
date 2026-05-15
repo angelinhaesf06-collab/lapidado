@@ -50,13 +50,14 @@ export default function SubscriptionPage() {
         else planType = GOOGLE_PLAY_PLANS.YEARLY;
 
         const purchase = await purchasePlan(planType)
-        if (purchase.success && (purchase as any).purchaserInfo) {
-          await syncSubscriptionWithSupabase(supabase, user.id, (purchase as any).purchaserInfo)
+        if (purchase.success && (purchase as any).customerInfo) {
+          await syncSubscriptionWithSupabase(supabase, user.id, (purchase as any).customerInfo)
           window.location.reload()
         } else {
           const errorMsg = (purchase as any).error;
+          const underlyingError = (purchase as any).underlyingError;
           if (errorMsg) {
-            alert(`Erro na Google Play: ${errorMsg}`);
+            alert(`Erro na assinatura: ${errorMsg}${underlyingError ? ` (${underlyingError})` : ''}\n\nVerifique se o seu usuário da Play Store está autorizado e se o app está configurado corretamente no RevenueCat.`);
           }
         }
       } else {

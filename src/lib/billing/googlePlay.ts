@@ -130,7 +130,8 @@ export async function purchasePackage(rcPackage: any) {
     console.error('❌ Erro na compra:', error);
     return { 
       success: false, 
-      error: isUnavailable ? 'O faturamento do Google Play está temporariamente indisponível ou processando. Verifique se o app está assinado e se você está logado na Play Store.' : error.message 
+      error: isUnavailable ? 'O faturamento do Google Play está temporariamente indisponível ou processando.' : error.message,
+      underlyingError: error.underlyingErrorMessage
     };
   }
 }

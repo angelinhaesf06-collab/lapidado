@@ -89,14 +89,14 @@ export async function POST(req: Request) {
       "description": "Texto da descrição aqui..."
     }`;
 
-    // 🚀 MOTOR DE VANGUARDA: Gemini Flash (Estabilidade e Velocidade)
-    console.log("💎 IA: Iniciando geração com gemini-flash-latest em MODO JSON...");
+    // 🚀 MOTOR DE VANGUARDA: Gemini 3.1 Flash Lite (Elite de 2026)
+    console.log("💎 IA: Iniciando geração com gemini-3.1-flash-lite em MODO JSON...");
     let model;
     let result;
 
     try {
       model = genAI.getGenerativeModel({ 
-        model: "gemini-flash-latest", 
+        model: "gemini-3.1-flash-lite", 
       });
 
       const generationConfig = {
@@ -126,8 +126,17 @@ export async function POST(req: Request) {
         safetySettings
       });
       
-      const responseText = chatResult.response.text();
-      console.log("✅ IA: Resposta JSON gerada com sucesso.");
+      let responseText = chatResult.response.text();
+      console.log("✅ IA: Resposta bruta recebida.");
+
+      // Limpeza de segurança: Remove blocos de código markdown se o modelo ignorar o mimeType
+      if (responseText.includes("```json")) {
+        responseText = responseText.split("```json")[1].split("```")[0];
+      } else if (responseText.includes("```")) {
+        responseText = responseText.split("```")[1].split("```")[0];
+      }
+      
+      responseText = responseText.trim();
       
       return new Response(responseText, {
         headers: { "Content-Type": "application/json; charset=utf-8" },

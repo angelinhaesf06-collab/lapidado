@@ -10,11 +10,10 @@ async function listModels() {
     // A API do JS não tem um método direto exposto facilmente em versões antigas, 
     // mas podemos tentar instanciar os modelos mais comuns de 2026.
     const testModels = [
-      "gemini-2.0-flash-exp",
-      "gemini-1.5-flash",
-      "gemini-1.5-pro",
+      "gemini-3.1-flash-lite-preview",
+      "gemini-3.1-flash-lite",
       "gemini-2.0-flash",
-      "gemini-2.0-pro"
+      "gemini-1.5-flash"
     ];
 
     for (const m of testModels) {
