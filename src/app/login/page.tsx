@@ -126,30 +126,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* 🚀 ACESSO VISITANTE / TESTE */}
-        <div className="mt-4 md:mt-6 flex flex-col items-center gap-4">
-          <div className="flex items-center gap-4 w-full">
-            <div className="h-[1px] bg-rose-100 flex-1" />
-            <span className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.2em] opacity-60">ou</span>
-            <div className="h-[1px] bg-rose-100 flex-1" />
-          </div>
-
-          <button
-            onClick={handleGuestLogin}
-            disabled={loading}
-            className="w-full border-2 border-[#c99090]/30 text-[#c99090] py-4 md:py-5 rounded-[24px] md:rounded-[28px] text-[10px] md:text-xs font-black uppercase tracking-[0.2em] hover:bg-[#c99090]/5 hover:border-[#c99090] transition-all flex items-center justify-center gap-2 group"
-          >
-            {loading ? (
-              <Loader2 className="animate-spin" size={20} />
-            ) : (
-              <>
-                <span>Acesso Visitante / Teste</span>
-                <Gem size={14} className="group-hover:animate-bounce" />
-              </>
-            )}
-          </button>
-        </div>
-
         {/* 💎 ACESSO PARA NOVAS EMPRESÁRIAS */}
         <div className="mt-8 md:mt-12 text-center border-t border-rose-50 pt-6 md:pt-8">
           <p className="text-[#8b6e6a] text-[11px] font-semibold uppercase tracking-widest">
