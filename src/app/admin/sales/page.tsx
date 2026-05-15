@@ -258,14 +258,10 @@ export default function SalesPage() {
     } finally { setIsSaving(false) }
   }
 
-  const handleWhatsApp = (sale: Sale) => {
-    if (!sale.customers?.phone) return toast.error('Cadastre o WhatsApp da cliente!')
-    const cleanPhone = sale.customers.phone.replace(/\D/g, '')
-    const msg = encodeURIComponent(`Olá ${sale.customers.name}! 💎\n\nAqui está o comprovante da sua compra na *${branding?.business_name}*:\n\n💍 *Peça:* ${sale.products.name}\n💰 *Valor:* R$ ${sale.total_value.toLocaleString('pt-BR')}\n💳 *Pagamento:* ${sale.payment_method}\n📜 *Garantia:* ${branding?.warranty_time || '1 ano'}\n\nObrigado! ✨`)
-    window.open(`https://api.whatsapp.com/send?phone=55${cleanPhone}&text=${msg}`, '_blank')
-  }
+  const filteredSales = useMemo(() => {
+    return sales.filter(sale => sale.created_at.startsWith(selectedMonth))
+  }, [sales, selectedMonth])
 
-  const filteredSales = sales.filter(sale => sale.created_at.startsWith(selectedMonth))
   const [pendingReceivables, setPendingReceivables] = useState(0)
   const [totalReceivables, setTotalReceivables] = useState(0)
 
@@ -290,7 +286,7 @@ export default function SalesPage() {
       }
     }
     loadRec()
-  }, [supabase, selectedMonth, sales])
+  }, [supabase, selectedMonth])
 
   return (
     <div className="max-w-5xl mx-auto pb-20 print:p-0">
@@ -585,6 +581,28 @@ export default function SalesPage() {
                </div>
              )}
           </div>
+        </div>
+      )}
+    </div>
+  )
+}
+lassName="w-full p-3 rounded-xl bg-brand-secondary/5 text-xs font-black outline-none" value={quantity} onChange={e => setQuantity(Number(e.target.value))} />
+                          </div>
+                       </div>
+                       <button onClick={handleRegisterSale} disabled={isSaving} className="w-full bg-brand-primary text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 disabled:opacity-50">
+                         {isSaving ? <Loader2 className="animate-spin" size={16} /> : <><ShoppingCart size={16} /> FINALIZAR VENDA DE R$ {(selectedProduct.price * quantity).toLocaleString('pt-BR')}</>}
+                       </button>
+                    </div>
+                  </div>
+               </div>
+             )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+  </div>
         </div>
       )}
     </div>
