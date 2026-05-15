@@ -19,26 +19,5 @@ export default function AdminBar({ user }: { user: unknown }) {
 
   if (!user || !isPublicPage) return null
 
-  return (
-    <div className="bg-brand-primary text-white pt-[env(safe-area-inset-top,0px)] pb-2 px-4 flex justify-center items-center gap-4 sticky top-0 z-[100] shadow-lg animate-in slide-in-from-top duration-500">
-      <div className="py-2 flex justify-center items-center gap-4">
-        <p className="text-[8px] font-black uppercase tracking-[0.3em]">Modo Lojista Ativo 💎</p>
-        
-        <div className="flex items-center gap-3">
-          <Link href="/admin" className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest transition-all">
-            <LayoutDashboard size={12} />
-            Painel Admin
-          </Link>
-          
-          <button 
-            onClick={handleSignOut}
-            className="flex items-center gap-2 bg-red-500/20 hover:bg-red-500/40 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest transition-all text-white/80"
-          >
-            <LogOut size={12} />
-            Sair
-          </button>
-        </div>
-      </div>
-    </div>
-  )
+  return null
 }

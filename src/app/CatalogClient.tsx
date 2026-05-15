@@ -219,7 +219,7 @@ export default function CatalogClient({
                   <Gem size={14} />
                </div>
                <h1 className="text-[10px] md:text-[14px] font-black uppercase tracking-[0.4em] text-brand-primary text-center px-6 leading-tight">
-                  {branding?.store_name || 'LAPIDADO'}
+                  {branding?.store_name || ''}
                </h1>
             </div>
           )}

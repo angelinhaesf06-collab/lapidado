@@ -73,16 +73,6 @@ export default function LoginPage() {
         
         {/* Branding Elegante */}
         <div className="text-center mb-8 md:mb-12 flex flex-col items-center">
-          <div className="relative w-40 h-20 md:w-48 md:h-24 mb-4 md:mb-6">
-            <Image 
-              src="/logo.png" 
-              alt="Logo Lapidado" 
-              fill
-              className="object-contain drop-shadow-lg"
-              priority 
-            />
-          </div>
-          <h1 className="text-[9px] font-black text-[#c99090] uppercase tracking-[0.6em] mb-4 hidden">Lapidado App</h1>
           <h2 className="text-3xl md:text-4xl font-bold text-[#4a322e] tracking-tight mb-2 md:mb-3">Seu Espaço</h2>
           <p className="text-[#8b6e6a] text-[12px] md:text-[13px] font-medium tracking-wide">
             &quot;Sua visão lapidada com perfeição.&quot;

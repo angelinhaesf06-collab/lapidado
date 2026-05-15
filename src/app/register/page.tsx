@@ -154,7 +154,6 @@ export default function RegisterPage() {
       <div className="bg-white/90 backdrop-blur-sm p-8 md:p-10 rounded-[40px] md:rounded-[48px] shadow-[0_32px_80px_rgba(74,50,46,0.06)] w-full max-w-md border border-white/50 relative z-10 transition-all">
 
         <div className="text-center mb-10 relative z-10">
-          <h1 className="text-[10px] font-black text-[#c99090] uppercase tracking-[0.4em] mb-8">Catálogo Lapidado</h1>
           <div className="bg-rose-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
             <Gem className="text-[#c99090]" size={36} />
           </div>

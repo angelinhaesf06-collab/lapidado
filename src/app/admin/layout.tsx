@@ -17,7 +17,7 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
-  const [branding, setBranding] = useState<{name: string, logo: string | null, slug: string | null, website: string | null}>({name: 'LAPIDADO', logo: null, slug: null, website: null})
+  const [branding, setBranding] = useState<{name: string, logo: string | null, slug: string | null, website: string | null}>({name: '', logo: null, slug: null, website: null})
   const [subscription, setSubscription] = useState<{status: string, trial_ends_at: string | null} | null>(null)
   const [loading, setLoading] = useState(true)
   const supabase = useMemo(() => createClient(), [])
