@@ -1,9 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { ShoppingCart, Loader2, ArrowLeft, Trash2, Plus, FileText, CheckCircle2, Printer, X, ShieldCheck, Gem, Phone, Check } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import Image from 'next/image'
 import { toast } from 'sonner'
 
 interface Sale {
@@ -258,6 +257,13 @@ export default function SalesPage() {
     } finally { setIsSaving(false) }
   }
 
+  const handleWhatsApp = (sale: Sale) => {
+    if (!sale.customers?.phone) return toast.error('Cadastre o WhatsApp da cliente!')
+    const cleanPhone = sale.customers.phone.replace(/\D/g, '')
+    const msg = encodeURIComponent(`Olá ${sale.customers.name}! 💎\n\nAqui está o comprovante da sua compra na *${branding?.business_name}*:\n\n💍 *Peça:* ${sale.products.name}\n💰 *Valor:* R$ ${sale.total_value.toLocaleString('pt-BR')}\n💳 *Pagamento:* ${sale.payment_method}\n📜 *Garantia:* ${branding?.warranty_time || '1 ano'}\n\nObrigado! ✨`)
+    window.open(`https://api.whatsapp.com/send?phone=55${cleanPhone}&text=${msg}`, '_blank')
+  }
+
   const filteredSales = useMemo(() => {
     return sales.filter(sale => sale.created_at.startsWith(selectedMonth))
   }, [sales, selectedMonth])
@@ -348,7 +354,15 @@ export default function SalesPage() {
                   <div key={sale.id} className={`bg-white p-4 rounded-[25px] border flex items-center gap-3 md:gap-4 group ${sale.status === 'pago' ? 'border-green-100 bg-green-50/10' : 'border-brand-secondary/5 shadow-sm'}`}>
                     <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl overflow-hidden relative border border-brand-secondary/10 bg-rose-50/30 shrink-0">
                       {imageUrl ? (
-                        <Image src={imageUrl} alt="" fill className="object-cover" />
+                        <img 
+                          src={imageUrl} 
+                          alt="" 
+                          className="w-full h-full object-cover" 
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = ""; // Força o fallback
+                            (e.target as HTMLImageElement).classList.add('hidden');
+                          }}
+                        />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-brand-secondary/20"><Gem size={20} /></div>
                       )}
@@ -468,7 +482,14 @@ export default function SalesPage() {
                            {(() => {
                               const productInfo = Array.isArray(showReceipt.products) ? showReceipt.products[0] : showReceipt.products
                               return productInfo?.image_url ? (
-                                <Image src={productInfo.image_url} alt="" fill className="object-cover" />
+                                <img 
+                                  src={productInfo.image_url} 
+                                  alt="" 
+                                  className="w-full h-full object-cover" 
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                  }}
+                                />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center text-brand-secondary/20"><Gem size={14} /></div>
                               )
@@ -536,7 +557,14 @@ export default function SalesPage() {
                   <button key={p.id} onClick={() => setSelectedProduct(p)} className={`p-2 md:p-3 rounded-[20px] md:rounded-[30px] border transition-all ${selectedProduct?.id === p.id ? 'bg-brand-primary border-brand-primary scale-105 shadow-xl' : 'bg-white border-brand-secondary/5'}`}>
                     <div className="aspect-square w-full rounded-[15px] md:rounded-[20px] overflow-hidden mb-1 md:mb-2 relative bg-brand-secondary/5 flex items-center justify-center">
                       {p.image_url ? (
-                        <Image src={p.image_url} alt="" fill className="object-cover" />
+                        <img 
+                          src={p.image_url} 
+                          alt="" 
+                          className="w-full h-full object-cover" 
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
                       ) : (
                         <Gem size={16} className="text-brand-secondary/20" />
                       )}
@@ -581,28 +609,6 @@ export default function SalesPage() {
                </div>
              )}
           </div>
-        </div>
-      )}
-    </div>
-  )
-}
-lassName="w-full p-3 rounded-xl bg-brand-secondary/5 text-xs font-black outline-none" value={quantity} onChange={e => setQuantity(Number(e.target.value))} />
-                          </div>
-                       </div>
-                       <button onClick={handleRegisterSale} disabled={isSaving} className="w-full bg-brand-primary text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 disabled:opacity-50">
-                         {isSaving ? <Loader2 className="animate-spin" size={16} /> : <><ShoppingCart size={16} /> FINALIZAR VENDA DE R$ {(selectedProduct.price * quantity).toLocaleString('pt-BR')}</>}
-                       </button>
-                    </div>
-                  </div>
-               </div>
-             )}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-  </div>
         </div>
       )}
     </div>
