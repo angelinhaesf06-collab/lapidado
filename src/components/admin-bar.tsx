@@ -20,21 +20,22 @@ export default function AdminBar({ user }: { user: unknown }) {
   if (!user || !isPublicPage) return null
 
   return (
-    <div className="bg-[#4a322e]/90 backdrop-blur-md text-white py-1.5 px-4 flex justify-center items-center gap-4 sticky top-0 z-[100] shadow-sm animate-in slide-in-from-top duration-500 border-b border-white/10">
-      <div className="flex justify-center items-center gap-6">
-        <p className="text-[7px] font-black uppercase tracking-[0.3em] opacity-80">Acesso Administrativo 💎</p>
+    <div className="bg-[#4a322e] text-white py-2 px-4 flex justify-center items-center gap-4 fixed top-0 left-0 right-0 z-[9999] shadow-xl animate-in slide-in-from-top duration-500 border-b border-white/10">
+      <div className="flex justify-center items-center gap-4 md:gap-6 w-full max-w-7xl mx-auto">
+        <p className="text-[7px] md:text-[8px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] opacity-80 whitespace-nowrap">Admin 💎</p>
         
-        <div className="flex items-center gap-3">
-          <Link href="/admin" className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest transition-all">
-            <LayoutDashboard size={10} />
-            Painel Admin
+        <div className="flex items-center gap-2 md:gap-3">
+          <Link href="/admin" className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-widest transition-all shadow-sm">
+            <LayoutDashboard size={12} />
+            <span className="hidden xs:inline">Painel Admin</span>
+            <span className="xs:hidden">Painel</span>
           </Link>
           
           <button 
             onClick={handleSignOut}
-            className="flex items-center gap-1.5 bg-rose-500/10 hover:bg-rose-500/20 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest transition-all text-rose-200"
+            className="flex items-center gap-1.5 bg-rose-500/20 hover:bg-rose-500/40 px-3 py-1.5 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-widest transition-all text-white shadow-sm"
           >
-            <LogOut size={10} />
+            <LogOut size={12} />
             Sair
           </button>
         </div>
