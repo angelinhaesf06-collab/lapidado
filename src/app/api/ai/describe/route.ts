@@ -90,7 +90,7 @@ export async function POST(req: Request) {
     }`;
 
     // 🚀 MOTOR DE VANGUARDA: Gemini Flash (Estabilidade e Velocidade)
-    console.log("💎 IA: Iniciando geração com gemini-flash-latest...");
+    console.log("💎 IA: Iniciando geração com gemini-flash-latest em MODO JSON...");
     let model;
     let result;
 
@@ -100,9 +100,10 @@ export async function POST(req: Request) {
       });
 
       const generationConfig = {
-        temperature: 0.7, 
-        topP: 0.9,
-        maxOutputTokens: 600, 
+        temperature: 1, 
+        topP: 0.95,
+        maxOutputTokens: 800,
+        responseMimeType: "application/json",
       };
 
       const safetySettings = [
@@ -115,7 +116,8 @@ export async function POST(req: Request) {
       let imageData = image.includes(",") ? image.split(",")[1] : image;
       const imagePart = { inlineData: { mimeType: "image/jpeg", data: imageData } };
 
-      result = await model.generateContentStream({
+      // 💎 Geramos o conteúdo de uma vez (não stream) para JSON puro e estável
+      const chatResult = await model.generateContent({
         contents: [{ 
           role: 'user', 
           parts: [{ text: promptText }, imagePart] 
@@ -124,7 +126,13 @@ export async function POST(req: Request) {
         safetySettings
       });
       
-      console.log("✅ IA: Stream de conteúdo iniciado com sucesso.");
+      const responseText = chatResult.response.text();
+      console.log("✅ IA: Resposta JSON gerada com sucesso.");
+      
+      return new Response(responseText, {
+        headers: { "Content-Type": "application/json; charset=utf-8" },
+      });
+
     } catch (primaryErr: any) {
       console.error("❌ IA: Erro no modelo principal:", primaryErr.message);
       
@@ -133,28 +141,6 @@ export async function POST(req: Request) {
         headers: { "Content-Type": "application/json; charset=utf-8" },
       });
     }
-
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          for await (const chunk of result.stream) {
-            const text = chunk.text();
-            controller.enqueue(encoder.encode(text));
-          }
-        } catch (streamErr: any) {
-          console.error("❌ IA: Erro durante o stream:", streamErr.message);
-          controller.enqueue(encoder.encode(JSON.stringify(selectedFallback)));
-        } finally {
-          controller.close();
-        }
-      },
-    });
-
-    return new Response(stream, {
-      headers: { "Content-Type": "text/plain; charset=utf-8" },
-    });
-
   } catch (err: any) {
     console.error("❌ FALHA TOTAL NA IA:", err.message);
     
