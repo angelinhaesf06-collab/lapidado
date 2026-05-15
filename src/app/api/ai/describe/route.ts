@@ -89,19 +89,20 @@ export async function POST(req: Request) {
       "description": "Texto da descrição aqui..."
     }`;
 
-    // 🚀 MOTOR DE VANGUARDA: Gemini 3 Flash Preview (Velocidade Geracional)
+    // 🚀 MOTOR DE VANGUARDA: Gemini Flash (Estabilidade e Velocidade)
+    console.log("💎 IA: Iniciando geração com gemini-flash-latest...");
     let model;
     let result;
 
     try {
       model = genAI.getGenerativeModel({ 
-        model: "gemini-flash-latest", // ⚡ Modelo ultra-rápido e estável em 2026
+        model: "gemini-flash-latest", 
       });
 
       const generationConfig = {
         temperature: 0.7, 
         topP: 0.9,
-        maxOutputTokens: 400, // Espaço para descrições luxuosas
+        maxOutputTokens: 600, 
       };
 
       const safetySettings = [
@@ -122,27 +123,14 @@ export async function POST(req: Request) {
         generationConfig,
         safetySettings
       });
-    } catch (primaryErr) {
-      console.warn("⚠️ Gemini 3.1 Flash Lite Falhou, tentando Fallback Secundário (Flash 8B)...");
       
-      // 🔄 FALLBACK SECUNDÁRIO: Gemini 1.5 Flash-8B
-      model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-flash-8b"
-      });
-
-      let imageData = image.includes(",") ? image.split(",")[1] : image;
-      const imagePart = { inlineData: { mimeType: "image/jpeg", data: imageData } };
-
-      result = await model.generateContentStream({
-        contents: [{ 
-          role: 'user', 
-          parts: [{ text: promptText }, imagePart] 
-        }],
-        generationConfig: {
-          temperature: 0.7,
-          topP: 0.9,
-          maxOutputTokens: 200,
-        }
+      console.log("✅ IA: Stream de conteúdo iniciado com sucesso.");
+    } catch (primaryErr: any) {
+      console.error("❌ IA: Erro no modelo principal:", primaryErr.message);
+      
+      // 🔄 FALLBACK IMEDIATO: Resposta Estática para não travar o usuário
+      return new Response(JSON.stringify(selectedFallback), {
+        headers: { "Content-Type": "application/json; charset=utf-8" },
       });
     }
 
@@ -154,9 +142,8 @@ export async function POST(req: Request) {
             const text = chunk.text();
             controller.enqueue(encoder.encode(text));
           }
-        } catch (streamErr) {
-          console.error("❌ Erro durante o stream da IA:", streamErr);
-          // Se o stream quebrar, enviamos o fallback como resposta final no corpo do stream
+        } catch (streamErr: any) {
+          console.error("❌ IA: Erro durante o stream:", streamErr.message);
           controller.enqueue(encoder.encode(JSON.stringify(selectedFallback)));
         } finally {
           controller.close();
