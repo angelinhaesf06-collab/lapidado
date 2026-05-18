@@ -143,15 +143,15 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-[100svh] flex items-center justify-center px-4 bg-[#fffaf9] relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 bg-[#fffaf9] relative overflow-y-auto">
       {/* Background Decorativo Mais Vibrante */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
          <div className="absolute -top-10 -right-10 w-[300px] h-[300px] bg-rose-200/40 rounded-full blur-3xl animate-pulse" />
          <div className="absolute top-1/2 -left-20 w-[400px] h-[400px] bg-[#c99090]/20 rounded-full blur-3xl" />
          <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-[300px] h-[300px] bg-rose-100/50 rounded-full blur-3xl" />
       </div>
 
-      <div className="bg-white/90 backdrop-blur-sm p-8 md:p-10 rounded-[40px] md:rounded-[48px] shadow-[0_32px_80px_rgba(74,50,46,0.06)] w-full max-w-md border border-white/50 relative z-10 transition-all">
+      <div className="bg-white/90 backdrop-blur-sm p-8 md:p-10 rounded-[40px] md:rounded-[48px] shadow-[0_32px_80px_rgba(74,50,46,0.06)] w-full max-w-md border border-white/50 relative z-10 transition-all my-auto">
 
         <div className="text-center mb-10 relative z-10">
           <div className="bg-rose-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">

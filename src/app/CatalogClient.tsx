@@ -235,10 +235,10 @@ export default function CatalogClient({
         )}
       </div>
 
-      {(branding?.top_banner ?? branding?.facebook?.split('|')[2]) && (
+      {branding?.top_banner && (
         <div className="w-full bg-brand-primary py-2 px-6 text-center flex items-center justify-center shadow-inner">
           <p className="text-white text-[7px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] break-words leading-relaxed max-w-5xl">
-            ✨ {(branding?.top_banner ?? branding?.facebook?.split('|')[2]) as string} ✨
+            ✨ {branding.top_banner} ✨
           </p>
         </div>
       )}
@@ -247,7 +247,7 @@ export default function CatalogClient({
         <div className="mb-4 md:mb-10 pt-2 w-full flex flex-col items-center gap-3 pb-4">
           <h2 className="text-[10px] md:text-lg font-light tracking-[0.4em] uppercase text-brand-primary animate-in slide-in-from-bottom-2 duration-700 block break-words leading-relaxed px-6">
             {(activeCategory === 'Todos' || !activeCategory) 
-              ? `${branding?.store_name || 'Coleção'} Exclusiva` 
+              ? `${branding?.store_name || branding?.business_name || 'Coleção'} Exclusiva` 
               : activeCategory}
           </h2>
           <div className="w-8 h-[1px] bg-brand-secondary/10 mx-auto" />

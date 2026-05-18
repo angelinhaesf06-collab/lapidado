@@ -38,7 +38,7 @@ export default function AdminLayout({
 
         if (data) {
           // 💎 NEXUS: Prioridade para store_name (personalizado) sobre business_name (padrão)
-          const storeName = data.store_name || data.business_name || (data.facebook || '').split('|')[3] || 'LAPIDADO'
+          const storeName = data.store_name || data.business_name || user.email?.split('@')[0].toUpperCase() || 'MINHA MARCA'
           const storeSlug = data.slug || generateSlug(storeName)
           
           // 💎 NEXUS: Anti-cache para o logotipo sem duplicar parâmetros.
@@ -213,20 +213,18 @@ export default function AdminLayout({
         <div className="flex flex-col items-center gap-4 mb-16 px-2 text-center">
           {branding.logo ? (
             <div className="relative w-full h-16 mb-2">
-              <Image 
+              <img 
                 src={branding.logo} 
                 alt={branding.name} 
-                fill
-                className="object-contain" 
+                className="w-full h-full object-contain" 
               />
             </div>
           ) : (
             <div className="relative w-12 h-12 mb-2">
-              <Image 
+              <img 
                 src="/logo-app.png" 
                 alt="Lapidado Logo" 
-                fill
-                className="object-contain rounded-xl" 
+                className="w-full h-full object-contain rounded-xl" 
               />
             </div>
           )}
@@ -296,13 +294,20 @@ export default function AdminLayout({
         <div className="md:hidden bg-[#F5F0E6] border-b border-brand-secondary/10 sticky top-0 z-50 shadow-sm pt-[env(safe-area-inset-top,0px)]">
            <div className="p-4 flex justify-between items-center border-b border-brand-secondary/5">
              <div className="flex items-center gap-2">
-               <div className="relative w-6 h-6">
-                 <Image 
-                   src="/logo-app.png" 
-                   alt="Logo" 
-                   fill
-                   className="object-contain rounded-md" 
-                 />
+               <div className="relative w-8 h-6">
+                 {branding.logo ? (
+                   <img 
+                     src={branding.logo} 
+                     alt={branding.name} 
+                     className="w-full h-full object-contain" 
+                   />
+                 ) : (
+                   <img 
+                     src="/logo-app.png" 
+                     alt="Logo" 
+                     className="w-full h-full object-contain rounded-md" 
+                   />
+                 )}
                </div>
                <span className="text-[9px] font-black uppercase tracking-widest text-brand-primary">{branding.name}</span>
              </div>

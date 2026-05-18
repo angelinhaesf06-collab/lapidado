@@ -53,12 +53,10 @@ export default function SubscriptionPage() {
         if (purchase.success && (purchase as any).customerInfo) {
           await syncSubscriptionWithSupabase(supabase, user.id, (purchase as any).customerInfo)
           window.location.reload()
-        } else {
+        } else if (!(purchase as any).cancelled) {
           const errorMsg = (purchase as any).error;
           const underlyingError = (purchase as any).underlyingError;
-          if (errorMsg) {
-            alert(`Erro na assinatura: ${errorMsg}${underlyingError ? ` (${underlyingError})` : ''}\n\nVerifique se o seu usuário da Play Store está autorizado e se o app está configurado corretamente no RevenueCat.`);
-          }
+          alert(`Erro na assinatura:\n\n${errorMsg}${underlyingError ? `\n\nDetalhe Técnico: ${underlyingError}` : ''}\n\nVerifique se o Bundle ID no RevenueCat é 'com.lapidado.vendas' e se a API Key está correta.`);
         }
       } else {
         console.log('🌐 Usando Stripe Checkout...');

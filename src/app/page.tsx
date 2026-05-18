@@ -73,7 +73,7 @@ export async function generateMetadata(
     .eq('slug', loja)
     .maybeSingle()
 
-  const storeName = branding?.business_name || branding?.store_name || 'LAPIDADO'
+  const storeName = branding?.business_name || branding?.store_name || 'MINHA MARCA'
   const description = branding?.tagline || 'Confira nosso catálogo de semijoias exclusivo e monte sua sacola.'
   let logoUrl = branding?.logo_url || '/logo-app.png'
   

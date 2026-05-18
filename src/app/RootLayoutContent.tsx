@@ -74,15 +74,16 @@ export default function RootLayoutContent({
   const primary = (brand?.primary_color && isValidHex(brand.primary_color)) ? brand.primary_color : '#4a322e';
   const secondary = (brand?.secondary_color && isValidHex(brand.secondary_color)) ? brand.secondary_color : '#c99090';
   
-  const isAuthPage = pathname?.includes('/login') || pathname?.includes('/register') || pathname?.includes('/auth');
-  const isAdminPage = pathname?.includes('/admin');
-  const isLegalPage = 
-    pathname?.includes('/politica') || 
-    pathname?.includes('/privacidade') || 
-    pathname?.includes('/termos') || 
-    pathname?.includes('/excluir-conta') ||
-    pathname?.includes('/cookies') ||
-    pathname?.includes('/policies');
+  const isAuthPage = !!pathname && (pathname.includes('/login') || pathname.includes('/register') || pathname.includes('/auth'));
+  const isAdminPage = !!pathname && pathname.includes('/admin');
+  const isLegalPage = !!pathname && (
+    pathname.includes('/politica') || 
+    pathname.includes('/privacidade') || 
+    pathname.includes('/termos') || 
+    pathname.includes('/excluir-conta') ||
+    pathname.includes('/cookies') ||
+    pathname.includes('/policies')
+  );
   const showFooter = !isAuthPage && !isAdminPage;
 
   const showAdminBar = user && (pathname === '/' || pathname?.startsWith('/product') || pathname === '/cart');

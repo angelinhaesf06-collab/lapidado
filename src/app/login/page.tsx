@@ -1,7 +1,7 @@
 'use client'
 
 import { Gem, Loader2 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
@@ -14,6 +14,16 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
+
+  useEffect(() => {
+    async function checkUser() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        router.push('/admin')
+      }
+    }
+    checkUser()
+  }, [supabase, router])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -61,15 +71,15 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-[100svh] flex items-center justify-center px-4 bg-[#fffaf9] relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 bg-[#fffaf9] relative overflow-y-auto">
       {/* Background Decorativo Mais Vibrante */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
          <div className="absolute -top-10 -left-10 w-[300px] h-[300px] bg-rose-200/40 rounded-full blur-3xl animate-pulse" />
          <div className="absolute top-1/2 -right-20 w-[400px] h-[400px] bg-[#c99090]/20 rounded-full blur-3xl" />
          <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-[300px] h-[300px] bg-rose-100/50 rounded-full blur-3xl" />
       </div>
 
-      <div className="bg-white/90 backdrop-blur-sm p-6 md:p-12 rounded-[40px] md:rounded-[56px] shadow-[0_32px_80px_rgba(74,50,46,0.06)] w-full max-w-lg border border-white/50 relative z-10 transition-all">
+      <div className="bg-white/90 backdrop-blur-sm p-6 md:p-12 rounded-[40px] md:rounded-[56px] shadow-[0_32px_80px_rgba(74,50,46,0.06)] w-full max-w-lg border border-white/50 relative z-10 transition-all my-auto">
         
         {/* Branding Elegante */}
         <div className="text-center mb-8 md:mb-12 flex flex-col items-center">

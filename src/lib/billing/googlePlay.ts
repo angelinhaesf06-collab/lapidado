@@ -45,11 +45,21 @@ export async function initializeBilling(userId?: string, supabase?: any) {
     console.log(`📡 Chave detectada (início): ${apiKey.substring(0, 8)}...`);
 
     await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
+    console.log(`📡 Configurando RevenueCat com chave: ${apiKey.substring(0, 10)}...`);
+    
     await Purchases.configure({ 
       apiKey: apiKey,
       appUserID: userId
     });
     console.log('✅ RevenueCat configurado com sucesso!');
+
+    // Teste imediato de conexão
+    try {
+      const offerings = await Purchases.getOfferings();
+      console.log('🎁 Ofertas carregadas na inicialização:', offerings);
+    } catch (offeringErr: any) {
+      console.error('❌ Erro ao validar ofertas após configure:', offeringErr);
+    }
 
     // 💎 NEXUS: Sincronização Automática Silenciosa (Startup)
     // Se tivermos o userId e o cliente Supabase, verificamos o status real agora.
