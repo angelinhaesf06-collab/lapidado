@@ -29,10 +29,8 @@ export default function AdminLayout({
       if (user) {
         // 💎 NEXUS: Busca ultra-resiliente com múltiplos fallbacks de ordenação.
         const { data, error } = await supabase.from('branding')
-          .select('store_name, business_name, logo_url, facebook, slug, website, subscription_status, trial_ends_at, top_banner, tagline')
+          .select('store_name, business_name, logo_url, facebook, slug, website, top_banner, tagline')
           .eq('user_id', user.id)
-          .order('updated_at', { ascending: false, nullsFirst: false })
-          .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle()
         
@@ -58,8 +56,8 @@ export default function AdminLayout({
             website: data.website || null
           })
           setSubscription({
-            status: data.subscription_status || 'trial',
-            trial_ends_at: data.trial_ends_at || null
+            status: 'trial',
+            trial_ends_at: null
           })
         }
       }
@@ -167,9 +165,9 @@ export default function AdminLayout({
 
   const shareToWhatsApp = () => {
     // 🔗 Prioriza o link oficial cadastrado, depois a URL de ambiente, por fim a origem atual
-    const baseUrl = branding.website || process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_SITE_URL || '')
     
-    // 💎 NEXUS: Fallback total para garantir que o botão NUNCA falhe se houver um nome
+    // 💎 NEXUS: Lógica idêntica à da página 'Minha Marca' para geração de slug
     const storeName = branding.name || 'LAPIDADO'
     const finalSlug = branding.slug || storeName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
 

@@ -202,38 +202,29 @@ export default function CatalogClient({
     <div className="flex flex-col w-full min-h-[100svh] animate-in fade-in duration-700 bg-[#F5F0E6]">
       
       {/* 💎 CABEÇALHO DINÂMICO COMPACTO COM SAFE AREA */}
-      <div className="sticky top-0 z-[100] bg-[#F5F0E6]/95 backdrop-blur-xl border-b border-brand-secondary/10 shadow-sm pt-[env(safe-area-inset-top,10px)] overflow-visible h-auto min-h-fit flex flex-col">
-        <header className="w-full pt-6 pb-3 flex flex-col items-center gap-4 h-auto min-h-fit">
+      <div className="sticky top-0 z-[100] bg-[#F5F0E6]/95 backdrop-blur-xl border-b border-brand-secondary/5 pt-[env(safe-area-inset-top,8px)] flex flex-col">
+        <header className="w-full pt-4 pb-2 flex flex-col items-center gap-3">
           {branding?.logo_url && !logoError ? (
-            <Link href={`/?catalogo=true${storeParam}`} className="relative block w-36 md:w-56 h-auto min-h-[48px] md:min-h-[80px] transition-all duration-500 hover:scale-105 active:scale-95 overflow-visible">
+            <Link href={`/?catalogo=true${storeParam}`} className="relative block w-32 md:w-56 h-auto transition-all duration-500 hover:scale-105 active:scale-95">
               <img 
                 src={branding.logo_url} 
                 alt={branding.store_name || 'Logo'} 
-                className="w-full h-full object-contain max-h-24 md:max-h-40"
+                className="w-full h-full object-contain max-h-16 md:max-h-40"
                 onError={() => setLogoError(true)}
               />
             </Link>
-          ) : (
-            <div className="flex flex-col items-center gap-2 py-4 h-auto min-h-fit">
-               <div className="w-8 h-8 rounded-full bg-brand-primary flex items-center justify-center text-white shadow-md">
-                  <Gem size={14} />
-               </div>
-               <h1 className="text-[10px] md:text-[14px] font-black uppercase tracking-[0.4em] text-brand-primary text-center px-6 leading-tight">
-                  {branding?.store_name || ''}
-               </h1>
-            </div>
-          )}
+          ) : null}
         </header>
 
         {categoryNames.length > 1 && (
-          <nav className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-center gap-2 md:gap-3 items-center overflow-visible pb-6 h-auto min-h-fit">
+          <nav className="max-w-7xl mx-auto px-4 py-2 flex flex-wrap justify-center gap-1.5 md:gap-3 items-center pb-4">
             {categoryNames.map((cat) => (
               <button 
                 key={cat}
                 onClick={() => handleCategoryChange(cat)}
-                className={`px-3 py-1.5 md:px-4 md:py-2 transition-all duration-300 font-black text-[7px] md:text-[9px] tracking-[0.1em] uppercase rounded-full border h-auto ${
+                className={`px-3 py-1.5 md:px-4 md:py-2 transition-all duration-300 font-black text-[7px] md:text-[9px] tracking-[0.1em] uppercase rounded-full border ${
                   activeCategory === cat || (cat === 'Todos' && !activeCategory)
-                  ? "bg-brand-primary text-white border-brand-primary shadow-md scale-105" 
+                  ? "bg-brand-primary text-white border-brand-primary shadow-sm scale-105" 
                   : "text-brand-primary/60 hover:text-brand-primary bg-white/40 border-brand-secondary/5"
                 }`}
               >
@@ -245,21 +236,21 @@ export default function CatalogClient({
       </div>
 
       {(branding?.top_banner ?? branding?.facebook?.split('|')[2]) && (
-        <div className="w-full bg-brand-primary py-3 px-6 text-center min-h-fit h-auto flex items-center justify-center shadow-inner">
-          <p className="text-white text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] break-words leading-relaxed max-w-5xl">
+        <div className="w-full bg-brand-primary py-2 px-6 text-center flex items-center justify-center shadow-inner">
+          <p className="text-white text-[7px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] break-words leading-relaxed max-w-5xl">
             ✨ {(branding?.top_banner ?? branding?.facebook?.split('|')[2]) as string} ✨
           </p>
         </div>
       )}
 
-      <div ref={productsTopRef} className="max-w-7xl mx-auto px-4 py-10 md:py-16 w-full text-center overflow-visible flex flex-col items-center gap-6 h-auto min-h-fit">
-        <div className="mb-6 md:mb-10 pt-2 w-full flex flex-col items-center gap-4 h-auto min-h-fit pb-8">
-          <h2 className="text-[12px] md:text-lg font-light tracking-[0.4em] uppercase text-brand-primary animate-in slide-in-from-bottom-2 duration-700 block break-words leading-relaxed px-6">
+      <div ref={productsTopRef} className="max-w-7xl mx-auto px-4 py-8 md:py-16 w-full text-center flex flex-col items-center gap-4">
+        <div className="mb-4 md:mb-10 pt-2 w-full flex flex-col items-center gap-3 pb-4">
+          <h2 className="text-[10px] md:text-lg font-light tracking-[0.4em] uppercase text-brand-primary animate-in slide-in-from-bottom-2 duration-700 block break-words leading-relaxed px-6">
             {(activeCategory === 'Todos' || !activeCategory) 
               ? `${branding?.store_name || 'Coleção'} Exclusiva` 
               : activeCategory}
           </h2>
-          <div className="w-12 h-[1px] bg-brand-secondary/20 mx-auto" />
+          <div className="w-8 h-[1px] bg-brand-secondary/10 mx-auto" />
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-2.5 md:gap-x-8 gap-y-6 md:gap-y-16 px-0.5 animate-in fade-in slide-in-from-bottom-4 duration-1000 w-full">
