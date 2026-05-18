@@ -85,9 +85,11 @@ export default function RootLayoutContent({
     pathname?.includes('/policies');
   const showFooter = !isAuthPage && !isAdminPage;
 
+  const showAdminBar = user && (pathname === '/' || pathname?.startsWith('/product') || pathname === '/cart');
+
   return (
     <body 
-      className={`${montserrat.variable} font-montserrat bg-[#F5F0E6] text-[#5D4037] antialiased min-h-[100svh]`}
+      className={`${montserrat.variable} font-montserrat bg-[#F5F0E6] text-[#5D4037] antialiased min-h-[100svh] ${showAdminBar ? 'pt-8 md:pt-10' : ''}`}
       style={{ 
         '--brand-primary': primary, 
         '--brand-secondary': secondary,
