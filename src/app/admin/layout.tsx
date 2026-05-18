@@ -88,16 +88,8 @@ export default function AdminLayout({
   }, [subscription]);
 
   const isBlocked = useMemo(() => {
-    if (loading || !subscription) return false;
-
-    // ✅ Se estiver no App Nativo (Android/iOS), libera o acesso para os testadores do Google
-    if (isNative) return false;
-
-    // ✅ Plano Ativo ou Trial com dias restantes: Acesso liberado
-    if (subscription?.status === 'active' || (subscription?.status === 'trial' && trialDaysLeft > 0)) return false;
-
-    // ❌ Bloqueio Total para WEB (Tráfego Pago): Se não houver plano ou trial vencido, bloqueia
-    return true;
+    // 💎 NEXUS: Bloqueio temporariamente desativado por solicitação da usuária.
+    return false;
   }, [subscription, loading, trialDaysLeft]);
 
   const handleSubscribe = async (plan: 'lite' | 'liteyearly' | 'monthly' | 'yearly') => {
