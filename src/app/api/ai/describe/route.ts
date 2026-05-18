@@ -71,15 +71,15 @@ export async function POST(req: Request) {
     TOM DE VOZ: ${config.tone}
     PALAVRAS-CHAVE: ${config.keywords}
 
-    ESTRUTURA OBRIGATÓRIA DA DESCRIÇÃO (MÁXIMO 400 CARACTERES):
+    ESTRUTURA OBRIGATÓRIA DA DESCRIÇÃO (MÁXIMO 300 CARACTERES):
     1. Frase de Impacto (curta e envolvente).
-    2. Ficha Técnica (tópicos sobre material, banho e detalhes como pedrarias/tamanho).
-    3. Sugestão de Uso/Look (uma frase curta).
+    2. Ficha Técnica (tópicos sobre material, banho e detalhes).
+    3. Sugestão de Uso (uma frase curta).
 
     REGRAS:
-    - Nomes: Curtos e impactantes (ex: 'Brinco Aura', 'Colar Infinito').
+    - Nomes: Curtos e impactantes (ex: 'Brinco Aura').
     - CATEGORIA: Escolha uma entre [ANEL, BRINCO, COLAR, PULSEIRA, CONJUNTO, ACESSÓRIO].
-    - LIMITE: A descrição total deve ter entre 250 e 400 caracteres.
+    - LIMITE: A descrição total deve ser curta e objetiva (máximo 300 caracteres).
     - ESTILO: Extremamente direto, luxuoso e focado em tópicos.
     
     RETORNE UM JSON PURO:
@@ -90,7 +90,7 @@ export async function POST(req: Request) {
     }`;
 
     // 🚀 MOTOR DE VANGUARDA: Gemini 3.1 Flash Lite (Elite de 2026)
-    console.log("💎 IA: Iniciando geração com gemini-3.1-flash-lite em MODO JSON...");
+    console.log("💎 IA: Iniciando geração com gemini-3.1-flash-lite em MODO JSON (LIMIT 200 TOKENS)...");
     let model;
     let result;
 
@@ -102,7 +102,7 @@ export async function POST(req: Request) {
       const generationConfig = {
         temperature: 1, 
         topP: 0.95,
-        maxOutputTokens: 800,
+        maxOutputTokens: 200,
         responseMimeType: "application/json",
       };
 
