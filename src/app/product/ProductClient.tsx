@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { useRouter, notFound, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import AddToCartButton from '@/components/cart/add-to-cart-button'
 import { createClient } from '@/lib/supabase/client'
 import { Loader2, ArrowLeft } from 'lucide-react'
