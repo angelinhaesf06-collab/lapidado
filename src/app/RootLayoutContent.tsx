@@ -33,32 +33,25 @@ export default function RootLayoutContent({
     async function loadIdentity() {
       try {
         const { data: { user: currentUser } } = await supabase.auth.getUser();
+        console.log('👤 [Identity] Usuário detectado:', currentUser?.email);
         setUser(currentUser);
 
-        // 📡 Inicializa faturamento no app nativo
         if (currentUser) {
           initializeBilling(currentUser.id, supabase);
         }
 
-        let currentBranding = null;
         const urlParams = new URLSearchParams(window.location.search);
         const slugFromUrl = urlParams.get('loja') || storeSlug;
 
         if (slugFromUrl) {
-          const { data } = await supabase.from('branding').select('*').eq('slug', slugFromUrl).maybeSingle();
-          currentBranding = data;
-        }
-
-        if (!currentBranding && currentUser) {
-          const { data } = await supabase.from('branding').select('*').eq('user_id', currentUser.id).maybeSingle();
-          currentBranding = data;
-        }
-
-        if (currentBranding) {
-          setBranding(currentBranding);
+          const { data: bData } = await supabase.from('branding').select('*').eq('slug', slugFromUrl).maybeSingle();
+          if (bData) setBranding(bData);
+        } else if (currentUser) {
+          const { data: bData } = await supabase.from('branding').select('*').eq('user_id', currentUser.id).maybeSingle();
+          if (bData) setBranding(bData);
         }
       } catch (error) {
-        console.error('Erro ao carregar branding:', error);
+        console.error('❌ Erro ao carregar identidade:', error);
       }
     }
     loadIdentity();

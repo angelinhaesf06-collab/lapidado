@@ -71,7 +71,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 bg-[#fffaf9] relative overflow-y-auto">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 pb-32 bg-[#fffaf9] relative overflow-y-auto">
       {/* Background Decorativo Mais Vibrante */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
          <div className="absolute -top-10 -left-10 w-[300px] h-[300px] bg-rose-200/40 rounded-full blur-3xl animate-pulse" />
@@ -79,7 +79,7 @@ export default function LoginPage() {
          <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-[300px] h-[300px] bg-rose-100/50 rounded-full blur-3xl" />
       </div>
 
-      <div className="bg-white/90 backdrop-blur-sm p-6 md:p-12 rounded-[40px] md:rounded-[56px] shadow-[0_32px_80px_rgba(74,50,46,0.06)] w-full max-w-lg border border-white/50 relative z-10 transition-all my-auto">
+      <div className="bg-white/90 backdrop-blur-sm p-6 md:p-12 rounded-[40px] md:rounded-[56px] shadow-[0_32px_80px_rgba(74,50,46,0.06)] w-full max-w-lg border border-white/50 relative z-10 transition-all my-auto mb-10">
         
         {/* Branding Elegante */}
         <div className="text-center mb-8 md:mb-12 flex flex-col items-center">
