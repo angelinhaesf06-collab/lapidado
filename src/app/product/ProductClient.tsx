@@ -153,15 +153,24 @@ export default function ProductClient({ initialProduct, initialBranding }: { ini
             </p>
           </div>
 
-          <div className="w-fit">
-            <AddToCartButton product={{ 
-              id: product.id,
-              name: product.name,
-              price: product.price,
-              image_url: product.image_url,
-              description: product.description ?? undefined,
-              material_finish: materialFinish
-            }} />
+          <div className="w-full flex flex-col items-center gap-4">
+            <div className="w-full">
+              <AddToCartButton product={{ 
+                id: product.id,
+                name: product.name,
+                price: product.price,
+                image_url: product.image_url,
+                description: product.description ?? undefined,
+                material_finish: materialFinish
+              }} />
+            </div>
+            
+            <Link 
+              href={backUrl}
+              className="text-[10px] font-black tracking-[0.3em] uppercase text-brand-secondary hover:text-brand-primary transition-all py-4 px-8 border border-brand-secondary/10 rounded-full bg-white/50"
+            >
+              ← Escolher mais Joias
+            </Link>
           </div>
           
           {brand?.warranty_time && (
