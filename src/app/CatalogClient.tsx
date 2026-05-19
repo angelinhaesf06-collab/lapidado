@@ -89,6 +89,11 @@ export default function CatalogClient({
 
   useEffect(() => {
     async function loadBrandingData() {
+      if (initialBranding && initialProducts) {
+        setLoading(false);
+        return;
+      }
+      
       try {
         let currentBranding: Branding | null = null
         
@@ -102,15 +107,23 @@ export default function CatalogClient({
         if (!currentBranding) {
           const { data: { user } } = await supabase.auth.getUser()
           if (user) {
-            const { data } = await supabase.from('branding').select('*').eq('user_id', user.id).order('updated_at', { ascending: false }).limit(1).maybeSingle()
+            const { data } = await supabase.from('branding').select('*').eq('user_id', user.id).maybeSingle()
             currentBranding = data as Branding | null
           }
         }
         
         if (currentBranding) {
           setBranding(currentBranding)
+          
+          // 💎 Injeta cores dinâmicas imediatamente para evitar "pulo" visual
+          if (typeof document !== 'undefined') {
+            document.body.style.setProperty('--brand-primary', currentBranding.primary_color || '#4a322e');
+            document.body.style.setProperty('--brand-secondary', currentBranding.secondary_color || '#c99090');
+          }
+
           const currentUserId = currentBranding.user_id
 
+          // 🚀 Carregamento Paralelo Ultra-Rápido
           const [catsRes, prodsRes] = await Promise.all([
             supabase.from('categories').select('id, name').eq('user_id', currentUserId).order('name'),
             supabase.from('products')
@@ -118,24 +131,14 @@ export default function CatalogClient({
               .eq('user_id', currentUserId)
               .gt('stock_quantity', 0)
               .order('display_order', { ascending: true, nullsFirst: true })
-              .order('created_at', { ascending: false })
-              .limit(100)
+              .limit(40) // Limite menor para carregamento inicial instantâneo
           ])
 
           if (catsRes.data) setDbCategories(catsRes.data)
           if (prodsRes.data) setAllProducts(prodsRes.data)
-        } else if (!storeSlug) {
-          // Vitrine Global (sem branding específico)
-          const { data: prods } = await supabase.from('products')
-            .select('id, name, price, image_url, category_id, stock_quantity')
-            .gt('stock_quantity', 0)
-            .order('created_at', { ascending: false })
-            .limit(100)
-          
-          if (prods) setAllProducts(prods)
         }
       } catch (err) {
-        console.error("Erro ao carregar dados da vitrine:", err)
+        console.error("❌ Falha no carregamento acelerado:", err)
       } finally {
         setLoading(false)
       }
