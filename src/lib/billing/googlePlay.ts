@@ -152,40 +152,36 @@ export async function purchasePackage(rcPackage: any) {
  * 💎 NEXUS: Mapeador Universal de Planos (Resiliente a IDs customizados)
  */
 export async function purchasePlan(planType: 'lite' | 'liteyearly' | 'monthly' | 'yearly') {
-  const offerings = await getOfferings();
-  if (!offerings) {
-    throw new Error('Nenhuma oferta (Offering) configurada como "Current" no RevenueCat. Verifique seu painel.');
+  const offerings = await Purchases.getOfferings();
+  
+  if (!offerings || !offerings.all || Object.keys(offerings.all).length === 0) {
+    throw new Error('Nenhuma oferta configurada no RevenueCat. Verifique se o app está publicado no modo Closed Testing ou Internal Test na Google Play.');
   }
   
   let pkg = null;
-  const avail = offerings.availablePackages;
+  
+  // 💎 NEXUS: Estratégia de Varredura Global (Busca em todas as ofertas, não só na 'current')
+  const allPackages = Object.values(offerings.all).flatMap(offering => offering.availablePackages);
 
-  // 💎 Estratégia de Busca:
-  // 1. Tentar por IDs customizados comuns (ofrng_lite_mensal, etc)
-  // 2. Tentar por aliases padrão do RevenueCat (monthly, annual)
-  // 3. Tentar por substrings nos identificadores
+  console.log(`📡 Varrendo ${allPackages.length} pacotes em busca de: ${planType}`);
 
   if (planType === 'lite') {
-    pkg = avail.find(p => p.identifier === 'lite' || p.identifier === 'assinatura_mensal_lite') ||
-          avail.find(p => p.product.identifier === 'assinatura_mensal_lite');
+    pkg = allPackages.find(p => p.identifier === 'lite' || p.identifier === 'assinatura_mensal_lite' || p.product.identifier === 'assinatura_mensal_lite');
   } 
   else if (planType === 'liteyearly') {
-    pkg = avail.find(p => p.identifier === 'liteyearly' || p.identifier === 'assinatura_anual_lite') ||
-          avail.find(p => p.product.identifier === 'assinatura_anual_lite');
+    pkg = allPackages.find(p => p.identifier === 'liteyearly' || p.identifier === 'assinatura_anual_lite' || p.product.identifier === 'assinatura_anual_lite');
   } 
-  else if (planType === 'monthly') { // Pro Monthly
-    pkg = avail.find(p => p.identifier === 'monthly' || p.identifier === 'assinatura_mensal_pro') ||
-          avail.find(p => p.product.identifier === 'assinatura_mensal_pro');
+  else if (planType === 'monthly') {
+    pkg = allPackages.find(p => p.identifier === 'monthly' || p.identifier === 'assinatura_mensal_pro' || p.product.identifier === 'assinatura_mensal_pro');
   } 
-  else if (planType === 'yearly') { // Pro Yearly
-    pkg = avail.find(p => p.identifier === 'yearly' || p.identifier === 'assinatura_anual_pro') ||
-          avail.find(p => p.product.identifier === 'assinatura_anual_pro');
+  else if (planType === 'yearly') {
+    pkg = allPackages.find(p => p.identifier === 'yearly' || p.identifier === 'assinatura_anual_pro' || p.product.identifier === 'assinatura_anual_pro');
   }
 
   if (!pkg) {
-    console.error(`❌ Pacote ${planType} não mapeado. Disponíveis:`, avail.map(p => p.identifier));
-    const availableStr = avail.map(p => p.identifier).join(', ');
-    throw new Error(`O plano ${planType.toUpperCase()} não foi localizado na loja. Disponíveis: ${availableStr}`);
+    const foundIds = allPackages.map(p => p.identifier).join(', ');
+    console.error(`❌ Pacote ${planType} não localizado. Encontrados: ${foundIds}`);
+    throw new Error(`Plano ${planType.toUpperCase()} não encontrado na loja.\n\nEncontrados no Google: ${foundIds || 'Nenhum'}`);
   }
   
   return await purchasePlanLegacy(pkg);
