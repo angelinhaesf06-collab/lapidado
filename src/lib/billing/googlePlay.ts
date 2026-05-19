@@ -13,7 +13,7 @@ import { Capacitor } from '@capacitor/core';
 
 export const REVENUECAT_CONF = {
   GOOGLE_API_KEY: process.env.NEXT_PUBLIC_REVENUECAT_GOOGLE_KEY || 'goog_placeholder',
-  ENTITLEMENT_ID: 'pro'
+  ENTITLEMENT_ID: 'Lapidado Pro'
 }
 
 export const isNative = Capacitor.isNativePlatform();
