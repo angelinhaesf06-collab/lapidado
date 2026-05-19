@@ -140,7 +140,15 @@ export default function CartPage() {
           return (
             <div key={`${item.id}-${index}`} className="flex items-center gap-6 border-b border-brand-secondary/10 pb-8">
               <div className="w-24 h-32 rounded-3xl overflow-hidden bg-white border border-brand-secondary/10 shadow-sm relative">
-                <Image src={item.image_url} alt={item.name} fill className="object-cover" />
+                <img 
+                  src={item.image_url} 
+                  alt={item.name} 
+                  className="w-full h-full object-cover" 
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/logo-app.png';
+                    (e.target as HTMLImageElement).className = 'w-full h-full object-contain p-4 opacity-20';
+                  }}
+                />
               </div>
               <div className="flex-1">
                 <h4 className="text-xs font-normal tracking-[0.2em] uppercase text-brand-primary mb-1">{item.name}</h4>
@@ -209,7 +217,7 @@ export default function CartPage() {
           <MessageCircle size={20} /> Finalizar no WhatsApp
         </button>
         
-        <Link href="/?catalogo=true" className="inline-block mt-8 text-[9px] font-light tracking-[0.3em] uppercase text-brand-secondary hover:text-brand-primary transition-colors">
+        <Link href={`/?catalogo=true${storeParam}`} className="inline-block mt-8 text-[9px] font-light tracking-[0.3em] uppercase text-brand-secondary hover:text-brand-primary transition-colors">
           ← Adicionar mais joias
         </Link>
       </div>

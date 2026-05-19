@@ -188,24 +188,6 @@ export default function AdminLayout({
       {/* 🛑 PAYWALL DE BLOQUEIO */}
       {isBlocked && <Paywall onSubscribe={handleSubscribe as any} trialDaysLeft={trialDaysLeft} />}
 
-      {/* 💎 BARRA DE PROGRESSO NO TOPO (Feedback Instantâneo) */}
-      <style jsx global>{`
-        @keyframes loadingBar {
-          0% { width: 0%; }
-          50% { width: 70%; }
-          100% { width: 100%; }
-        }
-        .route-transition-bar {
-          position: fixed;
-          top: 0;
-          left: 0;
-          height: 3px;
-          background: linear-gradient(90deg, #4a322e, #c99090);
-          z-index: 9999;
-          animation: loadingBar 2s ease-out;
-        }
-      `}</style>
-
       {/* 💎 SIDEBAR LAPIDADO (ESQUERDA) */}
       <aside className="hidden md:flex w-72 flex-col bg-[#F5F0E6] border-r border-brand-secondary/10 p-8 sticky top-0 h-[100svh] z-50 shadow-[20px_0_40px_rgba(74,50,46,0.02)] overflow-y-auto scrollbar-hide">
         
@@ -290,9 +272,9 @@ export default function AdminLayout({
 
       {/* CONTEÚDO PRINCIPAL */}
       <main className="flex-1 w-full overflow-y-auto overflow-x-hidden scroll-smooth pb-[env(safe-area-inset-bottom,24px)]">
-        {/* BARRA SUPERIOR MOBILE (Ajustada com todas as abas) */}
-        <div className="md:hidden bg-[#F5F0E6] border-b border-brand-secondary/10 sticky top-0 z-50 shadow-sm pt-[env(safe-area-inset-top,0px)]">
-           <div className="p-4 flex justify-between items-center border-b border-brand-secondary/5">
+        {/* 📱 GRADE DE ABAS RÁPIDAS MOBILE (NÃO MAIS STICKY PARA LIBERAR ESPAÇO) */}
+        <div className="md:hidden bg-[#F5F0E6] border-b border-brand-secondary/10 z-40 shadow-sm">
+           <div className="p-4 flex justify-between items-center border-b border-brand-secondary/5 pt-[env(safe-area-inset-top,16px)]">
              <div className="flex items-center gap-2">
                <div className="relative w-8 h-6">
                  {branding.logo ? (

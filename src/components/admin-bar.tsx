@@ -22,8 +22,6 @@ export default function AdminBar({ user }: { user: unknown }) {
   return (
     <div className="bg-[#4a322e]/95 backdrop-blur-md text-white py-1 px-4 flex justify-center items-center gap-3 fixed top-0 left-0 right-0 z-[9999] shadow-lg animate-in slide-in-from-top duration-500 border-b border-white/5 h-8 md:h-10">
       <div className="flex justify-center items-center gap-3 md:gap-6 w-full max-w-7xl mx-auto">
-        <p className="text-[6px] md:text-[7px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] opacity-60 whitespace-nowrap hidden xs:block">Modo Admin 💎</p>
-        
         <div className="flex items-center gap-2">
           <Link href="/admin" className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-full text-[7px] md:text-[8px] font-black uppercase tracking-widest transition-all">
             <LayoutDashboard size={10} />
