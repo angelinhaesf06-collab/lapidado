@@ -106,7 +106,9 @@ export async function getOfferings() {
     return selectedOffering || null;
   } catch (e: any) {
     console.error('❌ Erro crítico ao buscar ofertas no RevenueCat:', e);
-    throw new Error(e.message || 'Erro de conexão com o serviço de assinaturas.');
+    // 💎 Detecção de Erro de Configuração de Projetos/Planos
+    const configError = e.message?.includes('Configuration') || e.message?.includes('Offerings') || e.code === 'THERE_IS_AN_ISSUE_WITH_YOUR_CONFIGURATION';
+    throw new Error(configError ? 'ERRO DE CONFIGURAÇÃO: O app não conseguiu ler os planos da loja. Verifique os IDs no RevenueCat e no Google Console.' : (e.message || 'Erro de conexão com o serviço de assinaturas.'));
   }
 }
 
