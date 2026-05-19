@@ -166,19 +166,19 @@ export async function purchasePlan(planType: 'lite' | 'liteyearly' | 'monthly' |
   // 3. Tentar por substrings nos identificadores
 
   if (planType === 'lite') {
-    pkg = avail.find(p => p.identifier.includes('mensal_lite') || p.identifier.includes('lite') && !p.identifier.includes('anual')) ||
+    pkg = avail.find(p => p.identifier === 'lite' || p.identifier === 'assinatura_mensal_lite') ||
           avail.find(p => p.product.identifier === 'assinatura_mensal_lite');
   } 
   else if (planType === 'liteyearly') {
-    pkg = avail.find(p => p.identifier.includes('anual_lite') || p.identifier.includes('liteyearly')) ||
+    pkg = avail.find(p => p.identifier === 'liteyearly' || p.identifier === 'assinatura_anual_lite') ||
           avail.find(p => p.product.identifier === 'assinatura_anual_lite');
   } 
   else if (planType === 'monthly') { // Pro Monthly
-    pkg = avail.find(p => p.identifier.includes('mensal_pro') || p.identifier.includes('monthly')) ||
+    pkg = avail.find(p => p.identifier === 'monthly' || p.identifier === 'assinatura_mensal_pro') ||
           avail.find(p => p.product.identifier === 'assinatura_mensal_pro');
   } 
   else if (planType === 'yearly') { // Pro Yearly
-    pkg = avail.find(p => p.identifier.includes('anual_pro') || p.identifier.includes('yearly')) ||
+    pkg = avail.find(p => p.identifier === 'yearly' || p.identifier === 'assinatura_anual_pro') ||
           avail.find(p => p.product.identifier === 'assinatura_anual_pro');
   }
 
