@@ -90,7 +90,7 @@ export default function RootLayoutContent({
 
   return (
     <body 
-      className={`${montserrat.variable} font-montserrat bg-[#F5F0E6] text-[#5D4037] antialiased min-h-[100svh] ${showAdminBar ? 'pt-8 md:pt-10' : ''}`}
+      className={`${montserrat.variable} font-montserrat bg-[#F5F0E6] text-[#5D4037] antialiased min-h-[100svh] ${showAdminBar ? 'pt-12 md:pt-16' : ''}`}
       style={{ 
         '--brand-primary': primary, 
         '--brand-secondary': secondary,
