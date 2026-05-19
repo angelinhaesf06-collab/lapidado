@@ -123,7 +123,7 @@ export default function CatalogClient({
 
           const currentUserId = currentBranding.user_id
 
-          // 🚀 Carregamento Paralelo Ultra-Rápido
+          // 🚀 Carregamento Paralelo Ultra-Rápido e Completo
           const [catsRes, prodsRes] = await Promise.all([
             supabase.from('categories').select('id, name').eq('user_id', currentUserId).order('name'),
             supabase.from('products')
@@ -131,7 +131,7 @@ export default function CatalogClient({
               .eq('user_id', currentUserId)
               .gt('stock_quantity', 0)
               .order('display_order', { ascending: true, nullsFirst: true })
-              .limit(40) // Limite menor para carregamento inicial instantâneo
+              .limit(200) // Limite aumentado para garantir que nenhuma categoria fique vazia
           ])
 
           if (catsRes.data) setDbCategories(catsRes.data)
