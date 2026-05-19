@@ -166,16 +166,16 @@ export async function purchasePlan(planType: 'lite' | 'liteyearly' | 'monthly' |
   console.log(`📡 Varrendo ${allPackages.length} pacotes em busca de: ${planType}`);
 
   if (planType === 'lite') {
-    pkg = allPackages.find(p => p.identifier === 'lite' || p.identifier === 'assinatura_mensal_lite' || p.product.identifier === 'assinatura_mensal_lite');
+    pkg = allPackages.find(p => p.identifier === 'lite' || p.identifier === 'assinatura_mensal_lite' || p.identifier === 'assinatura_mensal_lite:lite' || p.product.identifier === 'assinatura_mensal_lite');
   } 
   else if (planType === 'liteyearly') {
-    pkg = allPackages.find(p => p.identifier === 'liteyearly' || p.identifier === 'assinatura_anual_lite' || p.product.identifier === 'assinatura_anual_lite');
+    pkg = allPackages.find(p => p.identifier === 'liteyearly' || p.identifier === 'assinatura_anual_lite' || p.identifier === 'assinatura_anual_lite:liteyearly' || p.product.identifier === 'assinatura_anual_lite');
   } 
   else if (planType === 'monthly') {
-    pkg = allPackages.find(p => p.identifier === 'monthly' || p.identifier === 'assinatura_mensal_pro' || p.product.identifier === 'assinatura_mensal_pro');
+    pkg = allPackages.find(p => p.identifier === 'monthly' || p.identifier === 'assinatura_mensal_pro' || p.identifier === 'assinatura_mensal_pro:monthly' || p.product.identifier === 'assinatura_mensal_pro');
   } 
   else if (planType === 'yearly') {
-    pkg = allPackages.find(p => p.identifier === 'yearly' || p.identifier === 'assinatura_anual_pro' || p.product.identifier === 'assinatura_anual_pro');
+    pkg = allPackages.find(p => p.identifier === 'yearly' || p.identifier === 'assinatura_anual_pro' || p.identifier === 'assinatura_anual_pro:yearly' || p.product.identifier === 'assinatura_anual_pro');
   }
 
   if (!pkg) {
