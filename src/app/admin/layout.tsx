@@ -274,7 +274,7 @@ export default function AdminLayout({
       <main className="flex-1 w-full overflow-y-auto overflow-x-hidden scroll-smooth pb-[env(safe-area-inset-bottom,24px)]">
         {/* 📱 GRADE DE ABAS RÁPIDAS MOBILE (NÃO MAIS STICKY PARA LIBERAR ESPAÇO) */}
         <div className="md:hidden bg-[#F5F0E6] border-b border-brand-secondary/10 z-40 shadow-sm">
-           <div className="p-4 flex justify-between items-center border-b border-brand-secondary/5 pt-[env(safe-area-inset-top,16px)]">
+           <div className="p-4 flex justify-between items-center border-b border-brand-secondary/5 pt-[env(safe-area-inset-top,32px)]">
              <div className="flex items-center gap-2">
                <div className="relative w-8 h-6">
                  {branding.logo ? (
