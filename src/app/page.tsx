@@ -1,145 +1,87 @@
-import { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
-import { generateSlug } from '@/lib/utils'
+'use client'
+
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import CatalogClient from './CatalogClient'
-import { Suspense } from 'react'
 import { Loader2 } from 'lucide-react'
-import { redirect } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
-export const dynamic = 'force-dynamic' 
-
-type Props = {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
-}
-
-async function getInitialData(loja?: string) {
-  const supabase = await createClient()
+export default function Home() {
+  const searchParams = useSearchParams()
+  const loja = searchParams.get('loja')
+  const catalogo = searchParams.get('catalogo')
   
-  if (!loja) {
-    // 🔒 SEGURANÇA MÁXIMA: Se não houver slug de loja, não retornamos NADA.
-    // Isso evita que um novo usuário veja produtos de outro lojista por engano.
-    return { branding: null, products: [], categories: [] }
-  }
-
-  // 💎 NEXUS: Busca rigorosa apenas por SLUG exclusivo.
-  const { data: branding } = await supabase.from('branding')
-    .select('*')
-    .eq('slug', loja)
-    .maybeSingle()
-
-  if (!branding) {
-    return { branding: null, products: [], categories: [] }
-  }
-
-  // 🔒 FILTRO OBRIGATÓRIO: Busca produtos APENAS do dono desta marca
-  const { data: products } = await supabase.from('products')
-    .select('id, name, price, image_url, category_id, stock_quantity, user_id')
-    .eq('user_id', branding.user_id) // Filtro de isolamento total
-    .gt('stock_quantity', 0)
-    .order('created_at', { ascending: false })
-    .limit(100)
+  const [loading, setLoading] = useState(true)
+  const [data, setData] = useState<{branding: any, products: any[], categories: any[]}>({
+    branding: null,
+    products: [],
+    categories: []
+  })
   
-  const { data: catData } = await supabase.from('categories')
-    .select('id, name')
-    .eq('user_id', branding.user_id) // Filtro de isolamento total
-    .order('name')
+  const supabase = createClient()
+  const router = useRouter()
 
-  return { 
-    branding, 
-    products: products || [], 
-    categories: catData || [] 
-  }
-}
+  useEffect(() => {
+    async function checkAuthAndLoad() {
+      const { data: { user } } = await supabase.auth.getUser()
 
-export async function generateMetadata(
-  { searchParams }: Props
-): Promise<Metadata> {
-  const resolvedSearchParams = (await searchParams) || {}
-  const loja = resolvedSearchParams.loja as string
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lapidado.com.br'
-  
-  if (!loja) {
-    return {
-      title: 'Lapidado | Login 💎',
-      description: 'Acesse seu painel administrativo.'
+      if (!loja && catalogo !== 'true') {
+        if (user) {
+          router.replace('/admin')
+        } else {
+          router.replace('/login')
+        }
+        return
+      }
+
+      if (loja) {
+        try {
+          const { data: branding } = await supabase.from('branding')
+            .select('*')
+            .eq('slug', loja)
+            .maybeSingle()
+
+          if (branding) {
+            const { data: products } = await supabase.from('products')
+              .select('id, name, price, image_url, category_id, stock_quantity, user_id')
+              .eq('user_id', branding.user_id)
+              .gt('stock_quantity', 0)
+              .order('created_at', { ascending: false })
+              .limit(100)
+            
+            const { data: catData } = await supabase.from('categories')
+              .select('id, name')
+              .eq('user_id', branding.user_id)
+              .order('name')
+
+            setData({
+              branding,
+              products: products || [],
+              categories: catData || []
+            })
+          }
+        } catch (err) {
+          console.error('Erro ao carregar catálogo:', err)
+        }
+      }
+      setLoading(false)
     }
+    checkAuthAndLoad()
+  }, [loja, catalogo, supabase, router])
+
+  if (loading) {
+    return (
+      <div className="min-h-[100svh] flex items-center justify-center">
+        <Loader2 className="animate-spin text-brand-secondary" size={40} />
+      </div>
+    )
   }
-
-  const supabase = await createClient()
-  
-  // 💎 NEXUS: Busca rigorosa apenas por SLUG para metadados (WhatsApp)
-  const { data: branding } = await supabase.from('branding')
-    .select('*')
-    .eq('slug', loja)
-    .maybeSingle()
-
-  const storeName = branding?.business_name || branding?.store_name || 'MINHA MARCA'
-  const description = branding?.tagline || 'Confira nosso catálogo de semijoias exclusivo e monte sua sacola.'
-  let logoUrl = branding?.logo_url || '/logo-app.png'
-  
-  // 💎 NEXUS: Garantir URL absoluta para a logo (WhatsApp exige link completo para gerar o preview)
-  if (logoUrl && !logoUrl.startsWith('http')) {
-    logoUrl = `${baseUrl}${logoUrl.startsWith('/') ? '' : '/'}${logoUrl}`
-  }
-
-  const title = `${storeName.toUpperCase()} | Vitrine Oficial 💎`
-
-  return {
-    metadataBase: new URL(baseUrl),
-    title,
-    description,
-    alternates: {
-      canonical: loja ? `/?loja=${loja}` : '/',
-    },
-    openGraph: {
-      title,
-      description,
-      url: loja ? `${baseUrl}/?loja=${loja}` : baseUrl,
-      siteName: storeName,
-      images: [{
-        url: logoUrl,
-        width: 1200, // Largura ideal para OG
-        height: 630,  // Altura ideal para OG
-        alt: storeName,
-      }],
-      type: 'website',
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      images: [logoUrl],
-    },
-  }
-}
-
-export default async function Home({ searchParams }: Props) {
-  const resolvedSearchParams = (await searchParams) || {}
-  const loja = resolvedSearchParams.loja as string
-  const catalogo = resolvedSearchParams.catalogo as string
-
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  // 🚀 REDIRECIONAMENTO INTELIGENTE (Nexus 2.0):
-  if (!loja && catalogo !== 'true') {
-    // Se está logada, vai direto para o Dashboard. Se não, vai para o Login.
-    if (user) {
-      redirect('/admin')
-    } else {
-      redirect('/login')
-    }
-  }
-
-  const { branding, products, categories } = await getInitialData(loja)
 
   return (
-    <Suspense fallback={<div className="min-h-[100svh] flex items-center justify-center"><Loader2 className="animate-spin text-brand-secondary" size={40} /></div>}>
-      <CatalogClient 
-        initialBranding={branding} 
-        initialProducts={products} 
-        initialCategories={categories}
-      />
-    </Suspense>
+    <CatalogClient 
+      initialBranding={data.branding} 
+      initialProducts={data.products} 
+      initialCategories={data.categories}
+    />
   )
 }

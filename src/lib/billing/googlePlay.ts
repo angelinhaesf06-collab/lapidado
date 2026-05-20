@@ -43,6 +43,7 @@ export async function initializeBilling(userId?: string, supabase?: any) {
     }
 
     console.log(`📡 Chave detectada (início): ${apiKey.substring(0, 8)}...`);
+    console.log(`📡 DEBUG: Comprimento da chave: ${apiKey.length}`);
 
     await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
     console.log(`📡 Configurando RevenueCat com chave: ${apiKey.substring(0, 10)}...`);
@@ -106,9 +107,29 @@ export async function getOfferings() {
     return selectedOffering || null;
   } catch (e: any) {
     console.error('❌ Erro crítico ao buscar ofertas no RevenueCat:', e);
-    // 💎 Detecção de Erro de Configuração de Projetos/Planos
-    const configError = e.message?.includes('Configuration') || e.message?.includes('Offerings') || e.code === 'THERE_IS_AN_ISSUE_WITH_YOUR_CONFIGURATION';
-    throw new Error(configError ? 'ERRO DE CONFIGURAÇÃO: O app não conseguiu ler os planos da loja. Verifique os IDs no RevenueCat e no Google Console.' : (e.message || 'Erro de conexão com o serviço de assinaturas.'));
+    
+    const errorMsg = e.message || '';
+    const errorCode = e.code || '';
+    
+    // 💎 Detecção de Erro de Configuração (Case Insensitive)
+    const isConfigError = 
+      errorMsg.toLowerCase().includes('configuration') || 
+      errorMsg.toLowerCase().includes('offerings') || 
+      errorCode === 'THERE_IS_AN_ISSUE_WITH_YOUR_CONFIGURATION';
+
+    const maskedKey = REVENUECAT_CONF.GOOGLE_API_KEY ? 
+      `${REVENUECAT_CONF.GOOGLE_API_KEY.substring(0, 5)}...${REVENUECAT_CONF.GOOGLE_API_KEY.slice(-5)}` : 
+      'NÃO DEFINIDA';
+
+    if (isConfigError) {
+      throw new Error(`DIAGNÓSTICO LAPIDADO: Erro de Configuração no RevenueCat.\n\n` +
+        `1. Bundle ID do App: com.lapidado.vendas\n` +
+        `2. Chave usada: ${maskedKey}\n` +
+        `3. Erro Original: ${errorMsg}\n\n` +
+        `Verifique se o Bundle ID e a API Key coincidem com o painel do RevenueCat.`);
+    }
+
+    throw new Error(errorMsg || 'Erro de conexão com o serviço de assinaturas.');
   }
 }
 
@@ -125,7 +146,8 @@ export async function purchasePackage(rcPackage: any) {
     
     return {
       success: isActive,
-      customerInfo
+      customerInfo,
+      purchaserInfo: customerInfo // 💎 NEXUS: Alias para compatibilidade com layout.tsx
     }
   } catch (error: any) {
     if (error.userCancelled) {
@@ -152,16 +174,23 @@ export async function purchasePackage(rcPackage: any) {
  * 💎 NEXUS: Mapeador Universal de Planos (Resiliente a IDs customizados)
  */
 export async function purchasePlan(planType: 'lite' | 'liteyearly' | 'monthly' | 'yearly') {
-  const offerings = await Purchases.getOfferings();
+  let selectedOffering = null;
   
-  if (!offerings || !offerings.all || Object.keys(offerings.all).length === 0) {
-    throw new Error('Nenhuma oferta configurada no RevenueCat. Verifique se o app está publicado no modo Closed Testing ou Internal Test na Google Play.');
+  try {
+    selectedOffering = await getOfferings();
+  } catch (e: any) {
+    console.error('❌ Falha ao obter ofertas:', e);
+    throw e; // Repassa o erro detalhado do getOfferings
+  }
+  
+  if (!selectedOffering) {
+    throw new Error('CONFIGURAÇÃO REVENUECAT: Nenhuma oferta encontrada. 1. Verifique se existe uma "Offering" marcada como CURRENT. 2. Verifique se o Bundle ID no painel é com.lapidado.vendas.');
   }
   
   let pkg = null;
   
-  // 💎 NEXUS: Estratégia de Varredura Global (Busca em todas as ofertas, não só na 'current')
-  const allPackages = Object.values(offerings.all).flatMap(offering => offering.availablePackages);
+  // 💎 NEXUS: Estratégia de Varredura Global (Busca em todos os pacotes da oferta selecionada)
+  const allPackages = selectedOffering.availablePackages;
 
   console.log(`📡 Varrendo ${allPackages.length} pacotes em busca de: ${planType}`);
 

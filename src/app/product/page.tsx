@@ -1,91 +1,59 @@
-import { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+'use client'
+
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import ProductClient from './ProductClient'
-import { Suspense } from 'react'
 import { Loader2 } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
 
-type Props = {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
-}
-
-async function getProductData(id: string) {
-  if (!id) return { product: null, branding: null }
-  const supabase = await createClient()
+export default function Page() {
+  const searchParams = useSearchParams()
+  const id = searchParams.get('id')
   
-  const { data: product } = await supabase
-    .from('products')
-    .select('*, categories(name)')
-    .eq('id', id)
-    .single()
+  const [loading, setLoading] = useState(true)
+  const [product, setProduct] = useState<any>(null)
+  const [branding, setBranding] = useState<any>(null)
+  const supabase = createClient()
 
-  if (!product) return { product: null, branding: null }
+  useEffect(() => {
+    async function loadData() {
+      if (!id) {
+        setLoading(false)
+        return
+      }
 
-  const { data: branding } = await supabase
-    .from('branding')
-    .select('*')
-    .eq('user_id', product.user_id)
-    .single()
+      try {
+        const { data: pData } = await supabase
+          .from('products')
+          .select('*, categories(name)')
+          .eq('id', id)
+          .single()
 
-  return { product, branding }
-}
+        if (pData) {
+          setProduct(pData)
+          const { data: bData } = await supabase
+            .from('branding')
+            .select('*')
+            .eq('user_id', pData.user_id)
+            .single()
+          if (bData) setBranding(bData)
+        }
+      } catch (err) {
+        console.error('Erro ao carregar produto:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadData()
+  }, [id, supabase])
 
-export async function generateMetadata(
-  { searchParams }: Props
-): Promise<Metadata> {
-  const resolvedSearchParams = (await searchParams) || {}
-  const id = resolvedSearchParams.id as string
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lapidado.com.br'
-
-  if (!id) return { title: 'Produto não encontrado | Lapidado' }
-
-  const { product, branding } = await getProductData(id)
-
-  if (!product) return { title: 'Produto não encontrado | Lapidado' }
-
-  const storeName = branding?.business_name || branding?.store_name || 'LAPIDADO'
-  const title = `${product.name.toUpperCase()} | ${storeName.toUpperCase()} 💎`
-  const description = product.description?.split('---')[0] || `Confira este(a) ${product.name} no nosso catálogo digital.`
-  let imageUrl = product.image_url || '/logo-app.png'
-
-  // 💎 NEXUS: Garantir URL absoluta da imagem da joia para o WhatsApp
-  if (imageUrl && !imageUrl.startsWith('http')) {
-    imageUrl = `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`
+  if (loading) {
+    return (
+      <div className="min-h-[100svh] flex items-center justify-center">
+        <Loader2 className="animate-spin text-brand-secondary" size={40} />
+      </div>
+    )
   }
 
-  return {
-    metadataBase: new URL(baseUrl),
-    title,
-    description,
-    openGraph: {
-      title,
-      description,
-      url: `${baseUrl}/product?id=${id}`,
-      siteName: storeName,
-      images: [{
-        url: imageUrl,
-        width: 800,
-        height: 800,
-        alt: product.name,
-      }],
-      type: 'article',
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      images: [imageUrl],
-    },
-  }
-}
-
-export default async function Page({ searchParams }: Props) {
-  const resolvedSearchParams = (await searchParams) || {}
-  const id = resolvedSearchParams.id as string
-  const { product, branding } = await getProductData(id)
-
-  return (
-    <Suspense fallback={<div className="min-h-[100svh] flex items-center justify-center"><Loader2 className="animate-spin text-brand-secondary" size={40} /></div>}>
-      <ProductClient initialProduct={product} initialBranding={branding} />
-    </Suspense>
-  )
+  return <ProductClient initialProduct={product} initialBranding={branding} />
 }
