@@ -2,11 +2,11 @@
 
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { generateSlug, triggerHaptic } from '@/lib/utils'
+import { triggerHaptic } from '@/lib/utils'
 import Link from 'next/link'
 import AddToCartButton from '@/components/cart/add-to-cart-button'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { Loader2, Gem } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
+import { Gem } from 'lucide-react'
 
 interface Category {
   id: string
@@ -18,6 +18,7 @@ interface Branding {
   user_id: string
   slug: string
   store_name: string
+  business_name?: string
   facebook?: string
   instagram?: string
   tiktok?: string
@@ -25,6 +26,8 @@ interface Branding {
   logo_url?: string
   top_banner?: string
   installments?: number | string
+  primary_color?: string
+  secondary_color?: string
   [key: string]: any
 }
 
@@ -33,9 +36,9 @@ export default function CatalogClient({
   initialProducts, 
   initialCategories 
 }: { 
-  initialBranding?: any, 
+  initialBranding?: Branding, 
   initialProducts?: any[], 
-  initialCategories?: any[] 
+  initialCategories?: Category[] 
 }) {
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({})
   const [logoError, setLogoError] = useState(false)
@@ -48,9 +51,7 @@ export default function CatalogClient({
   const productsTopRef = useRef<HTMLDivElement>(null)
   
   const storeSlug = searchParams.get('loja')
-  const isPublicCatalog = searchParams.get('catalogo') === 'true' || !!storeSlug
   const supabase = useMemo(() => createClient(), [])
-  const router = useRouter()
 
   const handleImageError = (id: string) => {
     setImageErrors(prev => ({ ...prev, [id]: true }))

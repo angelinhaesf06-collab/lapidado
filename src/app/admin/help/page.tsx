@@ -34,10 +34,10 @@ export default function HelpPage() {
   const supportLinks = [
     { 
       title: 'Suporte via WhatsApp', 
-      desc: 'Fale com nossa equipe técnica agora.', 
+      desc: '(18) 98119-6386', 
       icon: MessageCircle, 
       color: 'bg-green-500',
-      href: 'https://wa.me/5511999999999' // Substituir pelo número real
+      href: 'https://wa.me/5518981196386'
     },
     { 
       title: 'E-mail de Suporte', 
