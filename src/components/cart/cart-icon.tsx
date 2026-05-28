@@ -3,13 +3,26 @@
 import { ShoppingBag } from 'lucide-react'
 import { useCart } from '@/lib/cart-context'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 export default function CartIcon() {
   const { itemCount } = useCart()
   const searchParams = useSearchParams()
+  const pathname = usePathname()
   const storeSlug = searchParams.get('loja')
   const isCatalogo = searchParams.get('catalogo') === 'true'
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // 💎 NEXUS: Prevenção de Flashes e Renderizações Incorretas
+  const isAuthPage = !!pathname && (pathname.includes('/login') || pathname.includes('/register') || pathname.includes('/auth'));
+  const isAdminPage = !!pathname && pathname.includes('/admin');
+  
+  if (!mounted || isAuthPage || isAdminPage) return null;
 
   const cartUrl = `/cart?${isCatalogo ? 'catalogo=true' : ''}${storeSlug ? `&loja=${storeSlug}` : ''}`
 
