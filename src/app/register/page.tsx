@@ -222,7 +222,7 @@ export default function RegisterPage() {
                       value={storeName}
                       onChange={(e) => setStoreName(e.target.value)}
                       className="w-full pl-12 pr-6 py-4 rounded-3xl bg-rose-50/50 border-2 border-transparent focus:border-[#c99090] focus:bg-white outline-none transition-all text-[#4a322e]"
-                      placeholder="EX: ANGELA SEMIJOIAS"
+                      placeholder="EX: SUA LOJA SEMIJOIAS"
                     />
                     <Gem className="absolute left-5 top-1/2 -translate-y-1/2 text-[#c99090]" size={18} />
                   </div>
@@ -237,7 +237,7 @@ export default function RegisterPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="w-full pl-12 pr-6 py-4 rounded-3xl bg-rose-50/50 border-2 border-transparent focus:border-[#c99090] focus:bg-white outline-none transition-all text-[#4a322e]"
-                      placeholder="angela@exemplo.com"
+                      placeholder="contato@exemplo.com"
                     />
                     <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-[#c99090]" size={18} />
                   </div>
