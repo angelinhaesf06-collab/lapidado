@@ -56,8 +56,8 @@ export default function AdminLayout({
             website: data.website || null
           })
           setSubscription({
-            status: 'trial',
-            trial_ends_at: null
+            status: data.subscription_status || 'trial',
+            trial_ends_at: data.trial_ends_at || null
           })
         }
       }
