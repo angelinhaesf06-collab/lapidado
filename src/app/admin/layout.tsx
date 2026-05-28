@@ -88,8 +88,14 @@ export default function AdminLayout({
   }, [subscription]);
 
   const isBlocked = useMemo(() => {
-    // 💎 NEXUS: Bloqueio temporariamente desativado por solicitação da usuária.
-    return false;
+    if (loading) return false;
+    
+    // 💎 NEXUS: Bloqueio Ativo (7 Dias de Teste)
+    // Se não estiver ativo e os dias de trial acabaram, bloqueia.
+    const isSubscriptionActive = subscription?.status === 'active';
+    const isTrialOver = trialDaysLeft <= 0;
+
+    return !isSubscriptionActive && isTrialOver;
   }, [subscription, loading, trialDaysLeft]);
 
   const handleSubscribe = async (plan: 'lite' | 'liteyearly' | 'monthly' | 'yearly') => {
