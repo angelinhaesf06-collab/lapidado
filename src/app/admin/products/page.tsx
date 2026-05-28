@@ -23,8 +23,9 @@ import {
   rectSortingStrategy,
   useSortable,
 } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
+import { CSS } from '@nd-kit/utilities'
 import { restrictToWindowEdges } from '@dnd-kit/modifiers'
+import { ProductGridSkeleton, Skeleton } from '@/components/Skeleton'
 
 interface Product {
   id: string;
@@ -435,10 +436,7 @@ export default function ProductsListPage() {
       )}
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-4">
-          <Loader2 className="animate-spin text-brand-secondary" size={40} />
-          <p className="text-[10px] font-black text-brand-secondary uppercase tracking-[0.3em]">Carregando Acervo...</p>
-        </div>
+        <ProductGridSkeleton />
       ) : (
         <DndContext 
           sensors={sensors}

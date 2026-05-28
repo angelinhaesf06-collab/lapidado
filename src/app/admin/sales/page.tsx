@@ -197,11 +197,18 @@ export default function SalesPage() {
   }, [supabase])
 
   useEffect(() => {
-    loadSales()
-    loadBranding()
-    loadProducts()
-    loadCustomers()
-    loadCategories()
+    async function init() {
+      setLoading(true)
+      await Promise.all([
+        loadSales(true),
+        loadBranding(),
+        loadProducts(),
+        loadCustomers(),
+        loadCategories()
+      ])
+      setLoading(false)
+    }
+    init()
   }, [loadSales, loadBranding, loadProducts, loadCustomers, loadCategories])
 
   async function handleToggleStatus(sale: Sale) {
@@ -210,7 +217,7 @@ export default function SalesPage() {
       const { error } = await supabase.from('sales').update({ status: newStatus }).eq('id', sale.id)
       if (error) throw error
       toast.success(`Status atualizado!`)
-      loadSales()
+      loadSales(true)
     } catch { toast.error('Erro ao atualizar.') }
   }
 
@@ -220,7 +227,7 @@ export default function SalesPage() {
       const { error } = await supabase.from('sales').delete().eq('id', id)
       if (error) throw error
       toast.success('Venda excluída!')
-      loadSales()
+      loadSales(true)
     } catch { toast.error('Erro ao excluir.') }
   }
 

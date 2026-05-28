@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Plus, User, Search, MapPin, CreditCard, Loader2, Trash2, History, CheckCircle2, AlertCircle, ChevronDown, ChevronUp, FileText, Edit2, Save, X, Calendar, Phone, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
 import Image from 'next/image'
+import { TableRowSkeleton, Skeleton } from '@/components/Skeleton'
 
 interface Installment {
   id: string
@@ -53,7 +54,7 @@ export default function CustomersPage() {
 
   const loadCustomers = React.useCallback(async () => {
     try {
-      setLoading(true)
+      // ⚡ OTIMIZAÇÃO: Busca básica apenas para o necessário inicial
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
@@ -285,7 +286,13 @@ export default function CustomersPage() {
       </div>
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-4"><Loader2 className="animate-spin text-brand-primary" size={40} /><p className="text-[10px] font-black uppercase text-brand-secondary/40 tracking-[0.3em]">Acessando Arquivos Financeiros...</p></div>
+        <div className="space-y-4">
+          <TableRowSkeleton />
+          <TableRowSkeleton />
+          <TableRowSkeleton />
+          <TableRowSkeleton />
+          <TableRowSkeleton />
+        </div>
       ) : (
         <div className="space-y-4">
           {filteredCustomers.map(customer => (

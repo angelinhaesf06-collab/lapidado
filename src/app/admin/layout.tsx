@@ -195,18 +195,21 @@ export default function AdminLayout({
         <div className="flex flex-col items-center gap-4 mb-16 px-2 text-center">
           {branding.logo ? (
             <div className="relative w-full h-16 mb-2">
-              <img 
+              <Image 
                 src={branding.logo} 
                 alt={branding.name} 
-                className="w-full h-full object-contain" 
+                fill
+                className="object-contain" 
+                priority
               />
             </div>
           ) : (
             <div className="relative w-12 h-12 mb-2">
-              <img 
+              <Image 
                 src="/logo-app.png" 
                 alt="Lapidado Logo" 
-                className="w-full h-full object-contain rounded-xl" 
+                fill
+                className="object-contain rounded-xl" 
               />
             </div>
           )}
@@ -278,16 +281,18 @@ export default function AdminLayout({
              <div className="flex items-center gap-2">
                <div className="relative w-8 h-6">
                  {branding.logo ? (
-                   <img 
+                   <Image 
                      src={branding.logo} 
                      alt={branding.name} 
-                     className="w-full h-full object-contain" 
+                     fill
+                     className="object-contain" 
                    />
                  ) : (
-                   <img 
+                   <Image 
                      src="/logo-app.png" 
                      alt="Logo" 
-                     className="w-full h-full object-contain rounded-md" 
+                     fill
+                     className="object-contain rounded-md" 
                    />
                  )}
                </div>
