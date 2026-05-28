@@ -83,8 +83,8 @@ export default function Header() {
           {/* LOGOTIPO (ESQUERDA) */}
           <Link href="/?catalogo=true" className="flex-shrink-0 group z-10">
             {branding?.logo_url ? (
-              <div className="relative w-16 md:w-32 h-6 md:h-10 transition-all duration-500 group-hover:scale-105">
-                <Image src={branding.logo_url} alt={branding.store_name || "Logo"} fill sizes="(max-width: 768px) 64px, 128px" className="object-contain object-left" />
+              <div className="relative w-20 md:w-32 h-8 md:h-12 transition-all duration-500 group-hover:scale-105">
+                <Image src={branding.logo_url} alt={branding.store_name || "Logo"} fill sizes="(max-width: 768px) 80px, 128px" className="object-contain object-left md:object-center" />
               </div>
             ) : (
               <div className="flex items-center gap-2">
