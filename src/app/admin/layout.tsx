@@ -285,24 +285,23 @@ export default function AdminLayout({
         <div className="md:hidden bg-[#F5F0E6] border-b border-brand-secondary/10 z-40 shadow-sm">
            <div className="p-4 flex justify-between items-center border-b border-brand-secondary/5 pt-[env(safe-area-inset-top,32px)]">
              <div className="flex items-center gap-2">
-               <div className="relative w-8 h-6">
+               <div className="relative w-16 h-8">
                  {branding.logo ? (
                    <Image 
                      src={branding.logo} 
                      alt={branding.name} 
                      fill
-                     className="object-contain" 
+                     className="object-contain object-left" 
                    />
                  ) : (
                    <Image 
                      src="/logo-app.png" 
                      alt="Logo" 
                      fill
-                     className="object-contain rounded-md" 
+                     className="object-contain object-left rounded-md" 
                    />
                  )}
                </div>
-               <span className="text-[9px] font-black uppercase tracking-widest text-brand-primary">{branding.name}</span>
              </div>
              
              <div className="flex gap-2">
