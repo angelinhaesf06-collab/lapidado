@@ -146,9 +146,13 @@ export default function SalesPage() {
     }
   }, [supabase, salesPage])
 
-  // Função para dar baixa em parcela
+  // Função para dar baixa em parcela (Otimizada para UI instantânea)
   async function handlePayInstallment(inst: Installment) {
     const newStatus = inst.status === 'pago' ? 'pendente' : 'pago'
+    
+    // Otimização: Atualiza a interface primeiro para parecer instantâneo (Optimistic UI)
+    setInstallmentsList(prev => prev.map(i => i.id === inst.id ? { ...i, status: newStatus } : i))
+    
     try {
       const { error } = await supabase
         .from('installments')
@@ -156,10 +160,12 @@ export default function SalesPage() {
         .eq('id', inst.id)
       if (error) throw error
       toast.success('Parcela atualizada!')
-      loadSales()
-    } catch { toast.error('Erro ao atualizar parcela.') }
+    } catch { 
+      // Reverte se falhar
+      setInstallmentsList(prev => prev.map(i => i.id === inst.id ? { ...i, status: inst.status } : i))
+      toast.error('Erro ao atualizar parcela.') 
+    }
   }
-
 
   const loadBranding = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -214,22 +220,39 @@ export default function SalesPage() {
 
   async function handleToggleStatus(sale: Sale) {
     const newStatus = sale.status === 'pago' ? 'pendente' : 'pago'
+    // Optimistic UI:
+    setSales(prev => prev.map(s => s.id === sale.id ? { ...s, status: newStatus } : s))
+    
     try {
       const { error } = await supabase.from('sales').update({ status: newStatus }).eq('id', sale.id)
       if (error) throw error
       toast.success(`Status atualizado!`)
-      loadSales(true)
-    } catch { toast.error('Erro ao atualizar.') }
+    } catch { 
+      // Reverte se falhar
+      setSales(prev => prev.map(s => s.id === sale.id ? { ...s, status: sale.status } : s))
+      toast.error('Erro ao atualizar.') 
+    }
   }
 
   async function handleDeleteSale(id: string) {
     if (!confirm('Excluir esta venda?')) return
+    
+    // Backup para reverter
+    const saleToDelete = sales.find(s => s.id === id)
+    // Optimistic UI:
+    setSales(prev => prev.filter(s => s.id !== id))
+    
     try {
       const { error } = await supabase.from('sales').delete().eq('id', id)
       if (error) throw error
       toast.success('Venda excluída!')
-      loadSales(true)
-    } catch { toast.error('Erro ao excluir.') }
+    } catch { 
+      // Reverte se falhar
+      if (saleToDelete) {
+        setSales(prev => [saleToDelete, ...prev].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()))
+      }
+      toast.error('Erro ao excluir.') 
+    }
   }
 
   async function handleRegisterSale() {
