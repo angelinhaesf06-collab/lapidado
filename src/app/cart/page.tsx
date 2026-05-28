@@ -140,13 +140,15 @@ export default function CartPage() {
           return (
             <div key={`${item.id}-${index}`} className="flex items-center gap-6 border-b border-brand-secondary/10 pb-8">
               <div className="w-24 h-32 rounded-3xl overflow-hidden bg-white border border-brand-secondary/10 shadow-sm relative">
-                <img 
+                <Image 
                   src={item.image_url} 
                   alt={item.name} 
-                  className="w-full h-full object-cover" 
+                  fill
+                  sizes="96px"
+                  className="object-cover" 
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = '/logo-app.png';
-                    (e.target as HTMLImageElement).className = 'w-full h-full object-contain p-4 opacity-20';
+                    (e.target as HTMLImageElement).className = 'object-contain p-4 opacity-20';
                   }}
                 />
               </div>

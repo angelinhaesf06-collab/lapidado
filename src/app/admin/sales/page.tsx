@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { ShoppingCart, Loader2, ArrowLeft, Trash2, Plus, FileText, CheckCircle2, Printer, X, ShieldCheck, Gem, Phone, Check } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import Image from 'next/image'
 
 interface Sale {
   id: string
@@ -361,10 +362,12 @@ export default function SalesPage() {
                   <div key={sale.id} className={`bg-white p-4 rounded-[25px] border flex items-center gap-3 md:gap-4 group ${sale.status === 'pago' ? 'border-green-100 bg-green-50/10' : 'border-brand-secondary/5 shadow-sm'}`}>
                     <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl overflow-hidden relative border border-brand-secondary/10 bg-rose-50/30 shrink-0">
                       {imageUrl ? (
-                        <img 
+                        <Image 
                           src={imageUrl} 
                           alt="" 
-                          className="w-full h-full object-cover" 
+                          fill
+                          sizes="56px"
+                          className="object-cover" 
                           onError={(e) => {
                             (e.target as HTMLImageElement).src = ""; // Força o fallback
                             (e.target as HTMLImageElement).classList.add('hidden');
@@ -489,10 +492,12 @@ export default function SalesPage() {
                            {(() => {
                               const productInfo = Array.isArray(showReceipt.products) ? showReceipt.products[0] : showReceipt.products
                               return productInfo?.image_url ? (
-                                <img 
+                                <Image 
                                   src={productInfo.image_url} 
                                   alt="" 
-                                  className="w-full h-full object-cover" 
+                                  fill
+                                  sizes="40px"
+                                  className="object-cover" 
                                   onError={(e) => {
                                     (e.target as HTMLImageElement).style.display = 'none';
                                   }}

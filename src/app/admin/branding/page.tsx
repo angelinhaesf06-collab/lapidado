@@ -206,10 +206,12 @@ export default function BrandingPage() {
           <div className="flex flex-col items-center gap-4">
             <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-3xl overflow-hidden border-2 border-dashed border-brand-secondary/20 flex items-center justify-center bg-brand-secondary/5 group">
               {logo ? (
-                <img 
+                <Image 
                   src={logo} 
                   alt="LOGO" 
-                  className="w-full h-full object-contain" 
+                  fill
+                  sizes="128px"
+                  className="object-contain" 
                   onError={(e) => {
                     console.error("Erro ao carregar logo:", logo);
                     (e.target as HTMLImageElement).src = "/logo-app.png";

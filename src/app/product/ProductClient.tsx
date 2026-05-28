@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useRouter, notFound, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import AddToCartButton from '@/components/cart/add-to-cart-button'
 import { createClient } from '@/lib/supabase/client'
 import { Loader2, ArrowLeft } from 'lucide-react'
@@ -110,10 +111,13 @@ export default function ProductClient({ initialProduct, initialBranding }: { ini
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center w-full">
         <div className="relative aspect-[4/5] bg-white rounded-[80px] overflow-hidden shadow-2xl border border-brand-secondary/10 mx-auto w-full max-w-lg">
           {product.image_url && product.image_url.length > 5 ? (
-            <img 
+            <Image 
               src={product.image_url} 
               alt={product.name} 
-              className="w-full h-full object-cover" 
+              fill
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              className="object-cover" 
+              priority
             />
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center bg-brand-secondary/5 text-brand-secondary/20 gap-4">

@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { triggerHaptic } from '@/lib/utils'
 import Link from 'next/link'
+import Image from 'next/image'
 import AddToCartButton from '@/components/cart/add-to-cart-button'
 import { useSearchParams } from 'next/navigation'
 import { Gem } from 'lucide-react'
@@ -270,11 +271,13 @@ export default function CatalogClient({
                 <Link href={`/product?id=${product.id}&catalogo=true${storeParam}`} className="w-full focus:outline-none">
                   <div className="aspect-[4/5] w-full bg-brand-secondary/5 rounded-[24px] md:rounded-[36px] overflow-hidden mb-3 shadow-sm relative transition-all duration-500 group-hover:shadow-md group-hover:-translate-y-1 border border-brand-secondary/5">
                     {hasValidImage ? (
-                      <img 
+                      <Image 
                         src={product.image_url} 
                         alt={product.name} 
-                        className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110" 
-                        loading={index < 8 ? "eager" : "lazy"}
+                        fill
+                        sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                        className="object-cover transition-transform duration-[1.5s] group-hover:scale-110" 
+                        priority={index < 8}
                         onError={() => handleImageError(product.id)}
                       />
                     ) : (

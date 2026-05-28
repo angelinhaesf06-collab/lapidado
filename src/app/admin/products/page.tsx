@@ -81,10 +81,12 @@ function SortableProduct({ product, margin, deletingId, handleDelete, handleShar
       <div className="aspect-square relative overflow-hidden bg-brand-secondary/5 border-b border-brand-secondary/5">
         {hasValidImage ? (
           <div className="relative w-full h-full">
-            <img 
+            <Image 
               src={product.image_url} 
               alt={product.name}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+              fill
+              sizes="(max-width: 768px) 50vw, 33vw"
+              className="object-cover group-hover:scale-110 transition-transform duration-700"
               onError={(e) => {
                 console.error("Erro ao carregar imagem no admin:", product.image_url);
                 setImageError(true);
