@@ -19,14 +19,6 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     // 🚀 Otimização de performance
-  },
-  eslint: {
-    // ⚠️ ATENÇÃO: Ignora erros de linting durante o build para permitir o deploy emergencial da versão estável.
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    // ⚠️ ATENÇÃO: Ignora erros de tipo durante o build para permitir o deploy emergencial da versão estável.
-    ignoreBuildErrors: true,
   }
 };
 

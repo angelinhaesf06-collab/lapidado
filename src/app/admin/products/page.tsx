@@ -23,7 +23,7 @@ import {
   rectSortingStrategy,
   useSortable,
 } from '@dnd-kit/sortable'
-import { CSS } from '@nd-kit/utilities'
+import { CSS } from '@dnd-kit/utilities'
 import { restrictToWindowEdges } from '@dnd-kit/modifiers'
 import { ProductGridSkeleton, Skeleton } from '@/components/Skeleton'
 
