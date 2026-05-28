@@ -29,7 +29,7 @@ export default function AdminLayout({
       if (user) {
         // 💎 NEXUS: Busca ultra-resiliente com múltiplos fallbacks de ordenação.
         const { data, error } = await supabase.from('branding')
-          .select('store_name, business_name, logo_url, facebook, slug, website, top_banner, tagline')
+          .select('store_name, business_name, logo_url, facebook, slug, website, top_banner, tagline, subscription_status, trial_ends_at')
           .eq('user_id', user.id)
           .limit(1)
           .maybeSingle()
