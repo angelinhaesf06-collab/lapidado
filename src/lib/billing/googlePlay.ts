@@ -25,10 +25,17 @@ export const GOOGLE_PLAY_PLANS = {
   YEARLY: 'yearly'
 } as const
 
+let isBillingInitialized = false;
+
 export async function initializeBilling(userId?: string, supabase?: any) {
   if (!isNative) {
     console.log('💻 Rodando em Web: Google Play Billing desativado.');
     return false;
+  }
+
+  if (isBillingInitialized) {
+    console.log('📡 Billing já inicializado anteriormente.');
+    return true;
   }
 
   try {
@@ -42,36 +49,31 @@ export async function initializeBilling(userId?: string, supabase?: any) {
       return false;
     }
 
-    console.log(`📡 Chave detectada (início): ${apiKey.substring(0, 8)}...`);
-    console.log(`📡 DEBUG: Comprimento da chave: ${apiKey.length}`);
-
     await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
-    console.log(`📡 Configurando RevenueCat com chave: ${apiKey.substring(0, 10)}...`);
     
     await Purchases.configure({ 
       apiKey: apiKey,
       appUserID: userId
     });
+    
+    isBillingInitialized = true;
     console.log('✅ RevenueCat configurado com sucesso!');
 
-    // Teste imediato de conexão
-    try {
-      const offerings = await Purchases.getOfferings();
-      console.log('🎁 Ofertas carregadas na inicialização:', offerings);
-    } catch (offeringErr: any) {
-      console.error('❌ Erro ao validar ofertas após configure:', offeringErr);
-    }
-
-    // 💎 NEXUS: Sincronização Automática Silenciosa (Startup)
-    // Se tivermos o userId e o cliente Supabase, verificamos o status real agora.
+    // 💎 NEXUS: Sincronização Automática Silenciosa (Apenas se necessário)
     if (userId && supabase) {
-      console.log('🔄 Iniciando sincronização silenciosa de assinatura...');
-      try {
-        const { customerInfo } = await Purchases.getCustomerInfo();
-        await syncSubscriptionWithSupabase(supabase, userId, customerInfo);
-        console.log('✨ Sincronização de startup concluída.');
-      } catch (syncErr) {
-        console.warn('⚠️ Falha na sincronização silenciosa inicial (usuário pode estar offline):', syncErr);
+      // Verificamos o status no Supabase primeiro para ver se precisamos mesmo perguntar ao Google
+      const { data } = await supabase.from('branding').select('subscription_status').eq('user_id', userId).maybeSingle();
+      
+      // Se já estiver ativo no banco, não precisamos forçar o Google a nos mandar e-mail de sandbox
+      if (data?.subscription_status !== 'active') {
+        console.log('🔄 Iniciando sincronização silenciosa de assinatura...');
+        try {
+          const { customerInfo } = await Purchases.getCustomerInfo();
+          await syncSubscriptionWithSupabase(supabase, userId, customerInfo);
+          console.log('✨ Sincronização de startup concluída.');
+        } catch (syncErr) {
+          console.warn('⚠️ Falha na sincronização silenciosa inicial:', syncErr);
+        }
       }
     }
 

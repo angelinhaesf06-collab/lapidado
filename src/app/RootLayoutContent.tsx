@@ -33,11 +33,14 @@ export default function RootLayoutContent({
     async function loadIdentity() {
       try {
         const { data: { user: currentUser } } = await supabase.auth.getUser();
-        console.log('👤 [Identity] Usuário detectado:', currentUser?.email);
-        setUser(currentUser);
+        if (currentUser?.id !== user?.id) {
+          console.log('👤 [Identity] Usuário detectado:', currentUser?.email);
+          setUser(currentUser);
 
-        if (currentUser) {
-          initializeBilling(currentUser.id, supabase);
+          if (currentUser) {
+            // Inicializa apenas uma vez por login de usuário
+            initializeBilling(currentUser.id, supabase);
+          }
         }
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -46,7 +49,7 @@ export default function RootLayoutContent({
         if (slugFromUrl) {
           const { data: bData } = await supabase.from('branding').select('*').eq('slug', slugFromUrl).maybeSingle();
           if (bData) setBranding(bData);
-        } else if (currentUser) {
+        } else if (currentUser && !branding) {
           const { data: bData } = await supabase.from('branding').select('*').eq('user_id', currentUser.id).maybeSingle();
           if (bData) setBranding(bData);
         }
@@ -55,7 +58,7 @@ export default function RootLayoutContent({
       }
     }
     loadIdentity();
-  }, [supabase, storeSlug, pathname]);
+  }, [supabase]); // 💎 NEXUS: Removido pathname para evitar chamadas constantes ao Google Play
 
   const isValidHex = (color: string | null | undefined): boolean => {
     if (!color) return false;
