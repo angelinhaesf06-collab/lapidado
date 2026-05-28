@@ -1,59 +1,74 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/supabase/server'
 import ProductClient from './ProductClient'
-import { Loader2 } from 'lucide-react'
-import { useSearchParams } from 'next/navigation'
+import { Metadata } from 'next'
 
-export default function Page() {
-  const searchParams = useSearchParams()
-  const id = searchParams.get('id')
-  
-  const [loading, setLoading] = useState(true)
-  const [product, setProduct] = useState<any>(null)
-  const [branding, setBranding] = useState<any>(null)
-  const supabase = createClient()
+interface PageProps {
+  searchParams: Promise<{ id?: string }>
+}
 
-  useEffect(() => {
-    async function loadData() {
-      if (!id) {
-        setLoading(false)
-        return
-      }
+export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
+  const params = await searchParams
+  const id = params.id
 
-      try {
-        const { data: pData } = await supabase
-          .from('products')
-          .select('*, categories(name)')
-          .eq('id', id)
-          .single()
+  if (!id) return { title: 'Produto | Lapidado' }
 
-        if (pData) {
-          setProduct(pData)
-          const { data: bData } = await supabase
-            .from('branding')
-            .select('*')
-            .eq('user_id', pData.user_id)
-            .single()
-          if (bData) setBranding(bData)
-        }
-      } catch (err) {
-        console.error('Erro ao carregar produto:', err)
-      } finally {
-        setLoading(false)
-      }
+  const supabase = await createClient()
+  const { data: product } = await supabase
+    .from('products')
+    .select('name, description, image_url, user_id')
+    .eq('id', id)
+    .single()
+
+  if (!product) return { title: 'Produto não encontrado' }
+
+  const { data: branding } = await supabase
+    .from('branding')
+    .select('store_name')
+    .eq('user_id', product.user_id)
+    .single()
+
+  const title = `${product.name} | ${branding?.store_name || 'Lapidado'}`
+  const description = product.description || `Confira este item em nossa loja.`
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: product.image_url ? [{ url: product.image_url }] : [],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: product.image_url ? [product.image_url] : [],
     }
-    loadData()
-  }, [id, supabase])
-
-  if (loading) {
-    return (
-      <div className="min-h-[100svh] flex items-center justify-center">
-        <Loader2 className="animate-spin text-brand-secondary" size={40} />
-      </div>
-    )
   }
+}
+
+export default async function Page({ searchParams }: PageProps) {
+  const params = await searchParams
+  const id = params.id
+  
+  const supabase = await createClient()
+
+  if (!id) return <div>Produto não identificado</div>
+
+  const { data: product } = await supabase
+    .from('products')
+    .select('*, categories(name)')
+    .eq('id', id)
+    .single()
+
+  if (!product) return <div>Produto não encontrado</div>
+
+  const { data: branding } = await supabase
+    .from('branding')
+    .select('*')
+    .eq('user_id', product.user_id)
+    .single()
 
   return <ProductClient initialProduct={product} initialBranding={branding} />
 }

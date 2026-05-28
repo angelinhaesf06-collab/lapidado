@@ -1,87 +1,111 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/supabase/server'
 import CatalogClient from './CatalogClient'
-import { Loader2 } from 'lucide-react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { Metadata } from 'next'
 
-export default function Home() {
-  const searchParams = useSearchParams()
-  const loja = searchParams.get('loja')
-  const catalogo = searchParams.get('catalogo')
-  
-  const [loading, setLoading] = useState(true)
-  const [data, setData] = useState<{branding: any, products: any[], categories: any[]}>({
-    branding: null,
-    products: [],
-    categories: []
-  })
-  
-  const supabase = createClient()
-  const router = useRouter()
+interface PageProps {
+  searchParams: Promise<{ loja?: string; catalogo?: string }>
+}
 
-  useEffect(() => {
-    async function checkAuthAndLoad() {
-      const { data: { user } } = await supabase.auth.getUser()
+export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
+  const params = await searchParams
+  const loja = params.loja
 
-      if (!loja && catalogo !== 'true') {
-        if (user) {
-          router.replace('/admin')
-        } else {
-          router.replace('/login')
-        }
-        return
-      }
-
-      if (loja) {
-        try {
-          const { data: branding } = await supabase.from('branding')
-            .select('*')
-            .eq('slug', loja)
-            .maybeSingle()
-
-          if (branding) {
-            const { data: products } = await supabase.from('products')
-              .select('id, name, price, image_url, category_id, stock_quantity, user_id')
-              .eq('user_id', branding.user_id)
-              .gt('stock_quantity', 0)
-              .order('created_at', { ascending: false })
-              .limit(100)
-            
-            const { data: catData } = await supabase.from('categories')
-              .select('id, name')
-              .eq('user_id', branding.user_id)
-              .order('name')
-
-            setData({
-              branding,
-              products: products || [],
-              categories: catData || []
-            })
-          }
-        } catch (err) {
-          console.error('Erro ao carregar catálogo:', err)
-        }
-      }
-      setLoading(false)
+  if (!loja) {
+    return {
+      title: 'Lapidado | Catálogo Digital',
+      description: 'Seu catálogo de semijoias personalizado.',
     }
-    checkAuthAndLoad()
-  }, [loja, catalogo, supabase, router])
+  }
 
-  if (loading) {
-    return (
-      <div className="min-h-[100svh] flex items-center justify-center">
-        <Loader2 className="animate-spin text-brand-secondary" size={40} />
-      </div>
-    )
+  const supabase = await createClient()
+  const { data: branding } = await supabase
+    .from('branding')
+    .select('store_name, tagline, logo_url')
+    .eq('slug', loja)
+    .maybeSingle()
+
+  if (!branding) {
+    return {
+      title: 'Lapidado | Catálogo Digital',
+    }
+  }
+
+  const title = `${branding.store_name} | Catálogo`
+  const description = branding.tagline || 'Confira nossas peças exclusivas.'
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: branding.logo_url ? [{ url: branding.logo_url }] : ['/logo-app.png'],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: branding.logo_url ? [branding.logo_url] : ['/logo-app.png'],
+    }
+  }
+}
+
+export default async function Home({ searchParams }: PageProps) {
+  const params = await searchParams
+  const loja = params.loja
+  const catalogo = params.catalogo
+  
+  const supabase = await createClient()
+
+  // Se não houver loja nem flag de catálogo, redireciona para login/admin
+  // No Next.js 15+ App Router, usamos redirect para SSR
+  if (!loja && catalogo !== 'true') {
+    const { data: { user } } = await supabase.auth.getUser()
+    const { redirect } = require('next/navigation')
+    if (user) {
+      redirect('/admin')
+    } else {
+      redirect('/login')
+    }
+  }
+
+  let branding = null
+  let products: any[] = []
+  let categories: any[] = []
+
+  if (loja) {
+    const { data: bData } = await supabase.from('branding')
+      .select('*')
+      .eq('slug', loja)
+      .maybeSingle()
+
+    branding = bData
+
+    if (branding) {
+      const [prodRes, catRes] = await Promise.all([
+        supabase.from('products')
+          .select('id, name, price, image_url, category_id, stock_quantity, user_id')
+          .eq('user_id', branding.user_id)
+          .gt('stock_quantity', 0)
+          .order('created_at', { ascending: false })
+          .limit(100),
+        supabase.from('categories')
+          .select('id, name')
+          .eq('user_id', branding.user_id)
+          .order('name')
+      ])
+      
+      products = prodRes.data || []
+      categories = catRes.data || []
+    }
   }
 
   return (
     <CatalogClient 
-      initialBranding={data.branding} 
-      initialProducts={data.products} 
-      initialCategories={data.categories}
+      initialBranding={branding} 
+      initialProducts={products} 
+      initialCategories={categories}
     />
   )
 }
