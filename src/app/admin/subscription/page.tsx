@@ -55,8 +55,9 @@ export default function SubscriptionPage() {
           window.location.reload()
         } else if (!(purchase as any).cancelled) {
           const errorMsg = (purchase as any).error;
+          const errorCode = (purchase as any).errorCode;
           const underlyingError = (purchase as any).underlyingError;
-          alert(`Erro na assinatura:\n\n${errorMsg}${underlyingError ? `\n\nDetalhe Técnico: ${underlyingError}` : ''}\n\nVerifique se o Bundle ID no RevenueCat é 'com.lapidado.vendas' e se a API Key está correta.`);
+          alert(`Erro na assinatura:\n\n${errorMsg}${errorCode ? ` (Código: ${errorCode})` : ''}${underlyingError ? `\n\nDetalhe Técnico: ${underlyingError}` : ''}\n\nVerifique se o Bundle ID no RevenueCat é 'com.lapidado.vendas' e se a API Key está correta.`);
         }
       } else {
         console.log('🌐 Usando Stripe Checkout...');

@@ -150,21 +150,31 @@ export async function purchasePackage(rcPackage: any) {
       purchaserInfo: customerInfo // 💎 NEXUS: Alias para compatibilidade com layout.tsx
     }
   } catch (error: any) {
-    if (error.userCancelled) {
-      console.log('⚠️ Usuário cancelou a compra.');
+    console.error('❌ Erro na compra:', error);
+    
+    // 💎 NEXUS: Detecção Robusta de Cancelamento (vários formatos de erro)
+    const isCancelled = 
+      error.userCancelled || 
+      error.code === '1' || 
+      error.code === 1 || 
+      error.message?.toLowerCase().includes('cancelled') || 
+      error.message?.toLowerCase().includes('cancelado');
+
+    if (isCancelled) {
+      console.log('⚠️ Usuário cancelou a compra ou sistema reportou cancelamento.');
       return { success: false, cancelled: true };
     }
     
     // 💎 NEXUS: Detecção de processamento do Google (ITEM_UNAVAILABLE)
-    const isUnavailable = error.message?.includes('ITEM_UNAVAILABLE') || error.code === '3' || error.message?.includes('Billing is unavailable');
+    const isUnavailable = error.message?.includes('ITEM_UNAVAILABLE') || error.code === '3' || error.code === 3 || error.message?.includes('Billing is unavailable');
     if (isUnavailable) {
       console.error('🚫 Erro Google Play: ITEM_UNAVAILABLE ou Billing Unavailable.');
     }
 
-    console.error('❌ Erro na compra:', error);
     return { 
       success: false, 
       error: isUnavailable ? 'O faturamento do Google Play está temporariamente indisponível ou processando.' : error.message,
+      errorCode: error.code,
       underlyingError: error.underlyingErrorMessage
     };
   }
@@ -227,6 +237,7 @@ async function purchasePlanLegacy(pkg: any) {
       customerInfo: result.customerInfo,
       purchaserInfo: result.customerInfo,
       error: result.error,
+      errorCode: (result as any).errorCode,
       cancelled: result.cancelled
     };
   } catch (e: any) {
