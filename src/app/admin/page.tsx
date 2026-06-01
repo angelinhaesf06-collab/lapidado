@@ -8,14 +8,21 @@ import { useSearchParams } from 'next/navigation'
 import { CardSkeleton, Skeleton } from '@/components/Skeleton'
 
 function DashboardContent() {
-  const [stats, setStats] = useState({
-    totalItems: 0,
-    stockCost: 0,
-    stockSales: 0,
-    monthlyRevenue: 0,
-    monthlyProfit: 0,
-    totalSalesCount: 0,
-    pendingReceivables: 0
+  const [stats, setStats] = useState(() => {
+    // 🚀 Otimização: Tenta carregar dados cacheados para renderização INSTANTÂNEA
+    if (typeof window !== 'undefined') {
+      const cached = sessionStorage.getItem('lapidado-dash-stats')
+      if (cached) return JSON.parse(cached)
+    }
+    return {
+      totalItems: 0,
+      stockCost: 0,
+      stockSales: 0,
+      monthlyRevenue: 0,
+      monthlyProfit: 0,
+      totalSalesCount: 0,
+      pendingReceivables: 0
+    }
   })
   const [loading, setLoading] = useState(true)
 
@@ -23,9 +30,9 @@ function DashboardContent() {
   const searchParams = useSearchParams()
   const sessionId = searchParams.get('session_id')
 
-  const loadDashboardData = useCallback(async () => {
+  const loadDashboardData = useCallback(async (isSilent = false) => {
     try {
-      setLoading(true)
+      if (!isSilent) setLoading(true)
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
@@ -41,11 +48,11 @@ function DashboardContent() {
       const installments = installmentsRes.data
 
       if (products) {
+        // ... cálculos pesados mantidos mas agora com cache
         const totalItems = products.reduce((acc, p) => acc + (Number(p.stock_quantity) || 0), 0)
         const stockCost = products.reduce((acc, p) => acc + ((Number(p.cost_price) || 0) * (Number(p.stock_quantity) || 0)), 0)
         const stockSales = products.reduce((acc, p) => acc + ((Number(p.price) || 0) * (Number(p.stock_quantity) || 0)), 0)
 
-        // 🚀 Otimização: Mapa de produtos para busca O(1) no cálculo de lucro
         const productMap = new Map();
         products.forEach(p => productMap.set(p.id, p));
 
@@ -63,7 +70,7 @@ function DashboardContent() {
           }, 0)
         }
 
-        setStats({
+        const newStats = {
           totalItems,
           stockCost,
           stockSales,
@@ -71,7 +78,13 @@ function DashboardContent() {
           monthlyProfit,
           totalSalesCount: sales?.length || 0,
           pendingReceivables: installments?.reduce((acc, curr) => acc + (Number(curr.value) || 0), 0) || 0
-        })
+        }
+
+        setStats(newStats)
+        // 🚀 Salva no cache para a próxima visita ser instantânea
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('lapidado-dash-stats', JSON.stringify(newStats))
+        }
       }
     } catch (err) {
       console.error("Erro dashboard:", err)
@@ -81,7 +94,9 @@ function DashboardContent() {
   }, [supabase])
 
   useEffect(() => {
-    loadDashboardData()
+    // ⚡ Carregamento Híbrido: se tem cache, carrega "silenciosamente" no fundo
+    const hasCache = stats.totalItems > 0 || stats.monthlyRevenue > 0
+    loadDashboardData(hasCache)
   }, [loadDashboardData])
 
   useEffect(() => {
