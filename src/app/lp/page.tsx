@@ -11,10 +11,12 @@ import {
   ShieldCheck, 
   Camera, 
   Play,
-  ShoppingBag,
   Sparkles,
   Award,
-  Users
+  Users,
+  TrendingUp,
+  BarChart3,
+  PieChart
 } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -166,7 +168,7 @@ export default function LandingPage() {
               
               {/* Floating Badge */}
               <div className="absolute -right-4 top-1/2 -translate-y-1/2 bg-white p-6 rounded-3xl shadow-2xl border border-rose-100 max-w-[200px] animate-bounce-slow">
-                 <ShoppingBag className="text-brand-secondary mb-3" size={24} />
+                 <Smartphone className="text-brand-secondary mb-3" size={24} />
                  <p className="text-xs font-black uppercase tracking-widest leading-tight">Catalogo Otimizado para Mobile</p>
               </div>
             </div>
@@ -212,6 +214,68 @@ export default function LandingPage() {
                     </div>
                  </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 📈 GESTÃO FINANCEIRA: O CÉREBRO DO SEU NEGÓCIO */}
+      <section className="py-24 px-6 bg-brand-primary text-white overflow-hidden relative">
+        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-brand-secondary/20 rounded-full blur-[100px] -z-0" />
+        
+        <div className="max-w-6xl mx-auto relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div className="space-y-8">
+              <div className="w-16 h-1 bg-brand-secondary rounded-full" />
+              <h2 className="text-3xl md:text-5xl font-black leading-tight">
+                Gestão Financeira <span className="text-brand-secondary">Completa</span>
+              </h2>
+              <p className="text-xl text-white/80 leading-relaxed">
+                Saiba exatamente quanto você ganha em cada peça. O Lapidado calcula seu <span className="text-white font-bold">lucro real</span>, controla seu estoque e te dá um painel completo de vendas.
+              </p>
+              
+              <div className="space-y-4">
+                {[
+                  { icon: <TrendingUp size={20} />, title: "Cálculo Automático de Lucro", desc: "Saiba sua margem real descontando custos." },
+                  { icon: <BarChart3 size={20} />, title: "Relatórios de Vendas", desc: "Acompanhe seu crescimento mês a mês." },
+                  { icon: <PieChart size={20} />, title: "Controle de Estoque", desc: "Nunca mais perca uma venda por falta de produto." }
+                ].map((item, i) => (
+                  <div key={i} className="flex gap-4 p-4 rounded-2xl bg-white/5 border border-white/10">
+                    <div className="text-brand-secondary">{item.icon}</div>
+                    <div>
+                      <h4 className="font-bold text-sm">{item.title}</h4>
+                      <p className="text-[10px] text-white/60 uppercase tracking-widest mt-1">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-xl p-8 rounded-[40px] border border-white/20 shadow-2xl">
+               <div className="space-y-6">
+                  <div className="flex justify-between items-end">
+                     <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-brand-secondary">Faturamento Mensal</p>
+                        <h3 className="text-3xl font-black mt-1">R$ 12.450,00</h3>
+                     </div>
+                     <div className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-[10px] font-black">+15%</div>
+                  </div>
+                  <div className="h-32 flex items-end gap-2">
+                     {[40, 60, 45, 90, 65, 80, 100].map((h, i) => (
+                        <div key={i} className="flex-1 bg-brand-secondary/40 rounded-t-lg transition-all hover:bg-brand-secondary" style={{ height: `${h}%` }} />
+                     ))}
+                  </div>
+                  <div className="pt-6 border-t border-white/10 grid grid-cols-2 gap-4">
+                     <div>
+                        <p className="text-[8px] font-black uppercase tracking-widest text-white/40">Peças Vendidas</p>
+                        <p className="text-xl font-bold">142</p>
+                     </div>
+                     <div>
+                        <p className="text-[8px] font-black uppercase tracking-widest text-white/40">Lucro Líquido</p>
+                        <p className="text-xl font-bold text-brand-secondary">R$ 5.820,00</p>
+                     </div>
+                  </div>
+               </div>
             </div>
           </div>
         </div>
