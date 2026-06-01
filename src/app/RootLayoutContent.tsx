@@ -72,6 +72,7 @@ export default function RootLayoutContent({
   
   const isAuthPage = !!pathname && (pathname.includes('/login') || pathname.includes('/register') || pathname.includes('/auth'));
   const isAdminPage = !!pathname && pathname.includes('/admin');
+  const isLpPage = pathname === '/lp';
   const isLegalPage = !!pathname && (
     pathname.includes('/politica') || 
     pathname.includes('/privacidade') || 
@@ -113,7 +114,7 @@ export default function RootLayoutContent({
       <Toaster position="top-center" richColors />
       <CartProvider>
         <AdminBar user={user} />
-        {!isAdminPage && !isAuthPage && !isLegalPage && <CartIcon />}
+        {!isAdminPage && !isAuthPage && !isLegalPage && !isLpPage && <CartIcon />}
         <main>
           {children}
         </main>
