@@ -1,6 +1,6 @@
 'use client'
 
-import { Gem, Zap, Clock, Smartphone, CheckCircle2, ArrowRight, Star, ShieldCheck, Instagram, MessageCircle } from 'lucide-react'
+import { Gem, Zap, Clock, Smartphone, CheckCircle2, ArrowRight, Star, ShieldCheck, Camera, Share2 } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -111,7 +111,7 @@ export default function LandingPage() {
 
             <div className="space-y-6 group">
               <div className="w-16 h-16 rounded-2xl bg-rose-50 flex items-center justify-center text-brand-primary group-hover:bg-brand-primary group-hover:text-white transition-all">
-                <MessageCircle size={28} />
+                <Share2 size={28} />
               </div>
               <h4 className="text-xl font-bold">Venda Direta pelo Whats</h4>
               <p className="text-[#7a5c58] leading-relaxed">
@@ -171,7 +171,7 @@ export default function LandingPage() {
 
           <div className="flex gap-4">
             <div className="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center text-brand-primary">
-              <Instagram size={16} />
+              <Camera size={16} />
             </div>
             <div className="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center text-brand-primary">
               <Smartphone size={16} />
