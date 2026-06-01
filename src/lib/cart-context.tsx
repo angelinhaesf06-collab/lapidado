@@ -45,27 +45,31 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     window.dispatchEvent(new Event('cart-updated'))
   }, [cart])
 
-  const addToCart = (item: CartItem) => {
+  const addToCart = React.useCallback((item: CartItem) => {
     setCart(prev => [...prev, item])
-  }
+  }, [])
 
-  const removeFromCart = (index: number) => {
+  const removeFromCart = React.useCallback((index: number) => {
     setCart(prev => {
       const newCart = [...prev]
       newCart.splice(index, 1)
       return newCart
     })
-  }
+  }, [])
 
-  const clearCart = () => {
+  const clearCart = React.useCallback(() => {
     setCart([])
-  }
+  }, [])
 
-  const total = cart.reduce((acc, item) => acc + (item.price || 0), 0)
-  const itemCount = cart.length
+  const total = React.useMemo(() => cart.reduce((acc, item) => acc + (item.price || 0), 0), [cart])
+  const itemCount = React.useMemo(() => cart.length, [cart])
+
+  const value = React.useMemo(() => ({
+    cart, addToCart, removeFromCart, clearCart, total, itemCount
+  }), [cart, addToCart, removeFromCart, clearCart, total, itemCount])
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, clearCart, total, itemCount }}>
+    <CartContext.Provider value={value}>
       {children}
     </CartContext.Provider>
   )

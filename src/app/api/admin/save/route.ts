@@ -139,16 +139,19 @@ export async function POST(req: Request) {
       throw result.error;
     }
 
-    // INVALIDAÇÃO DE CACHE ESTRATÉGICA - REFORÇADA
+    // INVALIDAÇÃO DE CACHE ESTRATÉGICA - REFORÇADA PARA VELOCIDADE MÁXIMA
     revalidatePath('/', 'layout')
     revalidatePath('/admin/products', 'page')
     
+    // Invalida especificamente a rota da loja se disponível para garantir atualização instantânea
     if (table === 'branding' && data.slug) {
       revalidatePath(`/?loja=${data.slug}`, 'page')
     }
 
     if (id && table === 'products') {
       revalidatePath(`/product/${id}`, 'page')
+      // Força a revalidação da home para garantir que o novo produto apareça no topo
+      revalidatePath('/', 'page')
     }
 
     return NextResponse.json({ success: true, data: result.data })
