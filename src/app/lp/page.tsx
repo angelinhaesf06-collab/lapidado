@@ -269,6 +269,62 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* 🛍️ CARRINHO & WHATSAPP: FECHAMENTO RÁPIDO */}
+      <section className="py-24 px-6 bg-white overflow-hidden">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div className="relative group">
+              <div className="absolute -inset-4 bg-green-500/5 rounded-[40px] blur-2xl -z-10" />
+              <div className="bg-[#25D366]/10 p-12 rounded-[48px] border-2 border-[#25D366]/20 relative overflow-hidden">
+                 <div className="absolute top-0 right-0 w-32 h-32 bg-[#25D366]/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                 <div className="space-y-6 relative z-10">
+                    <div className="w-16 h-16 bg-white rounded-2xl shadow-xl flex items-center justify-center text-[#25D366]">
+                       <Smartphone size={32} />
+                    </div>
+                    <div className="space-y-2">
+                       <p className="bg-[#25D366] text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full inline-block">Pedido no WhatsApp</p>
+                       <h3 className="text-2xl font-black text-brand-primary italic">"Olá! Vi seu catálogo e quero estas 3 joias..."</h3>
+                    </div>
+                    <div className="pt-4 flex items-center gap-4">
+                       <div className="flex-1 h-[1px] bg-brand-primary/10" />
+                       <Gem className="text-brand-secondary/40" size={16} />
+                       <div className="flex-1 h-[1px] bg-brand-primary/10" />
+                    </div>
+                    <p className="text-xs font-bold text-[#7a5c58] text-center">O pedido chega pronto, com fotos, códigos e valores!</p>
+                 </div>
+              </div>
+            </div>
+
+            <div className="space-y-8">
+              <div className="w-16 h-1 bg-[#25D366] rounded-full" />
+              <h2 className="text-3xl md:text-5xl font-black leading-tight text-brand-primary">
+                Carrinho Inteligente via <span className="text-[#25D366]">WhatsApp</span>
+              </h2>
+              <p className="text-xl text-[#7a5c58] leading-relaxed">
+                Esqueça a bagunça de prints e áudios confusos. Sua cliente escolhe as peças no catálogo, o sistema organiza tudo no **Carrinho de Compras** e envia para você o pedido mastigado.
+              </p>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {[
+                  { title: "Sem Mais Prints", desc: "Chega de tentar adivinhar qual peça a cliente quer por fotos cortadas." },
+                  { title: "Cálculo Automático", desc: "O carrinho soma os valores para a cliente antes mesmo de te chamar." },
+                  { title: "Mais Conversão", desc: "Facilidade máxima para a cliente significa mais vendas para você." },
+                  { title: "Direto no seu Zap", desc: "Você recebe o link e a lista de produtos em um clique." }
+                ].map((item, i) => (
+                  <div key={i} className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="text-[#25D366]" size={16} />
+                      <h4 className="font-black text-xs uppercase tracking-widest">{item.title}</h4>
+                    </div>
+                    <p className="text-[10px] text-[#7a5c58] font-medium leading-relaxed">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* 💎 TESTEMUNHOS & CONFIANÇA */}
       <section className="py-24 px-6 bg-white" id="depoimentos">
         <div className="max-w-6xl mx-auto">
