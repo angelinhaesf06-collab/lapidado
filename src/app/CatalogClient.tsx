@@ -54,28 +54,39 @@ export default function CatalogClient({
   const storeSlug = searchParams.get('loja')
   const supabase = useMemo(() => createClient(), [])
 
+  // 🚀 Mapa de categorias para busca ultra-rápida O(1)
+  const categoryMap = useMemo(() => {
+    const map = new Map<string, string>();
+    dbCategories.forEach(c => map.set(c.id, c.name));
+    return map;
+  }, [dbCategories]);
+
+  // 💎 Memoiza a lista de nomes para evitar recriação de array e re-renders
+  const categoryNames = useMemo(() => ['Todos', ...dbCategories.map(c => c.name)], [dbCategories]);
+
   const handleImageError = (id: string) => {
     setImageErrors(prev => ({ ...prev, [id]: true }))
   }
 
   const handleCategoryChange = (cat: string) => {
+    if (cat === activeCategory) return; // Evita re-processamento se já for a ativa
+    
     setActiveCategory(cat);
     triggerHaptic('light');
+    
     const url = new URL(window.location.href);
     if (cat === 'Todos') {
       url.searchParams.delete('category');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       url.searchParams.set('category', cat);
-      // ✨ Scroll Suave Inteligente e Harmonioso
+      // ✨ Scroll Suave Inteligente e Harmonioso - Otimizado
       if (productsTopRef.current) {
-        // Busca a altura real do cabeçalho fixo no momento do clique
         const headerElement = document.querySelector('.sticky');
-        const headerHeight = headerElement ? headerElement.clientHeight : 100;
+        const headerHeight = headerElement ? headerElement.clientHeight : 80;
         
-        // Detecta se é mobile para um ajuste preciso
         const isMobile = window.innerWidth < 768;
-        const extraPadding = isMobile ? 40 : 20; 
+        const extraPadding = isMobile ? 30 : 20; 
         
         const elementPosition = productsTopRef.current.getBoundingClientRect().top;
         const offsetPosition = elementPosition + window.pageYOffset - (headerHeight + extraPadding);
@@ -133,7 +144,7 @@ export default function CatalogClient({
               .eq('user_id', currentUserId)
               .gt('stock_quantity', 0)
               .order('display_order', { ascending: true, nullsFirst: true })
-              .limit(200) // Limite aumentado para garantir que nenhuma categoria fique vazia
+              .limit(200) 
           ])
 
           if (catsRes.data) setDbCategories(catsRes.data)
@@ -155,10 +166,11 @@ export default function CatalogClient({
       return allProducts
     }
     return allProducts.filter(p => {
-      const cat = dbCategories.find(c => c.id === p.category_id)
-      return cat?.name === activeCategory
+      // 🚀 Busca O(1) usando o mapa pré-calculado
+      const catName = categoryMap.get(p.category_id);
+      return catName === activeCategory
     })
-  }, [allProducts, activeCategory, dbCategories])
+  }, [allProducts, activeCategory, categoryMap])
 
   const installments = useMemo(() => {
     try {
@@ -175,7 +187,6 @@ export default function CatalogClient({
     return 10
   }, [branding])
 
-  const categoryNames = ['Todos', ...dbCategories.map(c => c.name)]
   const storeParam = storeSlug ? `&loja=${storeSlug}` : ''
 
   if (loading && allProducts.length === 0) {
@@ -204,13 +215,13 @@ export default function CatalogClient({
   }
 
   return (
-    <div className="flex flex-col w-full min-h-[100svh] animate-in fade-in duration-700 bg-[#F5F0E6]">
+    <div className="flex flex-col w-full min-h-[100svh] animate-in fade-in duration-500 bg-[#F5F0E6]">
       
       {/* 💎 CABEÇALHO DINÂMICO COMPACTO COM SAFE AREA */}
       <div className="sticky top-0 z-[100] bg-[#F5F0E6]/95 backdrop-blur-xl border-b border-brand-secondary/5 pt-[env(safe-area-inset-top,8px)] flex flex-col">
         <header className="w-full pt-4 pb-2 flex flex-col items-center gap-3">
           {branding?.logo_url && !logoError ? (
-            <Link href={`/?catalogo=true${storeParam}`} className="relative block w-32 md:w-56 h-auto transition-all duration-500 hover:scale-105 active:scale-95">
+            <Link href={`/?catalogo=true${storeParam}`} className="relative block w-32 md:w-56 h-auto transition-all duration-300 hover:scale-105 active:scale-95">
               <img 
                 src={branding.logo_url} 
                 alt={branding.store_name || 'Logo'} 
@@ -227,7 +238,7 @@ export default function CatalogClient({
               <button 
                 key={cat}
                 onClick={() => handleCategoryChange(cat)}
-                className={`px-3 py-1.5 md:px-4 md:py-2 transition-all duration-300 font-black text-[7px] md:text-[9px] tracking-[0.1em] uppercase rounded-full border ${
+                className={`px-3 py-1.5 md:px-4 md:py-2 transition-all duration-200 font-black text-[7px] md:text-[9px] tracking-[0.1em] uppercase rounded-full border ${
                   activeCategory === cat || (cat === 'Todos' && !activeCategory)
                   ? "bg-brand-primary text-white border-brand-primary shadow-sm scale-105" 
                   : "text-brand-primary/60 hover:text-brand-primary bg-white/40 border-brand-secondary/5"
@@ -250,7 +261,7 @@ export default function CatalogClient({
 
       <div ref={productsTopRef} className="max-w-7xl mx-auto px-4 py-8 md:py-16 w-full text-center flex flex-col items-center gap-4">
         <div className="mb-4 md:mb-10 pt-2 w-full flex flex-col items-center gap-3 pb-4">
-          <h2 className="text-[10px] md:text-lg font-light tracking-[0.4em] uppercase text-brand-primary animate-in slide-in-from-bottom-2 duration-700 block break-words leading-relaxed px-6">
+          <h2 className="text-[10px] md:text-lg font-light tracking-[0.4em] uppercase text-brand-primary animate-in slide-in-from-bottom-2 duration-500 block break-words leading-relaxed px-6">
             {(activeCategory === 'Todos' || !activeCategory) 
               ? `${branding?.store_name || branding?.business_name || 'Coleção'} Exclusiva` 
               : activeCategory}
@@ -258,7 +269,7 @@ export default function CatalogClient({
           <div className="w-8 h-[1px] bg-brand-secondary/10 mx-auto" />
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-2.5 md:gap-x-8 gap-y-6 md:gap-y-16 px-0.5 animate-in fade-in slide-in-from-bottom-4 duration-1000 w-full">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-2.5 md:gap-x-8 gap-y-6 md:gap-y-16 px-0.5 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full">
           {displayedProducts.map((product, index) => {
             const hasValidImage = product.image_url && 
                                  product.image_url.length > 5 &&

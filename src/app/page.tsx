@@ -2,6 +2,10 @@ import { createClient } from '@/lib/supabase/server'
 import CatalogClient from './CatalogClient'
 import { Metadata } from 'next'
 
+// 💎 NEXUS: Garante que a vitrine sempre mostre os produtos mais recentes sem cache de servidor.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 interface PageProps {
   searchParams: Promise<{ loja?: string; catalogo?: string }>
 }

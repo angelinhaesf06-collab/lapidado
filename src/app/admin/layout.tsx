@@ -347,7 +347,7 @@ export default function AdminLayout({
            </nav>
         </div>
 
-        <div className="px-4 py-8 md:px-12 md:py-16 animate-in fade-in duration-500 slide-in-from-bottom-2 transform-gpu">
+        <div className="px-4 py-8 md:px-12 md:py-16 animate-in fade-in duration-300 slide-in-from-bottom-2 transform-gpu">
           {children}
         </div>
       </main>

@@ -45,6 +45,10 @@ function DashboardContent() {
         const stockCost = products.reduce((acc, p) => acc + ((Number(p.cost_price) || 0) * (Number(p.stock_quantity) || 0)), 0)
         const stockSales = products.reduce((acc, p) => acc + ((Number(p.price) || 0) * (Number(p.stock_quantity) || 0)), 0)
 
+        // 🚀 Otimização: Mapa de produtos para busca O(1) no cálculo de lucro
+        const productMap = new Map();
+        products.forEach(p => productMap.set(p.id, p));
+
         let monthlyRevenue = 0
         let monthlyProfit = 0
         
@@ -53,7 +57,7 @@ function DashboardContent() {
           monthlyProfit = sales.reduce((acc, s) => {
             const salePrice = Number(s.sale_price) || 0
             const quantity = Number(s.quantity) || 1
-            const prod = products.find(p => p.id === s.product_id)
+            const prod = productMap.get(s.product_id)
             const costPrice = Number(s.cost_price) > 0 ? Number(s.cost_price) : (Number(prod?.cost_price) || 0)
             return acc + ((salePrice - costPrice) * quantity)
           }, 0)

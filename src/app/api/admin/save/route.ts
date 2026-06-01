@@ -139,11 +139,16 @@ export async function POST(req: Request) {
       throw result.error;
     }
 
-    // INVALIDAÇÃO DE CACHE ESTRATÉGICA
-    revalidatePath('/')
-    revalidatePath('/admin/products')
+    // INVALIDAÇÃO DE CACHE ESTRATÉGICA - REFORÇADA
+    revalidatePath('/', 'layout')
+    revalidatePath('/admin/products', 'page')
+    
+    if (table === 'branding' && data.slug) {
+      revalidatePath(`/?loja=${data.slug}`, 'page')
+    }
+
     if (id && table === 'products') {
-      revalidatePath(`/product/${id}`)
+      revalidatePath(`/product/${id}`, 'page')
     }
 
     return NextResponse.json({ success: true, data: result.data })
