@@ -112,16 +112,20 @@ export default function LandingPage() {
             
             <div className="relative order-1 lg:order-2">
               <div className="absolute -inset-4 bg-brand-secondary/5 rounded-[40px] blur-2xl -z-10" />
-              <div className="bg-brand-primary rounded-[32px] overflow-hidden shadow-3xl aspect-[4/3] relative flex items-center justify-center group cursor-pointer border-4 border-white">
-                 <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-40 group-hover:scale-110 transition-transform duration-700" />
-                 <div className="relative z-10 flex flex-col items-center gap-4">
-                    <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30 group-hover:scale-110 transition-transform shadow-2xl">
-                       <Play size={40} fill="currentColor" className="ml-1" />
-                    </div>
-                    <span className="bg-brand-secondary text-white px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg">Assistir IA em Ação</span>
+              <div className="bg-brand-primary rounded-[32px] overflow-hidden shadow-3xl aspect-[4/3] relative flex items-center justify-center group border-4 border-white">
+                 <video 
+                   src="/videos/ia-demonstracao.mp4" 
+                   autoPlay 
+                   muted 
+                   loop 
+                   playsInline
+                   className="absolute inset-0 w-full h-full object-cover opacity-80"
+                 />
+                 <div className="relative z-10 flex flex-col items-center gap-4 pointer-events-none">
+                    <span className="bg-brand-secondary text-white px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg animate-pulse">A Mágica em Tempo Real</span>
                  </div>
                  {/* Overlay de carregamento simulado */}
-                 <div className="absolute bottom-6 left-6 right-6 bg-white/10 backdrop-blur-xl border border-white/20 p-4 rounded-2xl flex items-center gap-4">
+                 <div className="absolute bottom-6 left-6 right-6 bg-white/10 backdrop-blur-xl border border-white/20 p-4 rounded-2xl flex items-center gap-4 z-20">
                     <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-brand-primary">
                        <Zap size={20} className="animate-pulse" />
                     </div>
@@ -148,21 +152,15 @@ export default function LandingPage() {
                  <div className="absolute top-0 w-full h-8 flex justify-center items-center z-20">
                     <div className="w-20 h-4 bg-brand-primary rounded-b-xl" />
                  </div>
-                 <div className="absolute inset-0 bg-white flex flex-col">
-                    <div className="h-40 bg-rose-50 p-6 flex flex-col justify-end gap-2">
-                       <div className="w-12 h-1 bg-brand-secondary" />
-                       <div className="h-6 w-3/4 bg-brand-primary/10 rounded" />
-                    </div>
-                    <div className="p-4 grid grid-cols-2 gap-4">
-                       {[1,2,3,4,5,6].map(i => (
-                          <div key={i} className="aspect-square bg-rose-50/50 rounded-xl" />
-                       ))}
-                    </div>
-                 </div>
-                 <div className="absolute inset-0 bg-brand-primary/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-30 cursor-pointer">
-                    <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center text-brand-primary shadow-2xl">
-                       <Play size={24} fill="currentColor" className="ml-1" />
-                    </div>
+                 <div className="absolute inset-0 bg-white">
+                    <video 
+                      src="/videos/vitrine-mobile.mp4" 
+                      autoPlay 
+                      muted 
+                      loop 
+                      playsInline
+                      className="w-full h-full object-cover"
+                    />
                  </div>
               </div>
               
