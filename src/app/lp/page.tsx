@@ -198,20 +198,18 @@ export default function LandingPage() {
                     <div className="flex-1 h-[2px] bg-rose-100" />
                  </div>
                  <div className="flex gap-4 mt-6">
-                    <div className="flex-1 bg-brand-primary text-white p-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer hover:bg-black transition-colors">
-                       <Smartphone size={20} />
+                    <a 
+                      href="https://play.google.com/store/apps/details?id=com.lapidado.vendas" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-full bg-brand-primary text-white py-4 rounded-2xl flex items-center justify-center gap-3 cursor-pointer hover:bg-black transition-all hover:scale-[1.02] shadow-xl shadow-brand-primary/20"
+                    >
+                       <Smartphone size={24} />
                        <div className="text-left">
-                          <p className="text-[7px] uppercase font-bold opacity-60 leading-none">Baixar na</p>
-                          <p className="text-[10px] font-black uppercase leading-none mt-1">Play Store</p>
+                          <p className="text-[8px] uppercase font-bold opacity-60 leading-none">Baixar Aplicativo na</p>
+                          <p className="text-xs font-black uppercase leading-none mt-1">Google Play Store</p>
                        </div>
-                    </div>
-                    <div className="flex-1 bg-brand-primary text-white p-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer hover:bg-black transition-colors">
-                       <Smartphone size={20} />
-                       <div className="text-left">
-                          <p className="text-[7px] uppercase font-bold opacity-60 leading-none">Baixar na</p>
-                          <p className="text-[10px] font-black uppercase leading-none mt-1">App Store</p>
-                       </div>
-                    </div>
+                    </a>
                  </div>
               </div>
             </div>
@@ -251,29 +249,19 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-xl p-8 rounded-[40px] border border-white/20 shadow-2xl">
-               <div className="space-y-6">
-                  <div className="flex justify-between items-end">
-                     <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-brand-secondary">Faturamento Mensal</p>
-                        <h3 className="text-3xl font-black mt-1">R$ 12.450,00</h3>
-                     </div>
-                     <div className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-[10px] font-black">+15%</div>
-                  </div>
-                  <div className="h-32 flex items-end gap-2">
-                     {[40, 60, 45, 90, 65, 80, 100].map((h, i) => (
-                        <div key={i} className="flex-1 bg-brand-secondary/40 rounded-t-lg transition-all hover:bg-brand-secondary" style={{ height: `${h}%` }} />
-                     ))}
-                  </div>
-                  <div className="pt-6 border-t border-white/10 grid grid-cols-2 gap-4">
-                     <div>
-                        <p className="text-[8px] font-black uppercase tracking-widest text-white/40">Peças Vendidas</p>
-                        <p className="text-xl font-bold">142</p>
-                     </div>
-                     <div>
-                        <p className="text-[8px] font-black uppercase tracking-widest text-white/40">Lucro Líquido</p>
-                        <p className="text-xl font-bold text-brand-secondary">R$ 5.820,00</p>
-                     </div>
+            <div className="bg-white/10 backdrop-blur-xl p-2 rounded-[40px] border border-white/20 shadow-2xl overflow-hidden aspect-video relative group">
+               <video 
+                 src="/videos/gestao-financeira.mp4" 
+                 autoPlay 
+                 muted 
+                 loop 
+                 playsInline
+                 className="w-full h-full object-cover rounded-[32px]"
+               />
+               <div className="absolute inset-0 bg-gradient-to-t from-brand-primary/40 to-transparent pointer-events-none" />
+               <div className="absolute bottom-6 left-8">
+                  <div className="flex items-center gap-2 bg-brand-secondary text-white px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest shadow-lg">
+                    <Sparkles size={10} /> Seu Negócio nas Suas Mãos
                   </div>
                </div>
             </div>
