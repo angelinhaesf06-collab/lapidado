@@ -113,12 +113,65 @@ export default function CatalogClient({
   const [allProducts, setAllProducts] = useState<any[]>(initialProducts || [])
   const [dbCategories, setDbCategories] = useState<Category[]>(initialCategories || [])
   const [branding, setBranding] = useState<Branding | null>(initialBranding || null)
-  const [loading, setLoading] = useState(!initialProducts || initialProducts.length === 0)
+  const [loading, setLoading] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState((initialProducts?.length || 0) >= 20)
+  const [page, setPage] = useState(1)
   const [activeCategory, setActiveCategory] = useState('Todos')
+  
   const productsTopRef = useRef<HTMLDivElement>(null)
+  const observerRef = useRef<HTMLDivElement>(null)
   
   const storeSlug = searchParams.get('loja')
   const supabase = useMemo(() => createClient(), [])
+
+  // 🚀 INFINITE SCROLL: Carregamento por Demanda
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore || !branding) return
+    
+    setLoadingMore(true)
+    const from = page * 20
+    const to = from + 19
+
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('id, name, price, image_url, category_id')
+        .eq('user_id', branding.user_id)
+        .gt('stock_quantity', 0)
+        .order('created_at', { ascending: false })
+        .range(from, to)
+
+      if (error) throw error
+
+      if (data && data.length > 0) {
+        setAllProducts(prev => [...prev, ...data])
+        setPage(prev => prev + 1)
+        if (data.length < 20) setHasMore(false)
+      } else {
+        setHasMore(false)
+      }
+    } catch (err) {
+      console.error("Erro ao carregar mais produtos:", err)
+    } finally {
+      setLoadingMore(false)
+    }
+  }, [page, hasMore, loadingMore, branding, supabase])
+
+  // 🎯 Intersection Observer para detectar o fim da página
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore) {
+          loadMore()
+        }
+      },
+      { threshold: 0.1 }
+    )
+
+    if (observerRef.current) observer.observe(observerRef.current)
+    return () => observer.disconnect()
+  }, [loadMore, hasMore, loadingMore])
 
   // 🚀 Mapa de categorias para busca ultra-rápida O(1)
   const categoryMap = useMemo(() => {

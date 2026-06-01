@@ -89,11 +89,11 @@ export default async function Home({ searchParams }: PageProps) {
     if (branding) {
       const [prodRes, catRes] = await Promise.all([
         supabase.from('products')
-          .select('id, name, price, image_url, category_id, stock_quantity, user_id')
+          .select('id, name, price, image_url, category_id') // ⚡ QUERY ENXUTA: Apenas o essencial para o card
           .eq('user_id', branding.user_id)
           .gt('stock_quantity', 0)
           .order('created_at', { ascending: false })
-          .limit(100),
+          .limit(20), // ⚡ BLOCOS PEQUENOS: Carregamento inicial rápido
         supabase.from('categories')
           .select('id, name')
           .eq('user_id', branding.user_id)
