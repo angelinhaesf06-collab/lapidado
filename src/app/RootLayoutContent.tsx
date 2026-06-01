@@ -84,6 +84,23 @@ export default function RootLayoutContent({
 
   const showAdminBar = user && (pathname === '/' || pathname?.startsWith('/product') || pathname === '/cart');
 
+  // 💎 NEXUS: Bloqueio do Prompt de Instalação (PWA) na Vitrine do Cliente
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      // Detecta se é a visão do cliente (vitrine pública)
+      const isCustomerView = storeSlug || searchParams.get('catalogo') === 'true' || pathname?.startsWith('/product');
+      const isAdmin = pathname?.startsWith('/admin');
+
+      if (isCustomerView && !isAdmin) {
+        e.preventDefault();
+        console.log('🚫 [PWA] Prompt de instalação interceptado para proteger a marca do lojista.');
+      }
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, [storeSlug, searchParams, pathname]);
+
   return (
     <body 
       className={`${montserrat.variable} font-montserrat bg-[#F5F0E6] text-[#5D4037] antialiased min-h-[100svh] ${showAdminBar ? 'pt-[env(safe-area-inset-top,44px)] md:pt-16' : ''}`}
