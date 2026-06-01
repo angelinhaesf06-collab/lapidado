@@ -154,7 +154,7 @@ export default function RegisterPage() {
 
         // Se já tiver sessão, vai pro admin, senão pro login confirmar
         setTimeout(() => {
-          router.push('/login?message=Conta criada com sucesso! 💎')
+          router.push('/register/success')
         }, 2000)
       }
       
