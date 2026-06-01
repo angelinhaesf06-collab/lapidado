@@ -138,6 +138,20 @@ export default function RegisterPage() {
       // 💎 AUTO-LOGIN NEXUS: Removendo burocracia de e-mail
       if (data.user) {
         setSuccess(true)
+        
+        // 🎯 RASTREAMENTO DE CONVERSÃO (TRÁFEGO PAGO)
+        if (typeof window !== 'undefined' && (window as any).fbq) {
+          (window as any).fbq('track', 'CompleteRegistration', {
+            currency: 'BRL',
+            value: 0.00 // Pode ser atualizado depois para LTV esperado
+          });
+        }
+        if (typeof window !== 'undefined' && (window as any).gtag) {
+           (window as any).gtag('event', 'sign_up', {
+              method: 'email'
+           });
+        }
+
         // Se já tiver sessão, vai pro admin, senão pro login confirmar
         setTimeout(() => {
           router.push('/login?message=Conta criada com sucesso! 💎')
