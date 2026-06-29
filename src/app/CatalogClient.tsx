@@ -7,7 +7,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import AddToCartButton from '@/components/cart/add-to-cart-button'
 import { useSearchParams } from 'next/navigation'
-import { Gem } from 'lucide-react'
+import { Gem, Loader2 } from 'lucide-react'
 
 interface Category {
   id: string
@@ -373,6 +373,13 @@ export default function CatalogClient({
           <div className="py-20">
             <Gem size={24} className="text-brand-secondary/10 mb-3 mx-auto" />
             <p className="text-[8px] font-black uppercase tracking-[0.3em] text-brand-secondary/20">Coleção em breve 💎</p>
+          </div>
+        )}
+
+        {/* 🎯 SENSOR DO SCROLL INFINITO: dispara o carregamento das próximas joias ao chegar no fim da lista */}
+        {hasMore && (
+          <div ref={observerRef} className="w-full flex justify-center py-10">
+            {loadingMore && <Loader2 className="animate-spin text-brand-secondary/40" size={20} />}
           </div>
         )}
       </div>
