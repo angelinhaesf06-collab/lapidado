@@ -7,14 +7,16 @@ import Footer from '@/components/footer';
 import { CartProvider } from '@/lib/cart-context';
 import AdminBar from '@/components/admin-bar';
 import CartIcon from '@/components/cart/cart-icon';
+import Onboarding from '@/components/Onboarding';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Toaster } from 'sonner';
 import { initializeBilling } from '@/lib/billing/googlePlay';
 
-const montserrat = Montserrat({ 
-  subsets: ["latin"], 
-  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'], 
-  variable: '--font-montserrat' 
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  // ⚡ Apenas os pesos realmente usados no app (antes carregava os 9 → mais leve no carregamento)
+  weight: ['300', '400', '500', '600', '700', '900'],
+  variable: '--font-montserrat'
 });
 
 export default function RootLayoutContent({
@@ -112,6 +114,7 @@ export default function RootLayoutContent({
       } as React.CSSProperties}
     >
       <Toaster position="top-center" richColors />
+      <Onboarding />
       <CartProvider>
         <AdminBar user={user} />
         {!isAdminPage && !isAuthPage && !isLegalPage && !isLpPage && <CartIcon />}
