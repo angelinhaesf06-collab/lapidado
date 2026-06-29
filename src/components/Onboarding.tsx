@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
-import { Sparkles, Coins, MessageCircle, ChevronRight } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 
 // 💎 Tela de boas-vindas mostrada apenas na PRIMEIRA vez que a lojista entra (web ou app).
 // Não aparece para clientes (vitrine pública) nem repete depois de vista/pulada.
@@ -11,8 +11,7 @@ const STORAGE_KEY = 'lapidado_onboarding_v1'
 const SERIF = 'Georgia, "Times New Roman", serif'
 
 type Slide = {
-  kind: 'welcome' | 'icon'
-  Icon?: typeof Sparkles
+  kind: 'welcome' | 'feature'
   tag: string
   title: string
   text: string
@@ -26,22 +25,19 @@ const SLIDES: Slide[] = [
     text: 'Suas semijoias merecem brilhar como diamantes.',
   },
   {
-    kind: 'icon',
-    Icon: Sparkles,
+    kind: 'feature',
     tag: 'MÁGICA LAPIDADO',
     title: 'A foto vira anúncio',
     text: 'Fotografe a peça e a inteligência escreve o nome e a descrição que vendem por você.',
   },
   {
-    kind: 'icon',
-    Icon: Coins,
+    kind: 'feature',
     tag: 'PREÇO CERTO',
     title: 'Lucro sob controle',
     text: 'Informe o custo e a margem — o preço de venda aparece na hora, sem calculadora.',
   },
   {
-    kind: 'icon',
-    Icon: MessageCircle,
+    kind: 'feature',
     tag: 'SUA VITRINE',
     title: 'Pronta pra brilhar',
     text: 'Um link só seu para enviar no WhatsApp e no Instagram e receber pedidos.',
@@ -187,40 +183,27 @@ export default function Onboarding() {
           animation: 'lapFade 0.35s ease',
         }}
       >
-        {slide.kind === 'welcome' ? (
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo-app.png"
+          alt="Lapidado Catálogo"
+          style={{
+            width: slide.kind === 'welcome' ? 168 : 124,
+            height: slide.kind === 'welcome' ? 168 : 124,
+            borderRadius: slide.kind === 'welcome' ? 36 : 28,
+            boxShadow: '0 20px 50px rgba(169,114,95,0.28)',
+            marginBottom: 26,
+          }}
+        />
+        {slide.kind !== 'welcome' && (
           <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/logo-app.png"
-              alt="Lapidado Catálogo"
-              style={{ width: 168, height: 168, borderRadius: 36, boxShadow: '0 20px 50px rgba(169,114,95,0.28)', marginBottom: 28 }}
-            />
-            <p style={{ fontSize: 14, color: '#7a5c54', lineHeight: 1.6, margin: 0, fontWeight: 500 }}>{slide.text}</p>
-          </>
-        ) : (
-          <>
-            <div
-              style={{
-                width: 108,
-                height: 108,
-                borderRadius: '50%',
-                background: '#fbf1ea',
-                border: '2px solid #e8c9bc',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: 28,
-              }}
-            >
-              {slide.Icon && <slide.Icon size={46} color="#bd7d6a" strokeWidth={1.4} />}
-            </div>
             <p style={{ fontSize: 11, color: '#a9725f', letterSpacing: 3, fontWeight: 700, margin: '0 0 12px', textTransform: 'uppercase' }}>
               {slide.tag}
             </p>
             <h2 style={{ fontFamily: SERIF, fontSize: 26, color: '#5a3e36', margin: '0 0 14px', fontWeight: 500 }}>{slide.title}</h2>
-            <p style={{ fontSize: 14, color: '#7a5c54', lineHeight: 1.65, margin: 0, fontWeight: 500 }}>{slide.text}</p>
           </>
         )}
+        <p style={{ fontSize: 14, color: '#7a5c54', lineHeight: 1.6, margin: 0, fontWeight: 500 }}>{slide.text}</p>
       </div>
 
       {/* Indicadores (pontinhos) */}
