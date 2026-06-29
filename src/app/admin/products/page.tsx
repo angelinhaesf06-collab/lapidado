@@ -114,25 +114,28 @@ function SortableProduct({ product, margin, deletingId, handleDelete, handleShar
             <p className="absolute bottom-6 text-[8px] font-black text-white uppercase tracking-widest">Arraste para mover</p>
           </div>
         ) : (
-          <div className="absolute inset-0 bg-brand-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-[2px]">
-             <Link 
-              href={`/admin/products/edit?id=${product.id}`} 
-              className="p-4 bg-white rounded-full text-brand-primary hover:scale-110 transition-all shadow-lg"
+          <div className="absolute bottom-0 inset-x-0 flex items-center justify-center gap-2.5 p-3 bg-gradient-to-t from-brand-primary/55 via-brand-primary/20 to-transparent">
+             <Link
+              href={`/admin/products/edit?id=${product.id}`}
+              aria-label="Editar joia"
+              className="p-3.5 bg-white rounded-full text-brand-primary shadow-lg active:scale-90 hover:scale-110 transition-all"
              >
-               <Pencil size={20} />
+               <Pencil size={18} />
              </Link>
-             <button 
+             <button
               onClick={() => handleShareWhatsApp(product)}
-              className="p-4 bg-[#25D366] rounded-full text-white hover:scale-110 transition-all shadow-lg"
+              aria-label="Compartilhar no WhatsApp"
+              className="p-3.5 bg-[#25D366] rounded-full text-white shadow-lg active:scale-90 hover:scale-110 transition-all"
              >
-               <Share2 size={20} />
+               <Share2 size={18} />
              </button>
-             <button 
+             <button
               onClick={() => handleDelete(product.id, product.image_url)}
               disabled={deletingId === product.id}
-              className="p-4 bg-white rounded-full text-rose-500 hover:scale-110 transition-all shadow-lg"
+              aria-label="Excluir joia"
+              className="p-3.5 bg-white rounded-full text-rose-500 shadow-lg active:scale-90 hover:scale-110 transition-all"
              >
-               {deletingId === product.id ? <Loader2 size={20} className="animate-spin" /> : <Trash2 size={20} />}
+               {deletingId === product.id ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
              </button>
           </div>
         )}
