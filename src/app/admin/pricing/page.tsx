@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Loader2, Percent, TrendingUp, Gem, Calculator, FileText, Plus, X, Layers, ShoppingBag, Trash2, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
+// ⚡ jspdf/jspdf-autotable são carregados sob demanda (import dinâmico) dentro de generateReportPDF,
+// para não pesar no carregamento inicial da página de preços.
 
 export default function PricingPage() {
   const [loading, setLoading] = useState(true)
@@ -102,6 +102,9 @@ export default function PricingPage() {
 
   const generateReportPDF = async () => {
     if (addedItems.length === 0) return toast.error('Adicione itens primeiro! 📸')
+    // ⚡ Carrega a biblioteca de PDF só na hora de gerar o romaneio
+    const { default: jsPDF } = await import('jspdf')
+    const { default: autoTable } = await import('jspdf-autotable')
     const doc = new jsPDF()
     const storeName = branding?.business_name || branding?.store_name || 'LAPIDADO ERP'
     

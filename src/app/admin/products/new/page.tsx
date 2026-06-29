@@ -116,10 +116,13 @@ export default function NewProductPage() {
     
     try {
       const compressed = await compressImage(images[0].preview)
+      // 💎 Se a categoria já foi escolhida, enviamos para a IA gerar um texto específico
+      // daquele tipo de joia (e gastar menos tokens, pois não precisa adivinhar a categoria).
+      const selectedCategoryName = categories.find(c => c.id === category)?.name || ''
       const response = await fetch('/api/ai/describe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: compressed, style: aiStyle })
+        body: JSON.stringify({ image: compressed, style: aiStyle, category: selectedCategoryName })
       })
 
       if (!response.body) throw new Error("Sem resposta do servidor")

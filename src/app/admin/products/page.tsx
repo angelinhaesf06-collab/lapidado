@@ -324,10 +324,7 @@ export default function ProductsListPage() {
     try {
       const res = await fetch('/api/admin/delete', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer LAPIDADO_ADMIN_2026'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ table: 'products', id, imageUrl })
       })
       
