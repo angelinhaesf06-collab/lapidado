@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Phone, MapPin, Music2, Camera as InstagramIcon, Gem, User } from 'lucide-react'
+import { Phone, MapPin, Music2, Camera as InstagramIcon, Gem } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -108,13 +108,6 @@ export default function Footer() {
                 </a>
               )}
             </div>
-          </div>
-
-          <div className="">
-            <Link href="/login" className="flex items-center gap-1.5 text-[8px] font-black text-brand-secondary/40 hover:text-brand-primary uppercase tracking-[0.3em] transition-all group">
-              <User size={10} className="group-hover:scale-110 transition-transform" />
-              Admin
-            </Link>
           </div>
         </div>
 
