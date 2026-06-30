@@ -135,10 +135,8 @@ export default function RegisterPage() {
         }
       }
 
-      // 💎 AUTO-LOGIN NEXUS: Removendo burocracia de e-mail
+      // 💎 Cadastro concluído
       if (data.user) {
-        setSuccess(true)
-        
         // 🎯 RASTREAMENTO DE CONVERSÃO (TRÁFEGO PAGO)
         if (typeof window !== 'undefined' && (window as any).fbq) {
           (window as any).fbq('track', 'CompleteRegistration', {
@@ -152,10 +150,17 @@ export default function RegisterPage() {
            });
         }
 
-        // Se já tiver sessão, vai pro admin, senão pro login confirmar
-        setTimeout(() => {
-          router.push('/register/success')
-        }, 2000)
+        if (data.session) {
+          // ✅ AUTO-LOGIN: confirmação de e-mail está DESLIGADA → entra direto no painel,
+          // sem pedir login de novo. (Esse é o caminho ideal para não perder cadastros.)
+          setSuccess(true)
+          router.push('/admin')
+          router.refresh()
+        } else {
+          // 📧 O Supabase ainda exige confirmar o e-mail → mostra a tela de verificação.
+          // (Recomendado DESLIGAR a confirmação de e-mail no Supabase para cair no caso acima.)
+          setWaitingConfirmation(true)
+        }
       }
       
     } catch (err) {
