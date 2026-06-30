@@ -1,56 +1,26 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { ChevronRight } from 'lucide-react'
 
-// 💎 Tela de boas-vindas mostrada apenas na PRIMEIRA vez que a lojista entra (web ou app).
-// Não aparece para clientes (vitrine pública) nem repete depois de vista/pulada.
+// 💎 Tela de boas-vindas (UMA tela só) mostrada apenas na PRIMEIRA vez que a lojista
+// entra (web ou app). Não aparece para clientes (vitrine pública) nem repete depois.
 const STORAGE_KEY = 'lapidado_onboarding_v1'
 
 const SERIF = 'Georgia, "Times New Roman", serif'
 
-type Slide = {
-  kind: 'welcome' | 'feature'
-  tag: string
-  title: string
-  text: string
-}
-
-const SLIDES: Slide[] = [
-  {
-    kind: 'welcome',
-    tag: 'CATÁLOGO',
-    title: 'LAPIDADO',
-    text: 'Suas semijoias merecem brilhar como diamantes.',
-  },
-  {
-    kind: 'feature',
-    tag: 'MÁGICA LAPIDADO',
-    title: 'A foto vira anúncio',
-    text: 'Fotografe a peça e a inteligência escreve o nome e a descrição que vendem por você.',
-  },
-  {
-    kind: 'feature',
-    tag: 'PREÇO CERTO',
-    title: 'Lucro sob controle',
-    text: 'Informe o custo e a margem — o preço de venda aparece na hora, sem calculadora.',
-  },
-  {
-    kind: 'feature',
-    tag: 'SUA VITRINE',
-    title: 'Pronta pra brilhar',
-    text: 'Um link só seu para enviar no WhatsApp e no Instagram e receber pedidos.',
-  },
+const BENEFITS = [
+  'Cadastre suas joias e a inteligência escreve a descrição que vende.',
+  'Calcule preço e lucro na hora, sem complicação.',
+  'Compartilhe sua vitrine no WhatsApp e no Instagram.',
 ]
 
 export default function Onboarding() {
   const [show, setShow] = useState(false)
-  const [index, setIndex] = useState(0)
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const touchStartX = useRef<number | null>(null)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -77,7 +47,7 @@ export default function Onboarding() {
     }
   }, [pathname, searchParams])
 
-  const dismiss = () => {
+  const markSeen = () => {
     try {
       localStorage.setItem(STORAGE_KEY, '1')
     } catch {
@@ -87,42 +57,22 @@ export default function Onboarding() {
   }
 
   const handleStart = () => {
-    dismiss()
+    markSeen()
     router.push('/register')
   }
 
-  const isLast = index === SLIDES.length - 1
-
-  const handleNext = () => {
-    if (isLast) handleStart()
-    else setIndex((i) => Math.min(i + 1, SLIDES.length - 1))
-  }
-
-  const handlePrev = () => setIndex((i) => Math.max(i - 1, 0))
-
-  const onTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX
-  }
-
-  const onTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current === null) return
-    const delta = e.changedTouches[0].clientX - touchStartX.current
-    if (delta < -45) handleNext()
-    else if (delta > 45) handlePrev()
-    touchStartX.current = null
+  const handleLogin = () => {
+    markSeen()
+    router.push('/login')
   }
 
   if (!show) return null
-
-  const slide = SLIDES[index]
 
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-label="Boas-vindas ao Lapidado"
-      onTouchStart={onTouchStart}
-      onTouchEnd={onTouchEnd}
       style={{
         position: 'fixed',
         inset: 0,
@@ -131,106 +81,70 @@ export default function Onboarding() {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
+        justifyContent: 'center',
         paddingTop: 'env(safe-area-inset-top, 16px)',
         paddingBottom: 'env(safe-area-inset-bottom, 16px)',
         overflow: 'hidden',
       }}
     >
       {/* Círculos decorativos suaves */}
-      <div
-        aria-hidden
-        style={{ position: 'absolute', top: -60, left: -40, width: 200, height: 200, background: '#f6e7df', borderRadius: '50%' }}
-      />
-      <div
-        aria-hidden
-        style={{ position: 'absolute', bottom: -70, right: -50, width: 220, height: 220, background: '#f6e7df', borderRadius: '50%' }}
-      />
+      <div aria-hidden style={{ position: 'absolute', top: -60, left: -40, width: 200, height: 200, background: '#f6e7df', borderRadius: '50%' }} />
+      <div aria-hidden style={{ position: 'absolute', bottom: -70, right: -50, width: 220, height: 220, background: '#f6e7df', borderRadius: '50%' }} />
 
-      {/* Botão Pular */}
-      <div style={{ position: 'relative', zIndex: 1, width: '100%', display: 'flex', justifyContent: 'flex-end', padding: '12px 20px' }}>
+      {/* Botão Entrar (para quem já tem conta) */}
+      <div style={{ position: 'absolute', top: 'env(safe-area-inset-top, 16px)', right: 0, zIndex: 1, padding: '12px 20px' }}>
         <button
-          onClick={dismiss}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            color: '#a9725f',
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: 2,
-            textTransform: 'uppercase',
-            cursor: 'pointer',
-            padding: 8,
-          }}
+          onClick={handleLogin}
+          style={{ background: 'transparent', border: 'none', color: '#a9725f', fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', cursor: 'pointer', padding: 8 }}
         >
-          Pular
+          Entrar
         </button>
       </div>
 
-      {/* Conteúdo central do slide */}
+      {/* Conteúdo central */}
       <div
-        key={index}
         style={{
           position: 'relative',
           zIndex: 1,
-          flex: 1,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
           textAlign: 'center',
-          maxWidth: 360,
+          maxWidth: 380,
           padding: '0 32px',
-          animation: 'lapFade 0.35s ease',
+          animation: 'lapFade 0.4s ease',
         }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/logo-app.png"
           alt="Lapidado Catálogo"
-          style={{
-            width: slide.kind === 'welcome' ? 168 : 124,
-            height: slide.kind === 'welcome' ? 168 : 124,
-            borderRadius: slide.kind === 'welcome' ? 36 : 28,
-            boxShadow: '0 20px 50px rgba(169,114,95,0.28)',
-            marginBottom: 26,
-          }}
+          style={{ width: 132, height: 132, borderRadius: 30, boxShadow: '0 20px 50px rgba(169,114,95,0.28)', marginBottom: 24 }}
         />
-        {slide.kind !== 'welcome' && (
-          <>
-            <p style={{ fontSize: 11, color: '#a9725f', letterSpacing: 3, fontWeight: 700, margin: '0 0 12px', textTransform: 'uppercase' }}>
-              {slide.tag}
-            </p>
-            <h2 style={{ fontFamily: SERIF, fontSize: 26, color: '#5a3e36', margin: '0 0 14px', fontWeight: 500 }}>{slide.title}</h2>
-          </>
-        )}
-        <p style={{ fontSize: 14, color: '#7a5c54', lineHeight: 1.6, margin: 0, fontWeight: 500 }}>{slide.text}</p>
-      </div>
 
-      {/* Indicadores (pontinhos) */}
-      <div style={{ position: 'relative', zIndex: 1, display: 'flex', gap: 7, marginBottom: 22 }}>
-        {SLIDES.map((_, i) => (
-          <button
-            key={i}
-            aria-label={`Ir para a tela ${i + 1}`}
-            onClick={() => setIndex(i)}
-            style={{
-              width: i === index ? 22 : 7,
-              height: 7,
-              borderRadius: 9,
-              border: 'none',
-              padding: 0,
-              cursor: 'pointer',
-              background: i === index ? '#a9725f' : '#dcbcae',
-              transition: 'width 0.25s ease, background 0.25s ease',
-            }}
-          />
-        ))}
-      </div>
+        <h2 style={{ fontFamily: SERIF, fontSize: 25, color: '#5a3e36', margin: '0 0 8px', fontWeight: 500, lineHeight: 1.2 }}>
+          Seu catálogo de semijoias
+        </h2>
+        <p style={{ fontSize: 13, color: '#a9725f', margin: '0 0 26px', fontWeight: 600, letterSpacing: 1 }}>
+          PROFISSIONAL E COM INTELIGÊNCIA ARTIFICIAL
+        </p>
 
-      {/* Botão principal */}
-      <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 360, padding: '0 32px 20px' }}>
+        {/* Resumo do que o app faz */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%', marginBottom: 32 }}>
+          {BENEFITS.map((text, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, textAlign: 'left' }}>
+              <span
+                aria-hidden
+                style={{ flexShrink: 0, width: 10, height: 10, marginTop: 5, background: '#c98e7d', transform: 'rotate(45deg)', borderRadius: 2 }}
+              />
+              <span style={{ fontSize: 14, color: '#7a5c54', lineHeight: 1.5, fontWeight: 500 }}>{text}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Botão principal */}
         <button
-          onClick={handleNext}
+          onClick={handleStart}
           style={{
             width: '100%',
             background: '#a9725f',
@@ -250,8 +164,15 @@ export default function Onboarding() {
             boxShadow: '0 14px 32px rgba(169,114,95,0.3)',
           }}
         >
-          {isLast ? 'Começar agora' : 'Avançar'}
+          Começar agora
           <ChevronRight size={18} strokeWidth={2.4} />
+        </button>
+
+        <button
+          onClick={handleLogin}
+          style={{ marginTop: 16, background: 'transparent', border: 'none', color: '#a9725f', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+        >
+          Já tenho conta · Entrar
         </button>
       </div>
 
