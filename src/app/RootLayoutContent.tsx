@@ -85,7 +85,9 @@ export default function RootLayoutContent({
   );
   const showFooter = !isAuthPage && !isAdminPage;
 
-  const showAdminBar = user && (pathname === '/' || pathname?.startsWith('/product') || pathname === '/cart');
+  // 🚫 A barra de administração NUNCA deve aparecer na vitrine/visão do cliente (catalogo=true ou ?loja=)
+  const isCustomerView = !!storeSlug || searchParams.get('catalogo') === 'true';
+  const showAdminBar = !!user && !isCustomerView && (pathname === '/' || pathname?.startsWith('/product') || pathname === '/cart');
 
   // 💎 NEXUS: Bloqueio do Prompt de Instalação (PWA) na Vitrine do Cliente
   useEffect(() => {
@@ -116,7 +118,7 @@ export default function RootLayoutContent({
       <Toaster position="top-center" richColors />
       <Onboarding />
       <CartProvider>
-        <AdminBar user={user} />
+        {showAdminBar && <AdminBar user={user} />}
         {!isAdminPage && !isAuthPage && !isLegalPage && !isLpPage && <CartIcon />}
         <main>
           {children}
