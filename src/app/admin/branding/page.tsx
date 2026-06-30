@@ -246,7 +246,7 @@ export default function BrandingPage() {
           {currentSlug && (
             <div className="p-3 rounded-xl bg-brand-primary/5 border border-brand-primary/10">
               <p className="text-[7px] font-black text-brand-secondary/40 uppercase tracking-widest mb-1">Link Público da sua Vitrine:</p>
-              <p className="text-[10px] font-bold text-brand-primary break-all">lapidado.app/?loja={currentSlug}</p>
+              <p className="text-[10px] font-bold text-brand-primary break-all">{(typeof window !== 'undefined' ? window.location.host : 'lapidado.com.br')}/{currentSlug}</p>
             </div>
           )}
 
