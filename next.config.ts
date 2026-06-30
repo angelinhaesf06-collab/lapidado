@@ -19,7 +19,17 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     // 🚀 Otimização de performance
-  }
+  },
+  // 🔗 LINK LIMPO POR LOJA: /nome-da-loja abre a vitrine certa (sem ?catalogo=true&loja=).
+  // 'fallback' só age quando nenhuma rota/arquivo real combinou, então /login, /admin,
+  // /product etc. continuam funcionando normalmente. Os links antigos (?loja=) seguem válidos.
+  async rewrites() {
+    return {
+      fallback: [
+        { source: '/:loja', destination: '/?catalogo=true&loja=:loja' },
+      ],
+    };
+  },
 };
 
 export default nextConfig;

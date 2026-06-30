@@ -169,7 +169,7 @@ export default function AdminLayout({
     const storeName = branding.name || 'LAPIDADO'
     const finalSlug = branding.slug || storeName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
 
-    const url = `${baseUrl}/?catalogo=true&loja=${finalSlug}`
+    const url = `${baseUrl}/${finalSlug}`
     const text = `💎 *${storeName.toUpperCase()}* | Catálogo Exclusivo\n\nOlá! Confira as nossas novidades e peças selecionadas em nossa vitrine digital. Brilho e requinte a apenas um toque:\n\n🔗 ${url}`
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
   }

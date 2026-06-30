@@ -2,11 +2,11 @@
 
 import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { triggerHaptic } from '@/lib/utils'
+import { triggerHaptic, resolveStoreSlug } from '@/lib/utils'
 import Link from 'next/link'
 import Image from 'next/image'
 import AddToCartButton from '@/components/cart/add-to-cart-button'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, usePathname } from 'next/navigation'
 import { Gem, Loader2 } from 'lucide-react'
 
 interface Category {
@@ -109,6 +109,7 @@ export default function CatalogClient({
   initialCategories?: Category[] 
 }) {
   const searchParams = useSearchParams()
+  const pathname = usePathname()
   const [logoError, setLogoError] = useState(false)
   const [allProducts, setAllProducts] = useState<any[]>(initialProducts || [])
   const [dbCategories, setDbCategories] = useState<Category[]>(initialCategories || [])
@@ -122,7 +123,7 @@ export default function CatalogClient({
   const productsTopRef = useRef<HTMLDivElement>(null)
   const observerRef = useRef<HTMLDivElement>(null)
   
-  const storeSlug = searchParams.get('loja')
+  const storeSlug = resolveStoreSlug(searchParams, pathname)
   const supabase = useMemo(() => createClient(), [])
 
   // 🚀 INFINITE SCROLL: Carregamento por Demanda

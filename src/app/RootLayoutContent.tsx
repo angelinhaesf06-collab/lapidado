@@ -11,6 +11,7 @@ import Onboarding from '@/components/Onboarding';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Toaster } from 'sonner';
 import { initializeBilling } from '@/lib/billing/googlePlay';
+import { resolveStoreSlug } from '@/lib/utils';
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -29,7 +30,7 @@ export default function RootLayoutContent({
   const supabase = useMemo(() => createClient(), []);
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const storeSlug = searchParams.get('loja');
+  const storeSlug = resolveStoreSlug(searchParams, pathname);
 
   useEffect(() => {
     async function loadIdentity() {

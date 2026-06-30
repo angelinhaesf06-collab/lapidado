@@ -295,8 +295,9 @@ export default function ProductsListPage() {
     // 💎 Fallback para slug caso esteja nulo no banco
     const storeSlug = branding?.slug || storeName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
     
-    // 🔗 Prioriza o link oficial cadastrado, depois a URL de ambiente, por fim a origem atual
-    const baseUrl = branding?.website || process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
+    // 🔗 Usa o domínio raiz (NÃO o branding.website, que agora é a URL completa da loja).
+    // Assim o link do produto fica correto: dominio/product?id=...
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== 'undefined' ? window.location.origin : '')
     
     if (!storeSlug || storeSlug === 'lapidado') {
       return alert('💎 ANGELA, O NOME DA SUA LOJA AINDA NÃO FOI CONFIGURADO.\n\nPor favor, vá em "MINHA MARCA", digite o NOME DA LOJA (diferente de LAPIDADO) e clique em SALVAR. Isso criará o seu link exclusivo para que você possa compartilhar suas joias! ✨')

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Phone, MapPin, Music2, Camera as InstagramIcon, Gem } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { resolveStoreSlug } from '@/lib/utils'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -28,8 +29,7 @@ export default function Footer() {
   useEffect(() => {
     async function loadBranding() {
       try {
-        const urlParams = new URLSearchParams(window.location.search)
-        const storeSlug = urlParams.get('loja')
+        const storeSlug = resolveStoreSlug(new URLSearchParams(window.location.search), window.location.pathname)
 
         let brandingData = null
 
@@ -64,7 +64,7 @@ export default function Footer() {
     const storeName = branding.business_name || branding.store_name || 'LAPIDADO'
     const storeSlug = branding.slug || ''
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lapidado.vercel.app'
-    const catalogUrl = storeSlug ? `${baseUrl}/?catalogo=true&loja=${storeSlug}` : baseUrl
+    const catalogUrl = storeSlug ? `${baseUrl}/${storeSlug}` : baseUrl
     
     const msg = encodeURIComponent(`Olá! ✨ Vi o catálogo da *${storeName.toUpperCase()}* e gostaria de mais informações.\n\nLink do Catálogo: ${catalogUrl}`)
     return `https://wa.me/${phone}?text=${msg}`
