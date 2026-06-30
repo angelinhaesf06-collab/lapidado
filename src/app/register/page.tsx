@@ -10,7 +10,7 @@ export default function RegisterPage() {
   const [storeName, setStoreName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -59,13 +59,6 @@ export default function RegisterPage() {
     if (cleanEmail.endsWith('.con')) cleanEmail = cleanEmail.replace('.con', '.com')
     
     const pass = password.trim()
-    const confirm = confirmPassword.trim()
-
-    if (pass !== confirm) {
-      setError('As senhas não coincidem, Angela.')
-      setLoading(false)
-      return
-    }
 
     try {
       const { data, error: signUpError } = await supabase.auth.signUp({
@@ -279,33 +272,25 @@ export default function RegisterPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-black text-[#c99090] uppercase tracking-[0.2em] mb-2 ml-2">Senha Mestra</label>
+                  <label className="block text-[10px] font-black text-[#c99090] uppercase tracking-[0.2em] mb-2 ml-2">Senha de Acesso</label>
                   <div className="relative">
-                    <input 
-                      type="password" 
+                    <input
+                      type={showPassword ? 'text' : 'password'}
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full pl-12 pr-6 py-4 rounded-3xl bg-rose-50/50 border-2 border-transparent focus:border-[#c99090] focus:bg-white outline-none transition-all text-[#4a322e]"
-                      placeholder="••••••••"
+                      className="w-full pl-12 pr-24 py-4 rounded-3xl bg-rose-50/50 border-2 border-transparent focus:border-[#c99090] focus:bg-white outline-none transition-all text-[#4a322e]"
+                      placeholder="Mínimo 6 caracteres"
                       minLength={6}
                     />
                     <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-[#c99090]" size={18} />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-black text-[#c99090] uppercase tracking-[0.2em] mb-2 ml-2">Confirmar Senha</label>
-                  <div className="relative">
-                    <input 
-                      type="password" 
-                      required
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full pl-12 pr-6 py-4 rounded-3xl bg-rose-50/50 border-2 border-transparent focus:border-[#c99090] focus:bg-white outline-none transition-all text-[#4a322e]"
-                      placeholder="••••••••"
-                    />
-                    <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-[#c99090]" size={18} />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(v => !v)}
+                      className="absolute right-5 top-1/2 -translate-y-1/2 text-[9px] font-black text-[#c99090] uppercase tracking-widest hover:opacity-70"
+                    >
+                      {showPassword ? 'Ocultar' : 'Mostrar'}
+                    </button>
                   </div>
                 </div>
 
