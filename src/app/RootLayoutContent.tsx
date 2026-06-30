@@ -86,9 +86,12 @@ export default function RootLayoutContent({
   );
   const showFooter = !isAuthPage && !isAdminPage;
 
-  // 🚫 A barra de administração NUNCA deve aparecer na vitrine/visão do cliente (catalogo=true ou ?loja=)
+  // Visão do cliente (vitrine pública): catalogo=true ou ?loja= / caminho /nome-da-loja
   const isCustomerView = !!storeSlug || searchParams.get('catalogo') === 'true';
-  const showAdminBar = !!user && !isCustomerView && (pathname === '/' || pathname?.startsWith('/product') || pathname === '/cart');
+  // 💎 A DONA da loja vê a barra (com "Voltar ao Painel") mesmo ao pré-visualizar a vitrine.
+  // O cliente (sem sessão, ou logado em outra loja) NUNCA vê controles de admin.
+  const isStoreOwner = !!user && !!branding?.user_id && (user as { id?: string }).id === branding.user_id;
+  const showAdminBar = !!user && (pathname === '/' || pathname?.startsWith('/product') || pathname === '/cart') && (!isCustomerView || isStoreOwner);
 
   // 💎 NEXUS: Bloqueio do Prompt de Instalação (PWA) na Vitrine do Cliente
   useEffect(() => {
