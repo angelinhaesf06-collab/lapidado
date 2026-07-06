@@ -210,19 +210,18 @@ export default function CatalogClient({
   }
 
   useEffect(() => {
+    // ⚡ Os produtos iniciais (do servidor) dão o primeiro paint rápido; aqui SEMPRE carregamos
+    // a coleção completa (até 200) para garantir que TODAS as peças/fotos apareçam, sem depender
+    // do scroll infinito.
     async function loadBrandingData() {
-      if (initialBranding && initialProducts && initialProducts.length > 0) {
-        setLoading(false);
-        return;
-      }
-      
       try {
-        let currentBranding: Branding | null = null
-        if (storeSlug) {
+        let currentBranding: Branding | null = initialBranding || null
+
+        if (!currentBranding && storeSlug) {
           const { data } = await supabase.from('branding').select('*').eq('slug', storeSlug).maybeSingle()
           currentBranding = data as Branding | null
-        } 
-        
+        }
+
         if (!currentBranding) {
           const { data: { user } } = await supabase.auth.getUser()
           if (user) {
@@ -230,7 +229,7 @@ export default function CatalogClient({
             currentBranding = data as Branding | null
           }
         }
-        
+
         if (currentBranding) {
           setBranding(currentBranding)
           if (typeof document !== 'undefined') {
@@ -246,21 +245,24 @@ export default function CatalogClient({
               .eq('user_id', currentUserId)
               .gt('stock_quantity', 0)
               .order('created_at', { ascending: false }) // ⚡ Prioridade para os novos cadastros
-              .limit(200) 
+              .limit(200)
           ])
 
           if (catsRes.data) setDbCategories(catsRes.data)
-          if (prodsRes.data) setAllProducts(prodsRes.data)
+          if (prodsRes.data) {
+            setAllProducts(prodsRes.data)
+            setHasMore(false) // Coleção completa já carregada — não precisa de scroll infinito
+          }
         }
       } catch (err) {
-        console.error("❌ Falha no carregamento acelerado:", err)
+        console.error("❌ Falha no carregamento da vitrine:", err)
       } finally {
         setLoading(false)
       }
     }
 
     loadBrandingData()
-  }, [storeSlug, supabase, initialProducts, initialBranding])
+  }, [storeSlug, supabase, initialBranding])
 
   const displayedProducts = useMemo(() => {
     if (!allProducts) return []
@@ -313,23 +315,23 @@ export default function CatalogClient({
   return (
     <div className="flex flex-col w-full min-h-[100svh] animate-in fade-in duration-300 bg-[#F5F0E6]">
       <div className="sticky top-0 z-[100] bg-[#F5F0E6]/95 backdrop-blur-xl border-b border-brand-secondary/5 pt-[env(safe-area-inset-top,8px)] flex flex-col">
-        <header className="w-full pt-4 pb-2 flex flex-col items-center gap-3">
+        <header className="w-full pt-3 pb-1 flex flex-col items-center gap-2">
           {branding?.logo_url && !logoError ? (
-            <Link href={`/?catalogo=true${storeParam}`} className="relative block w-32 md:w-56 h-auto transition-all duration-300 hover:scale-105 active:scale-95">
-              <img src={branding.logo_url} alt={branding.store_name || 'Logo'} className="w-full h-full object-contain max-h-16 md:max-h-40" onError={() => setLogoError(true)} />
+            <Link href={`/?catalogo=true${storeParam}`} className="relative block w-28 md:w-52 h-auto transition-all duration-300 hover:scale-105 active:scale-95">
+              <img src={branding.logo_url} alt={branding.store_name || 'Logo'} className="w-full h-full object-contain max-h-14 md:max-h-36" onError={() => setLogoError(true)} />
             </Link>
           ) : null}
         </header>
 
         {categoryNames.length > 1 && (
-          <nav className="max-w-7xl mx-auto px-4 py-2 flex flex-wrap justify-center gap-1.5 md:gap-3 items-center pb-4">
+          <nav className="w-full max-w-7xl mx-auto px-4 pt-1 pb-2.5 flex flex-nowrap md:flex-wrap md:justify-center gap-1.5 md:gap-3 items-center overflow-x-auto scrollbar-hide">
             {categoryNames.map((cat) => (
-              <button 
+              <button
                 key={cat}
                 onClick={() => handleCategoryChange(cat)}
-                className={`px-3 py-1.5 md:px-4 md:py-2 transition-all duration-200 font-black text-[7px] md:text-[9px] tracking-[0.1em] uppercase rounded-full border ${
+                className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 md:px-4 md:py-2 transition-all duration-200 font-black text-[8px] md:text-[9px] tracking-[0.1em] uppercase rounded-full border ${
                   activeCategory === cat || (cat === 'Todos' && !activeCategory)
-                  ? "bg-brand-primary text-white border-brand-primary shadow-sm scale-105" 
+                  ? "bg-brand-primary text-white border-brand-primary shadow-sm"
                   : "text-brand-primary/60 hover:text-brand-primary bg-white/40 border-brand-secondary/5"
                 }`}
               >
@@ -348,11 +350,11 @@ export default function CatalogClient({
         </div>
       )}
 
-      <div ref={productsTopRef} className="max-w-7xl mx-auto px-4 py-8 md:py-16 w-full text-center flex flex-col items-center gap-4">
-        <div className="mb-4 md:mb-10 pt-2 w-full flex flex-col items-center gap-3 pb-4">
+      <div ref={productsTopRef} className="max-w-7xl mx-auto px-4 pt-4 pb-8 md:pt-8 md:pb-16 w-full text-center flex flex-col items-center gap-4">
+        <div className="mb-2 md:mb-6 w-full flex flex-col items-center gap-2 pb-2">
           <h2 className="text-[10px] md:text-lg font-light tracking-[0.4em] uppercase text-brand-primary animate-in slide-in-from-bottom-2 duration-300 block break-words leading-relaxed px-6">
-            {(activeCategory === 'Todos' || !activeCategory) 
-              ? `${branding?.store_name || branding?.business_name || 'Coleção'} Exclusiva` 
+            {(activeCategory === 'Todos' || !activeCategory)
+              ? `${branding?.store_name || branding?.business_name || 'Coleção'} Exclusiva`
               : activeCategory}
           </h2>
           <div className="w-8 h-[1px] bg-brand-secondary/10 mx-auto" />
