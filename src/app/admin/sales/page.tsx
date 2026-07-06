@@ -17,6 +17,7 @@ interface Sale {
   installments: number
   status: 'pago' | 'pendente'
   total_value: number
+  item_name?: string | null
   customer_id: string
   customers: {
     name: string
@@ -102,6 +103,20 @@ export default function SalesPage() {
   const [paymentMethod, setPaymentMethod] = useState('cartao')
   const [installments, setInstallments] = useState(1)
   const [isSaving, setIsSaving] = useState(false)
+
+  // 💎 Venda de peça AVULSA (fora do catálogo)
+  const [isManual, setIsManual] = useState(false)
+  const [manualName, setManualName] = useState('')
+  const [manualPrice, setManualPrice] = useState('')
+  const [manualCost, setManualCost] = useState('')
+
+  const closeAddModal = () => {
+    setShowAddModal(false)
+    setSelectedProduct(null)
+    setIsManual(false)
+    setManualName(''); setManualPrice(''); setManualCost('')
+    setCustomerId(''); setQuantity(1); setInstallments(1); setPaymentMethod('cartao')
+  }
   
   const loadSales = useCallback(async (isInitial = true) => {
     if (isInitial) setLoading(true)
@@ -256,18 +271,39 @@ export default function SalesPage() {
   }
 
   async function handleRegisterSale() {
-    if (!selectedProduct || !customerId) return toast.error('Dados incompletos!')
+    if (!customerId) return toast.error('Selecione a cliente!')
+
+    const price = isManual ? (parseFloat(manualPrice) || 0) : (selectedProduct?.price || 0)
+    const cost = isManual ? (parseFloat(manualCost) || 0) : (selectedProduct?.cost_price || 0)
+
+    if (isManual) {
+      if (!manualName.trim() || price <= 0) return toast.error('Preencha o nome e o preço da peça avulsa!')
+    } else if (!selectedProduct) {
+      return toast.error('Selecione uma peça!')
+    }
+
     setIsSaving(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('No user')
-      const totalValue = selectedProduct.price * quantity
-      const { data: saleData, error: saleError } = await supabase.from('sales').insert({
-        product_id: selectedProduct.id, user_id: user.id, customer_id: customerId, quantity,
-        sale_price: selectedProduct.price, cost_price: selectedProduct.cost_price || 0,
-        payment_method: paymentMethod, installments: paymentMethod === 'dinheiro' ? 1 : installments,
-        total_value: totalValue, status: 'pendente'
-      }).select().single()
+      const totalValue = price * quantity
+
+      // Peça do catálogo mantém product_id; peça avulsa vai com product_id null + item_name.
+      const saleInsert = isManual
+        ? {
+            product_id: null, item_name: manualName.trim().toUpperCase(), user_id: user.id, customer_id: customerId, quantity,
+            sale_price: price, cost_price: cost,
+            payment_method: paymentMethod, installments: paymentMethod === 'dinheiro' ? 1 : installments,
+            total_value: totalValue, status: 'pendente'
+          }
+        : {
+            product_id: selectedProduct!.id, user_id: user.id, customer_id: customerId, quantity,
+            sale_price: price, cost_price: cost,
+            payment_method: paymentMethod, installments: paymentMethod === 'dinheiro' ? 1 : installments,
+            total_value: totalValue, status: 'pendente'
+          }
+
+      const { data: saleData, error: saleError } = await supabase.from('sales').insert(saleInsert).select().single()
       if (saleError) throw saleError
 
       const numI = paymentMethod === 'dinheiro' ? 1 : installments
@@ -278,13 +314,17 @@ export default function SalesPage() {
         instR.push({ sale_id: saleData.id, user_id: user.id, installment_number: i, value: i === numI ? totalValue - (instV * (numI - 1)) : instV, status: 'pendente', due_date: d.toISOString() })
       }
       await supabase.from('installments').insert(instR)
-      await supabase.from('products').update({ stock_quantity: selectedProduct.stock_quantity - quantity }).eq('id', selectedProduct.id)
 
-      setShowAddModal(false); setSelectedProduct(null); setCustomerId(''); loadSales(); loadProducts();
+      // Baixa de estoque somente para peças do catálogo
+      if (!isManual && selectedProduct) {
+        await supabase.from('products').update({ stock_quantity: selectedProduct.stock_quantity - quantity }).eq('id', selectedProduct.id)
+      }
+
+      closeAddModal(); loadSales(); loadProducts();
       toast.success('Venda Registrada! 💎')
-    } catch (err) { 
+    } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro desconhecido'
-      toast.error(message) 
+      toast.error(message)
     } finally { setIsSaving(false) }
   }
 
@@ -401,7 +441,7 @@ export default function SalesPage() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-[10px] font-black text-brand-primary uppercase truncate pr-2">{productInfo?.name || 'Joia não identificada'}</h4>
+                      <h4 className="text-[10px] font-black text-brand-primary uppercase truncate pr-2">{sale.item_name || productInfo?.name || 'Peça avulsa'}</h4>
                       <p className="text-[8px] font-bold text-brand-secondary/50 uppercase truncate">{sale.customers?.name} • {new Date(sale.created_at).toLocaleDateString('pt-BR')}</p>
                     </div>
                     <div className="flex items-center gap-2 md:gap-3">
@@ -532,7 +572,7 @@ export default function SalesPage() {
                         </div>
                         <div>
                           <p className="text-xs font-black text-brand-primary uppercase">
-                            {(Array.isArray(showReceipt.products) ? showReceipt.products[0] : showReceipt.products)?.name || 'JOIA'}
+                            {showReceipt.item_name || (Array.isArray(showReceipt.products) ? showReceipt.products[0] : showReceipt.products)?.name || 'JOIA'}
                           </p>
                           <p className="text-[9px] font-bold text-brand-secondary/50 uppercase">{showReceipt.quantity} unidade(s)</p>
                         </div>
@@ -559,29 +599,63 @@ export default function SalesPage() {
           <div className="bg-white w-full max-w-4xl h-[85vh] rounded-[40px] flex flex-col overflow-hidden shadow-2xl">
              <div className="p-6 border-b border-brand-secondary/10 flex justify-between items-center">
                 <h3 className="text-sm font-black text-brand-primary uppercase tracking-widest flex items-center gap-3"><ShoppingCart size={18} /> Nova Venda Real</h3>
-                <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-rose-50 rounded-full"><X size={20} /></button>
+                <button onClick={closeAddModal} className="p-2 hover:bg-rose-50 rounded-full"><X size={20} /></button>
              </div>
 
              <div className="px-6 py-4 bg-rose-50/30 border-b border-brand-secondary/5">
-                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                  <button 
-                    onClick={() => setActiveCategory('Todas')}
-                    className={`px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest transition-all shrink-0 border ${activeCategory === 'Todas' ? 'bg-brand-primary border-brand-primary text-white shadow-md' : 'bg-white border-brand-secondary/10 text-brand-secondary/40'}`}
+                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide items-center">
+                  <button
+                    onClick={() => { setIsManual(m => !m); setSelectedProduct(null); }}
+                    className={`px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest transition-all shrink-0 border ${isManual ? 'bg-amber-500 border-amber-500 text-white shadow-md' : 'bg-white border-amber-300 text-amber-600'}`}
                   >
-                    Todas
+                    {isManual ? '← Voltar ao catálogo' : '✨ Peça avulsa'}
                   </button>
-                  {categories.map(cat => (
-                    <button 
-                      key={cat.id}
-                      onClick={() => setActiveCategory(cat.name)}
-                      className={`px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest transition-all shrink-0 border ${activeCategory === cat.name ? 'bg-brand-primary border-brand-primary text-white shadow-md' : 'bg-white border-brand-secondary/10 text-brand-secondary/40'}`}
-                    >
-                      {cat.name}
-                    </button>
-                  ))}
+                  {!isManual && (
+                    <>
+                      <button
+                        onClick={() => setActiveCategory('Todas')}
+                        className={`px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest transition-all shrink-0 border ${activeCategory === 'Todas' ? 'bg-brand-primary border-brand-primary text-white shadow-md' : 'bg-white border-brand-secondary/10 text-brand-secondary/40'}`}
+                      >
+                        Todas
+                      </button>
+                      {categories.map(cat => (
+                        <button
+                          key={cat.id}
+                          onClick={() => setActiveCategory(cat.name)}
+                          className={`px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest transition-all shrink-0 border ${activeCategory === cat.name ? 'bg-brand-primary border-brand-primary text-white shadow-md' : 'bg-white border-brand-secondary/10 text-brand-secondary/40'}`}
+                        >
+                          {cat.name}
+                        </button>
+                      ))}
+                    </>
+                  )}
                 </div>
              </div>
 
+             {isManual ? (
+               <div className="flex-1 overflow-y-auto p-6 bg-rose-50/10">
+                 <div className="max-w-md mx-auto space-y-4 pt-2">
+                   <div className="text-center mb-2">
+                     <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Peça fora do catálogo</p>
+                     <p className="text-[8px] font-bold text-brand-secondary/40 uppercase mt-1">Digite os dados da peça vendida</p>
+                   </div>
+                   <div>
+                     <label className="text-[8px] font-black uppercase text-brand-secondary/40 ml-2">Nome da peça</label>
+                     <input type="text" value={manualName} onChange={e => setManualName(e.target.value)} placeholder="EX: COLAR PONTO DE LUZ" className="w-full p-4 rounded-2xl bg-brand-secondary/5 text-[11px] font-bold uppercase text-brand-primary outline-none focus:ring-2 focus:ring-brand-primary/20 mt-1" />
+                   </div>
+                   <div className="grid grid-cols-2 gap-3">
+                     <div>
+                       <label className="text-[8px] font-black uppercase text-brand-primary ml-2">Preço venda R$</label>
+                       <input type="number" step="0.01" value={manualPrice} onChange={e => setManualPrice(e.target.value)} placeholder="0,00" className="w-full p-4 rounded-2xl bg-brand-primary/5 border border-brand-primary/10 text-[13px] font-black text-brand-primary outline-none mt-1" />
+                     </div>
+                     <div>
+                       <label className="text-[8px] font-black uppercase text-brand-secondary/40 ml-2">Custo R$ (opcional)</label>
+                       <input type="number" step="0.01" value={manualCost} onChange={e => setManualCost(e.target.value)} placeholder="0,00" className="w-full p-4 rounded-2xl bg-brand-secondary/5 text-[13px] font-bold text-brand-primary outline-none mt-1" />
+                     </div>
+                   </div>
+                 </div>
+               </div>
+             ) : (
              <div className="flex-1 overflow-y-auto p-4 md:p-6 grid grid-cols-3 sm:grid-cols-4 gap-2 md:gap-4 bg-rose-50/10 scrollbar-hide">
                 {products
                   .filter(p => {
@@ -610,8 +684,9 @@ export default function SalesPage() {
                   </button>
                 ))}
              </div>
+             )}
 
-             {selectedProduct && (
+             {(selectedProduct || isManual) && (
                <div className="p-6 bg-white border-t border-brand-secondary/10 space-y-4 animate-in slide-in-from-bottom duration-500">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
@@ -637,7 +712,7 @@ export default function SalesPage() {
                           </div>
                        </div>
                        <button onClick={handleRegisterSale} disabled={isSaving} className="w-full bg-brand-primary text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 disabled:opacity-50">
-                         {isSaving ? <Loader2 className="animate-spin" size={16} /> : <><ShoppingCart size={16} /> FINALIZAR VENDA DE R$ {(selectedProduct.price * quantity).toLocaleString('pt-BR')}</>}
+                         {isSaving ? <Loader2 className="animate-spin" size={16} /> : <><ShoppingCart size={16} /> FINALIZAR VENDA DE R$ {(((isManual ? (parseFloat(manualPrice) || 0) : (selectedProduct?.price || 0))) * quantity).toLocaleString('pt-BR')}</>}
                        </button>
                     </div>
                   </div>
