@@ -193,20 +193,14 @@ export default function CatalogClient({
     const url = new URL(window.location.href);
     if (cat === 'Todos') {
       url.searchParams.delete('category');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       url.searchParams.set('category', cat);
-      if (productsTopRef.current) {
-        const headerElement = document.querySelector('.sticky');
-        const headerHeight = headerElement ? headerElement.clientHeight : 80;
-        const isMobile = window.innerWidth < 768;
-        const extraPadding = isMobile ? 30 : 20; 
-        const elementPosition = productsTopRef.current.getBoundingClientRect().top;
-        const offsetPosition = elementPosition + window.pageYOffset - (headerHeight + extraPadding);
-        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-      }
     }
     window.history.pushState({}, '', url);
+
+    // Sobe suavemente ao topo para a logo e a categoria selecionada ficarem inteiras à vista
+    // (antes, a rolagem calculada até os produtos "cortava" a logo).
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   useEffect(() => {
