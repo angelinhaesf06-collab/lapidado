@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useMemo, Fragment } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Trash2, Pencil, Image as ImageIcon, Loader2, ArrowLeft, Gem, Share2, Plus, Search, GripVertical, Check, X, Move } from 'lucide-react'
 import Link from 'next/link'
-import Image from 'next/image'
 import {
   DndContext,
   closestCenter,
@@ -81,21 +80,13 @@ function SortableProduct({ product, margin, deletingId, handleDelete, handleShar
       <div className="aspect-square relative overflow-hidden bg-brand-secondary/5 border-b border-brand-secondary/5">
         {hasValidImage ? (
           <div className="relative w-full h-full">
-            <Image 
-              src={product.image_url} 
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={product.image_url}
               alt={product.name}
-              fill
-              sizes="(max-width: 768px) 50vw, 33vw"
-              className="object-cover group-hover:scale-110 transition-transform duration-700"
-              onError={(e) => {
-                console.error("Erro ao carregar imagem no admin:", product.image_url);
-                setImageError(true);
-              }}
+              className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+              onError={() => setImageError(true)}
             />
-            {/* DEBUG INFO: Apenas para Angela ver se o link existe */}
-            <div className="absolute bottom-2 left-2 bg-black/50 text-[5px] text-white p-1 rounded backdrop-blur-sm pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
-              URL: {product.image_url.substring(0, 30)}...
-            </div>
           </div>
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-brand-secondary/10 gap-2 bg-brand-secondary/5">

@@ -4,7 +4,6 @@ import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { triggerHaptic, resolveStoreSlug } from '@/lib/utils'
 import Link from 'next/link'
-import Image from 'next/image'
 import AddToCartButton from '@/components/cart/add-to-cart-button'
 import { useSearchParams, usePathname } from 'next/navigation'
 import { Gem, Loader2 } from 'lucide-react'
@@ -58,14 +57,12 @@ const ProductCard = React.memo(({
       <Link href={`/product?id=${product.id}&catalogo=true${storeParam}`} className="w-full focus:outline-none">
         <div className="aspect-[4/5] w-full bg-brand-secondary/5 rounded-[24px] md:rounded-[36px] overflow-hidden mb-3 shadow-sm relative transition-all duration-300 group-hover:shadow-md group-hover:-translate-y-1 border border-brand-secondary/5">
           {hasValidImage ? (
-            <Image 
-              src={product.image_url} 
-              alt={product.name} 
-              fill
-              sizes="(max-width: 768px) 45vw, (max-width: 1200px) 30vw, 20vw"
-              className="object-cover transition-transform duration-[0.8s] group-hover:scale-105" 
-              priority={priority}
-              quality={60} // ⚡ Otimização de banda para carregamento ultra-rápido
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={product.image_url}
+              alt={product.name}
+              loading={priority ? 'eager' : 'lazy'}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-[0.8s] group-hover:scale-105"
               onError={() => setImageError(true)}
             />
           ) : (
