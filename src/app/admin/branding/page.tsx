@@ -124,7 +124,7 @@ export default function BrandingPage() {
       if (!user) throw new Error('Sessão expirada. Por favor, faça login novamente.')
 
       const newSlug = cleanBusinessName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
-      const newWebsite = `${typeof window !== 'undefined' ? window.location.origin : ''}/${newSlug}`
+      const newWebsite = `${typeof window !== 'undefined' ? window.location.origin : ''}/?catalogo=true&loja=${newSlug}`
 
       console.log('💎 NEXUS: Salvando dados da marca...', { business_name: cleanBusinessName, slug: newSlug, website: newWebsite });
 
@@ -180,7 +180,7 @@ export default function BrandingPage() {
   }
 
   const installmentsOptions = [1, 2, 3, 4, 5, 6, 8, 10, 12]
-  const generatedLink = brandingId && businessName ? `${typeof window !== 'undefined' ? window.location.origin : ''}/${businessName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')}` : 'Defina o nome da loja para gerar o link'
+  const generatedLink = brandingId && businessName ? `${typeof window !== 'undefined' ? window.location.origin : ''}/?catalogo=true&loja=${businessName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')}` : 'Defina o nome da loja para gerar o link'
 
   const copyToClipboard = () => {
     if (!brandingId || !businessName) return
@@ -246,7 +246,7 @@ export default function BrandingPage() {
           {currentSlug && (
             <div className="p-3 rounded-xl bg-brand-primary/5 border border-brand-primary/10">
               <p className="text-[7px] font-black text-brand-secondary/40 uppercase tracking-widest mb-1">Link Público da sua Vitrine:</p>
-              <p className="text-[10px] font-bold text-brand-primary break-all">{(typeof window !== 'undefined' ? window.location.host : 'lapidado.com.br')}/{currentSlug}</p>
+              <p className="text-[10px] font-bold text-brand-primary break-all">{(typeof window !== 'undefined' ? window.location.host : 'lapidado.com.br')}/?loja={currentSlug}</p>
             </div>
           )}
 

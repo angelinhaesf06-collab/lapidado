@@ -64,7 +64,7 @@ export default function Footer() {
     const storeName = branding.business_name || branding.store_name || 'LAPIDADO'
     const storeSlug = branding.slug || ''
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lapidado.vercel.app'
-    const catalogUrl = storeSlug ? `${baseUrl}/${storeSlug}` : baseUrl
+    const catalogUrl = storeSlug ? `${baseUrl}/?catalogo=true&loja=${storeSlug}` : baseUrl
     
     const msg = encodeURIComponent(`Olá! ✨ Vi o catálogo da *${storeName.toUpperCase()}* e gostaria de mais informações.\n\nLink do Catálogo: ${catalogUrl}`)
     return `https://wa.me/${phone}?text=${msg}`
