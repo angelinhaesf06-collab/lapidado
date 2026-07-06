@@ -94,6 +94,9 @@ function SortableProduct({ product, margin, deletingId, handleDelete, handleShar
               <span className="text-xl">💎</span>
             </div>
             <p className="text-[7px] font-black uppercase tracking-widest opacity-40">Sem Foto</p>
+            <p className="text-[6px] text-brand-secondary/50 px-2 break-all text-center leading-tight max-w-full">
+              {product.image_url ? `link: ${product.image_url.substring(0, 45)}` : 'sem link salvo'}
+            </p>
           </div>
         )}
         
