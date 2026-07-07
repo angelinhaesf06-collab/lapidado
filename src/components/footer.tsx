@@ -156,7 +156,6 @@ export default function Footer() {
         <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
           <Link href="/privacidade" className="text-[8px] font-black text-brand-secondary/40 hover:text-brand-primary uppercase tracking-[0.1em] transition-colors">Privacidade</Link>
           <Link href="/termos" className="text-[8px] font-black text-brand-secondary/40 hover:text-brand-primary uppercase tracking-[0.1em] transition-colors">Termos</Link>
-          <Link href="/excluir-conta" className="text-[8px] font-black text-brand-secondary/40 hover:text-brand-primary uppercase tracking-[0.1em] transition-colors">Exclusão</Link>
         </div>
         
         <div className="text-center space-y-1">
